@@ -4,7 +4,7 @@ public class TitularTelefono
 {
     public int Id { get; private set; }
     public int TitularId { get; private set; }
-    public string Numero { get; private set; } = null!;
+    public string NumeroE164 { get; private set; } = null!;
     public bool EsPrincipal { get; private set; }
     public DateTime FechaAlta { get; private set; }
     public DateTime? FechaBaja { get; private set; }
@@ -16,16 +16,16 @@ public class TitularTelefono
     private TitularTelefono() { }
 
     // Constructor para creación
-    public TitularTelefono(int titularId, string numero, bool esPrincipal = false)
+    public TitularTelefono(int titularId, string numeroE164, bool esPrincipal = false)
     {
         if (titularId <= 0)
             throw new ArgumentException("TitularId inválido", nameof(titularId));
         
-        if (string.IsNullOrWhiteSpace(numero))
-            throw new ArgumentException("El número no puede estar vacío", nameof(numero));
+        if (string.IsNullOrWhiteSpace(numeroE164))
+            throw new ArgumentException("El número no puede estar vacío", nameof(numeroE164));
 
         TitularId = titularId;
-        Numero = numero;
+        NumeroE164 = numeroE164;
         EsPrincipal = esPrincipal;
         FechaAlta = DateTime.UtcNow;
     }
