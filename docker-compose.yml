@@ -12,7 +12,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./TransporteEscolar
       dockerfile: TransporteEscolar.Api/Dockerfile
     depends_on:
       - sqlserver
