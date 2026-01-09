@@ -12,3 +12,11 @@
 
 # Optional: local docker override
 docker-compose.override.yml
+
+# Scripts SQL con datos sensibles
+*.sql
+CargaTitulares.sql
+Scripts/
+
+# Datos de clientes
+**/datos_clientes.*

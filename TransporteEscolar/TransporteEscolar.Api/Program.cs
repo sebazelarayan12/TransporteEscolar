@@ -1,6 +1,7 @@
-
 using Microsoft.EntityFrameworkCore;
+using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Infrastructure.Persistence;
+using TransporteEscolar.Infrastructure.Repositories;
 
 namespace TransporteEscolar.Api
 {
@@ -10,20 +11,23 @@ namespace TransporteEscolar.Api
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // DbContext
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
             });
 
+            // Repositorios
+            builder.Services.AddScoped<ITitularRepository, TitularRepository>();
+
+            // API
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+            // Middleware
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -31,10 +35,7 @@ namespace TransporteEscolar.Api
             }
 
             app.UseHttpsRedirection();
-
             app.UseAuthorization();
-
-
             app.MapControllers();
 
             app.Run();

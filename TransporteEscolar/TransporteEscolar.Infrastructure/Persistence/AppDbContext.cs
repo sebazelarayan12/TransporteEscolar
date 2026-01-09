@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TransporteEscolar.Domain.Entities;
+using TransporteEscolar.Infrastructure.Persistence.Configurations;
 
 namespace TransporteEscolar.Infrastructure.Persistence;
 
@@ -18,7 +19,12 @@ public sealed class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         
-        // Aplicar todas las configuraciones del assembly actual
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        // Aplicar configuraciones explícitamente (workaround para asegurar que se carguen)
+        modelBuilder.ApplyConfiguration(new TitularConfiguration());
+        modelBuilder.ApplyConfiguration(new TitularTelefonoConfiguration());
+        modelBuilder.ApplyConfiguration(new PasajeroConfiguration());
+        modelBuilder.ApplyConfiguration(new PagoMensualConfiguration());
+        modelBuilder.ApplyConfiguration(new PagoMovimientoConfiguration());
+        modelBuilder.ApplyConfiguration(new ReinscripcionPasajeroConfiguration());
     }
 }
