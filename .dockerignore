@@ -28,3 +28,8 @@ README.md
 !.git/config
 !.git/packed-refs
 !.git/refs/heads/**
+{
+  "ConnectionStrings": {
+    "Default": "Server=localhost,1433;Database=TransporteEscolarDb;User Id=sa;Password=Transporte2026!;TrustServerCertificate=True;"
+  }
+}
