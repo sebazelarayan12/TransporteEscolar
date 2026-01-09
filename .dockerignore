@@ -1,6 +1,7 @@
 **/.classpath
 **/.dockerignore
 **/.env
+**/.env.*
 **/.git
 **/.gitignore
 **/.project
@@ -11,6 +12,8 @@
 **/*.*proj.user
 **/*.dbmdl
 **/*.jfm
+**/appsettings.Development.json
+**/appsettings.*.json
 **/azds.yaml
 **/bin
 **/charts
@@ -20,6 +23,7 @@
 **/npm-debug.log
 **/obj
 **/secrets.dev.yaml
+**/secrets.json
 **/values.dev.yaml
 LICENSE
 README.md
@@ -28,8 +32,3 @@ README.md
 !.git/config
 !.git/packed-refs
 !.git/refs/heads/**
-{
-  "ConnectionStrings": {
-    "Default": "Server=localhost,1433;Database=TransporteEscolarDb;User Id=sa;Password=Transporte2026!;TrustServerCertificate=True;"
-  }
-}
