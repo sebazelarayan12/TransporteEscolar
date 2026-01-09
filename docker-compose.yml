@@ -10,19 +10,19 @@ services:
       - sql_data_volume:/var/opt/mssql
     restart: unless-stopped
 
-  api:
-    build:
-      context: ./TransporteEscolar
-      dockerfile: TransporteEscolar.Api/Dockerfile
-    depends_on:
-      - sqlserver
-    ports:
-      - "8080:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__Default=${CONNECTIONSTRINGS__DEFAULT}
-    restart: unless-stopped
+  # api:  # ← COMENTADO para desarrollo local
+  #   build:
+  #     context: ./TransporteEscolar
+  #     dockerfile: TransporteEscolar.Api/Dockerfile
+  #   depends_on:
+  #     - sqlserver
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ASPNETCORE_URLS=http://+:8080
+  #     - ConnectionStrings__Default=${CONNECTIONSTRINGS__DEFAULT}
+  #   restart: unless-stopped
 
 volumes:
   sql_data_volume:
