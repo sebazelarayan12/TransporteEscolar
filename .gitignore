@@ -20,3 +20,4 @@ Scripts/
 
 # Datos de clientes
 **/datos_clientes.*
+appsettings.Development.json
