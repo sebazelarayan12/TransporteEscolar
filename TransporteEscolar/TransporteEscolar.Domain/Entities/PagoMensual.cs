@@ -28,18 +28,6 @@ public class PagoMensual
         decimal montoGenerado,
         string? observaciones = null)
     {
-        if (titularId <= 0)
-            throw new ArgumentException("TitularId inválido", nameof(titularId));
-        
-        if (mes < 1 || mes > 12)
-            throw new ArgumentException("El mes debe estar entre 1 y 12", nameof(mes));
-        
-        if (anio < 2020 || anio > 2100)
-            throw new ArgumentException("Año inválido", nameof(anio));
-        
-        if (montoGenerado <= 0)
-            throw new ArgumentException("El monto generado debe ser mayor a 0", nameof(montoGenerado));
-
         TitularId = titularId;
         Mes = mes;
         Anio = anio;

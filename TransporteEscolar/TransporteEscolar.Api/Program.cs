@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Api.DependencyInjection;
+using TransporteEscolar.Api.Middleware;
 using TransporteEscolar.Infrastructure.Persistence;
-using TransporteEscolar.Infrastructure.Repositories;
 
 namespace TransporteEscolar.Api
 {
@@ -17,15 +17,21 @@ namespace TransporteEscolar.Api
                 options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
             });
 
-            // Repositorios
-            builder.Services.AddScoped<ITitularRepository, TitularRepository>();
+            // Registrar servicios y repositorios
+            builder.Services.AddApplicationServices();
 
             // API
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.CustomSchemaIds(type => type.FullName?.Replace("+", "."));
+            });
 
             var app = builder.Build();
+
+            // Middleware de manejo global de excepciones
+            app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
             // Middleware
             if (app.Environment.IsDevelopment())

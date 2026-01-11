@@ -1,0 +1,25 @@
+namespace TransporteEscolar.Application.DTOs;
+
+public record TitularModel
+{
+    public record Request(
+        string Apellido,
+        string NombreContacto,
+        string Direccion,
+        decimal MontoMensualPactado);
+
+    public record UpdateRequest(
+        string NombreContacto,
+        string Direccion,
+        decimal MontoMensualPactado);
+
+    public record Response(
+        int Id,
+        string Apellido,
+        string NombreContacto,
+        string Direccion,
+        decimal MontoMensualPactado,
+        DateTime FechaAlta,
+        DateTime? FechaBaja,
+        bool Activo);
+}

@@ -23,15 +23,6 @@ public class PagoMovimiento
         string medioPago,
         string? observaciones = null)
     {
-        if (pagoMensualId <= 0)
-            throw new ArgumentException("PagoMensualId inválido", nameof(pagoMensualId));
-        
-        if (monto <= 0)
-            throw new ArgumentException("El monto debe ser mayor a 0", nameof(monto));
-        
-        if (string.IsNullOrWhiteSpace(medioPago))
-            throw new ArgumentException("El medio de pago no puede estar vacío", nameof(medioPago));
-
         PagoMensualId = pagoMensualId;
         Monto = monto;
         FechaPago = fechaPago;

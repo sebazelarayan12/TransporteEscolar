@@ -33,24 +33,6 @@ public class Pasajero
         string turno,
         string? observaciones = null)
     {
-        if (titularId <= 0)
-            throw new ArgumentException("TitularId inválido", nameof(titularId));
-        
-        if (string.IsNullOrWhiteSpace(nombre))
-            throw new ArgumentException("El nombre no puede estar vacío", nameof(nombre));
-        
-        if (string.IsNullOrWhiteSpace(apellido))
-            throw new ArgumentException("El apellido no puede estar vacío", nameof(apellido));
-        
-        if (string.IsNullOrWhiteSpace(colegio))
-            throw new ArgumentException("El colegio no puede estar vacío", nameof(colegio));
-        
-        if (string.IsNullOrWhiteSpace(gradoCurso))
-            throw new ArgumentException("El grado/curso no puede estar vacío", nameof(gradoCurso));
-        
-        if (string.IsNullOrWhiteSpace(turno))
-            throw new ArgumentException("El turno no puede estar vacío", nameof(turno));
-
         TitularId = titularId;
         Nombre = nombre;
         Apellido = apellido;
@@ -68,15 +50,6 @@ public class Pasajero
         string turno,
         string? observaciones)
     {
-        if (string.IsNullOrWhiteSpace(colegio))
-            throw new ArgumentException("El colegio no puede estar vacío", nameof(colegio));
-        
-        if (string.IsNullOrWhiteSpace(gradoCurso))
-            throw new ArgumentException("El grado/curso no puede estar vacío", nameof(gradoCurso));
-        
-        if (string.IsNullOrWhiteSpace(turno))
-            throw new ArgumentException("El turno no puede estar vacío", nameof(turno));
-
         Colegio = colegio;
         GradoCurso = gradoCurso;
         Turno = turno;

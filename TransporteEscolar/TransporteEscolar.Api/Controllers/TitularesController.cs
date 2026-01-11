@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Interfaces;
-using TransporteEscolar.Domain.Entities;
 
 namespace TransporteEscolar.Api.Controllers;
 
@@ -9,14 +8,14 @@ namespace TransporteEscolar.Api.Controllers;
 [Route("api/[controller]")]
 public class TitularesController : ControllerBase
 {
-    private readonly ITitularRepository _repository;
+    private readonly ITitularService _service;
     private readonly ILogger<TitularesController> _logger;
 
     public TitularesController(
-        ITitularRepository repository,
+        ITitularService service,
         ILogger<TitularesController> logger)
     {
-        _repository = repository;
+        _service = service;
         _logger = logger;
     }
 
@@ -24,10 +23,9 @@ public class TitularesController : ControllerBase
     /// Obtiene todos los titulares
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<List<TitularDto>>> GetAll()
+    public async Task<ActionResult<List<TitularModel.Response>>> GetAll()
     {
-        var titulares = await _repository.GetAllAsync();
-        var dtos = titulares.Select(MapToDto).ToList();
+        var dtos = await _service.ObtenerTodosAsync();
         return Ok(dtos);
     }
 
@@ -35,10 +33,9 @@ public class TitularesController : ControllerBase
     /// Obtiene solo titulares activos
     /// </summary>
     [HttpGet("activos")]
-    public async Task<ActionResult<List<TitularDto>>> GetActivos()
+    public async Task<ActionResult<List<TitularModel.Response>>> GetActivos()
     {
-        var titulares = await _repository.GetActivosAsync();
-        var dtos = titulares.Select(MapToDto).ToList();
+        var dtos = await _service.ObtenerActivosAsync();
         return Ok(dtos);
     }
 
@@ -46,71 +43,43 @@ public class TitularesController : ControllerBase
     /// Obtiene un titular por ID
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ActionResult<TitularDto>> GetById(int id)
+    public async Task<ActionResult<TitularModel.Response>> GetById(int id)
     {
-        var titular = await _repository.GetByIdAsync(id);
+        var dto = await _service.ObtenerPorIdAsync(id);
         
-        if (titular == null)
-            return NotFound(new { mensaje = $"Titular con ID {id} no encontrado" });
+        if (dto == null)
+            return NotFound();
 
-        return Ok(MapToDto(titular));
+        return Ok(dto);
     }
 
     /// <summary>
     /// Crea un nuevo titular
     /// </summary>
     [HttpPost]
-    public async Task<ActionResult<TitularDto>> Create([FromBody] CrearTitularDto dto)
+    public async Task<ActionResult<TitularModel.Response>> Create([FromBody] TitularModel.Request dto)
     {
-        try
-        {
-            var titular = new Titular(
-                dto.Apellido,
-                dto.NombreContacto,
-                dto.Direccion,
-                dto.MontoMensualPactado);
+        var resultado = await _service.CrearAsync(dto);
 
-            await _repository.AddAsync(titular);
+        _logger.LogInformation("Titular creado: {Apellido} (ID: {Id})", resultado.Apellido, resultado.Id);
 
-            _logger.LogInformation("Titular creado: {Apellido} (ID: {Id})", titular.Apellido, titular.Id);
-
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = titular.Id },
-                MapToDto(titular));
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { mensaje = ex.Message });
-        }
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = resultado.Id },
+            resultado);
     }
 
     /// <summary>
     /// Actualiza datos de un titular existente
     /// </summary>
     [HttpPut("{id}")]
-    public async Task<ActionResult> Update(int id, [FromBody] ActualizarTitularDto dto)
+    public async Task<ActionResult> Update(int id, [FromBody] TitularModel.UpdateRequest dto)
     {
-        var titular = await _repository.GetByIdAsync(id);
-        
-        if (titular == null)
-            return NotFound(new { mensaje = $"Titular con ID {id} no encontrado" });
+        await _service.ActualizarAsync(id, dto);
 
-        try
-        {
-            titular.ActualizarDatos(dto.NombreContacto, dto.Direccion);
-            titular.ActualizarMontoPactado(dto.MontoMensualPactado);
+        _logger.LogInformation("Titular actualizado (ID: {Id})", id);
 
-            await _repository.UpdateAsync(titular);
-
-            _logger.LogInformation("Titular actualizado: {Apellido} (ID: {Id})", titular.Apellido, titular.Id);
-
-            return NoContent();
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { mensaje = ex.Message });
-        }
+        return NoContent();
     }
 
     /// <summary>
@@ -119,15 +88,9 @@ public class TitularesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> DarDeBaja(int id)
     {
-        var titular = await _repository.GetByIdAsync(id);
-        
-        if (titular == null)
-            return NotFound(new { mensaje = $"Titular con ID {id} no encontrado" });
+        await _service.DarDeBajaAsync(id);
 
-        titular.DarDeBaja();
-        await _repository.UpdateAsync(titular);
-
-        _logger.LogInformation("Titular dado de baja: {Apellido} (ID: {Id})", titular.Apellido, titular.Id);
+        _logger.LogInformation("Titular dado de baja (ID: {Id})", id);
 
         return NoContent();
     }
@@ -138,27 +101,60 @@ public class TitularesController : ControllerBase
     [HttpPost("{id}/reactivar")]
     public async Task<ActionResult> Reactivar(int id)
     {
-        var titular = await _repository.GetByIdAsync(id);
-        
-        if (titular == null)
-            return NotFound(new { mensaje = $"Titular con ID {id} no encontrado" });
+        await _service.ReactivarAsync(id);
 
-        titular.Reactivar();
-        await _repository.UpdateAsync(titular);
-
-        _logger.LogInformation("Titular reactivado: {Apellido} (ID: {Id})", titular.Apellido, titular.Id);
+        _logger.LogInformation("Titular reactivado (ID: {Id})", id);
 
         return NoContent();
     }
 
-    private static TitularDto MapToDto(Titular titular) => new()
+    // Endpoints para teléfonos
+    /// <summary>
+    /// Obtiene los teléfonos de un titular
+    /// </summary>
+    [HttpGet("{id}/telefonos")]
+    public async Task<ActionResult<List<TelefonoModel.Response>>> GetTelefonos(int id)
     {
-        Id = titular.Id,
-        Apellido = titular.Apellido,
-        NombreContacto = titular.NombreContacto,
-        Direccion = titular.Direccion,
-        MontoMensualPactado = titular.MontoMensualPactado,
-        FechaAlta = titular.FechaAlta,
-        FechaBaja = titular.FechaBaja
-    };
+        var telefonos = await _service.ObtenerTelefonosAsync(id);
+        return Ok(telefonos);
+    }
+
+    /// <summary>
+    /// Agrega un teléfono a un titular
+    /// </summary>
+    [HttpPost("{id}/telefonos")]
+    public async Task<ActionResult<TelefonoModel.Response>> AgregarTelefono(int id, [FromBody] TelefonoModel.Request dto)
+    {
+        var telefono = await _service.AgregarTelefonoAsync(id, dto);
+
+        _logger.LogInformation("Teléfono agregado a titular (ID: {Id})", id);
+
+        return Ok(telefono);
+    }
+
+    /// <summary>
+    /// Marca un teléfono como principal
+    /// </summary>
+    [HttpPut("{id}/telefonos/{telefonoId}/marcar-principal")]
+    public async Task<ActionResult> MarcarTelefonoComoPrincipal(int id, int telefonoId)
+    {
+        await _service.MarcarTelefonoComoPrincipalAsync(id, telefonoId);
+
+        _logger.LogInformation("Teléfono {TelefonoId} marcado como principal para titular {TitularId}", telefonoId, id);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Elimina (da de baja) un teléfono
+    /// </summary>
+    [HttpDelete("{id}/telefonos/{telefonoId}")]
+    public async Task<ActionResult> EliminarTelefono(int id, int telefonoId)
+    {
+        await _service.EliminarTelefonoAsync(id, telefonoId);
+
+        _logger.LogInformation("Teléfono {TelefonoId} eliminado del titular {TitularId}", telefonoId, id);
+
+        return NoContent();
+    }
 }

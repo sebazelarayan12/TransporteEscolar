@@ -26,18 +26,6 @@ public class Titular
         string direccion,
         decimal montoMensualPactado)
     {
-        if (string.IsNullOrWhiteSpace(apellido))
-            throw new ArgumentException("El apellido no puede estar vacío", nameof(apellido));
-        
-        if (string.IsNullOrWhiteSpace(nombreContacto))
-            throw new ArgumentException("El nombre de contacto no puede estar vacío", nameof(nombreContacto));
-        
-        if (string.IsNullOrWhiteSpace(direccion))
-            throw new ArgumentException("La dirección no puede estar vacía", nameof(direccion));
-        
-        if (montoMensualPactado <= 0)
-            throw new ArgumentException("El monto pactado debe ser mayor a 0", nameof(montoMensualPactado));
-
         Apellido = apellido;
         NombreContacto = nombreContacto;
         Direccion = direccion;
@@ -46,25 +34,12 @@ public class Titular
         Telefonos = new List<TitularTelefono>();
     }
 
-    // Métodos simples de actualización (invariantes)
-    public void ActualizarDatos(string nombreContacto, string direccion)
+    // Métodos simples de actualización
+    public void ActualizarDatos(string nombreContacto, string direccion, decimal montoMensualPactado)
     {
-        if (string.IsNullOrWhiteSpace(nombreContacto))
-            throw new ArgumentException("El nombre de contacto no puede estar vacío", nameof(nombreContacto));
-        
-        if (string.IsNullOrWhiteSpace(direccion))
-            throw new ArgumentException("La dirección no puede estar vacía", nameof(direccion));
-
         NombreContacto = nombreContacto;
         Direccion = direccion;
-    }
-
-    public void ActualizarMontoPactado(decimal nuevoMonto)
-    {
-        if (nuevoMonto <= 0)
-            throw new ArgumentException("El monto pactado debe ser mayor a 0", nameof(nuevoMonto));
-
-        MontoMensualPactado = nuevoMonto;
+        MontoMensualPactado = montoMensualPactado;
     }
 
     public void DarDeBaja()

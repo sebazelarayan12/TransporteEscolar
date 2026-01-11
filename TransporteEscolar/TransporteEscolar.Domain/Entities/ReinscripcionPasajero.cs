@@ -18,12 +18,6 @@ public class ReinscripcionPasajero
     // Constructor para creación
     public ReinscripcionPasajero(int pasajeroId, int anio)
     {
-        if (pasajeroId <= 0)
-            throw new ArgumentException("PasajeroId inválido", nameof(pasajeroId));
-        
-        if (anio < 2020 || anio > 2100)
-            throw new ArgumentException("Año inválido", nameof(anio));
-
         PasajeroId = pasajeroId;
         Anio = anio;
         Estado = "Pendiente";

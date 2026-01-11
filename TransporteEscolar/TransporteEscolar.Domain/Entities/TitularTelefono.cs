@@ -18,12 +18,6 @@ public class TitularTelefono
     // Constructor para creación
     public TitularTelefono(int titularId, string numeroE164, bool esPrincipal = false)
     {
-        if (titularId <= 0)
-            throw new ArgumentException("TitularId inválido", nameof(titularId));
-        
-        if (string.IsNullOrWhiteSpace(numeroE164))
-            throw new ArgumentException("El número no puede estar vacío", nameof(numeroE164));
-
         TitularId = titularId;
         NumeroE164 = numeroE164;
         EsPrincipal = esPrincipal;
