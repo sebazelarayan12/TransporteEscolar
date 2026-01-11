@@ -53,8 +53,13 @@ public class PasajeroService : IPasajeroService
             throw new NotFoundException(nameof(Titular), dto.TitularId);
 
         var pasajero = new Pasajero(
-            dto.TitularId, dto.Nombre, dto.Apellido, 
-            dto.Colegio, dto.GradoCurso, dto.Turno, dto.Observaciones);
+            dto.TitularId, 
+            dto.Nombre, 
+            dto.Colegio, 
+            dto.GradoCurso, 
+            dto.Turno, 
+            dto.Observaciones,
+            dto.FechaAlta);
 
         var pasajeroCreado = await _repository.AddAsync(pasajero, cancellationToken);
         return MapearAResponse(pasajeroCreado);
@@ -149,8 +154,8 @@ public class PasajeroService : IPasajeroService
     }
 
     private static PasajeroModel.Response MapearAResponse(Pasajero pasajero) =>
-        new(pasajero.Id, pasajero.TitularId, pasajero.Nombre, pasajero.Apellido,
-            $"{pasajero.Nombre} {pasajero.Apellido}", pasajero.Colegio, pasajero.GradoCurso,
+        new(pasajero.Id, pasajero.TitularId, pasajero.Nombre, pasajero.Titular.Apellido,
+            $"{pasajero.Nombre} {pasajero.Titular.Apellido}", pasajero.Colegio, pasajero.GradoCurso,
             pasajero.Turno, pasajero.Observaciones, pasajero.FechaAlta, pasajero.FechaBaja,
             pasajero.FechaBaja == null, pasajero.Titular?.Apellido);
 }

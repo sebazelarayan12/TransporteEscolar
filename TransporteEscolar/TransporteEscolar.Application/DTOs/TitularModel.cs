@@ -6,7 +6,8 @@ public record TitularModel
         string Apellido,
         string NombreContacto,
         string Direccion,
-        decimal MontoMensualPactado);
+        decimal MontoMensualPactado,
+        DateTime? FechaAlta = null); // Opcional: si no se especifica, usa fecha actual
 
     public record UpdateRequest(
         string NombreContacto,

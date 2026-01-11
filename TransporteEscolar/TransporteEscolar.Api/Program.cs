@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TransporteEscolar.Api.Converters;
 using TransporteEscolar.Api.DependencyInjection;
 using TransporteEscolar.Api.Middleware;
 using TransporteEscolar.Infrastructure.Persistence;
@@ -21,7 +22,15 @@ namespace TransporteEscolar.Api
             builder.Services.AddApplicationServices();
 
             // API
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    // Formato de fecha: solo año-mes-día (2026-01-11)
+                    options.JsonSerializerOptions.Converters.Add(new DateOnlyJsonConverter());
+                    options.JsonSerializerOptions.Converters.Add(new NullableDateOnlyJsonConverter());
+                    options.JsonSerializerOptions.Converters.Add(
+                        new System.Text.Json.Serialization.JsonStringEnumConverter());
+                });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {

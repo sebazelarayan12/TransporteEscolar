@@ -40,6 +40,22 @@ public class TitularesController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene titulares activos para selector (dropdown)
+    /// Devuelve: { id, label } donde label = "Apellido - Dirección"
+    /// </summary>
+    [HttpGet("selector")]
+    public async Task<ActionResult<List<object>>> GetSelector()
+    {
+        var titulares = await _service.ObtenerActivosAsync();
+        var selector = titulares.Select(t => new
+        {
+            id = t.Id,
+            label = $"{t.Apellido} - {t.Direccion}"
+        }).ToList();
+        return Ok(selector);
+    }
+
+    /// <summary>
     /// Obtiene un titular por ID
     /// </summary>
     [HttpGet("{id}")]

@@ -13,9 +13,6 @@ public static class PasajeroValidator
         if (string.IsNullOrWhiteSpace(request.Nombre))
             throw new ValidationException("El nombre es requerido");
 
-        if (string.IsNullOrWhiteSpace(request.Apellido))
-            throw new ValidationException("El apellido es requerido");
-
         if (string.IsNullOrWhiteSpace(request.Colegio))
             throw new ValidationException("El colegio es requerido");
 

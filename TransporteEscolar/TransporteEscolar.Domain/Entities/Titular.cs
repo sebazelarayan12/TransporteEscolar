@@ -24,13 +24,14 @@ public class Titular
         string apellido,
         string nombreContacto,
         string direccion,
-        decimal montoMensualPactado)
+        decimal montoMensualPactado,
+        DateTime? fechaAlta = null)
     {
         Apellido = apellido;
         NombreContacto = nombreContacto;
         Direccion = direccion;
         MontoMensualPactado = montoMensualPactado;
-        FechaAlta = DateTime.UtcNow;
+        FechaAlta = fechaAlta?.Date ?? DateTime.UtcNow.Date;
         Telefonos = new List<TitularTelefono>();
     }
 
@@ -44,7 +45,7 @@ public class Titular
 
     public void DarDeBaja()
     {
-        FechaBaja = DateTime.UtcNow;
+        FechaBaja = DateTime.UtcNow.Date;
     }
 
     public void Reactivar()

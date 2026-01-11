@@ -21,7 +21,7 @@ public class TitularTelefono
         TitularId = titularId;
         NumeroE164 = numeroE164;
         EsPrincipal = esPrincipal;
-        FechaAlta = DateTime.UtcNow;
+        FechaAlta = DateTime.UtcNow.Date;
     }
 
     public void MarcarComoPrincipal()

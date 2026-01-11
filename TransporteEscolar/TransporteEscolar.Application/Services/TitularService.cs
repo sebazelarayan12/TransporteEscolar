@@ -37,7 +37,12 @@ public class TitularService : ITitularService
     {
         TitularValidator.Validate(dto);
 
-        var titular = new Titular(dto.Apellido, dto.NombreContacto, dto.Direccion, dto.MontoMensualPactado);
+        var titular = new Titular(
+            dto.Apellido, 
+            dto.NombreContacto, 
+            dto.Direccion, 
+            dto.MontoMensualPactado,
+            dto.FechaAlta);
         var titularCreado = await _repository.AddAsync(titular, cancellationToken);
         
         return MapearAResponse(titularCreado);

@@ -21,7 +21,7 @@ public class ReinscripcionPasajero
         PasajeroId = pasajeroId;
         Anio = anio;
         Estado = "Pendiente";
-        FechaCreacion = DateTime.UtcNow;
+        FechaCreacion = DateTime.UtcNow.Date;
     }
 
     public void Confirmar()
@@ -30,7 +30,7 @@ public class ReinscripcionPasajero
             throw new InvalidOperationException("Solo se puede confirmar una reinscripción pendiente");
 
         Estado = "Confirmado";
-        FechaConfirmacion = DateTime.UtcNow;
+        FechaConfirmacion = DateTime.UtcNow.Date;
     }
 
     public void MarcarComoNoContinua()
@@ -39,6 +39,6 @@ public class ReinscripcionPasajero
             throw new InvalidOperationException("Solo se puede marcar como no continúa una reinscripción pendiente");
 
         Estado = "NoContinua";
-        FechaConfirmacion = DateTime.UtcNow;
+        FechaConfirmacion = DateTime.UtcNow.Date;
     }
 }

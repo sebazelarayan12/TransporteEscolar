@@ -22,10 +22,6 @@ public class PasajeroConfiguration : IEntityTypeConfiguration<Pasajero>
             .IsRequired()
             .HasMaxLength(100);
 
-        builder.Property(p => p.Apellido)
-            .IsRequired()
-            .HasMaxLength(100);
-
         builder.Property(p => p.Colegio)
             .IsRequired()
             .HasMaxLength(200);
@@ -48,14 +44,14 @@ public class PasajeroConfiguration : IEntityTypeConfiguration<Pasajero>
         builder.Property(p => p.FechaBaja)
             .IsRequired(false);
 
-        // Relación con Titular
+        // Relaciï¿½n con Titular
         builder.HasOne(p => p.Titular)
-            .WithMany() // No definimos colección en Titular por ahora
+            .WithMany() // No definimos colecciï¿½n en Titular por ahora
             .HasForeignKey(p => p.TitularId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Índice único: TitularId + Nombre + Apellido
-        builder.HasIndex(p => new { p.TitularId, p.Nombre, p.Apellido })
+        // Ãndice Ãºnico: TitularId + Nombre (un titular no puede tener dos pasajeros con el mismo nombre)
+        builder.HasIndex(p => new { p.TitularId, p.Nombre })
             .IsUnique();
     }
 }

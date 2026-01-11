@@ -25,7 +25,7 @@ public class PasajeroRepository : IPasajeroRepository
     {
         return await _context.Pasajeros
             .Include(p => p.Titular)
-            .OrderBy(p => p.Apellido)
+            .OrderBy(p => p.Titular.Apellido)
             .ThenBy(p => p.Nombre)
             .ToListAsync(cancellationToken);
     }
@@ -35,7 +35,7 @@ public class PasajeroRepository : IPasajeroRepository
         return await _context.Pasajeros
             .Include(p => p.Titular)
             .Where(p => p.FechaBaja == null)
-            .OrderBy(p => p.Apellido)
+            .OrderBy(p => p.Titular.Apellido)
             .ThenBy(p => p.Nombre)
             .ToListAsync(cancellationToken);
     }
@@ -45,7 +45,7 @@ public class PasajeroRepository : IPasajeroRepository
         return await _context.Pasajeros
             .Include(p => p.Titular)
             .Where(p => p.TitularId == titularId)
-            .OrderBy(p => p.Apellido)
+            .OrderBy(p => p.Titular.Apellido)
             .ThenBy(p => p.Nombre)
             .ToListAsync(cancellationToken);
     }

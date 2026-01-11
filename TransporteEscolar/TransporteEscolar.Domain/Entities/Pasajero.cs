@@ -5,7 +5,6 @@ public class Pasajero
     public int Id { get; private set; }
     public int TitularId { get; private set; }
     public string Nombre { get; private set; } = null!;
-    public string Apellido { get; private set; } = null!;
     public string Colegio { get; private set; } = null!;
     public string GradoCurso { get; private set; } = null!;
     public string Turno { get; private set; } = null!;
@@ -27,20 +26,19 @@ public class Pasajero
     public Pasajero(
         int titularId,
         string nombre,
-        string apellido,
         string colegio,
         string gradoCurso,
         string turno,
-        string? observaciones = null)
+        string? observaciones = null,
+        DateTime? fechaAlta = null)
     {
         TitularId = titularId;
         Nombre = nombre;
-        Apellido = apellido;
         Colegio = colegio;
         GradoCurso = gradoCurso;
         Turno = turno;
         Observaciones = observaciones;
-        FechaAlta = DateTime.UtcNow;
+        FechaAlta = fechaAlta?.Date ?? DateTime.UtcNow.Date;
         Reinscripciones = new List<ReinscripcionPasajero>();
     }
 
@@ -58,7 +56,7 @@ public class Pasajero
 
     public void DarDeBaja()
     {
-        FechaBaja = DateTime.UtcNow;
+        FechaBaja = DateTime.UtcNow.Date;
     }
 
     public void Reactivar()
@@ -66,5 +64,5 @@ public class Pasajero
         FechaBaja = null;
     }
 
-    public string NombreCompleto() => $"{Nombre} {Apellido}";
+    public string NombreCompleto() => $"{Nombre} {Titular.Apellido}";
 }

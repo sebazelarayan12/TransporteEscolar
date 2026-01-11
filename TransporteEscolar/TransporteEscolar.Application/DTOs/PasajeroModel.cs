@@ -5,11 +5,11 @@ public record PasajeroModel
     public record Request(
         int TitularId,
         string Nombre,
-        string Apellido,
         string Colegio,
         string GradoCurso,
         string Turno,
-        string? Observaciones);
+        string? Observaciones,
+        DateTime? FechaAlta = null); // Opcional: si no se especifica, usa fecha actual
 
     public record UpdateRequest(
         string Colegio,
