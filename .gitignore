@@ -1,5 +1,6 @@
 # Secrets
 .env
+.env.testing
 
 # Visual Studio
 .vs/
@@ -9,6 +10,7 @@
 # Build outputs
 **/bin/
 **/obj/
+**/NUL
 
 # Optional: local docker override
 docker-compose.override.yml

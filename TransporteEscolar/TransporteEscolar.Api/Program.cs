@@ -34,7 +34,7 @@ namespace TransporteEscolar.Api
             app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
             // Middleware
-            if (app.Environment.IsDevelopment())
+            if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
@@ -43,6 +43,19 @@ namespace TransporteEscolar.Api
             app.UseHttpsRedirection();
             app.UseAuthorization();
             app.MapControllers();
+
+            // ===== AMBIENTE DE TESTING =====
+            // Descomentar las líneas de abajo para habilitar el seeder de datos de prueba
+            // NOTA: Esto solo se ejecuta en el ambiente "Testing" y NO toca la base de datos de producción
+            
+            if (app.Environment.IsEnvironment("Testing"))
+            {
+                using var scope = app.Services.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                context.Database.Migrate();
+                TransporteEscolar.Infrastructure.Persistence.Seeders.TestDataSeeder.SeedTestData(context);
+            }
+            // ===============================
 
             app.Run();
         }

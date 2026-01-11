@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  sqlserver-test:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: transporte-test-db
+    environment:
+      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD_TEST}
+      - ACCEPT_EULA=Y
+    ports:
+      - "1434:1433"
+    volumes:
+      - transporte-test-data:/var/opt/mssql
+    networks:
+      - transporte-test-network
+
+volumes:
+  transporte-test-data:
+
+networks:
+  transporte-test-network:
+    driver: bridge
