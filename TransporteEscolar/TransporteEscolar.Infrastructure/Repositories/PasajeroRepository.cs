@@ -18,6 +18,7 @@ public class PasajeroRepository : IPasajeroRepository
     {
         return await _context.Pasajeros
             .Include(p => p.Titular)
+            .Include(p => p.Reinscripciones)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
@@ -44,6 +45,7 @@ public class PasajeroRepository : IPasajeroRepository
     {
         return await _context.Pasajeros
             .Include(p => p.Titular)
+            .Include(p => p.Reinscripciones)
             .Where(p => p.TitularId == titularId)
             .OrderBy(p => p.Titular.Apellido)
             .ThenBy(p => p.Nombre)

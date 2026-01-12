@@ -73,14 +73,54 @@ public class PagoMensualService : IPagoMensualService
     {
         PagoMensualValidator.ValidateRegistrarPago(dto);
 
+        // Obtener el pago mensual para identificar el titular
         var pagoMensual = await RepositoryHelper.GetByIdOrThrowAsync(
             _repository.GetByIdAsync, pagoMensualId, nameof(PagoMensual), cancellationToken);
 
-        var movimiento = new PagoMovimiento(
-            pagoMensualId, dto.Monto, dto.FechaPago, dto.MedioPago, dto.Observaciones);
+        // Obtener TODOS los pagos mensuales del titular con saldo pendiente, ordenados cronológicamente
+        var todosPagos = await _repository.GetByTitularIdAsync(pagoMensual.TitularId, cancellationToken);
+        var pagosPendientes = todosPagos
+            .Where(p => p.SaldoPendiente() > 0)
+            .OrderBy(p => p.Anio)
+            .ThenBy(p => p.Mes)
+            .ToList();
 
-        pagoMensual.Movimientos.Add(movimiento);
-        await _repository.UpdateAsync(pagoMensual, cancellationToken);
+        if (!pagosPendientes.Any())
+            throw new ValidationException("No hay pagos pendientes para este titular");
+
+        // Distribuir el monto pagado desde el mes más antiguo hacia adelante
+        decimal montoRestante = dto.Monto;
+        
+        foreach (var pago in pagosPendientes)
+        {
+            if (montoRestante <= 0)
+                break;
+
+            var saldoPendiente = pago.SaldoPendiente();
+            var montoAplicar = Math.Min(montoRestante, saldoPendiente);
+
+            var movimiento = new PagoMovimiento(
+                pago.Id, 
+                montoAplicar, 
+                dto.FechaPago, 
+                dto.MedioPago, 
+                montoAplicar < saldoPendiente 
+                    ? $"{dto.Observaciones} (Pago parcial)" 
+                    : dto.Observaciones);
+
+            pago.Movimientos.Add(movimiento);
+            await _repository.UpdateAsync(pago, cancellationToken);
+
+            montoRestante -= montoAplicar;
+        }
+
+        // Si quedó dinero sobrante, informar al usuario
+        if (montoRestante > 0)
+        {
+            throw new ValidationException(
+                $"El monto pagado (${dto.Monto}) excede la deuda total pendiente. " +
+                $"Se aplicaron ${dto.Monto - montoRestante} y sobran ${montoRestante}");
+        }
     }
 
     public async Task ActualizarObservacionesAsync(int id, PagoMensualModel.UpdateObservacionesRequest dto, CancellationToken cancellationToken = default)
@@ -90,6 +130,46 @@ public class PagoMensualService : IPagoMensualService
 
         pagoMensual.ActualizarObservaciones(dto.Observaciones);
         await _repository.UpdateAsync(pagoMensual, cancellationToken);
+    }
+
+    public async Task GenerarPagosMensualesAutomaticosAsync(int titularId, int anio, CancellationToken cancellationToken = default)
+    {
+        var titular = await _titularRepository.GetByIdAsync(titularId, cancellationToken);
+        if (titular == null)
+            throw new NotFoundException(nameof(Titular), titularId);
+
+        var mesActual = DateTime.UtcNow.Month;
+        var anioActual = DateTime.UtcNow.Year;
+
+        // Si el año solicitado es el actual, generar desde el mes actual
+        // Si el año es futuro, generar desde marzo
+        var mesInicio = (anio == anioActual) ? mesActual : 3;
+        var mesFin = 11; // Noviembre (diciembre opcional se verá después)
+
+        // Validar que estemos en un rango válido (marzo-noviembre)
+        if (anio == anioActual && mesActual > 11)
+            return; // Ya pasó el ciclo lectivo
+
+        if (mesInicio < 3)
+            mesInicio = 3; // Mínimo marzo
+
+        // Generar pagos mensuales desde mesInicio hasta noviembre
+        for (int mes = mesInicio; mes <= mesFin; mes++)
+        {
+            // Verificar si ya existe un pago para ese mes/año
+            var existe = await _repository.GetByTitularMesAnioAsync(titularId, mes, anio, cancellationToken);
+            if (existe == null)
+            {
+                var pagoMensual = new PagoMensual(
+                    titularId, 
+                    mes, 
+                    anio, 
+                    titular.MontoMensualPactado, 
+                    $"Generado automáticamente al confirmar reinscripciones");
+
+                await _repository.AddAsync(pagoMensual, cancellationToken);
+            }
+        }
     }
 
     private static PagoMensualModel.Response MapearAResponse(PagoMensual pagoMensual) =>
