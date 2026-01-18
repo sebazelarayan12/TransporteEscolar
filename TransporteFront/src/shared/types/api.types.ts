@@ -1,0 +1,13 @@
+export interface ApiError {
+  status: number;
+  message: string;
+  errors: Record<string, string[]>;
+  originalError?: any;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}

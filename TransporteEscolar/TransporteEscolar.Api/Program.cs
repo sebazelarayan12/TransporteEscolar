@@ -21,6 +21,18 @@ namespace TransporteEscolar.Api
             // Registrar servicios y repositorios
             builder.Services.AddApplicationServices();
 
+            // CORS - Permitir frontend en desarrollo
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy.WithOrigins("http://localhost:5173")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
+
             // API
             builder.Services.AddControllers()
                 .AddJsonOptions(options =>
@@ -41,6 +53,9 @@ namespace TransporteEscolar.Api
 
             // Middleware de manejo global de excepciones
             app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
+            // CORS - Debe ir antes de Authorization
+            app.UseCors("AllowFrontend");
 
             // Middleware
             if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
