@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+/* Fuente principal */
+body {
+  font-family: 'Manrope', sans-serif;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 20px;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+}
+
+/* Colores personalizados del tema */
+:root {
+  --color-primary: #007a8a;
+  --color-primary-dark: #00626e;
+}

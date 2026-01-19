@@ -1,74 +1,104 @@
+import { useState } from 'react';
 import { useTitularesActivos } from '../api/titulares.queries';
-import { Card, CardContent, LoadingScreen, ErrorState, EmptyState, Button } from '../../shared/ui';
-import { Link } from 'react-router-dom';
+import { LoadingScreen, ErrorState, EmptyState, SearchInput } from '../../shared/ui';
+import { TitularTableHeader, TitularTableRow, TitularDetailPanel } from '../components';
+import { filterTitulares } from '../utils/search.utils';
+import type { TitularResponse } from '../types/titular.types';
 
 export const TitularesListPage = () => {
   const { data: titulares, isLoading, error } = useTitularesActivos();
+  const [selectedTitular, setSelectedTitular] = useState<TitularResponse | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
+
+  const handleSelectTitular = (titular: TitularResponse) => {
+    setSelectedTitular(titular);
+    setShowMobileDrawer(true);
+  };
+
+  const handleCloseMobileDrawer = () => {
+    setShowMobileDrawer(false);
+  };
+
+  const filteredTitulares = titulares ? filterTitulares(titulares, searchQuery) : [];
 
   if (isLoading) return <LoadingScreen message="Cargando titulares..." />;
   if (error) return <ErrorState message="Error al cargar los titulares" />;
   if (!titulares || titulares.length === 0) return <EmptyState message="No hay titulares activos" />;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <div>
-          <p className="text-sm sm:text-base text-gray-600">Gestión de familias y contactos</p>
+    <div className="flex flex-col lg:flex-row h-full w-full gap-6 overflow-hidden">
+      {/* Main Area - Table */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Titulares</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {filteredTitulares.length > 0
+                ? `${filteredTitulares.length} titular${filteredTitulares.length !== 1 ? 'es' : ''} ${searchQuery ? 'encontrado' + (filteredTitulares.length !== 1 ? 's' : '') : 'activo' + (filteredTitulares.length !== 1 ? 's' : '')}`
+                : 'No hay titulares activos'}
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Buscar por nombre, dirección o ID..."
+            />
+            <button 
+              onClick={() => window.location.href = '/titulares/nuevo'}
+              className="shrink-0 flex items-center justify-center gap-2 py-2.5 px-5 rounded-lg bg-[#007a8a] text-white font-bold text-sm shadow-md hover:bg-[#00626e] transition-colors"
+            >
+              <span className="material-symbols-outlined text-[20px]">add</span>
+              Nuevo Titular
+            </button>
+          </div>
         </div>
-        <Link to="/titulares/nuevo">
-          <Button variant="primary" className="w-full sm:w-auto">+ Nuevo Titular</Button>
-        </Link>
-      </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:gap-4">
-        {titulares.map((titular) => (
-          <Card key={titular.id}>
-            <CardContent>
-              <div className="space-y-3 sm:space-y-4">
-                {/* Header con título y badge */}
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{titular.apellido}</h3>
-                  <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${
-                    titular.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {titular.activo ? 'Activo' : 'Inactivo'}
-                  </span>
-                </div>
-
-                {/* Info grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
-                  <div>
-                    <p className="text-gray-500">Contacto</p>
-                    <p className="font-medium text-gray-900">{titular.nombreContacto}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Dirección</p>
-                    <p className="font-medium text-gray-900">{titular.direccion}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Monto Mensual</p>
-                    <p className="font-medium text-gray-900">${titular.montoMensualPactado.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Fecha Alta</p>
-                    <p className="font-medium text-gray-900">{new Date(titular.fechaAlta).toLocaleDateString()}</p>
-                  </div>
-                </div>
-
-                {/* Botones */}
-                <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-gray-100">
-                  <Link to={`/titulares/${titular.id}`} className="flex-1">
-                    <Button variant="ghost" size="sm" className="w-full">Ver Detalle</Button>
-                  </Link>
-                  <Link to={`/pasajeros?titular=${titular.id}`} className="flex-1">
-                    <Button variant="secondary" size="sm" className="w-full">Ver Pasajeros</Button>
-                  </Link>
-                </div>
+        {/* Table */}
+        <div className="flex-1 bg-white dark:bg-[#27272a] rounded-xl border border-[#e4e4e7] dark:border-[#3f3f46] shadow-sm overflow-hidden flex flex-col">
+          <TitularTableHeader />
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {filteredTitulares.length > 0 ? (
+              filteredTitulares.map((titular, rowIndex) => (
+                <TitularTableRow
+                  key={titular.id}
+                  titular={titular}
+                  isSelected={selectedTitular?.id === titular.id}
+                  onClick={() => handleSelectTitular(titular)}
+                  rowIndex={rowIndex}
+                />
+              ))
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500 dark:text-gray-400">No se encontraron titulares</p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Desktop Side Panel - Always Visible */}
+      <div className="hidden lg:flex flex-col w-[400px] bg-white dark:bg-[#27272a] rounded-xl border border-[#e4e4e7] dark:border-[#3f3f46] shadow-sm overflow-hidden">
+        <TitularDetailPanel titular={selectedTitular} />
+      </div>
+
+      {/* Mobile Drawer - From Bottom */}
+      {showMobileDrawer && selectedTitular && (
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end">
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={handleCloseMobileDrawer}
+          />
+          <div className="relative w-full bg-white dark:bg-[#27272a] rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col animate-slide-up">
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full" />
+            </div>
+            <TitularDetailPanel titular={selectedTitular} onClose={handleCloseMobileDrawer} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
