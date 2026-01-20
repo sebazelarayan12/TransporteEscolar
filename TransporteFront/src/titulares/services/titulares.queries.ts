@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { titularesApi } from '../api/titulares.api';
+import { titularesApi } from './titulares.api';
 import type { TitularRequest, TitularUpdateRequest } from '../types/titular.types';
 
 /**

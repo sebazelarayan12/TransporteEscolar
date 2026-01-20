@@ -1,6 +1,6 @@
 import type { TitularResponse } from '../types/titular.types';
 import { Avatar, Badge } from '../../shared/ui';
-import { getInitials, getAvatarColor } from '../utils/avatar.utils';
+import { getInitials, getAvatarColor } from '../helpers/avatar.helpers';
 
 interface TitularTableRowProps {
   titular: TitularResponse;

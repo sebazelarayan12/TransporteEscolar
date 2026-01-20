@@ -1,4 +1,4 @@
-import { usePasajerosActivos } from '../api/pasajeros.queries';
+import { usePasajerosActivos } from '../services/pasajeros.queries';
 import { Card, CardContent, LoadingScreen, ErrorState, EmptyState, Button } from '../../shared/ui';
 import { Link } from 'react-router-dom';
 

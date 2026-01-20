@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { pasajerosApi } from '../api/pasajeros.api';
+import { pasajerosApi } from './pasajeros.api';
 import type { PasajeroRequest, PasajeroUpdateRequest } from '../types/pasajero.types';
 
 /**

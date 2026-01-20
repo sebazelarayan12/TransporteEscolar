@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
-import { useTitular } from '../api/titulares.queries';
-import { usePasajerosByTitular } from '../../pasajeros/api/pasajeros.queries';
+import { useTitular } from '../services/titulares.queries';
+import { usePasajerosByTitular } from '../../pasajeros/services/pasajeros.queries';
 import { Card, CardHeader, CardTitle, CardContent, LoadingScreen, ErrorState, Button } from '../../shared/ui';
 
 export const TitularDetailPage = () => {

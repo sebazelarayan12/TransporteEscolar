@@ -1,6 +1,6 @@
 import type { TitularResponse } from '../types/titular.types';
 import { Avatar } from '../../shared/ui';
-import { getInitials, getAvatarColor } from '../utils/avatar.utils';
+import { getInitials, getAvatarColor } from '../helpers/avatar.helpers';
 
 interface TitularDetailHeaderProps {
   titular: TitularResponse;
@@ -10,7 +10,7 @@ interface TitularDetailHeaderProps {
 
 export const TitularDetailHeader = ({ titular, onClose, compact = false }: TitularDetailHeaderProps) => {
   return (
-    <div className={`${compact ? 'px-6 py-4' : 'p-6'} border-b border-[#e4e4e7] dark:border-[#3f3f46] flex items-start justify-between bg-gradient-to-r from-gray-50 to-white dark:from-white/5 dark:to-transparent ${compact ? '' : 'rounded-t-xl'}`}>
+    <div className={`${compact ? 'px-6 py-4' : 'p-6'} border-b border-[#e4e4e7] dark:border-[#3f3f46] flex items-start justify-between bg-linear-to-r from-gray-50 to-white dark:from-white/5 dark:to-transparent ${compact ? '' : 'rounded-t-xl'}`}>
       <div className={`flex flex-col gap-${compact ? '3' : '4'} w-full`}>
         <div className="flex justify-between items-start w-full">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700/50">

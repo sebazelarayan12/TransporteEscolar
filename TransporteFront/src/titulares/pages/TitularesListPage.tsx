@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useTitularesActivos } from '../api/titulares.queries';
+import { useTitularesActivos } from '../services/titulares.queries';
 import { LoadingScreen, ErrorState, EmptyState, SearchInput } from '../../shared/ui';
 import { TitularTableHeader, TitularTableRow, TitularDetailPanel } from '../components';
-import { filterTitulares } from '../utils/search.utils';
+import { filterTitulares } from '../helpers/search.helpers';
 import type { TitularResponse } from '../types/titular.types';
 
 export const TitularesListPage = () => {
