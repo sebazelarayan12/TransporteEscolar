@@ -1,0 +1,74 @@
+using Microsoft.EntityFrameworkCore;
+using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Domain.Entities;
+using TransporteEscolar.Infrastructure.Persistence;
+
+namespace TransporteEscolar.Infrastructure.Repositories;
+
+public class ReinscripcionRepository : IReinscripcionRepository
+{
+    private readonly AppDbContext _context;
+
+    public ReinscripcionRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<ReinscripcionPasajero?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.ReinscripcionesPasajeros
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+    }
+
+    public async Task<ReinscripcionPasajero?> GetByIdConDetallesAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.ReinscripcionesPasajeros
+            .Include(r => r.Pasajero)
+                .ThenInclude(p => p.Titular)
+            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+    }
+
+    public async Task<List<ReinscripcionPasajero>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.ReinscripcionesPasajeros
+            .OrderByDescending(r => r.FechaCreacion)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<ReinscripcionPasajero>> GetByAnioAsync(int anio, CancellationToken cancellationToken = default)
+    {
+        return await _context.ReinscripcionesPasajeros
+            .Where(r => r.Anio == anio)
+            .OrderByDescending(r => r.FechaCreacion)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<ReinscripcionPasajero>> GetByAnioConDetallesAsync(int anio, CancellationToken cancellationToken = default)
+    {
+        return await _context.ReinscripcionesPasajeros
+            .Include(r => r.Pasajero)
+                .ThenInclude(p => p.Titular)
+            .Where(r => r.Anio == anio)
+            .OrderByDescending(r => r.FechaCreacion)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> ExisteParaPasajeroYAnioAsync(int pasajeroId, int anio, CancellationToken cancellationToken = default)
+    {
+        return await _context.ReinscripcionesPasajeros
+            .AnyAsync(r => r.PasajeroId == pasajeroId && r.Anio == anio, cancellationToken);
+    }
+
+    public async Task<ReinscripcionPasajero> AddAsync(ReinscripcionPasajero reinscripcion, CancellationToken cancellationToken = default)
+    {
+        _context.ReinscripcionesPasajeros.Add(reinscripcion);
+        await _context.SaveChangesAsync(cancellationToken);
+        return reinscripcion;
+    }
+
+    public async Task UpdateAsync(ReinscripcionPasajero reinscripcion, CancellationToken cancellationToken = default)
+    {
+        _context.ReinscripcionesPasajeros.Update(reinscripcion);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+}

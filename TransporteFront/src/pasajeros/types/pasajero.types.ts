@@ -34,3 +34,16 @@ export interface PasajeroUpdateRequest {
   turno: string;
   observaciones?: string;
 }
+
+// Paginación
+export interface PasajeroFilterRequest {
+  search?: string;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface PasajeroPaginationResponse {
+  data: PasajeroResponse[];
+  totalCount: number;
+}
+

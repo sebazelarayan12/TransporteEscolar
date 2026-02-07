@@ -1,0 +1,92 @@
+import { useState, useRef, useEffect } from 'react';
+import type { TitularResponse } from '../../titulares/types/titular.types';
+
+interface TitularComboboxProps {
+  titulares: TitularResponse[];
+  value: number;
+  onChange: (titularId: number) => void;
+  error?: string;
+  disabled?: boolean;
+}
+
+export const TitularCombobox = ({ titulares, value, onChange, error, disabled }: TitularComboboxProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const selectedTitular = titulares.find(t => t.id === value);
+  const displayText = selectedTitular 
+    ? `${selectedTitular.apellido}, ${selectedTitular.nombreContacto}`
+    : '';
+
+  const filteredTitulares = titulares.filter(titular =>
+    titular.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    titular.nombreContacto.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setSearchTerm('');
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = (titularId: number) => {
+    onChange(titularId);
+    setIsOpen(false);
+    setSearchTerm('');
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        type="text"
+        value={isOpen ? searchTerm : displayText}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          if (!isOpen) setIsOpen(true);
+        }}
+        onFocus={() => setIsOpen(true)}
+        disabled={disabled}
+        placeholder="Buscar titular por apellido o nombre..."
+        className={`
+          w-full px-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
+          bg-white dark:bg-[#27272a]
+          focus:outline-none focus:ring-2 focus:ring-[#007a8a] focus:border-transparent
+          transition-colors
+          ${error ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-[#3f3f46]'}
+          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+        `}
+      />
+      
+      {isOpen && !disabled && (
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#27272a] border border-gray-300 dark:border-[#3f3f46] rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          {filteredTitulares.length === 0 ? (
+            <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+              No se encontraron titulares
+            </div>
+          ) : (
+            filteredTitulares.map((titular) => (
+              <button
+                key={titular.id}
+                type="button"
+                onClick={() => handleSelect(titular.id)}
+                className={`
+                  w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-[#3f3f46]
+                  ${titular.id === value ? 'bg-[#007a8a]/10 text-[#007a8a] dark:text-cyan-400' : 'text-gray-900 dark:text-white'}
+                `}
+              >
+                {titular.apellido}, {titular.nombreContacto}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};

@@ -50,6 +50,59 @@ public class PagoMensualService : IPagoMensualService
         return pagos.Select(MapearAResponse).ToList();
     }
 
+    public async Task<PaginationModel.ResponsePagination<PagoMensualModel.Response>> ObtenerPaginadosAsync(
+        PagoMensualModel.FilterRequest request, 
+        CancellationToken cancellationToken = default)
+    {
+        // Get all payments for the month/year
+        var pagos = await _repository.GetByMesAnioAsync(request.Mes, request.Anio, cancellationToken);
+        
+        // Filter by search term (titular apellido)
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var searchLower = request.Search.ToLower();
+            pagos = pagos
+                .Where(p => p.Titular.Apellido.ToLower().Contains(searchLower))
+                .ToList();
+        }
+        
+        var totalCount = pagos.Count;
+        
+        // Apply pagination
+        var pagosPaginados = pagos
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToList();
+        
+        var response = pagosPaginados.Select(MapearAResponse).ToList();
+        
+        return new PaginationModel.ResponsePagination<PagoMensualModel.Response>(response, totalCount);
+    }
+
+    public async Task<PagoMensualModel.EstadisticasMes> ObtenerEstadisticasMesAsync(
+        int mes, 
+        int anio, 
+        CancellationToken cancellationToken = default)
+    {
+        var pagos = await _repository.GetByMesAnioAsync(mes, anio, cancellationToken);
+        
+        var totalPagos = pagos.Count;
+        var cantidadPagados = pagos.Count(p => p.EstaPagado());
+        var cantidadVencidos = pagos.Count(p => p.EstaVencido());
+        var cantidadPendientes = totalPagos - cantidadPagados - cantidadVencidos;
+        
+        var totalRecaudado = pagos.Sum(p => p.TotalPagado());
+        var totalPendiente = pagos.Sum(p => p.SaldoPendiente());
+        
+        return new PagoMensualModel.EstadisticasMes(
+            totalPagos,
+            cantidadPagados,
+            cantidadPendientes,
+            cantidadVencidos,
+            totalRecaudado,
+            totalPendiente);
+    }
+
     public async Task<PagoMensualModel.Response> CrearAsync(PagoMensualModel.Request dto, CancellationToken cancellationToken = default)
     {
         PagoMensualValidator.Validate(dto);

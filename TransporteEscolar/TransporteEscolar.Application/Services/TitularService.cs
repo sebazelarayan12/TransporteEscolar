@@ -33,6 +33,43 @@ public class TitularService : ITitularService
         return titulares.Select(MapearAResponse).ToList();
     }
 
+    public async Task<PaginationModel.ResponsePagination<TitularModel.Response>> ObtenerPaginadosAsync(
+        PaginationModel.FilterRequest request, 
+        CancellationToken cancellationToken = default)
+    {
+        // Obtener todos los titulares activos
+        var titularesActivos = await _repository.GetActivosAsync(cancellationToken);
+
+        // Aplicar filtro de búsqueda si existe
+        var titularesFiltrados = titularesActivos.AsQueryable();
+        
+        if (!string.IsNullOrEmpty(request.Search))
+        {
+            var searchLower = request.Search.ToLower();
+            titularesFiltrados = titularesFiltrados.Where(t => 
+                t.Apellido.ToLower().Contains(searchLower) ||
+                t.NombreContacto.ToLower().Contains(searchLower) ||
+                t.Direccion.ToLower().Contains(searchLower));
+        }
+
+        // Ordenar por apellido
+        var titularesOrdenados = titularesFiltrados.OrderBy(t => t.Apellido);
+
+        // Obtener el total antes de paginar
+        var totalCount = titularesOrdenados.Count();
+
+        // Aplicar paginación
+        var titularesPaginados = titularesOrdenados
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Select(MapearAResponse)
+            .ToList();
+
+        return new PaginationModel.ResponsePagination<TitularModel.Response>(
+            titularesPaginados,
+            totalCount);
+    }
+
     public async Task<TitularModel.Response> CrearAsync(TitularModel.Request dto, CancellationToken cancellationToken = default)
     {
         TitularValidator.Validate(dto);

@@ -17,6 +17,21 @@ public record PagoMensualModel
 
     public record UpdateObservacionesRequest(string? Observaciones);
 
+    public record FilterRequest(
+        int Mes,
+        int Anio,
+        string? Search = null,
+        int PageNumber = 1,
+        int PageSize = 20);
+
+    public record EstadisticasMes(
+        int TotalPagos,
+        int CantidadPagados,
+        int CantidadPendientes,
+        int CantidadVencidos,
+        decimal TotalRecaudado,
+        decimal TotalPendiente);
+
     public record Response(
         int Id,
         int TitularId,

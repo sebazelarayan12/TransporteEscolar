@@ -1,81 +1,208 @@
-import { usePasajerosActivos } from '../services/pasajeros.queries';
-import { Card, CardContent, LoadingScreen, ErrorState, EmptyState, Button } from '../../shared/ui';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { usePasajerosPaginados } from '../services/pasajeros.queries';
+import { LoadingScreen, ErrorState, SearchInput, MobileDrawer, Pagination } from '../../shared/ui';
+import { PasajeroDetailPanel, PasajeroTableHeader, PasajeroTableRow, PasajeroCompactCard } from '../components';
+import type { PasajeroResponse } from '../types/pasajero.types';
+import { useDebounce } from '../../shared/hooks/useDebounce';
 
 export const PasajerosListPage = () => {
-  const { data: pasajeros, isLoading, error } = usePasajerosActivos();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedPasajero, setSelectedPasajero] = useState<PasajeroResponse | null>(null);
+  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
+  const [isPanelExpanded, setIsPanelExpanded] = useState(false);
+  
+  const debouncedSearch = useDebounce(searchQuery, 300);
+  const pageSize = 20;
 
-  if (isLoading) return <LoadingScreen message="Cargando pasajeros..." />;
+  const { data, isLoading, isFetching, error } = usePasajerosPaginados({
+    search: debouncedSearch,
+    pageNumber: currentPage,
+    pageSize,
+  });
+
+  const handleSelectPasajero = (pasajero: PasajeroResponse) => {
+    setSelectedPasajero(pasajero);
+    setShowMobileDrawer(true);
+    setIsPanelExpanded(true);
+  };
+
+  const handleCloseDrawer = () => setShowMobileDrawer(false);
+
+  const handleCloseSidePanel = () => {
+    setIsPanelExpanded(false);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedPasajero(null);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const isInitialLoading = isLoading && !data;
+  
+  if (isInitialLoading) return <LoadingScreen message="Cargando pasajeros..." />;
   if (error) return <ErrorState message="Error al cargar los pasajeros" />;
-  if (!pasajeros || pasajeros.length === 0) return <EmptyState message="No hay pasajeros activos" />;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <div>
-          <p className="text-sm sm:text-base text-gray-600">Estudiantes que utilizan el servicio</p>
-        </div>
-        <Link to="/pasajeros/nuevo">
-          <Button variant="primary" className="w-full sm:w-auto">+ Nuevo Pasajero</Button>
-        </Link>
-      </div>
+    <div className="w-full bg-[#fafafa] dark:bg-[#18181b]">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_400px]">
+          {/* Main Area */}
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Pasajeros</h1>
+                <p className="text-sm text-gray-500">
+                  {data && data.totalCount > 0
+                    ? `${data.data.length} estudiante${data.data.length !== 1 ? 's' : ''} en esta página de ${data.totalCount} activos`
+                    : 'No hay pasajeros que coincidan con la búsqueda'}
+                </p>
+              </div>
+              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+                <SearchInput value={searchQuery} onChange={handleSearchChange} placeholder="Buscar por nombre, titular o colegio..." />
+                <Link
+                  to="/pasajeros/nuevo"
+                  className="shrink-0 rounded-lg bg-[#007a8a] px-4 py-2 text-center text-sm font-bold text-white shadow-sm hover:bg-[#00626e]"
+                >
+                  <span className="material-symbols-outlined mr-1 align-middle text-[18px]">add</span>
+                  Nuevo pasajero
+                </Link>
+              </div>
+            </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:gap-4">
-        {pasajeros.map((pasajero) => (
-          <Card key={pasajero.id}>
-            <CardContent>
-              <div className="space-y-3 sm:space-y-4">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 flex-1">{pasajero.nombreCompleto}</h3>
-                  <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${
-                    pasajero.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {pasajero.activo ? 'Activo' : 'Inactivo'}
-                  </span>
-                </div>
-
-                {/* Info grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs sm:text-sm">
-                  <div>
-                    <p className="text-gray-500">Titular</p>
-                    <p className="font-medium text-gray-900">{pasajero.titularApellido || '-'}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Colegio</p>
-                    <p className="font-medium text-gray-900 truncate" title={pasajero.colegio}>{pasajero.colegio}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Grado/Curso</p>
-                    <p className="font-medium text-gray-900">{pasajero.gradoCurso}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Turno</p>
-                    <p className="font-medium text-gray-900">{pasajero.turno}</p>
-                  </div>
-                </div>
-
-                {/* Observaciones */}
-                {pasajero.observaciones && (
-                  <div className="pt-2 border-t border-gray-100">
-                    <p className="text-xs text-gray-500 mb-1">Observaciones:</p>
-                    <p className="text-xs sm:text-sm text-gray-700 italic">{pasajero.observaciones}</p>
+            {/* Desktop Table View - Altura fija con scroll */}
+            <div className="hidden overflow-hidden rounded-2xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a] md:flex md:h-[600px] md:flex-col">
+              <PasajeroTableHeader />
+              <div className="custom-scrollbar relative flex-1 divide-y divide-gray-100 overflow-y-auto dark:divide-white/5">
+                {isFetching && data && (
+                  <div className="absolute right-2 top-2 z-10">
+                    <div className="rounded-full border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-[#27272a]">
+                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-[#007a8a]"></div>
+                    </div>
                   </div>
                 )}
-
-                {/* Botones */}
-                <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-gray-100">
-                  <Link to={`/pasajeros/${pasajero.id}`} className="flex-1">
-                    <Button variant="ghost" size="sm" className="w-full">Ver Detalle</Button>
-                  </Link>
-                  <Link to={`/titulares/${pasajero.titularId}`} className="flex-1">
-                    <Button variant="secondary" size="sm" className="w-full">Ver Titular</Button>
-                  </Link>
-                </div>
+                {isLoading ? (
+                  <div className="flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex flex-col items-center gap-3 py-8">
+                      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#007a8a]"></div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Cargando...</p>
+                    </div>
+                  </div>
+                ) : data && data.data.length === 0 ? (
+                  <div className="flex items-center justify-center py-8 text-sm text-gray-500 dark:text-gray-400">
+                    No se encontraron pasajeros para ese criterio.
+                  </div>
+                ) : (
+                  data && data.data.map((pasajero) => (
+                    <PasajeroTableRow
+                      key={pasajero.id}
+                      pasajero={pasajero}
+                      isSelected={selectedPasajero?.id === pasajero.id}
+                      onSelect={handleSelectPasajero}
+                    />
+                  ))
+                )}
               </div>
-            </CardContent>
-          </Card>
-        ))}
+              {data && data.totalCount > 0 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalCount={data.totalCount}
+                  pageSize={pageSize}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </div>
+
+            {/* Mobile Compact List View */}
+            <div className="flex flex-col overflow-hidden rounded-2xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a] md:hidden">
+              <div className="custom-scrollbar relative max-h-[70vh] overflow-y-auto">
+                {isFetching && data && (
+                  <div className="absolute right-2 top-2 z-10">
+                    <div className="rounded-full border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-700 dark:bg-[#27272a]">
+                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-[#007a8a]"></div>
+                    </div>
+                  </div>
+                )}
+                {isLoading ? (
+                  <div className="flex items-center justify-center p-8 text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#007a8a]"></div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Cargando...</p>
+                    </div>
+                  </div>
+                ) : data && data.data.length === 0 ? (
+                  <div className="flex items-center justify-center p-8 text-sm text-gray-500 dark:text-gray-400">
+                    No se encontraron pasajeros para ese criterio.
+                  </div>
+                ) : (
+                  data && data.data.map((pasajero) => (
+                    <PasajeroCompactCard
+                      key={pasajero.id}
+                      pasajero={pasajero}
+                      isSelected={selectedPasajero?.id === pasajero.id}
+                      onClick={() => handleSelectPasajero(pasajero)}
+                    />
+                  ))
+                )}
+              </div>
+              {data && data.totalCount > 0 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalCount={data.totalCount}
+                  pageSize={pageSize}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Desktop Side Panel - Sticky con altura fija y scroll */}
+          <div className={`
+            hidden lg:block
+            ${isPanelExpanded ? '' : 'lg:hidden xl:block'}
+          `}>
+            <div className={`
+              flex h-[600px] flex-col overflow-hidden rounded-2xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a]
+              lg:fixed lg:right-0 lg:top-0 lg:z-50 lg:h-screen lg:w-80 lg:rounded-none lg:shadow-2xl xl:w-96
+              xl:sticky xl:top-6 xl:h-[600px] xl:w-full xl:rounded-2xl xl:shadow-sm
+            `}>
+              <div className="flex-1 overflow-y-auto">
+                <PasajeroDetailPanel pasajero={selectedPasajero} onClose={handleCloseSidePanel} />
+              </div>
+            </div>
+          </div>
+
+          {/* Overlay para LG cuando el panel está expandido */}
+          {isPanelExpanded && selectedPasajero && (
+            <div 
+              className="fixed inset-0 z-40 hidden bg-black/50 transition-opacity duration-300 lg:block xl:hidden"
+              onClick={handleCloseSidePanel}
+            />
+          )}
+
+          {/* Botón flotante para abrir panel en LG */}
+          {selectedPasajero && !isPanelExpanded && (
+            <button
+              onClick={() => setIsPanelExpanded(true)}
+              className="fixed bottom-6 right-6 z-30 hidden items-center gap-2 rounded-full bg-[#007a8a] px-6 py-3 text-white shadow-lg transition-all hover:scale-105 hover:bg-[#00626e] lg:flex xl:hidden"
+            >
+              <span className="material-symbols-outlined text-[20px]">info</span>
+              <span className="text-sm font-bold">Ver Detalles</span>
+            </button>
+          )}
+
+          {/* Mobile Drawer - From Bottom */}
+          <MobileDrawer isOpen={showMobileDrawer && !!selectedPasajero} onClose={handleCloseDrawer}>
+            {selectedPasajero && <PasajeroDetailPanel pasajero={selectedPasajero} onClose={handleCloseDrawer} />}
+          </MobileDrawer>
+        </div>
       </div>
     </div>
   );

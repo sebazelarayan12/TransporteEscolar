@@ -1,109 +1,186 @@
-import { useParams, Link } from 'react-router-dom';
-import { useTitular } from '../services/titulares.queries';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useTitular, useTitularTelefonos } from '../services/titulares.queries';
 import { usePasajerosByTitular } from '../../pasajeros/services/pasajeros.queries';
-import { Card, CardHeader, CardTitle, CardContent, LoadingScreen, ErrorState, Button } from '../../shared/ui';
+import { LoadingScreen, ErrorState } from '../../shared/ui';
+import { TitularPhoneList } from '../components/TitularPhoneList';
+import { TitularPasajerosList } from '../components/TitularPasajerosList';
+
+const formatDate = (value: string | null) => {
+  if (!value) return null;
+  const formatter = new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium' });
+  return formatter.format(new Date(value));
+};
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value);
+};
 
 export const TitularDetailPage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const titularId = Number(id);
 
   const { data: titular, isLoading: loadingTitular, error: errorTitular } = useTitular(titularId);
-  const { data: pasajeros, isLoading: loadingPasajeros } = usePasajerosByTitular(titularId);
+  const { data: telefonos, isLoading: telefonosLoading, error: telefonosError, refetch: refetchTelefonos } = useTitularTelefonos(titularId);
+  const { data: pasajeros, isLoading: pasajerosLoading, error: pasajerosError, refetch: refetchPasajeros } = usePasajerosByTitular(titularId);
 
   if (loadingTitular) return <LoadingScreen message="Cargando titular..." />;
   if (errorTitular || !titular) return <ErrorState message="Error al cargar el titular" />;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div>
-        <Link to="/titulares" className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm mb-2 inline-block">
-          ← Volver a Titulares
-        </Link>
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mt-2">
-          <div className="flex-1">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{titular.apellido}</h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">{titular.nombreContacto}</p>
+    <div className="min-h-full w-full bg-[#fafafa] dark:bg-[#18181b]">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="flex h-full w-full flex-col gap-6 overflow-hidden">
+      {/* Header */}
+      <div className="flex flex-col gap-4">
+        <button
+          onClick={() => navigate('/titulares')}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-[#007a8a] hover:text-[#00626e] transition-colors self-start"
+        >
+          <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+          Volver a Titulares
+        </button>
+
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#007a8a] to-[#00626e] text-2xl font-bold text-white shadow-lg">
+                {titular.apellido.charAt(0)}
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{titular.apellido}</h1>
+                <p className="text-base text-gray-600 dark:text-gray-300">{titular.nombreContacto}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <span className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${
+                titular.activo 
+                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-900/20 dark:text-emerald-300 dark:ring-emerald-400/20' 
+                  : 'bg-gray-100 text-gray-600 ring-1 ring-gray-600/20 dark:bg-white/10 dark:text-gray-300 dark:ring-white/20'
+              }`}>
+                <span className={`h-2 w-2 rounded-full ${titular.activo ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`} />
+                {titular.activo ? 'Activo' : 'Inactivo'}
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                ID #{titular.id} • Alta {formatDate(titular.fechaAlta)}
+              </span>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" className="flex-1 sm:flex-none">Editar</Button>
-            <Button variant="danger" size="sm" className="flex-1 sm:flex-none">Dar de Baja</Button>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button className="flex items-center justify-center gap-2 rounded-xl border border-[#007a8a] bg-white px-5 py-2.5 font-semibold text-[#007a8a] shadow-sm transition hover:bg-[#007a8a]/5 dark:bg-[#27272a] dark:hover:bg-[#007a8a]/10">
+              <span className="material-symbols-outlined text-[18px]">edit</span>
+              Editar Titular
+            </button>
+            <button className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-5 py-2.5 font-semibold text-red-600 shadow-sm transition hover:bg-red-50 dark:border-red-800 dark:bg-[#27272a] dark:text-red-400 dark:hover:bg-red-900/10">
+              <span className="material-symbols-outlined text-[18px]">block</span>
+              Dar de Baja
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Información del Titular</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="space-y-2 sm:space-y-3">
-              <div>
-                <dt className="text-xs sm:text-sm font-medium text-gray-500">Apellido</dt>
-                <dd className="text-sm sm:text-base text-gray-900">{titular.apellido}</dd>
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column */}
+          <div className="space-y-6">
+            {/* Información General */}
+            <div className="rounded-2xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a] overflow-hidden">
+              <div className="border-b border-gray-100 bg-gray-50 px-6 py-4 dark:border-white/5 dark:bg-white/5">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-[#007a8a]">info</span>
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white">Información General</h2>
+                </div>
               </div>
-              <div>
-                <dt className="text-xs sm:text-sm font-medium text-gray-500">Contacto</dt>
-                <dd className="text-sm sm:text-base text-gray-900">{titular.nombreContacto}</dd>
+              <div className="p-6 space-y-4">
+                <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Apellido</p>
+                  <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">{titular.apellido}</p>
+                </div>
+                <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Nombre de Contacto</p>
+                  <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">{titular.nombreContacto}</p>
+                </div>
+                <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Dirección</p>
+                  <p className="mt-1 text-base font-medium text-gray-900 dark:text-white">{titular.direccion}</p>
+                </div>
               </div>
-              <div>
-                <dt className="text-xs sm:text-sm font-medium text-gray-500">Dirección</dt>
-                <dd className="text-sm sm:text-base text-gray-900">{titular.direccion}</dd>
-              </div>
-              <div>
-                <dt className="text-xs sm:text-sm font-medium text-gray-500">Monto Mensual Pactado</dt>
-                <dd className="text-sm sm:text-base text-gray-900 font-semibold">${titular.montoMensualPactado.toLocaleString()}</dd>
-              </div>
-              <div>
-                <dt className="text-xs sm:text-sm font-medium text-gray-500">Fecha de Alta</dt>
-                <dd className="text-sm sm:text-base text-gray-900">{new Date(titular.fechaAlta).toLocaleDateString()}</dd>
-              </div>
-              <div>
-                <dt className="text-xs sm:text-sm font-medium text-gray-500">Estado</dt>
-                <dd>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    titular.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {titular.activo ? 'Activo' : 'Inactivo'}
-                  </span>
-                </dd>
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Pasajeros ({pasajeros?.length || 0})</CardTitle>
-              <Link to={`/pasajeros/nuevo?titular=${titularId}`}>
-                <Button variant="primary" size="sm">+ Agregar</Button>
-              </Link>
             </div>
-          </CardHeader>
-          <CardContent>
-            {loadingPasajeros ? (
-              <p className="text-gray-500 text-xs sm:text-sm">Cargando pasajeros...</p>
-            ) : !pasajeros || pasajeros.length === 0 ? (
-              <p className="text-gray-500 text-xs sm:text-sm">No hay pasajeros asociados</p>
-            ) : (
-              <ul className="space-y-2 sm:space-y-3">
-                {pasajeros.map((pasajero) => (
-                  <li key={pasajero.id} className="border-b pb-2 sm:pb-3 last:border-0 last:pb-0">
-                    <Link
-                      to={`/pasajeros/${pasajero.id}`}
-                      className="block hover:bg-gray-50 active:bg-gray-100 -mx-2 px-2 py-2 rounded transition-colors"
-                    >
-                      <p className="text-sm sm:text-base font-medium text-gray-900">{pasajero.nombreCompleto}</p>
-                      <p className="text-xs sm:text-sm text-gray-500">{pasajero.colegio} - {pasajero.gradoCurso}</p>
-                      <p className="text-xs text-gray-400 mt-1">Turno: {pasajero.turno}</p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+
+            {/* Teléfonos */}
+            <div className="rounded-2xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a] overflow-hidden">
+              <div className="border-b border-gray-100 bg-gray-50 px-6 py-4 dark:border-white/5 dark:bg-white/5">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-[#007a8a]">call</span>
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white">Teléfonos</h2>
+                </div>
+              </div>
+              <div className="p-6">
+                 <TitularPhoneList
+                   phones={telefonos}
+                   isLoading={telefonosLoading}
+                   error={telefonosError ? 'No se pudieron cargar los teléfonos.' : undefined}
+                   onRetry={refetchTelefonos}
+                   showHeader={false}
+                   titularNombre={titular.nombreContacto}
+                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Información Financiera */}
+            <div className="rounded-2xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a] overflow-hidden">
+              <div className="border-b border-gray-100 bg-gray-50 px-6 py-4 dark:border-white/5 dark:bg-white/5">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-[#007a8a]">payments</span>
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white">Información Financiera</h2>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="rounded-2xl bg-gradient-to-br from-[#007a8a] to-[#00626e] p-6 text-white shadow-lg">
+                  <p className="text-sm font-semibold uppercase tracking-wide opacity-90">Monto Mensual Pactado</p>
+                  <p className="mt-2 text-4xl font-bold">{formatCurrency(titular.montoMensualPactado)}</p>
+                  <div className="mt-4 flex items-center gap-2 text-sm opacity-80">
+                    <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+                    <span>Renovación mensual</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pasajeros */}
+            <div className="rounded-2xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a] overflow-hidden">
+              <div className="border-b border-gray-100 bg-gray-50 px-6 py-4 dark:border-white/5 dark:bg-white/5">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-[#007a8a]">school</span>
+                  <h2 className="text-base font-bold text-gray-900 dark:text-white">
+                    Pasajeros Asociados
+                  </h2>
+                  {pasajeros && pasajeros.length > 0 && (
+                    <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-[#007a8a] text-xs font-bold text-white">
+                      {pasajeros.length}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="p-6">
+                <TitularPasajerosList
+                  pasajeros={pasajeros}
+                  isLoading={pasajerosLoading}
+                  error={pasajerosError ? 'No se pudieron cargar los pasajeros.' : undefined}
+                  onRetry={refetchPasajeros}
+                  showAddButton={false}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+        </div>
       </div>
     </div>
   );

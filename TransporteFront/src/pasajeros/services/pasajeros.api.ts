@@ -3,6 +3,8 @@ import type {
   PasajeroResponse,
   PasajeroRequest,
   PasajeroUpdateRequest,
+  PasajeroFilterRequest,
+  PasajeroPaginationResponse,
 } from '../types/pasajero.types';
 
 /**
@@ -23,6 +25,21 @@ export const pasajerosApi = {
    */
   getActivos: async (): Promise<PasajeroResponse[]> => {
     return apiClient.get<PasajeroResponse[]>('/pasajeros/activos');
+  },
+
+  /**
+   * GET /pasajeros/paginados - Obtiene pasajeros activos con paginación
+   */
+  getPaginados: async (filter: PasajeroFilterRequest): Promise<PasajeroPaginationResponse> => {
+    const params = new URLSearchParams();
+    if (filter.search) params.append('search', filter.search);
+    if (filter.pageNumber) params.append('pageNumber', filter.pageNumber.toString());
+    if (filter.pageSize) params.append('pageSize', filter.pageSize.toString());
+    
+    const queryString = params.toString();
+    const url = queryString ? `/pasajeros/paginados?${queryString}` : '/pasajeros/paginados';
+    
+    return apiClient.get<PasajeroPaginationResponse>(url);
   },
 
   /**

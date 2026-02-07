@@ -4,6 +4,8 @@ import { TitularDetailHeader } from './TitularDetailHeader';
 import { TitularPhoneList } from './TitularPhoneList';
 import { TitularPasajerosList } from './TitularPasajerosList';
 import { TitularInfoSection } from './TitularInfoSection';
+import { usePasajerosByTitular } from '../../pasajeros/services/pasajeros.queries';
+import { useTitularTelefonos } from '../services/titulares.queries';
 
 interface TitularDetailPanelProps {
   titular: TitularResponse | null;
@@ -11,6 +13,21 @@ interface TitularDetailPanelProps {
 }
 
 export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps) => {
+  const titularId = titular?.id;
+  const {
+    data: telefonos,
+    isLoading: telefonosLoading,
+    error: telefonosError,
+    refetch: refetchTelefonos,
+  } = useTitularTelefonos(titularId);
+
+  const {
+    data: pasajeros,
+    isLoading: pasajerosLoading,
+    error: pasajerosError,
+    refetch: refetchPasajeros,
+  } = usePasajerosByTitular(titularId ?? 0);
+
   if (!titular) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
@@ -30,8 +47,19 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
       <TitularDetailHeader titular={titular} onClose={onClose} />
       
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
-        <TitularPhoneList />
-        <TitularPasajerosList apellido={titular.apellido} />
+        <TitularPhoneList
+          phones={telefonos}
+          isLoading={telefonosLoading}
+          error={telefonosError ? 'No se pudieron cargar los teléfonos.' : undefined}
+          onRetry={refetchTelefonos}
+          titularNombre={titular.nombreContacto}
+        />
+        <TitularPasajerosList
+          pasajeros={pasajeros}
+          isLoading={pasajerosLoading}
+          error={pasajerosError ? 'No se pudieron cargar los pasajeros.' : undefined}
+          onRetry={refetchPasajeros}
+        />
         <TitularInfoSection titular={titular} />
       </div>
 

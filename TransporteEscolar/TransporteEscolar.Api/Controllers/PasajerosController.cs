@@ -40,6 +40,20 @@ public class PasajerosController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene pasajeros activos con paginación y filtros
+    /// </summary>
+    [HttpGet("paginados")]
+    public async Task<ActionResult<PaginationModel.ResponsePagination<PasajeroModel.Response>>> GetPaginados(
+        [FromQuery] string? search = null,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var request = new PaginationModel.FilterRequest(search, pageNumber, pageSize);
+        var resultado = await _service.ObtenerPaginadosAsync(request);
+        return Ok(resultado);
+    }
+
+    /// <summary>
     /// Obtiene pasajeros por titular
     /// </summary>
     [HttpGet("titular/{titularId}")]

@@ -21,12 +21,23 @@ namespace TransporteEscolar.Api
             // Registrar servicios y repositorios
             builder.Services.AddApplicationServices();
 
-            // CORS - Permitir frontend en desarrollo
+            // ⚠️ CORS - SOLO PARA DESARROLLO ⚠️
+            // 🔒 ANTES DE PRODUCCIÓN: 
+            //    1. Eliminar AllowAnyOrigin() y usar WithOrigins() con dominios específicos
+            //    2. Validar que solo dominios de producción estén permitidos
+            //    3. Considerar usar políticas CORS más restrictivas
+            //    4. NO usar AllowCredentials() con AllowAnyOrigin()
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173")
+                    // DESARROLLO: Permite localhost y red local (192.168.1.23 es la IP local de desarrollo)
+                    policy.WithOrigins(
+                              "http://localhost:5173",           // Desarrollo en PC
+                              "http://192.168.1.23:5173",        // Mobile/tablet en red local
+                              "http://localhost:5074",           // Backend local
+                              "http://192.168.1.23:5074"         // Backend en red local
+                          )
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();

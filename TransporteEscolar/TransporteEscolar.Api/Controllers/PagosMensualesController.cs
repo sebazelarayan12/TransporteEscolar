@@ -50,6 +50,34 @@ public class PagosMensualesController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene pagos mensuales paginados filtrados por mes/año
+    /// </summary>
+    [HttpGet("paginados")]
+    public async Task<ActionResult<PaginationModel.ResponsePagination<PagoMensualModel.Response>>> GetPaginados(
+        [FromQuery] int mes,
+        [FromQuery] int anio,
+        [FromQuery] string? search = null,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var request = new PagoMensualModel.FilterRequest(mes, anio, search, pageNumber, pageSize);
+        var resultado = await _service.ObtenerPaginadosAsync(request);
+        return Ok(resultado);
+    }
+
+    /// <summary>
+    /// Obtiene estadísticas del mes seleccionado
+    /// </summary>
+    [HttpGet("estadisticas")]
+    public async Task<ActionResult<PagoMensualModel.EstadisticasMes>> GetEstadisticas(
+        [FromQuery] int mes,
+        [FromQuery] int anio)
+    {
+        var estadisticas = await _service.ObtenerEstadisticasMesAsync(mes, anio);
+        return Ok(estadisticas);
+    }
+
+    /// <summary>
     /// Obtiene pagos por titular
     /// </summary>
     [HttpGet("titular/{titularId}")]

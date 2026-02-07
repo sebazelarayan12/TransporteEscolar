@@ -59,6 +59,9 @@ public class PagoMensualRepository : IPagoMensualRepository
         return await _context.PagosMensuales
             .Include(p => p.Titular)
             .Include(p => p.Movimientos)
+            .Where(p => (p.Movimientos.Sum(m => (decimal?)m.Monto) ?? 0m) < p.MontoGenerado)
+            .OrderBy(p => p.Anio)
+            .ThenBy(p => p.Mes)
             .ToListAsync(cancellationToken);
     }
 
@@ -66,6 +69,16 @@ public class PagoMensualRepository : IPagoMensualRepository
     {
         return await _context.PagosMensuales
             .FirstOrDefaultAsync(p => p.TitularId == titularId && p.Mes == mes && p.Anio == anio, cancellationToken);
+    }
+
+    public async Task<List<PagoMensual>> GetByMesAnioAsync(int mes, int anio, CancellationToken cancellationToken = default)
+    {
+        return await _context.PagosMensuales
+            .Include(p => p.Titular)
+            .Include(p => p.Movimientos)
+            .Where(p => p.Mes == mes && p.Anio == anio)
+            .OrderBy(p => p.Titular.Apellido)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<PagoMensual> AddAsync(PagoMensual pagoMensual, CancellationToken cancellationToken = default)

@@ -23,3 +23,7 @@ Scripts/
 # Datos de clientes
 **/datos_clientes.*
 appsettings.Development.json
+DESARROLLO-RED-LOCAL.md
+
+# Contexto de sesiones (uso interno)
+recarga.md

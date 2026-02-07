@@ -10,6 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# Archivos de entorno local (incluye .env.local para desarrollo)
+# ⚠️ Estos archivos contienen configuraciones específicas de cada desarrollador
 *.local
 
 # Editor directories and files

@@ -13,6 +13,15 @@ export interface TitularResponse {
   activo: boolean;
 }
 
+export interface TitularTelefonoResponse {
+  id: number;
+  numeroE164: string;
+  esPrincipal: boolean;
+  fechaAlta: string;
+  fechaBaja: string | null;
+  activo: boolean;
+}
+
 export interface TitularRequest {
   apellido: string;
   nombreContacto: string;
@@ -31,3 +40,16 @@ export interface TitularSelectorItem {
   id: number;
   label: string;
 }
+
+// Paginación
+export interface TitularFilterRequest {
+  search?: string;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface TitularPaginationResponse {
+  data: TitularResponse[];
+  totalCount: number;
+}
+

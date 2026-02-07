@@ -41,6 +41,43 @@ public class PasajeroService : IPasajeroService
         return pasajeros.Select(MapearAResponse).ToList();
     }
 
+    public async Task<PaginationModel.ResponsePagination<PasajeroModel.Response>> ObtenerPaginadosAsync(
+        PaginationModel.FilterRequest request, 
+        CancellationToken cancellationToken = default)
+    {
+        // Obtener todos los pasajeros activos
+        var pasajerosActivos = await _repository.GetActivosAsync(cancellationToken);
+
+        // Aplicar filtro de búsqueda si existe
+        var pasajerosFiltrados = pasajerosActivos.AsQueryable();
+        
+        if (!string.IsNullOrEmpty(request.Search))
+        {
+            var searchLower = request.Search.ToLower();
+            pasajerosFiltrados = pasajerosFiltrados.Where(p => 
+                p.Nombre.ToLower().Contains(searchLower) ||
+                p.Titular.Apellido.ToLower().Contains(searchLower) ||
+                p.Colegio.ToLower().Contains(searchLower));
+        }
+
+        // Ordenar por nombre
+        var pasajerosOrdenados = pasajerosFiltrados.OrderBy(p => p.Nombre);
+
+        // Obtener el total antes de paginar
+        var totalCount = pasajerosOrdenados.Count();
+
+        // Aplicar paginación
+        var pasajerosPaginados = pasajerosOrdenados
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Select(MapearAResponse)
+            .ToList();
+
+        return new PaginationModel.ResponsePagination<PasajeroModel.Response>(
+            pasajerosPaginados,
+            totalCount);
+    }
+
     public async Task<List<PasajeroModel.Response>> ObtenerPorTitularAsync(int titularId, CancellationToken cancellationToken = default)
     {
         var pasajeros = await _repository.GetByTitularIdAsync(titularId, cancellationToken);

@@ -9,8 +9,8 @@ export const MainLayout = () => {
     { name: 'Dashboard', href: '/', icon: 'dashboard' },
     { name: 'Titulares', href: '/titulares', icon: 'group' },
     { name: 'Pasajeros', href: '/pasajeros', icon: 'face' },
+    { name: 'Reinscripciones', href: '/reinscripciones', icon: 'assignment_returned' },
     { name: 'Pagos', href: '/pagos', icon: 'payments' },
-    { name: 'Configuración', href: '/configuracion', icon: 'settings' },
   ];
 
   const isActive = (path: string) => {
@@ -93,14 +93,14 @@ export const MainLayout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-h-screen relative">
+      <main className="flex-1 flex flex-col min-h-screen relative overflow-x-hidden w-full">
         {/* Top Header - solo visible en mobile */}
         <header className="bg-[#fafafa] dark:bg-[#18181b] z-10 shrink-0 lg:hidden">
           <div className="flex items-center gap-3 px-4 py-3">
             {/* Hamburger menu */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5"
+              className="p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-900 dark:text-white"
               aria-label="Toggle menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +115,7 @@ export const MainLayout = () => {
         </header>
 
         {/* Page Content - sin padding, cada página controla su layout */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full">
           <Outlet />
         </div>
       </main>

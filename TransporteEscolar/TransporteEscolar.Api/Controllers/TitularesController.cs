@@ -40,6 +40,20 @@ public class TitularesController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene titulares activos con paginación y filtros
+    /// </summary>
+    [HttpGet("paginados")]
+    public async Task<ActionResult<PaginationModel.ResponsePagination<TitularModel.Response>>> GetPaginados(
+        [FromQuery] string? search = null,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var request = new PaginationModel.FilterRequest(search, pageNumber, pageSize);
+        var resultado = await _service.ObtenerPaginadosAsync(request);
+        return Ok(resultado);
+    }
+
+    /// <summary>
     /// Obtiene titulares activos para selector (dropdown)
     /// Devuelve: { id, label } donde label = "Apellido - Dirección"
     /// </summary>

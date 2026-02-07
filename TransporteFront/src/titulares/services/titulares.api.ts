@@ -4,6 +4,9 @@ import type {
   TitularRequest,
   TitularUpdateRequest,
   TitularSelectorItem,
+  TitularTelefonoResponse,
+  TitularFilterRequest,
+  TitularPaginationResponse,
 } from '../types/titular.types';
 
 /**
@@ -24,6 +27,21 @@ export const titularesApi = {
    */
   getActivos: async (): Promise<TitularResponse[]> => {
     return apiClient.get<TitularResponse[]>('/titulares/activos');
+  },
+
+  /**
+   * GET /titulares/paginados - Obtiene titulares activos con paginación
+   */
+  getPaginados: async (filter: TitularFilterRequest): Promise<TitularPaginationResponse> => {
+    const params = new URLSearchParams();
+    if (filter.search) params.append('search', filter.search);
+    if (filter.pageNumber) params.append('pageNumber', filter.pageNumber.toString());
+    if (filter.pageSize) params.append('pageSize', filter.pageSize.toString());
+    
+    const queryString = params.toString();
+    const url = queryString ? `/titulares/paginados?${queryString}` : '/titulares/paginados';
+    
+    return apiClient.get<TitularPaginationResponse>(url);
   },
 
   /**
@@ -59,5 +77,12 @@ export const titularesApi = {
    */
   delete: async (id: number): Promise<void> => {
     return apiClient.delete<void>(`/titulares/${id}`);
+  },
+
+  /**
+   * GET /titulares/{id}/telefonos - Obtiene teléfonos del titular
+   */
+  getTelefonos: async (id: number): Promise<TitularTelefonoResponse[]> => {
+    return apiClient.get<TitularTelefonoResponse[]>(`/titulares/${id}/telefonos`);
   },
 };

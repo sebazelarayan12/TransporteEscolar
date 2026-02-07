@@ -25,7 +25,7 @@ export const TitularTableRow = ({ titular, isSelected, onClick, rowIndex }: Titu
       {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#007a8a]" />}
 
       {/* Titular Info */}
-      <div className="col-span-4 flex items-center gap-3">
+      <div className="col-span-7 md:col-span-4 flex items-center gap-3">
         <Avatar
           initials={getInitials(titular.nombreContacto, titular.apellido)}
           colorClass={getAvatarColor(titular.id)}
@@ -43,22 +43,22 @@ export const TitularTableRow = ({ titular, isSelected, onClick, rowIndex }: Titu
       </div>
 
       {/* Dirección */}
-      <div className="col-span-3 text-sm text-gray-600 dark:text-gray-400 truncate pr-2" title={titular.direccion}>
+      <div className="col-span-5 md:col-span-3 text-sm text-gray-600 dark:text-gray-400 truncate pr-2" title={titular.direccion}>
         {titular.direccion}
       </div>
 
       {/* Monto */}
-      <div className="col-span-2 text-right pr-4 text-sm font-medium text-gray-900 dark:text-gray-200 tabular-nums">
+      <div className="hidden md:block md:col-span-2 text-right pr-4 text-sm font-medium text-gray-900 dark:text-gray-200 tabular-nums">
         ${titular.montoMensualPactado.toLocaleString()}
       </div>
 
       {/* Estado */}
-      <div className="col-span-2">
+      <div className="hidden md:block md:col-span-2">
         <Badge variant={titular.activo ? 'active' : 'inactive'} animated={isSelected && titular.activo} />
       </div>
 
       {/* Acciones */}
-      <div className="col-span-1 flex justify-center">
+      <div className="hidden md:flex md:col-span-1 justify-center">
         <button className={`size-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-[#007a8a] hover:bg-[#007a8a]/10 transition-colors ${
           isSelected ? '' : 'opacity-0 group-hover:opacity-100'
         }`}>

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { titularesApi } from './titulares.api';
-import type { TitularRequest, TitularUpdateRequest } from '../types/titular.types';
+import type { TitularRequest, TitularUpdateRequest, TitularFilterRequest } from '../types/titular.types';
 
 /**
  * Query keys para cache de Titulares
@@ -10,9 +10,11 @@ export const titularesKeys = {
   lists: () => [...titularesKeys.all, 'list'] as const,
   list: (filters?: string) => [...titularesKeys.lists(), { filters }] as const,
   activos: () => [...titularesKeys.all, 'activos'] as const,
+  paginados: (filter: TitularFilterRequest) => [...titularesKeys.all, 'paginados', filter] as const,
   selector: () => [...titularesKeys.all, 'selector'] as const,
   details: () => [...titularesKeys.all, 'detail'] as const,
   detail: (id: number) => [...titularesKeys.details(), id] as const,
+  telefonos: (id: number) => [...titularesKeys.detail(id), 'telefonos'] as const,
 };
 
 /**
@@ -32,6 +34,18 @@ export const useTitularesActivos = () => {
   return useQuery({
     queryKey: titularesKeys.activos(),
     queryFn: () => titularesApi.getActivos(),
+  });
+};
+
+/**
+ * Hook para obtener titulares con paginación
+ */
+export const useTitularesPaginados = (filter: TitularFilterRequest) => {
+  return useQuery({
+    queryKey: titularesKeys.paginados(filter),
+    queryFn: () => titularesApi.getPaginados(filter),
+    placeholderData: (previousData) => previousData, // Mantiene datos previos mientras carga
+    staleTime: 30000, // Considera datos frescos por 30 segundos
   });
 };
 
@@ -57,6 +71,17 @@ export const useTitular = (id: number) => {
 };
 
 /**
+ * Hook para obtener teléfonos de un titular
+ */
+export const useTitularTelefonos = (id?: number) => {
+  return useQuery({
+    queryKey: titularesKeys.telefonos(id ?? 0),
+    queryFn: () => titularesApi.getTelefonos(id!),
+    enabled: !!id,
+  });
+};
+
+/**
  * Hook para crear un titular
  */
 export const useCreateTitular = () => {
@@ -68,6 +93,7 @@ export const useCreateTitular = () => {
       // Invalidar cache para refrescar listados
       queryClient.invalidateQueries({ queryKey: titularesKeys.lists() });
       queryClient.invalidateQueries({ queryKey: titularesKeys.activos() });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.all }); // Invalida paginados también
       queryClient.invalidateQueries({ queryKey: titularesKeys.selector() });
     },
   });
@@ -87,6 +113,7 @@ export const useUpdateTitular = () => {
       queryClient.invalidateQueries({ queryKey: titularesKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: titularesKeys.lists() });
       queryClient.invalidateQueries({ queryKey: titularesKeys.activos() });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.all }); // Invalida paginados también
       queryClient.invalidateQueries({ queryKey: titularesKeys.selector() });
     },
   });
