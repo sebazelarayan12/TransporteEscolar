@@ -3,6 +3,8 @@ export interface PagoMensual {
   id: number;
   titularId: number;
   titularApellido: string;
+  titularNombre: string;
+  titularDireccion: string;
   mes: number;
   anio: number;
   periodo: string; // "Octubre 2023"
@@ -34,6 +36,8 @@ export interface RegistrarPagoRequest {
 export type PaymentStatus = 'vencido' | 'parcial' | 'pagado';
 
 export type PagoEstado = 'pendiente' | 'vencido' | 'pagado';
+
+export type PagosEstadoFiltro = 'todos' | PagoEstado;
 
 export interface PagoFilterRequest {
   mes: number;

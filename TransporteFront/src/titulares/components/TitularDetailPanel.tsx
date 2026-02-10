@@ -1,14 +1,21 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import type { TitularResponse } from '../types/titular.types';
 import { TitularDetailHeader } from './TitularDetailHeader';
 import { TitularPhoneList } from './TitularPhoneList';
 import { TitularPasajerosList } from './TitularPasajerosList';
 import { TitularInfoSection } from './TitularInfoSection';
 import { TitularPhoneModal } from './TitularPhoneModal';
+import { TitularStatusModal } from './TitularStatusModal';
 import { usePasajerosByTitular } from '../../pasajeros/services/pasajeros.queries';
-import { useMarkTitularTelefonoPrincipal, useTitularTelefonos } from '../services/titulares.queries';
+import {
+  useDeleteTitular,
+  useMarkTitularTelefonoPrincipal,
+  useReactivarTitular,
+  useTitularTelefonos,
+} from '../services/titulares.queries';
 import { useToast } from '../../shared/hooks';
+import { Button } from '../../shared/ui/Button';
 
 interface TitularDetailPanelProps {
   titular: TitularResponse | null;
@@ -18,8 +25,11 @@ interface TitularDetailPanelProps {
 export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps) => {
   const [isPhoneModalOpen, setPhoneModalOpen] = useState(false);
   const [markingPhoneId, setMarkingPhoneId] = useState<number | null>(null);
+  const [isDeactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [isReactivateModalOpen, setReactivateModalOpen] = useState(false);
   const titularId = titular?.id;
   const { showSuccess, showError } = useToast();
+  const navigate = useNavigate();
   const {
     data: telefonos,
     isLoading: telefonosLoading,
@@ -34,6 +44,20 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
     refetch: refetchPasajeros,
   } = usePasajerosByTitular(titularId ?? 0);
   const { mutateAsync: markTelefonoPrincipal } = useMarkTitularTelefonoPrincipal(titularId ?? 0);
+  const { mutateAsync: deleteTitular, isPending: isDeletingTitular } = useDeleteTitular();
+  const { mutateAsync: reactivateTitular, isPending: isReactivatingTitular } = useReactivarTitular();
+  const pasajerosCount = pasajeros?.length ?? 0;
+  const statusMutationPending = isDeletingTitular || isReactivatingTitular;
+
+  const resolveErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object' && 'message' in error) {
+      const message = (error as { message?: unknown }).message;
+      if (typeof message === 'string' && message.trim().length > 0) {
+        return message;
+      }
+    }
+    return fallback;
+  };
 
   if (!titular) {
     return (
@@ -65,6 +89,38 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
     }
   };
 
+  const handleConfirmDeactivate = async () => {
+    if (!titular) {
+      return;
+    }
+    try {
+      await deleteTitular(titular.id);
+      showSuccess('Titular inactivado correctamente');
+      setDeactivateModalOpen(false);
+      onClose?.();
+    } catch (error) {
+      const message = resolveErrorMessage(error, 'No se pudo inactivar al titular');
+      console.error('Error al inactivar titular', error);
+      showError(message);
+    }
+  };
+
+  const handleConfirmReactivate = async () => {
+    if (!titular) {
+      return;
+    }
+    try {
+      await reactivateTitular(titular.id);
+      showSuccess('Titular reactivado correctamente');
+      setReactivateModalOpen(false);
+      onClose?.();
+    } catch (error) {
+      const message = resolveErrorMessage(error, 'No se pudo reactivar al titular');
+      console.error('Error al reactivar titular', error);
+      showError(message);
+    }
+  };
+
   return (
     <>
       <TitularDetailHeader titular={titular} onClose={onClose} />
@@ -93,26 +149,56 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
         <TitularInfoSection titular={titular} />
       </div>
 
-      <div className="p-4 border-t border-[#e4e4e7] dark:border-[#3f3f46] bg-gray-50 dark:bg-white/5 flex gap-3 sticky bottom-0">
-        <Link to={`/titulares/${titular.id}`} className="flex-1">
-          <button className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-bold text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
-            <span className="material-symbols-outlined text-[18px]">edit</span>
-            Editar
-          </button>
-        </Link>
-        <button className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400 font-bold text-sm shadow-sm hover:bg-red-50 dark:hover:bg-red-900/10 hover:border-red-200 dark:hover:border-red-800 transition-colors">
-          <span className="material-symbols-outlined text-[18px]">block</span>
-          Inactivar
-        </button>
+      <div className="p-4 border-t border-[#e4e4e7] dark:border-[#3f3f46] bg-gray-50 dark:bg-white/5 flex flex-col sm:flex-row gap-3 sticky bottom-0">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(`/titulares/${titular.id}`)}
+          disabled={statusMutationPending}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          <span className="material-symbols-outlined text-[18px]">edit</span>
+          Editar
+        </Button>
+        <Button
+          variant={titular.activo ? 'danger' : 'brand'}
+          onClick={() => (titular.activo ? setDeactivateModalOpen(true) : setReactivateModalOpen(true))}
+          disabled={statusMutationPending}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            {titular.activo ? 'block' : 'restart_alt'}
+          </span>
+          {titular.activo ? 'Inactivar' : 'Reactivar'}
+        </Button>
       </div>
       {titular && (
-        <TitularPhoneModal
-          isOpen={isPhoneModalOpen}
-          onClose={() => setPhoneModalOpen(false)}
-          titularApellido={titular.apellido}
-          titularId={titular.id}
-          onSaved={refetchTelefonos}
-        />
+        <>
+          <TitularStatusModal
+            isOpen={isDeactivateModalOpen}
+            titular={titular}
+            pasajerosCount={pasajerosCount}
+            mode="deactivate"
+            onClose={() => setDeactivateModalOpen(false)}
+            onConfirm={handleConfirmDeactivate}
+            isPending={isDeletingTitular}
+          />
+          <TitularStatusModal
+            isOpen={isReactivateModalOpen}
+            titular={titular}
+            pasajerosCount={pasajerosCount}
+            mode="reactivate"
+            onClose={() => setReactivateModalOpen(false)}
+            onConfirm={handleConfirmReactivate}
+            isPending={isReactivatingTitular}
+          />
+          <TitularPhoneModal
+            isOpen={isPhoneModalOpen}
+            onClose={() => setPhoneModalOpen(false)}
+            titularApellido={titular.apellido}
+            titularId={titular.id}
+            onSaved={refetchTelefonos}
+          />
+        </>
       )}
     </>
   );

@@ -33,6 +33,21 @@ const formatDate = (isoDate: string) => {
   });
 };
 
+const formatDateTime = (isoDate: string) => {
+  const parsed = new Date(isoDate);
+  if (Number.isNaN(parsed.getTime())) {
+    return isoDate;
+  }
+  return parsed.toLocaleString('es-AR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
 const titularButtonBaseClasses =
   'w-full rounded-2xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d8ca5] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#1f1f24]';
 
@@ -40,6 +55,16 @@ interface RegistrarPagoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+}
+
+interface PagoConfirmacionData {
+  pagoId: number;
+  titularNombreCompleto: string;
+  monto: number;
+  medioPago: MedioPago;
+  observaciones?: string;
+  fechaPagoIso: string;
+  periodoDestino: string;
 }
 
 export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPagoModalProps) => {
@@ -53,6 +78,8 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
   const [monto, setMonto] = useState('');
   const [medioPago, setMedioPago] = useState<MedioPago>(MEDIOS_PAGO.EFECTIVO);
   const [observaciones, setObservaciones] = useState('');
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [confirmacionPago, setConfirmacionPago] = useState<PagoConfirmacionData | null>(null);
 
   const {
     data: titularesResponse,
@@ -108,29 +135,63 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
     setObservaciones('');
   };
 
+  const closeConfirmacionModal = () => {
+    setIsConfirmOpen(false);
+    setConfirmacionPago(null);
+  };
+
+  const handleConfirmacionClose = () => {
+    if (registrarPago.isPending) {
+      return;
+    }
+    closeConfirmacionModal();
+  };
+
   const handleClose = () => {
+    closeConfirmacionModal();
     resetState();
     onClose();
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const pagoDestino = pagosOrdenados[0];
     if (!selectedTitular || !pagoDestino || !isMontoValid) {
       return;
     }
 
+    const fechaPagoIso = new Date().toISOString();
+    const trimmedObservaciones = observaciones.trim();
+
+    setConfirmacionPago({
+      pagoId: pagoDestino.id,
+      titularNombreCompleto: `${selectedTitular.nombreContacto} ${selectedTitular.apellido}`.trim(),
+      monto: montoNumber,
+      medioPago,
+      observaciones: trimmedObservaciones ? trimmedObservaciones : undefined,
+      fechaPagoIso,
+      periodoDestino: pagoDestino.periodo,
+    });
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmarPago = async () => {
+    if (!confirmacionPago) {
+      return;
+    }
+
     try {
       await registrarPago.mutateAsync({
-        id: pagoDestino.id,
+        id: confirmacionPago.pagoId,
         data: {
-          monto: montoNumber,
-          fechaPago: new Date().toISOString(),
-          medioPago,
-          observaciones: observaciones.trim() ? observaciones.trim() : undefined,
+          monto: confirmacionPago.monto,
+          fechaPago: confirmacionPago.fechaPagoIso,
+          medioPago: confirmacionPago.medioPago,
+          observaciones: confirmacionPago.observaciones,
         },
       });
       showSuccess('Pago registrado correctamente');
+      closeConfirmacionModal();
       resetState();
       onClose();
       onSuccess();
@@ -414,7 +475,8 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
                 <Button
                   type="submit"
                   disabled={!canSubmit}
-                  className="w-full bg-[#1d8ca5] text-white hover:bg-[#187286] sm:w-auto"
+                  variant="brand"
+                  className="w-full rounded-full sm:w-auto"
                 >
                   {registrarPago.isPending ? (
                     <span className="flex items-center justify-center gap-2">
@@ -433,6 +495,89 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
           </div>
         </div>
       </div>
+      <Modal
+        isOpen={isConfirmOpen && Boolean(confirmacionPago)}
+        onClose={handleConfirmacionClose}
+        title="¿Querés confirmar el pago?"
+        maxWidth="lg"
+      >
+        {confirmacionPago && (
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-gray-200 bg-white/80 p-5 text-sm text-gray-700 dark:border-[#3f3f46] dark:bg-[#1f1f24] dark:text-gray-200">
+              <dl className="space-y-3">
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-gray-500 dark:text-gray-400">Titular</dt>
+                  <dd className="text-right font-semibold text-gray-900 dark:text-white">
+                    {confirmacionPago.titularNombreCompleto}
+                  </dd>
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-gray-500 dark:text-gray-400">Cuota destino</dt>
+                  <dd className="text-right font-semibold text-gray-900 dark:text-white">
+                    {confirmacionPago.periodoDestino}
+                  </dd>
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-gray-500 dark:text-gray-400">Monto</dt>
+                  <dd className="text-right font-semibold text-gray-900 dark:text-white">
+                    {formatCurrency(confirmacionPago.monto)}
+                  </dd>
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-gray-500 dark:text-gray-400">Medio de pago</dt>
+                  <dd className="text-right font-semibold text-gray-900 dark:text-white">
+                    {confirmacionPago.medioPago}
+                  </dd>
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-gray-500 dark:text-gray-400">Fecha de registro</dt>
+                  <dd className="text-right font-semibold text-gray-900 dark:text-white">
+                    {formatDateTime(confirmacionPago.fechaPagoIso)}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            {confirmacionPago.observaciones && (
+              <div className="rounded-3xl border border-dashed border-gray-300 bg-white/70 p-4 text-sm text-gray-700 dark:border-[#3f3f46] dark:bg-[#1f1f24] dark:text-gray-200">
+                <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Observaciones</p>
+                <p className="mt-1 whitespace-pre-line text-sm">{confirmacionPago.observaciones}</p>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleConfirmacionClose}
+                disabled={registrarPago.isPending}
+                className="w-full sm:w-auto"
+              >
+                Volver
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirmarPago}
+                disabled={registrarPago.isPending}
+                variant="brand"
+                className="w-full rounded-full sm:w-auto"
+              >
+                {registrarPago.isPending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="material-symbols-outlined animate-spin text-[20px] text-white">progress_activity</span>
+                    Confirmando...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="material-symbols-outlined text-[20px]">task_alt</span>
+                    Confirmar pago
+                  </span>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </Modal>
   );
 };

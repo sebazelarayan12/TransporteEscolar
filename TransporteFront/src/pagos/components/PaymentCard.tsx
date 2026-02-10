@@ -45,7 +45,13 @@ export const PaymentCard = ({ pago, isSelected, onSelect, status }: PaymentCardP
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-gray-500">{pago.periodo}</p>
-            <h4 className="text-lg font-bold text-[#0f181a] dark:text-white">{pago.titularApellido}</h4>
+            <h4 className="text-lg font-bold text-[#0f181a] dark:text-white leading-tight">{pago.titularApellido}</h4>
+            {pago.titularNombre ? (
+              <p className="text-xs text-gray-500">{pago.titularNombre}</p>
+            ) : null}
+            {pago.titularDireccion ? (
+              <p className="text-[11px] text-gray-400">{pago.titularDireccion}</p>
+            ) : null}
           </div>
           <span className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-bold ${statusStyles[status].chip}`}>
             <span className="material-symbols-outlined text-[16px]">

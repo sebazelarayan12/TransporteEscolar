@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { pasajerosKeys } from '../../pasajeros/services/pasajeros.queries';
 import { titularesApi } from './titulares.api';
 import type {
   TitularRequest,
@@ -132,9 +133,38 @@ export const useDeleteTitular = () => {
 
   return useMutation({
     mutationFn: (id: number) => titularesApi.delete(id),
-    onSuccess: () => {
-      // Invalidar cache completo de titulares
+    onSuccess: (_, id) => {
+      if (typeof id === 'number') {
+        queryClient.invalidateQueries({ queryKey: titularesKeys.detail(id) });
+        queryClient.invalidateQueries({ queryKey: titularesKeys.telefonos(id) });
+      }
+      queryClient.invalidateQueries({ queryKey: titularesKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.activos() });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.selector() });
       queryClient.invalidateQueries({ queryKey: titularesKeys.all });
+      queryClient.invalidateQueries({ queryKey: pasajerosKeys.all });
+    },
+  });
+};
+
+/**
+ * Hook para reactivar un titular dado de baja
+ */
+export const useReactivarTitular = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => titularesApi.reactivate(id),
+    onSuccess: (_, id) => {
+      if (typeof id === 'number') {
+        queryClient.invalidateQueries({ queryKey: titularesKeys.detail(id) });
+        queryClient.invalidateQueries({ queryKey: titularesKeys.telefonos(id) });
+      }
+      queryClient.invalidateQueries({ queryKey: titularesKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.activos() });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.selector() });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.all });
+      queryClient.invalidateQueries({ queryKey: pasajerosKeys.all });
     },
   });
 };

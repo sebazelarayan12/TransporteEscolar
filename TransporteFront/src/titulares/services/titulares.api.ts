@@ -81,6 +81,13 @@ export const titularesApi = {
   },
 
   /**
+   * POST /titulares/{id}/reactivar - Reactiva un titular dado de baja
+   */
+  reactivate: async (id: number): Promise<void> => {
+    return apiClient.post<void>(`/titulares/${id}/reactivar`);
+  },
+
+  /**
    * GET /titulares/{id}/telefonos - Obtiene teléfonos del titular
    */
   getTelefonos: async (id: number): Promise<TitularTelefonoResponse[]> => {

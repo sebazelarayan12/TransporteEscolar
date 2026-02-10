@@ -36,6 +36,8 @@ public record PagoMensualModel
         int Id,
         int TitularId,
         string TitularApellido,
+        string TitularNombre,
+        string TitularDireccion,
         int Mes,
         int Anio,
         string Periodo,

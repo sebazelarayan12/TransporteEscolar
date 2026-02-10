@@ -10,10 +10,12 @@ namespace TransporteEscolar.Application.Services;
 public class TitularService : ITitularService
 {
     private readonly ITitularRepository _repository;
+    private readonly IPasajeroRepository _pasajeroRepository;
 
-    public TitularService(ITitularRepository repository)
+    public TitularService(ITitularRepository repository, IPasajeroRepository pasajeroRepository)
     {
         _repository = repository;
+        _pasajeroRepository = pasajeroRepository;
     }
 
     public async Task<TitularModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
@@ -94,8 +96,18 @@ public class TitularService : ITitularService
     {
         var titular = await RepositoryHelper.GetByIdOrThrowAsync(
             _repository.GetByIdAsync, id, nameof(Titular), cancellationToken);
+        var pasajeros = await _pasajeroRepository.GetByTitularIdAsync(id, cancellationToken);
+        var pasajerosActivos = pasajeros.Where(p => p.FechaBaja == null).ToList();
 
         titular.DarDeBaja();
+
+        // Cascada manual para mantener la consistencia de estado con los pasajeros activos
+        foreach (var pasajero in pasajerosActivos)
+        {
+            pasajero.DarDeBaja();
+            await _pasajeroRepository.UpdateAsync(pasajero, cancellationToken);
+        }
+
         await _repository.UpdateAsync(titular, cancellationToken);
     }
 
@@ -103,8 +115,17 @@ public class TitularService : ITitularService
     {
         var titular = await RepositoryHelper.GetByIdOrThrowAsync(
             _repository.GetByIdAsync, id, nameof(Titular), cancellationToken);
+        var pasajeros = await _pasajeroRepository.GetByTitularIdAsync(id, cancellationToken);
+        var pasajerosDadosDeBaja = pasajeros.Where(p => p.FechaBaja != null).ToList();
 
         titular.Reactivar();
+
+        foreach (var pasajero in pasajerosDadosDeBaja)
+        {
+            pasajero.Reactivar();
+            await _pasajeroRepository.UpdateAsync(pasajero, cancellationToken);
+        }
+
         await _repository.UpdateAsync(titular, cancellationToken);
     }
 

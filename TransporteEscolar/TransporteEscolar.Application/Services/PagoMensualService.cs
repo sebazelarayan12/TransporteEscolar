@@ -61,9 +61,18 @@ public class PagoMensualService : IPagoMensualService
         // Filter by search term (titular apellido)
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
-            var searchLower = request.Search.ToLower();
+            var searchTerm = request.Search.Trim();
             pagos = pagos
-                .Where(p => p.Titular.Apellido.ToLower().Contains(searchLower))
+                .Where(p =>
+                {
+                    var titular = p.Titular;
+                    if (titular is null)
+                        return false;
+
+                    return (titular.Apellido?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+                        || (titular.NombreContacto?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
+                        || (titular.Direccion?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false);
+                })
                 .ToList();
         }
         
@@ -244,7 +253,11 @@ public class PagoMensualService : IPagoMensualService
     }
 
     private static PagoMensualModel.Response MapearAResponse(PagoMensual pagoMensual) =>
-        new(pagoMensual.Id, pagoMensual.TitularId, pagoMensual.Titular?.Apellido ?? "",
+        new(pagoMensual.Id,
+            pagoMensual.TitularId,
+            pagoMensual.Titular?.Apellido ?? string.Empty,
+            pagoMensual.Titular?.NombreContacto ?? string.Empty,
+            pagoMensual.Titular?.Direccion ?? string.Empty,
             pagoMensual.Mes, pagoMensual.Anio, $"{pagoMensual.Mes:D2}/{pagoMensual.Anio}",
             pagoMensual.MontoGenerado, pagoMensual.TotalPagado(), pagoMensual.SaldoPendiente(),
             pagoMensual.FechaVencimiento, pagoMensual.EstaPagado(), pagoMensual.EstaVencido(),

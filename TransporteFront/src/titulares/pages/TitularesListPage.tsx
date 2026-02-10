@@ -1,16 +1,25 @@
 import { useState } from 'react';
-import { useTitularesActivos } from '../services/titulares.queries';
+import { useTitulares } from '../services/titulares.queries';
 import { LoadingScreen, ErrorState, EmptyState, SearchInput } from '../../shared/ui';
 import { TitularTableHeader, TitularTableRow, TitularDetailPanel } from '../components';
 import { filterTitulares } from '../helpers/search.helpers';
 import type { TitularResponse } from '../types/titular.types';
 
+const STATUS_FILTERS = {
+  ALL: 'all',
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+} as const;
+
+type StatusFilter = (typeof STATUS_FILTERS)[keyof typeof STATUS_FILTERS];
+
 export const TitularesListPage = () => {
-  const { data: titulares, isLoading, error } = useTitularesActivos();
+  const { data: titulares, isLoading, error } = useTitulares();
   const [selectedTitular, setSelectedTitular] = useState<TitularResponse | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(STATUS_FILTERS.ALL);
 
   const handleSelectTitular = (titular: TitularResponse) => {
     setSelectedTitular(titular);
@@ -26,11 +35,21 @@ export const TitularesListPage = () => {
     setIsPanelExpanded(false);
   };
 
-  const filteredTitulares = titulares ? filterTitulares(titulares, searchQuery) : [];
+  const titularesList = titulares ?? [];
+  const totalTitulares = titularesList.length;
+  const activeTitularesCount = titularesList.filter((titular) => titular.activo).length;
+  const inactiveTitularesCount = totalTitulares - activeTitularesCount;
+  const filteredBySearch = filterTitulares(titularesList, searchQuery);
+  const filteredTitulares = filteredBySearch.filter((titular) => {
+    if (statusFilter === STATUS_FILTERS.ACTIVE) return titular.activo;
+    if (statusFilter === STATUS_FILTERS.INACTIVE) return !titular.activo;
+    return true;
+  });
+  const filteredCount = filteredTitulares.length;
 
   if (isLoading) return <LoadingScreen message="Cargando titulares..." />;
   if (error) return <ErrorState message="Error al cargar los titulares" />;
-  if (!titulares || titulares.length === 0) return <EmptyState message="No hay titulares activos" />;
+  if (!titulares || titulares.length === 0) return <EmptyState message="No hay titulares registrados" />;
 
   return (
     <div className="w-full bg-[#fafafa] dark:bg-[#18181b]">
@@ -43,17 +62,40 @@ export const TitularesListPage = () => {
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Titulares</h1>
                 <p className="mt-1 text-sm text-gray-500">
-                  {filteredTitulares.length > 0
-                    ? `${filteredTitulares.length} titular${filteredTitulares.length !== 1 ? 'es' : ''} ${searchQuery ? 'encontrado' + (filteredTitulares.length !== 1 ? 's' : '') : 'activo' + (filteredTitulares.length !== 1 ? 's' : '')}`
-                    : 'No hay titulares activos'}
+                  {filteredCount === 0
+                    ? '0 titulares'
+                    : `${filteredCount} titular${filteredCount !== 1 ? 'es' : ''} encontrado${filteredCount !== 1 ? 's' : ''}`}
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <SearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="Buscar por nombre, dirección o ID..."
-                />
+                <div className="flex w-full flex-col gap-2">
+                  <SearchInput
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Buscar por nombre, dirección o ID..."
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { label: 'Todos', value: STATUS_FILTERS.ALL, count: totalTitulares },
+                      { label: 'Activos', value: STATUS_FILTERS.ACTIVE, count: activeTitularesCount },
+                      { label: 'Inactivos', value: STATUS_FILTERS.INACTIVE, count: inactiveTitularesCount },
+                    ].map((filter) => (
+                      <button
+                        key={filter.value}
+                        type="button"
+                        onClick={() => setStatusFilter(filter.value)}
+                        className={`inline-flex items-center gap-1 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
+                          statusFilter === filter.value
+                            ? 'border-[#007a8a] bg-[#007a8a] text-white shadow'
+                            : 'border-gray-200 text-gray-600 hover:border-[#007a8a] hover:text-[#007a8a] dark:border-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        {filter.label}
+                        <span className="text-xs font-semibold">({filter.count})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <button 
                   onClick={() => window.location.href = '/titulares/nuevo'}
                   className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#007a8a] px-5 py-2.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#00626e]"
@@ -80,7 +122,7 @@ export const TitularesListPage = () => {
                   ))
                 ) : (
                   <div className="flex h-32 items-center justify-center">
-                    <p className="text-gray-500 dark:text-gray-400">No se encontraron titulares</p>
+                    <p className="text-gray-500 dark:text-gray-400">No se encontraron titulares para este filtro</p>
                   </div>
                 )}
               </div>

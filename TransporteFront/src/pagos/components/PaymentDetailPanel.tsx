@@ -30,7 +30,13 @@ export const PaymentDetailPanel = ({ pago, onSubmitPayment, isSubmitting }: Paym
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-[#1d8ca5]">Detalle de pago</p>
-          <h2 className="text-2xl font-bold text-[#0f181a] dark:text-white">{pago.titularApellido}</h2>
+          <h2 className="text-2xl font-bold text-[#0f181a] dark:text-white leading-tight">{pago.titularApellido}</h2>
+          {pago.titularNombre ? (
+            <p className="text-sm text-gray-500">{pago.titularNombre}</p>
+          ) : null}
+          {pago.titularDireccion ? (
+            <p className="text-xs text-gray-400">{pago.titularDireccion}</p>
+          ) : null}
           <p className="text-sm text-gray-500">
             {pago.periodo} • Saldo pendiente <span className="font-bold text-rose-500">{currencyFormatter.format(pago.saldoPendiente)}</span>
           </p>

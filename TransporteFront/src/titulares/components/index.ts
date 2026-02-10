@@ -10,3 +10,4 @@ export * from './TitularPasajerosList';
 export * from './TitularInfoSection';
 export * from './TitularForm';
 export * from './TitularEditModal';
+export * from './TitularStatusModal';

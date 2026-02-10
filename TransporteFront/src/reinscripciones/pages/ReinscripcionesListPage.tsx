@@ -88,6 +88,17 @@ export const ReinscripcionesListPage = () => {
           </div>
         </header>
 
+        <div className="flex justify-end">
+          <Button
+            variant="brand"
+            className="flex items-center gap-2 rounded-full bg-[#1d8ca5] px-6 py-3 text-base font-semibold text-white shadow-lg shadow-[#1d8ca5]/30 hover:bg-[#187286]"
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            <span className="material-symbols-outlined text-[20px]">add</span>
+            Nueva Reinscripción
+          </Button>
+        </div>
+
         {/* Month/Year Filter */}
         <MonthYearFilter selectedMes={mes} selectedAnio={anio} onFilterChange={handlePeriodoChange} />
 
@@ -159,18 +170,6 @@ export const ReinscripcionesListPage = () => {
             )}
           </section>
         )}
-
-        {/* Floating Action Button */}
-        <div className="sticky bottom-6 mt-4 flex justify-end">
-          <Button
-            variant="ghost"
-            className="flex items-center gap-2 rounded-full bg-[#1d8ca5] px-6 py-3 text-base font-semibold text-white shadow-lg shadow-[#1d8ca5]/30 hover:bg-[#187286]"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <span className="material-symbols-outlined text-[20px]">add</span>
-            Nueva Reinscripción
-          </Button>
-        </div>
       </div>
       <ReinscripcionCreateModal
         isOpen={isCreateModalOpen}

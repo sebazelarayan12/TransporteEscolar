@@ -4,7 +4,7 @@ interface ButtonProps {
   children: ReactNode;
   onClick?: () => void;
   type?: 'button' | 'submit' | 'reset';
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'brand';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   className?: string;
@@ -26,6 +26,7 @@ export const Button = ({
     secondary: 'bg-gray-600 text-white hover:bg-gray-700 active:bg-gray-800 focus:ring-gray-500 disabled:bg-gray-300 disabled:hover:bg-gray-300',
     danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus:ring-red-500 disabled:bg-red-300 disabled:hover:bg-red-300',
     ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200 focus:ring-gray-500 disabled:text-gray-400 disabled:hover:bg-transparent',
+    brand: 'bg-[#1d8ca5] text-white shadow-lg shadow-[#1d8ca5]/30 hover:bg-[#187286] active:bg-[#125c70] focus:ring-[#1d8ca5] disabled:bg-[#83b8c5] disabled:hover:bg-[#83b8c5]',
   };
   
   const sizeStyles = {

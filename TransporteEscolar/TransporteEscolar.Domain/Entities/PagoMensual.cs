@@ -49,7 +49,8 @@ public class PagoMensual
 
     public bool EstaVencido()
     {
-        return DateTime.UtcNow > FechaVencimiento && !EstaPagado();
+        var hoy = DateTime.UtcNow.Date;
+        return hoy > FechaVencimiento.Date && !EstaPagado();
     }
 
     public decimal SaldoPendiente()

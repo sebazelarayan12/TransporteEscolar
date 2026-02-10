@@ -17,10 +17,15 @@ public class DashboardRepository : IDashboardRepository
     public async Task<DashboardModel.Summary> ObtenerResumenAsync(CancellationToken cancellationToken = default)
     {
         var hoy = DateTime.UtcNow.Date;
+        var mesActual = hoy.Month;
+        var anioActual = hoy.Year;
 
         var pendientesQuery = _context.PagosMensuales
             .AsNoTracking()
-            .Where(p => p.FechaVencimiento >= hoy)
+            .Where(p =>
+                p.Mes == mesActual &&
+                p.Anio == anioActual &&
+                p.FechaVencimiento >= hoy)
             .Select(p => p.MontoGenerado - (p.Movimientos.Sum(m => (decimal?)m.Monto) ?? 0m))
             .Where(saldo => saldo > 0);
 

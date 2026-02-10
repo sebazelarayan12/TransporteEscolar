@@ -46,11 +46,11 @@ public class PagoMensualRepository : IPagoMensualRepository
 
     public async Task<List<PagoMensual>> GetVencidosAsync(CancellationToken cancellationToken = default)
     {
-        var ahora = DateTime.UtcNow;
+        var hoy = DateTime.UtcNow.Date;
         return await _context.PagosMensuales
             .Include(p => p.Titular)
             .Include(p => p.Movimientos)
-            .Where(p => p.FechaVencimiento < ahora)
+            .Where(p => p.FechaVencimiento < hoy)
             .OrderBy(p => p.FechaVencimiento)
             .ToListAsync(cancellationToken);
     }
