@@ -11,6 +11,7 @@ public interface IPagoMensualRepository
     Task<List<PagoMensual>> GetPendientesAsync(CancellationToken cancellationToken = default);
     Task<PagoMensual?> GetByTitularMesAnioAsync(int titularId, int mes, int anio, CancellationToken cancellationToken = default);
     Task<List<PagoMensual>> GetByMesAnioAsync(int mes, int anio, CancellationToken cancellationToken = default);
+    Task<(List<Titular> Titulares, int TotalCount)> GetTitularesConPagosAsync(string? search, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
     Task<PagoMensual> AddAsync(PagoMensual pagoMensual, CancellationToken cancellationToken = default);
     Task UpdateAsync(PagoMensual pagoMensual, CancellationToken cancellationToken = default);
     Task<bool> ExisteAsync(int id, CancellationToken cancellationToken = default);

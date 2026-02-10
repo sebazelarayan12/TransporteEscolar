@@ -5,3 +5,4 @@ export { PaymentHistory } from './PaymentHistory';
 export { PaymentForm } from './PaymentForm';
 export { PaymentDetailPanel } from './PaymentDetailPanel';
 export { PaymentList } from './PaymentList';
+export { RegistrarPagoModal } from './RegistrarPagoModal';

@@ -2,6 +2,7 @@ using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Helpers;
 using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Application.Mappers;
 using TransporteEscolar.Application.Validation;
 using TransporteEscolar.Domain.Entities;
 
@@ -77,6 +78,23 @@ public class PagoMensualService : IPagoMensualService
         var response = pagosPaginados.Select(MapearAResponse).ToList();
         
         return new PaginationModel.ResponsePagination<PagoMensualModel.Response>(response, totalCount);
+    }
+
+    public async Task<PaginationModel.ResponsePagination<TitularModel.Response>> ObtenerTitularesConPagosAsync(
+        PaginationModel.FilterRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var (titulares, totalCount) = await _repository.GetTitularesConPagosAsync(
+            request.Search,
+            request.PageNumber,
+            request.PageSize,
+            cancellationToken);
+
+        var data = titulares
+            .Select(TitularMapper.MapearAResponse)
+            .ToList();
+
+        return new PaginationModel.ResponsePagination<TitularModel.Response>(data, totalCount);
     }
 
     public async Task<PagoMensualModel.EstadisticasMes> ObtenerEstadisticasMesAsync(

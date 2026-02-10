@@ -78,6 +78,23 @@ public class PagosMensualesController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene titulares con pagos mensuales generados
+    /// </summary>
+    [HttpGet("titulares-con-pagos")]
+    public async Task<ActionResult<PaginationModel.ResponsePagination<TitularModel.Response>>> GetTitularesConPagos(
+        [FromQuery] string? search = null,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        if (pageNumber <= 0 || pageSize <= 0)
+            return BadRequest("pageNumber y pageSize deben ser mayores a 0.");
+
+        var request = new PaginationModel.FilterRequest(search, pageNumber, pageSize);
+        var resultado = await _service.ObtenerTitularesConPagosAsync(request);
+        return Ok(resultado);
+    }
+
+    /// <summary>
     /// Obtiene pagos por titular
     /// </summary>
     [HttpGet("titular/{titularId}")]

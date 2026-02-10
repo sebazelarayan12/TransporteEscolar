@@ -1,6 +1,7 @@
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Helpers;
 using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Application.Mappers;
 using TransporteEscolar.Application.Validation;
 using TransporteEscolar.Domain.Entities;
 
@@ -195,6 +196,5 @@ public class TitularService : ITitularService
     }
 
     private static TitularModel.Response MapearAResponse(Titular titular) =>
-        new(titular.Id, titular.Apellido, titular.NombreContacto, titular.Direccion,
-            titular.MontoMensualPactado, titular.FechaAlta, titular.FechaBaja, titular.FechaBaja == null);
+        TitularMapper.MapearAResponse(titular);
 }

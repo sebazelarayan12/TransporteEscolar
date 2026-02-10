@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { usePagosPaginados, useEstadisticasMes } from '../services/pagos.queries';
 import { getPagoEstado } from '../helpers/periodo.helpers';
 import { 
@@ -12,6 +11,7 @@ import {
 } from '../../shared/ui';
 import { useDebounce } from '../../shared/hooks/useDebounce';
 import type { PagoMensual } from '../types/pago.types';
+import { RegistrarPagoModal } from '../components';
 
 export const PagosListPage = () => {
   // Initialize with current month
@@ -20,6 +20,7 @@ export const PagosListPage = () => {
   const [selectedAnio, setSelectedAnio] = useState<number>(currentDate.getFullYear());
   const [search, setSearch] = useState('');
   const [pageNumber, setPageNumber] = useState(1);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
   const handleSearchChange = (value: string) => {
@@ -28,7 +29,7 @@ export const PagosListPage = () => {
   };
 
   // Fetch paginated data
-  const { data: paginatedData, isLoading, isFetching } = usePagosPaginados(
+  const { data: paginatedData, isLoading, isFetching, refetch: refetchPagos } = usePagosPaginados(
     selectedMes,
     selectedAnio,
     debouncedSearch,
@@ -37,7 +38,7 @@ export const PagosListPage = () => {
   );
 
   // Fetch statistics
-  const { data: estadisticas } = useEstadisticasMes(selectedMes, selectedAnio);
+  const { data: estadisticas, refetch: refetchEstadisticas } = useEstadisticasMes(selectedMes, selectedAnio);
 
   const handleFilterChange = (mes: number, anio: number) => {
     setSelectedMes(mes);
@@ -65,13 +66,14 @@ export const PagosListPage = () => {
               <h1 className="text-2xl font-bold text-[#0f181a] dark:text-white">Pagos y Recaudación</h1>
               <p className="text-sm text-gray-500">Seguimiento en tiempo real de vencimientos, saldos y registros manuales.</p>
             </div>
-            <Link
-              to="/not-found"
+            <button
+              type="button"
+              onClick={() => setIsRegisterModalOpen(true)}
               className="flex items-center justify-center gap-2 rounded-full bg-[#1d8ca5] px-5 py-2 font-semibold text-white shadow-lg shadow-[#1d8ca5]/30 hover:bg-[#187286] transition-colors"
             >
-              <span className="material-symbols-outlined text-[20px]">add_card</span>
-              Generar lote
-            </Link>
+              <span className="material-symbols-outlined text-[20px]">payments</span>
+              Registrar Pago
+            </button>
           </div>
         </header>
 
@@ -219,6 +221,15 @@ export const PagosListPage = () => {
             />
           </>
         )}
+        <RegistrarPagoModal
+          isOpen={isRegisterModalOpen}
+          onClose={() => setIsRegisterModalOpen(false)}
+          onSuccess={() => {
+            setIsRegisterModalOpen(false);
+            refetchPagos();
+            refetchEstadisticas();
+          }}
+        />
       </div>
     </div>
   );

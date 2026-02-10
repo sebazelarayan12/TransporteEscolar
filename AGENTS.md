@@ -282,6 +282,16 @@ dotnet ef database update --startup-project ../TransporteEscolar.Api
 
 ---
 
+## 🆕 Contexto reciente (10 feb 2026)
+
+- Reinscripciones: el detalle de titular ahora permite marcar teléfonos principales desde el listado y la modal de “Nueva Reinscripción” vive en la misma página, usando los endpoints existentes y refrescando TanStack Query.
+- Pagos: el botón superior abre un modal "Registrar Pago" con búsqueda paginada (debounce) de titulares que ya tienen cuotas generadas; el modal muestra resumen financiero y registra movimientos usando `useRegistrarPago`.
+- Backend: se agregó `GET /pagosmensuales/titulares-con-pagos` para obtener titulares con cuotas generadas; `PagoMensualService` + repos implementan paginación y filtros, reutilizando el mapper de Titulares.
+- UI: el modal de pagos ahora soporta anchura `2xl`, estados mejorados en mobile/desktop y contraste ajustado para los titulares seleccionados.
+- Pendientes inmediatos: limpiar deudas de meses futuros, enriquecer la lista de pagos con estados (confirmado/pendiente), ajustar el botón primario del modal y revisar el dashboard.
+
+Para más detalle, también revisa el archivo `recarga.md`.
+
 # Repository Guidelines
 - Este archivo gobierna todo el monorepo Transporte. Cada componente puede tener su propio AGENTS.md; si existe, prevalece sobre este documento.  
   - Para tareas del backend ve a TransporteEscolar/AGENTS.md.  

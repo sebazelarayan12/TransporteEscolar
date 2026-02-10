@@ -9,8 +9,11 @@ export const QUERY_KEYS = {
     ['pagos', 'paginados', mes, anio, search, page] as const,
   estadisticas: (mes: number, anio: number) => 
     ['pagos', 'estadisticas', mes, anio] as const,
+  pagosPorTitular: (titularId: number) => ['pagos', 'titular', titularId] as const,
   vencidos: ['pagos', 'vencidos'] as const,
   pendientes: ['pagos', 'pendientes'] as const,
+  titularesConPagos: (search: string, pageNumber: number, pageSize: number) =>
+    ['pagos', 'titulares-con-pagos', search, pageNumber, pageSize] as const,
 };
 
 /**
@@ -99,6 +102,38 @@ export function useEstadisticasMes(mes: number | null, anio: number | null) {
       return await pagosApi.getEstadisticas(mes!, anio!);
     },
     enabled: mes !== null && anio !== null,
+    staleTime: 30000,
+  });
+}
+
+/**
+ * Hook para obtener los pagos de un titular específico
+ */
+export function usePagosPorTitular(titularId: number | null) {
+  return useQuery({
+    queryKey: titularId ? QUERY_KEYS.pagosPorTitular(titularId) : ['pagos', 'titular', 'idle'],
+    queryFn: async () => {
+      return await pagosApi.getByTitular(titularId!);
+    },
+    enabled: typeof titularId === 'number',
+    staleTime: 0,
+  });
+}
+
+/**
+ * Hook para obtener titulares con cuotas generadas
+ */
+export function useTitularesConPagos(search: string, pageNumber: number, pageSize: number = 10) {
+  return useQuery({
+    queryKey: QUERY_KEYS.titularesConPagos(search, pageNumber, pageSize),
+    queryFn: async () => {
+      return await pagosApi.getTitularesConPagos({
+        search,
+        pageNumber,
+        pageSize,
+      });
+    },
+    placeholderData: (previousData) => previousData,
     staleTime: 30000,
   });
 }

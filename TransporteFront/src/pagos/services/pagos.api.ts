@@ -1,4 +1,5 @@
 import { apiClient } from '../../api/client';
+import type { TitularFilterRequest, TitularPaginationResponse } from '../../titulares/types/titular.types';
 import type { PagoMensual, RegistrarPagoRequest, PagoFilterRequest, PagoPaginationResponse, EstadisticasMes } from '../types/pago.types';
 
 const BASE_PATH = '/pagosmensuales';
@@ -30,6 +31,40 @@ export const pagosApi = {
    */
   getById: async (id: number): Promise<PagoMensual> => {
     return apiClient.get<PagoMensual>(`${BASE_PATH}/${id}`);
+  },
+
+  /**
+   * GET /pagosmensuales/titular/{titularId} - Obtiene todos los pagos de un titular
+   */
+  getByTitular: async (titularId: number): Promise<PagoMensual[]> => {
+    return apiClient.get<PagoMensual[]>(`${BASE_PATH}/titular/${titularId}`);
+  },
+
+  /**
+   * GET /pagosmensuales/titulares-con-pagos - Lista titulares con cuotas generadas (paginado)
+   */
+  getTitularesConPagos: async (filter: TitularFilterRequest): Promise<TitularPaginationResponse> => {
+    const params = new URLSearchParams();
+    const trimmedSearch = filter.search?.trim();
+
+    if (trimmedSearch) {
+      params.append('search', trimmedSearch);
+    }
+
+    if (typeof filter.pageNumber === 'number') {
+      params.append('pageNumber', filter.pageNumber.toString());
+    }
+
+    if (typeof filter.pageSize === 'number') {
+      params.append('pageSize', filter.pageSize.toString());
+    }
+
+    const queryString = params.toString();
+    const url = queryString
+      ? `${BASE_PATH}/titulares-con-pagos?${queryString}`
+      : `${BASE_PATH}/titulares-con-pagos`;
+
+    return apiClient.get<TitularPaginationResponse>(url);
   },
 
   /**

@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Domain.Entities;
@@ -79,6 +80,42 @@ public class PagoMensualRepository : IPagoMensualRepository
             .Where(p => p.Mes == mes && p.Anio == anio)
             .OrderBy(p => p.Titular.Apellido)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<(List<Titular> Titulares, int TotalCount)> GetTitularesConPagosAsync(
+        string? search,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var safePageNumber = Math.Max(pageNumber, 1);
+        var safePageSize = Math.Max(pageSize, 1);
+
+        var titularesQuery = _context.PagosMensuales
+            .AsNoTracking()
+            .Where(p => p.Titular != null && p.Titular.FechaBaja == null)
+            .Select(p => p.Titular)
+            .Distinct();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var normalizedSearch = $"%{search.Trim().ToLower()}%";
+            titularesQuery = titularesQuery.Where(t =>
+                EF.Functions.Like(t.Apellido.ToLower(), normalizedSearch) ||
+                EF.Functions.Like(t.NombreContacto.ToLower(), normalizedSearch) ||
+                EF.Functions.Like(t.Direccion.ToLower(), normalizedSearch));
+        }
+
+        var totalCount = await titularesQuery.CountAsync(cancellationToken);
+
+        var titulares = await titularesQuery
+            .OrderBy(t => t.Apellido)
+            .ThenBy(t => t.NombreContacto)
+            .Skip((safePageNumber - 1) * safePageSize)
+            .Take(safePageSize)
+            .ToListAsync(cancellationToken);
+
+        return (titulares, totalCount);
     }
 
     public async Task<PagoMensual> AddAsync(PagoMensual pagoMensual, CancellationToken cancellationToken = default)
