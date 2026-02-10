@@ -22,6 +22,11 @@ export interface TitularTelefonoResponse {
   activo: boolean;
 }
 
+export interface TitularTelefonoRequest {
+  numeroE164: string;
+  esPrincipal: boolean;
+}
+
 export interface TitularRequest {
   apellido: string;
   nombreContacto: string;
@@ -52,4 +57,3 @@ export interface TitularPaginationResponse {
   data: TitularResponse[];
   totalCount: number;
 }
-

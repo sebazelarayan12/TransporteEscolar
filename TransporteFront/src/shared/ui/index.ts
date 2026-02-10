@@ -7,6 +7,7 @@ export { Badge } from './Badge';
 export { SearchInput } from './SearchInput';
 export { SectionHeader } from './SectionHeader';
 export { MobileDrawer } from './MobileDrawer';
+export { Modal } from './Modal';
 export { Pagination } from './Pagination';
 export { MonthYearFilter } from './MonthYearFilter';
 export { EstadisticasMesCard } from './EstadisticasMesCard';

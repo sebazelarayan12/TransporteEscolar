@@ -7,6 +7,7 @@ public interface IPasajeroService
     Task<PasajeroModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default);
     Task<List<PasajeroModel.Response>> ObtenerTodosAsync(CancellationToken cancellationToken = default);
     Task<List<PasajeroModel.Response>> ObtenerActivosAsync(CancellationToken cancellationToken = default);
+    Task<List<PasajeroModel.Response>> ObtenerActivosDisponiblesParaReinscripcionAsync(int anio, CancellationToken cancellationToken = default);
     Task<PaginationModel.ResponsePagination<PasajeroModel.Response>> ObtenerPaginadosAsync(PaginationModel.FilterRequest request, CancellationToken cancellationToken = default);
     Task<List<PasajeroModel.Response>> ObtenerPorTitularAsync(int titularId, CancellationToken cancellationToken = default);
     Task<PasajeroModel.Response> CrearAsync(PasajeroModel.Request dto, CancellationToken cancellationToken = default);

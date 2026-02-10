@@ -12,6 +12,7 @@ public record PasajeroModel
         DateTime? FechaAlta = null); // Opcional: si no se especifica, usa fecha actual
 
     public record UpdateRequest(
+        string Nombre,
         string Colegio,
         string GradoCurso,
         string Turno,

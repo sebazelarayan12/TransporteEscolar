@@ -1,16 +1,39 @@
+import { lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ToastProvider } from './shared/ui';
+import { ToastProvider } from './shared/ui/ToastProvider';
 import { MainLayout } from './app/MainLayout';
-import { DashboardPage } from './app/DashboardPage';
-import { NotFoundPage } from './app/NotFoundPage';
-import { TitularesListPage } from './titulares/pages/TitularesListPage';
-import { TitularDetailPage } from './titulares/pages/TitularDetailPage';
-import { TitularCreatePage } from './titulares/pages/TitularCreatePage';
-import { PasajerosListPage } from './pasajeros/pages/PasajerosListPage';
-import { PasajeroCreatePage } from './pasajeros/pages/PasajeroCreatePage';
-import { PagosListPage } from './pagos';
-import { ReinscripcionesListPage } from './reinscripciones';
+
+const DashboardPage = lazy(() =>
+  import('./app/DashboardPage').then((module) => ({ default: module.DashboardPage }))
+);
+const TitularesListPage = lazy(() =>
+  import('./titulares/pages/TitularesListPage').then((module) => ({ default: module.TitularesListPage }))
+);
+const TitularDetailPage = lazy(() =>
+  import('./titulares/pages/TitularDetailPage').then((module) => ({ default: module.TitularDetailPage }))
+);
+const TitularCreatePage = lazy(() =>
+  import('./titulares/pages/TitularCreatePage').then((module) => ({ default: module.TitularCreatePage }))
+);
+const PasajerosListPage = lazy(() =>
+  import('./pasajeros/pages/PasajerosListPage').then((module) => ({ default: module.PasajerosListPage }))
+);
+const PasajeroCreatePage = lazy(() =>
+  import('./pasajeros/pages/PasajeroCreatePage').then((module) => ({ default: module.PasajeroCreatePage }))
+);
+const ReinscripcionesListPage = lazy(() =>
+  import('./reinscripciones/pages/ReinscripcionesListPage').then((module) => ({ default: module.ReinscripcionesListPage }))
+);
+// const ReinscripcionCreatePage = lazy(() =>
+//   import('./reinscripciones/pages/ReinscripcionCreatePage').then((module) => ({ default: module.ReinscripcionCreatePage }))
+// );
+const PagosListPage = lazy(() =>
+  import('./pagos/pages/PagosListPage').then((module) => ({ default: module.PagosListPage }))
+);
+const NotFoundPage = lazy(() =>
+  import('./app/NotFoundPage').then((module) => ({ default: module.NotFoundPage }))
+);
 
 // Configuración de TanStack Query
 const queryClient = new QueryClient({
@@ -37,6 +60,7 @@ function App() {
               <Route path="pasajeros" element={<PasajerosListPage />} />
               <Route path="pasajeros/nuevo" element={<PasajeroCreatePage />} />
               <Route path="reinscripciones" element={<ReinscripcionesListPage />} />
+              {/* <Route path="reinscripciones/nueva" element={<ReinscripcionCreatePage />} /> */}
               <Route path="pagos" element={<PagosListPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>

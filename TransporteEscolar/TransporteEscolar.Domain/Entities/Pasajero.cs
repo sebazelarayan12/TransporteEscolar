@@ -43,11 +43,13 @@ public class Pasajero
     }
 
     public void ActualizarDatos(
+        string nombre,
         string colegio,
         string gradoCurso,
         string turno,
         string? observaciones)
     {
+        Nombre = nombre;
         Colegio = colegio;
         GradoCurso = gradoCurso;
         Turno = turno;

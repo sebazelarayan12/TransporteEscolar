@@ -41,6 +41,12 @@ public class PasajeroService : IPasajeroService
         return pasajeros.Select(MapearAResponse).ToList();
     }
 
+    public async Task<List<PasajeroModel.Response>> ObtenerActivosDisponiblesParaReinscripcionAsync(int anio, CancellationToken cancellationToken = default)
+    {
+        var pasajeros = await _repository.GetActivosDisponiblesParaReinscripcionAsync(anio, cancellationToken);
+        return pasajeros.Select(MapearAResponse).ToList();
+    }
+
     public async Task<PaginationModel.ResponsePagination<PasajeroModel.Response>> ObtenerPaginadosAsync(
         PaginationModel.FilterRequest request, 
         CancellationToken cancellationToken = default)
@@ -112,7 +118,7 @@ public class PasajeroService : IPasajeroService
         var pasajero = await RepositoryHelper.GetByIdOrThrowAsync(
             _repository.GetByIdAsync, id, nameof(Pasajero), cancellationToken);
 
-        pasajero.ActualizarDatos(dto.Colegio, dto.GradoCurso, dto.Turno, dto.Observaciones);
+        pasajero.ActualizarDatos(dto.Nombre, dto.Colegio, dto.GradoCurso, dto.Turno, dto.Observaciones);
         await _repository.UpdateAsync(pasajero, cancellationToken);
     }
 
@@ -179,8 +185,9 @@ public class PasajeroService : IPasajeroService
         reinscripcion.Confirmar();
         await _repository.UpdateAsync(pasajero, cancellationToken);
 
-        // Verificar si se deben generar pagos mensuales automáticamente
-        await VerificarYGenerarPagosMensualesAsync(pasajero.TitularId, reinscripcion.Anio, cancellationToken);
+
+        // TODO: Verificar si se deben generar pagos mensuales automáticamente
+        // await VerificarYGenerarPagosMensualesAsync(pasajero.TitularId, reinscripcion.Anio, cancellationToken);
     }
 
     public async Task MarcarComoNoContinuaAsync(int pasajeroId, int reinscripcionId, CancellationToken cancellationToken = default)
@@ -194,45 +201,24 @@ public class PasajeroService : IPasajeroService
 
         reinscripcion.MarcarComoNoContinua();
         await _repository.UpdateAsync(pasajero, cancellationToken);
-
-        // Verificar si se deben generar pagos mensuales automáticamente
-        await VerificarYGenerarPagosMensualesAsync(pasajero.TitularId, reinscripcion.Anio, cancellationToken);
     }
 
-    private async Task VerificarYGenerarPagosMensualesAsync(int titularId, int anio, CancellationToken cancellationToken)
+    private static PasajeroModel.Response MapearAResponse(Pasajero pasajero)
     {
-        // Obtener todos los pasajeros del titular
-        var pasajeros = await _repository.GetByTitularIdAsync(titularId, cancellationToken);
-        
-        if (pasajeros.Count == 0)
-            return;
-
-        // Verificar que todos los pasajeros tengan reinscripciones para el año
-        var todasLasReinscripciones = pasajeros
-            .SelectMany(p => p.Reinscripciones.Where(r => r.Anio == anio))
-            .ToList();
-
-        // Si no todos los pasajeros tienen reinscripción para ese año, no generar
-        if (todasLasReinscripciones.Count != pasajeros.Count)
-            return;
-
-        // Verificar que NINGUNA esté en estado "Pendiente"
-        var hayPendientes = todasLasReinscripciones.Any(r => r.Estado == "Pendiente");
-        if (hayPendientes)
-            return; // No generar pagos si hay reinscripciones pendientes
-
-        // Verificar que AL MENOS UNA esté en estado "Confirmado"
-        var hayConfirmados = todasLasReinscripciones.Any(r => r.Estado == "Confirmado");
-        if (!hayConfirmados)
-            return; // No generar pagos si todos son "NoContinua"
-
-        // Generar pagos mensuales automáticamente
-        await _pagoMensualService.GenerarPagosMensualesAutomaticosAsync(titularId, anio, cancellationToken);
+        var apellido = pasajero.Titular?.Apellido ?? string.Empty;
+        return new(
+            pasajero.Id, 
+            pasajero.TitularId, 
+            pasajero.Nombre, 
+            apellido,
+            $"{pasajero.Nombre} {apellido}", 
+            pasajero.Colegio, 
+            pasajero.GradoCurso,
+            pasajero.Turno, 
+            pasajero.Observaciones, 
+            pasajero.FechaAlta, 
+            pasajero.FechaBaja,
+            pasajero.FechaBaja == null, 
+            apellido);
     }
-
-    private static PasajeroModel.Response MapearAResponse(Pasajero pasajero) =>
-        new(pasajero.Id, pasajero.TitularId, pasajero.Nombre, pasajero.Titular.Apellido,
-            $"{pasajero.Nombre} {pasajero.Titular.Apellido}", pasajero.Colegio, pasajero.GradoCurso,
-            pasajero.Turno, pasajero.Observaciones, pasajero.FechaAlta, pasajero.FechaBaja,
-            pasajero.FechaBaja == null, pasajero.Titular?.Apellido);
 }

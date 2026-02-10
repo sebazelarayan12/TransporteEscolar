@@ -15,6 +15,19 @@ export interface ReinscripcionDetallada {
 
 export type ReinscripcionEstado = 'Pendiente' | 'Confirmado' | 'NoContinua';
 
+export interface ReinscripcionListParams {
+  anio: number;
+  mes: number;
+  estado: ReinscripcionEstado;
+  pageNumber: number;
+  pageSize: number;
+}
+
+export interface ReinscripcionListResponse {
+  data: ReinscripcionDetallada[];
+  totalCount: number;
+}
+
 export interface CrearReinscripcionRequest {
   pasajeroId: number;
   anio: number;

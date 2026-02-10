@@ -28,6 +28,15 @@ const quickActions = [
   },
 ];
 
+const getNameInitials = (fullName: string) =>
+  fullName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((segment) => segment.charAt(0))
+    .join('')
+    .toUpperCase() || '--';
+
 export const DashboardPage = () => {
   const { data: healthCheck } = useBackendHealth();
   const { data, isLoading, error } = useDashboardResumen();
@@ -61,6 +70,9 @@ export const DashboardPage = () => {
     }
     return 'No se pudieron cargar los datos del dashboard.';
   };
+  const adminDisplayName = 'Esteban Albornoz';
+  const adminFirstName = adminDisplayName.split(' ')[0] ?? adminDisplayName;
+  const adminInitials = getNameInitials(adminDisplayName);
 
   return (
     <div className="min-h-full w-full bg-[#f6f8f8] dark:bg-[#0f1416] text-[#0f181a] dark:text-white overflow-x-hidden">
@@ -86,12 +98,8 @@ export const DashboardPage = () => {
                 <span className="material-symbols-outlined text-[22px]">notifications</span>
                 <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-white bg-rose-500 dark:border-[#1f1f24]" />
               </button>
-              <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white shadow-sm dark:border-white/20">
-                <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFmYqcQuRMCH97dzCg7scjOr92WvIp8dMz6BbWCO-iZQKdwMiwlxtLJSgSafkdYWbLgVE7HWazzhQekLxzMYNVjZu8xtbYasW11vawGnxC139NrDsXKoNtusfiSZf1xWstVw3K5u9l9rpqS1gcRfke-pFSlW1bfh6X48v4dWjue4N-y8QRKM74eaVnZw7HyraRdKs1ar-VouvzPA3MTE6pYivdrJRn3uI_8818lMooVjnVLYx_m8MeGQqDxbw7XISnKrgldxNuCCo"
-                  alt="Foto del administrador"
-                  className="h-full w-full object-cover"
-                />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#007a8a] to-cyan-400 text-sm font-semibold uppercase tracking-wide text-white shadow-lg shadow-[#007a8a]/30 dark:border-white/30">
+                {adminInitials}
               </div>
             </div>
           </div>
@@ -101,7 +109,7 @@ export const DashboardPage = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-medium uppercase tracking-wide text-gray-500">Resumen general</p>
-            <h2 className="text-3xl font-bold text-[#0f181a] dark:text-white">Hola, Esteban 👋</h2>
+            <h2 className="text-3xl font-bold text-[#0f181a] dark:text-white">Hola, {adminFirstName} 👋</h2>
             <p className="text-sm text-gray-500">Conoce rápidamente el estado del servicio de transporte escolar.</p>
           </div>
           <div className={`flex items-center gap-2 rounded-full border px-3 py-1 shadow-sm ${

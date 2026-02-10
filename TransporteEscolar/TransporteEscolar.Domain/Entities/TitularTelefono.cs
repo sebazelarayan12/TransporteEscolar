@@ -44,4 +44,12 @@ public class TitularTelefono
     {
         FechaBaja = null;
     }
+
+    public void ActualizarNumero(string nuevoNumero)
+    {
+        if (string.IsNullOrWhiteSpace(nuevoNumero))
+            throw new ArgumentException("El número de teléfono no puede estar vacío", nameof(nuevoNumero));
+        
+        NumeroE164 = nuevoNumero;
+    }
 }

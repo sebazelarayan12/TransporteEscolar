@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { TitularResponse } from '../types/titular.types';
 import { TitularDetailHeader } from './TitularDetailHeader';
 import { TitularPhoneList } from './TitularPhoneList';
 import { TitularPasajerosList } from './TitularPasajerosList';
 import { TitularInfoSection } from './TitularInfoSection';
+import { TitularPhoneModal } from './TitularPhoneModal';
 import { usePasajerosByTitular } from '../../pasajeros/services/pasajeros.queries';
-import { useTitularTelefonos } from '../services/titulares.queries';
+import { useMarkTitularTelefonoPrincipal, useTitularTelefonos } from '../services/titulares.queries';
+import { useToast } from '../../shared/hooks';
 
 interface TitularDetailPanelProps {
   titular: TitularResponse | null;
@@ -13,7 +16,10 @@ interface TitularDetailPanelProps {
 }
 
 export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps) => {
+  const [isPhoneModalOpen, setPhoneModalOpen] = useState(false);
+  const [markingPhoneId, setMarkingPhoneId] = useState<number | null>(null);
   const titularId = titular?.id;
+  const { showSuccess, showError } = useToast();
   const {
     data: telefonos,
     isLoading: telefonosLoading,
@@ -27,6 +33,7 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
     error: pasajerosError,
     refetch: refetchPasajeros,
   } = usePasajerosByTitular(titularId ?? 0);
+  const { mutateAsync: markTelefonoPrincipal } = useMarkTitularTelefonoPrincipal(titularId ?? 0);
 
   if (!titular) {
     return (
@@ -42,6 +49,22 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
     );
   }
 
+  const handleMarkPrincipal = async (telefonoId: number) => {
+    if (!titularId) {
+      return;
+    }
+    try {
+      setMarkingPhoneId(telefonoId);
+      await markTelefonoPrincipal(telefonoId);
+      showSuccess('Teléfono marcado como principal');
+    } catch (error) {
+      console.error('Error al marcar teléfono principal', error);
+      showError('No se pudo marcar el teléfono como principal');
+    } finally {
+      setMarkingPhoneId(null);
+    }
+  };
+
   return (
     <>
       <TitularDetailHeader titular={titular} onClose={onClose} />
@@ -53,12 +76,19 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
           error={telefonosError ? 'No se pudieron cargar los teléfonos.' : undefined}
           onRetry={refetchTelefonos}
           titularNombre={titular.nombreContacto}
+          onAddPhone={titular ? () => setPhoneModalOpen(true) : undefined}
+          titularId={titular.id}
+          onMarkPrincipal={handleMarkPrincipal}
+          markingPhoneId={markingPhoneId}
+          showEditButton={false}
         />
         <TitularPasajerosList
           pasajeros={pasajeros}
           isLoading={pasajerosLoading}
           error={pasajerosError ? 'No se pudieron cargar los pasajeros.' : undefined}
           onRetry={refetchPasajeros}
+          prefillTitularId={titular.id}
+          prefillTitularApellido={titular.apellido}
         />
         <TitularInfoSection titular={titular} />
       </div>
@@ -75,6 +105,15 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
           Inactivar
         </button>
       </div>
+      {titular && (
+        <TitularPhoneModal
+          isOpen={isPhoneModalOpen}
+          onClose={() => setPhoneModalOpen(false)}
+          titularApellido={titular.apellido}
+          titularId={titular.id}
+          onSaved={refetchTelefonos}
+        />
+      )}
     </>
   );
 };

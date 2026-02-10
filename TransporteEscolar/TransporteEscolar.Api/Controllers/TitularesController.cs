@@ -163,6 +163,23 @@ public class TitularesController : ControllerBase
     }
 
     /// <summary>
+    /// Actualiza un teléfono existente
+    /// </summary>
+    [HttpPut("{id}/telefonos/{telefonoId}")]
+    public async Task<ActionResult> ActualizarTelefono(
+        int id, 
+        int telefonoId, 
+        [FromBody] TelefonoModel.UpdateRequest dto)
+    {
+        await _service.ActualizarTelefonoAsync(id, telefonoId, dto);
+
+        _logger.LogInformation(
+            "Teléfono {TelefonoId} actualizado para titular {TitularId}", 
+            telefonoId, id);
+
+        return NoContent();
+    }
+    /// <summary>
     /// Marca un teléfono como principal
     /// </summary>
     [HttpPut("{id}/telefonos/{telefonoId}/marcar-principal")]

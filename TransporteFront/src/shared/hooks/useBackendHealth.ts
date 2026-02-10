@@ -1,18 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
 
+type HealthResponse = {
+  status?: string;
+};
+
 /**
- * Hook para verificar el estado del backend
+ * Hook para verificar el estado del backend con un ping ligero
  */
 export function useBackendHealth() {
   return useQuery({
     queryKey: ['backend-health'],
     queryFn: async () => {
       try {
-        // Intentamos hacer un request simple al backend
-        await apiClient.get('/titulares');
-        return { isHealthy: true };
-      } catch (error) {
+        const health = await apiClient.get<HealthResponse>('/health');
+        const normalizedStatus = health.status?.toLowerCase();
+        return { isHealthy: normalizedStatus === 'healthy' };
+      } catch {
         return { isHealthy: false };
       }
     },

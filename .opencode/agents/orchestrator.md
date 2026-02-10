@@ -12,8 +12,8 @@ permission:
   bash:
     "git *": allow
     "docker-compose *": allow
-    "dotnet *": deny
-    "npm *": deny
+    "dotnet *": allow
+    "npm *": allow
 ---
 
 # Agente Orquestador - Monorepo Transporte

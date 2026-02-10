@@ -4,7 +4,7 @@ namespace TransporteEscolar.Application.Interfaces;
 
 public interface IReinscripcionService
 {
-    Task<List<ReinscripcionModel.ResponseDetallada>> ObtenerTodosAsync(int anio);
+    Task<PaginationModel.ResponsePagination<ReinscripcionModel.ResponseDetallada>> ObtenerTodosAsync(ReinscripcionModel.FilterRequest request);
     Task<ReinscripcionModel.ResponseDetallada> ObtenerPorIdAsync(int id);
     Task<ReinscripcionModel.ResponseDetallada> CrearAsync(int pasajeroId, int anio);
     Task ConfirmarAsync(int id);

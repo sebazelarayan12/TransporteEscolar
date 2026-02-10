@@ -10,6 +10,7 @@ export const pasajerosKeys = {
   lists: () => [...pasajerosKeys.all, 'list'] as const,
   list: (filters?: string) => [...pasajerosKeys.lists(), { filters }] as const,
   activos: () => [...pasajerosKeys.all, 'activos'] as const,
+  disponibles: (anio: number) => [...pasajerosKeys.all, 'disponibles', anio] as const,
   paginados: (filter: PasajeroFilterRequest) => [...pasajerosKeys.all, 'paginados', filter] as const,
   byTitular: (titularId: number) => [...pasajerosKeys.all, 'titular', titularId] as const,
   details: () => [...pasajerosKeys.all, 'detail'] as const,
@@ -33,6 +34,17 @@ export const usePasajerosActivos = () => {
   return useQuery({
     queryKey: pasajerosKeys.activos(),
     queryFn: () => pasajerosApi.getActivos(),
+  });
+};
+
+/**
+ * Hook para obtener pasajeros disponibles para reinscripción por año
+ */
+export const usePasajerosDisponibles = (anio: number) => {
+  return useQuery({
+    queryKey: pasajerosKeys.disponibles(anio),
+    queryFn: () => pasajerosApi.getActivosDisponibles(anio),
+    enabled: !!anio,
   });
 };
 

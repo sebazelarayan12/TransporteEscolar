@@ -7,11 +7,13 @@ interface TitularComboboxProps {
   onChange: (titularId: number) => void;
   error?: string;
   disabled?: boolean;
+  initialSearchTerm?: string;
 }
 
-export const TitularCombobox = ({ titulares, value, onChange, error, disabled }: TitularComboboxProps) => {
+export const TitularCombobox = ({ titulares, value, onChange, error, disabled, initialSearchTerm }: TitularComboboxProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const normalizedInitialSearchTerm = initialSearchTerm?.trim() ?? '';
+  const [searchTerm, setSearchTerm] = useState(normalizedInitialSearchTerm);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedTitular = titulares.find(t => t.id === value);
@@ -42,11 +44,13 @@ export const TitularCombobox = ({ titulares, value, onChange, error, disabled }:
     setSearchTerm('');
   };
 
+  const inputValue = isOpen || !selectedTitular ? searchTerm : displayText;
+
   return (
     <div ref={containerRef} className="relative">
       <input
         type="text"
-        value={isOpen ? searchTerm : displayText}
+        value={inputValue}
         onChange={(e) => {
           setSearchTerm(e.target.value);
           if (!isOpen) setIsOpen(true);

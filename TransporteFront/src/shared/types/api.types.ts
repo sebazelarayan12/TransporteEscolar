@@ -2,7 +2,7 @@ export interface ApiError {
   status: number;
   message: string;
   errors: Record<string, string[]>;
-  originalError?: any;
+  originalError?: unknown;
 }
 
 export interface PaginatedResponse<T> {

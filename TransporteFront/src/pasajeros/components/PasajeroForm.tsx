@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
@@ -8,16 +9,22 @@ import { Button } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
 import { TitularCombobox } from './TitularCombobox';
 
-export const PasajeroForm = () => {
+interface PasajeroFormProps {
+  initialTitularId?: number;
+  titularApellido?: string;
+}
+
+export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroFormProps) => {
   const navigate = useNavigate();
   const createPasajero = useCreatePasajero();
   const { showSuccess, showError } = useToast();
   const { data: titulares, isLoading: isLoadingTitulares } = useTitularesActivos();
+  const [titularId, setTitularId] = useState(initialTitularId ?? 0);
 
   const form = useForm<CreatePasajeroFormData>({
     resolver: zodResolver(createPasajeroSchema),
     defaultValues: {
-      titularId: 0,
+      titularId: initialTitularId ?? 0,
       nombre: '',
       colegio: '',
       gradoCurso: '',
@@ -29,10 +36,15 @@ export const PasajeroForm = () => {
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors, isSubmitting },
   } = form;
+  const selectedTitular = titularId > 0 ? titulares?.find((t) => t.id === titularId) : undefined;
+
+  const handleTitularChange = (value: number) => {
+    setTitularId(value);
+    setValue('titularId', value, { shouldValidate: true });
+  };
 
   const onSubmit = async (data: CreatePasajeroFormData) => {
     try {
@@ -74,10 +86,11 @@ export const PasajeroForm = () => {
         ) : (
           <TitularCombobox
             titulares={titulares || []}
-            value={watch('titularId') || 0}
-            onChange={(titularId) => setValue('titularId', titularId, { shouldValidate: true })}
+            value={titularId || 0}
+            onChange={handleTitularChange}
             error={errors.titularId?.message}
             disabled={isSubmitting}
+            initialSearchTerm={titularApellido}
           />
         )}
         {errors.titularId && (
@@ -88,13 +101,13 @@ export const PasajeroForm = () => {
       </div>
 
       {/* Campo Dirección del Titular (read-only, aparece automáticamente) */}
-      {watch('titularId') > 0 && (
+      {titularId > 0 && (
         <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
           <label className="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">
             Dirección del Titular
           </label>
           <p className="text-sm text-blue-900 dark:text-blue-100">
-            {titulares?.find(t => t.id === watch('titularId'))?.direccion || 'No disponible'}
+            {selectedTitular?.direccion || 'No disponible'}
           </p>
         </div>
       )}

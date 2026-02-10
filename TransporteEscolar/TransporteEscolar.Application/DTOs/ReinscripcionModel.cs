@@ -25,4 +25,11 @@ public record ReinscripcionModel
         string Estado, // "Pendiente" | "Confirmado" | "NoContinua"
         DateTime FechaCreacion,
         DateTime? FechaConfirmacion);
+
+    public record FilterRequest(
+        int Anio = 2024,
+        string? Estado = null,
+        int Mes = 0,
+        int PageNumber = 1,
+        int PageSize = 20);
 }

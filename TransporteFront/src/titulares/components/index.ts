@@ -4,7 +4,9 @@ export * from './TitularCompactCard';
 export * from './TitularDetailPanel';
 export * from './TitularDetailHeader';
 export * from './TitularPhoneList';
+export * from './TitularPhoneModal';
+export * from './TitularPhoneEditModal';
 export * from './TitularPasajerosList';
 export * from './TitularInfoSection';
 export * from './TitularForm';
-
+export * from './TitularEditModal';

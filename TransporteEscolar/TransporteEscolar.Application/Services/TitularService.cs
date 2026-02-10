@@ -37,10 +37,7 @@ public class TitularService : ITitularService
         PaginationModel.FilterRequest request, 
         CancellationToken cancellationToken = default)
     {
-        // Obtener todos los titulares activos
         var titularesActivos = await _repository.GetActivosAsync(cancellationToken);
-
-        // Aplicar filtro de búsqueda si existe
         var titularesFiltrados = titularesActivos.AsQueryable();
         
         if (!string.IsNullOrEmpty(request.Search))
@@ -52,13 +49,9 @@ public class TitularService : ITitularService
                 t.Direccion.ToLower().Contains(searchLower));
         }
 
-        // Ordenar por apellido
         var titularesOrdenados = titularesFiltrados.OrderBy(t => t.Apellido);
-
-        // Obtener el total antes de paginar
         var totalCount = titularesOrdenados.Count();
 
-        // Aplicar paginación
         var titularesPaginados = titularesOrdenados
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
@@ -114,8 +107,6 @@ public class TitularService : ITitularService
         await _repository.UpdateAsync(titular, cancellationToken);
     }
 
-
-    // Gestión de teléfonos
     public async Task<List<TelefonoModel.Response>> ObtenerTelefonosAsync(int titularId, CancellationToken cancellationToken = default)
     {
         var titular = await RepositoryHelper.GetByIdOrThrowAsync(
@@ -135,7 +126,10 @@ public class TitularService : ITitularService
         var titular = await RepositoryHelper.GetByIdOrThrowAsync(
             _repository.GetByIdAsync, titularId, nameof(Titular), cancellationToken);
 
-        if (dto.EsPrincipal)
+        var noHayTelefonosActivos = !titular.Telefonos.Any(t => t.FechaBaja == null);
+        var esPrincipal = noHayTelefonosActivos || dto.EsPrincipal;
+
+        if (esPrincipal)
         {
             foreach (var tel in titular.Telefonos.Where(t => t.EsPrincipal && t.FechaBaja == null))
             {
@@ -143,7 +137,7 @@ public class TitularService : ITitularService
             }
         }
 
-        var telefono = new TitularTelefono(titularId, dto.NumeroE164, dto.EsPrincipal);
+        var telefono = new TitularTelefono(titularId, dto.NumeroE164, esPrincipal);
         titular.Telefonos.Add(telefono);
 
         await _repository.UpdateAsync(titular, cancellationToken);
@@ -151,6 +145,22 @@ public class TitularService : ITitularService
         return new TelefonoModel.Response(
             telefono.Id, telefono.NumeroE164, telefono.EsPrincipal, 
             telefono.FechaAlta, telefono.FechaBaja, telefono.FechaBaja == null);
+    }
+
+    public async Task ActualizarTelefonoAsync(int titularId, int telefonoId, TelefonoModel.UpdateRequest dto, CancellationToken cancellationToken = default)
+    {
+        TelefonoValidator.Validate(new TelefonoModel.Request(dto.NumeroE164, false));
+
+        var titular = await RepositoryHelper.GetByIdOrThrowAsync(
+            _repository.GetByIdAsync, titularId, nameof(Titular), cancellationToken);
+
+        var telefono = titular.Telefonos.FirstOrDefault(t => t.Id == telefonoId && t.FechaBaja == null);
+        if (telefono == null)
+            throw new Exceptions.NotFoundException(nameof(TitularTelefono), telefonoId);
+
+        telefono.ActualizarNumero(dto.NumeroE164);
+
+        await _repository.UpdateAsync(titular, cancellationToken);
     }
 
     public async Task MarcarTelefonoComoPrincipalAsync(int titularId, int telefonoId, CancellationToken cancellationToken = default)

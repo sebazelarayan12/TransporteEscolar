@@ -40,6 +40,19 @@ public class PasajerosController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene pasajeros activos sin reinscripción confirmada para el año indicado
+    /// </summary>
+    [HttpGet("activos-disponibles")]
+    public async Task<ActionResult<List<PasajeroModel.Response>>> GetActivosDisponibles([FromQuery] int anio)
+    {
+        if (anio <= 0)
+            return BadRequest("anio es obligatorio");
+
+        var dtos = await _service.ObtenerActivosDisponiblesParaReinscripcionAsync(anio);
+        return Ok(dtos);
+    }
+
+    /// <summary>
     /// Obtiene pasajeros activos con paginación y filtros
     /// </summary>
     [HttpGet("paginados")]

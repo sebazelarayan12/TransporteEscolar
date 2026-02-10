@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { titularesApi } from './titulares.api';
-import type { TitularRequest, TitularUpdateRequest, TitularFilterRequest } from '../types/titular.types';
+import type {
+  TitularRequest,
+  TitularUpdateRequest,
+  TitularTelefonoRequest,
+  TitularFilterRequest,
+} from '../types/titular.types';
 
 /**
  * Query keys para cache de Titulares
@@ -130,6 +135,52 @@ export const useDeleteTitular = () => {
     onSuccess: () => {
       // Invalidar cache completo de titulares
       queryClient.invalidateQueries({ queryKey: titularesKeys.all });
+    },
+  });
+};
+
+/**
+ * Hook para agregar un teléfono a un titular
+ */
+export const useAddTitularTelefono = (titularId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: TitularTelefonoRequest) => titularesApi.addTelefono(titularId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: titularesKeys.telefonos(titularId) });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.detail(titularId) });
+    },
+  });
+};
+
+/**
+ * Hook para actualizar un teléfono de un titular
+ */
+export const useUpdateTitularTelefono = (titularId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ telefonoId, numeroE164 }: { telefonoId: number; numeroE164: string }) =>
+      titularesApi.updateTelefono(titularId, telefonoId, numeroE164),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: titularesKeys.telefonos(titularId) });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.detail(titularId) });
+    },
+  });
+};
+
+/**
+ * Hook para marcar un teléfono como principal
+ */
+export const useMarkTitularTelefonoPrincipal = (titularId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (telefonoId: number) => titularesApi.markTelefonoPrincipal(titularId, telefonoId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: titularesKeys.telefonos(titularId) });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.detail(titularId) });
     },
   });
 };

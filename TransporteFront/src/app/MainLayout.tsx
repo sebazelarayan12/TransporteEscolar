@@ -1,5 +1,15 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { Spinner } from '../shared/ui/Spinner';
+
+const LayoutContentFallback = () => (
+  <div className="flex min-h-[360px] w-full items-center justify-center px-6 py-10">
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#d9e3e8] bg-white/80 px-6 py-8 text-[#1d8ca5] shadow-sm dark:border-white/10 dark:bg-[#1f1f24]/80">
+      <Spinner size="lg" />
+      <p className="text-xs font-semibold uppercase tracking-[0.3em]">Cargando sección</p>
+    </div>
+  </div>
+);
 
 export const MainLayout = () => {
   const location = useLocation();
@@ -116,7 +126,9 @@ export const MainLayout = () => {
 
         {/* Page Content - sin padding, cada página controla su layout */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden w-full">
-          <Outlet />
+          <Suspense fallback={<LayoutContentFallback />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
     </div>

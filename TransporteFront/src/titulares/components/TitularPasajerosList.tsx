@@ -1,6 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SectionHeader, Spinner, Alert } from '../../shared/ui';
+import { useToast } from '../../shared/hooks';
+import { useUpdatePasajero } from '../../pasajeros/services/pasajeros.queries';
+import { PasajeroEditModal } from '../../pasajeros/components/PasajeroEditModal';
 import type { PasajeroResponse } from '../../pasajeros/types/pasajero.types';
+import type { UpdatePasajeroFormData } from '../../pasajeros/schemas/pasajero.schema';
 
 interface TitularPasajerosListProps {
   pasajeros?: PasajeroResponse[];
@@ -8,6 +13,8 @@ interface TitularPasajerosListProps {
   error?: string;
   onRetry?: () => void;
   showAddButton?: boolean;
+  prefillTitularApellido?: string;
+  prefillTitularId?: number;
 }
 
 const getInitial = (nombreCompleto: string) => {
@@ -24,8 +31,51 @@ const getColorClass = (id: number) => {
   return palette[id % palette.length];
 };
 
-export const TitularPasajerosList = ({ pasajeros, isLoading, error, onRetry, showAddButton = true }: TitularPasajerosListProps) => {
+export const TitularPasajerosList = ({ 
+  pasajeros, 
+  isLoading, 
+  error, 
+  onRetry, 
+  showAddButton = true, 
+  prefillTitularApellido, 
+  prefillTitularId 
+}: TitularPasajerosListProps) => {
+  const { showSuccess, showError } = useToast();
+  const [editingPasajero, setEditingPasajero] = useState<PasajeroResponse | null>(null);
+  const updatePasajero = useUpdatePasajero();
+
   const cantidad = pasajeros?.length ?? 0;
+  const prefillState =
+    typeof prefillTitularId === 'number' || prefillTitularApellido
+      ? {
+          ...(typeof prefillTitularId === 'number' ? { titularId: prefillTitularId } : {}),
+          ...(prefillTitularApellido ? { titularApellido: prefillTitularApellido } : {}),
+        }
+      : undefined;
+
+  const handleEditPasajero = (pasajero: PasajeroResponse) => {
+    if (pasajero.activo) {
+      setEditingPasajero(pasajero);
+    }
+  };
+
+  const handleSavePasajero = async (data: UpdatePasajeroFormData) => {
+    if (!editingPasajero) return;
+
+    try {
+      await updatePasajero.mutateAsync({
+        id: editingPasajero.id,
+        data,
+      });
+      showSuccess('Pasajero actualizado correctamente');
+      setEditingPasajero(null);
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String(error.message)
+        : 'Error al actualizar el pasajero';
+      showError(errorMessage);
+    }
+  };
 
   return (
     <section>
@@ -72,16 +122,31 @@ export const TitularPasajerosList = ({ pasajeros, isLoading, error, onRetry, sho
               key={pasajero.id}
               className="p-3 rounded-xl border border-[#e4e4e7] dark:border-[#3f3f46] bg-white dark:bg-[#27272a] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
             >
+              {/* Botón de editar en esquina superior derecha */}
+              <div className="absolute top-2 right-2">
+                <button
+                  type="button"
+                  onClick={() => handleEditPasajero(pasajero)}
+                  disabled={!pasajero.activo}
+                  title={pasajero.activo ? 'Editar pasajero' : 'Inactivo'}
+                  aria-label="Editar pasajero"
+                  className="p-1.5 rounded-lg text-gray-400 dark:text-gray-300 hover:text-[#007a8a] hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <span className="material-symbols-outlined text-[18px]">edit</span>
+                </button>
+              </div>
+
               {pasajero.activo && (
-                <div className="absolute top-0 right-0 p-2">
+                <div className="absolute top-2 right-12">
                   <span className="block size-2 rounded-full bg-green-500 ring-2 ring-white dark:ring-[#27272a]" />
                 </div>
               )}
+
               <div className="flex items-start gap-3">
                 <div className={`size-12 rounded-lg ${getColorClass(pasajero.id)} flex items-center justify-center text-lg font-bold`}>
                   {getInitial(pasajero.nombreCompleto)}
                 </div>
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col w-full pr-8">
                   <h5 className="font-bold text-gray-900 dark:text-white text-sm">{pasajero.nombreCompleto}</h5>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                     {pasajero.colegio} · {pasajero.gradoCurso}
@@ -100,14 +165,26 @@ export const TitularPasajerosList = ({ pasajeros, isLoading, error, onRetry, sho
         {showAddButton && (
           <Link
             to="/pasajeros/nuevo"
+            state={prefillState}
             aria-label="Vincular pasajero"
-            className="p-3 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-gray-400 hover:text-[#007a8a] hover:border-[#007a8a] hover:bg-[#007a8a]/5 transition-all flex items-center justify-center gap-2 text-sm font-medium h-[80px]"
+            className="p-3 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-gray-400 hover:text-[#007a8a] hover:border-[#007a8a] hover:bg-[#007a8a]/5 transition-all flex items-center justify-center gap-2 text-sm font-medium h-20"
           >
             <span className="material-symbols-outlined">add_circle</span>
             Vincular Pasajero
           </Link>
         )}
       </div>
+
+      {/* Modal de Edición */}
+      {editingPasajero && (
+        <PasajeroEditModal
+          pasajero={editingPasajero}
+          isOpen={!!editingPasajero}
+          onClose={() => setEditingPasajero(null)}
+          onSave={handleSavePasajero}
+          isSaving={updatePasajero.isPending}
+        />
+      )}
     </section>
   );
 };

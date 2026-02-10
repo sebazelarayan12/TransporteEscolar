@@ -1,7 +1,17 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { PasajeroForm } from '../components/PasajeroForm';
 
+type PasajeroCreateLocationState = {
+  titularId?: number;
+  titularApellido?: string;
+};
+
 export const PasajeroCreatePage = () => {
+  const location = useLocation();
+  const locationState = location.state as PasajeroCreateLocationState | null;
+  const titularId = typeof locationState?.titularId === 'number' ? locationState.titularId : undefined;
+  const titularApellido = locationState?.titularApellido;
+
   return (
     <div className="min-h-full w-full bg-[#fafafa] dark:bg-[#18181b] flex flex-col">
       <div className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -24,7 +34,7 @@ export const PasajeroCreatePage = () => {
 
         {/* Card con formulario */}
         <div className="bg-white dark:bg-[#27272a] rounded-xl border border-[#e4e4e7] dark:border-[#3f3f46] shadow-sm p-6 sm:p-8">
-          <PasajeroForm />
+          <PasajeroForm initialTitularId={titularId} titularApellido={titularApellido} />
         </div>
       </div>
     </div>

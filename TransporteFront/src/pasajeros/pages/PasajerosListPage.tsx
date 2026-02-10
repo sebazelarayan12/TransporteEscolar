@@ -32,6 +32,7 @@ export const PasajerosListPage = () => {
 
   const handleCloseSidePanel = () => {
     setIsPanelExpanded(false);
+    setSelectedPasajero(null);
   };
 
   const handlePageChange = (page: number) => {

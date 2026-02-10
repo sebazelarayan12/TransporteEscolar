@@ -1,9 +1,15 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useTitular, useTitularTelefonos } from '../services/titulares.queries';
+import { useTitular, useTitularTelefonos, useUpdateTitular, useMarkTitularTelefonoPrincipal } from '../services/titulares.queries';
 import { usePasajerosByTitular } from '../../pasajeros/services/pasajeros.queries';
 import { LoadingScreen, ErrorState } from '../../shared/ui';
 import { TitularPhoneList } from '../components/TitularPhoneList';
 import { TitularPasajerosList } from '../components/TitularPasajerosList';
+import { TitularEditModal } from '../components/TitularEditModal';
+import { TitularPhoneEditModal } from '../components/TitularPhoneEditModal';
+import { useToast } from '../../shared/hooks';
+import type { UpdateTitularFormData } from '../schemas/titular.schema';
+import type { TitularTelefonoResponse } from '../types/titular.types';
 
 const formatDate = (value: string | null) => {
   if (!value) return null;
@@ -19,10 +25,59 @@ export const TitularDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const titularId = Number(id);
+  const titularIdForMutation = Number.isNaN(titularId) ? 0 : titularId;
 
   const { data: titular, isLoading: loadingTitular, error: errorTitular } = useTitular(titularId);
   const { data: telefonos, isLoading: telefonosLoading, error: telefonosError, refetch: refetchTelefonos } = useTitularTelefonos(titularId);
   const { data: pasajeros, isLoading: pasajerosLoading, error: pasajerosError, refetch: refetchPasajeros } = usePasajerosByTitular(titularId);
+
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [markingPhoneId, setMarkingPhoneId] = useState<number | null>(null);
+  const [editingPhone, setEditingPhone] = useState<TitularTelefonoResponse | null>(null);
+  const { showSuccess, showError } = useToast();
+  const { mutateAsync: updateTitular, isPending: isUpdating } = useUpdateTitular();
+  const { mutateAsync: markTelefonoPrincipal } = useMarkTitularTelefonoPrincipal(titularIdForMutation);
+
+  const handleSaveTitular = async (data: UpdateTitularFormData) => {
+    try {
+      await updateTitular({ id: titularId, data });
+      showSuccess('Titular actualizado correctamente');
+      setEditModalOpen(false);
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error 
+        ? String(error.message) 
+        : 'Error al actualizar el titular';
+      showError(errorMessage);
+    }
+  };
+
+  const handleMarkTelefonoPrincipal = async (telefonoId: number) => {
+    if (!Number.isFinite(titularId)) {
+      showError('No se pudo identificar al titular');
+      return;
+    }
+
+    try {
+      setMarkingPhoneId(telefonoId);
+      await markTelefonoPrincipal(telefonoId);
+      showSuccess('Teléfono marcado como principal');
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String(error.message)
+        : 'No se pudo marcar el teléfono como principal';
+      showError(errorMessage);
+    } finally {
+      setMarkingPhoneId(null);
+    }
+  };
+
+  const handleOpenPhoneModal = (phone: TitularTelefonoResponse) => {
+    setEditingPhone(phone);
+  };
+
+  const handleClosePhoneModal = () => {
+    setEditingPhone(null);
+  };
 
   if (loadingTitular) return <LoadingScreen message="Cargando titular..." />;
   if (errorTitular || !titular) return <ErrorState message="Error al cargar el titular" />;
@@ -68,7 +123,10 @@ export const TitularDetailPage = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <button className="flex items-center justify-center gap-2 rounded-xl border border-[#007a8a] bg-white px-5 py-2.5 font-semibold text-[#007a8a] shadow-sm transition hover:bg-[#007a8a]/5 dark:bg-[#27272a] dark:hover:bg-[#007a8a]/10">
+            <button 
+              onClick={() => setEditModalOpen(true)}
+              className="flex items-center justify-center gap-2 rounded-xl border border-[#007a8a] bg-white px-5 py-2.5 font-semibold text-[#007a8a] shadow-sm transition hover:bg-[#007a8a]/5 dark:bg-[#27272a] dark:hover:bg-[#007a8a]/10"
+            >
               <span className="material-symbols-outlined text-[18px]">edit</span>
               Editar Titular
             </button>
@@ -125,7 +183,11 @@ export const TitularDetailPage = () => {
                    onRetry={refetchTelefonos}
                    showHeader={false}
                    titularNombre={titular.nombreContacto}
-                 />
+                   titularId={titular.id}
+                   onMarkPrincipal={handleMarkTelefonoPrincipal}
+                   markingPhoneId={markingPhoneId}
+                   onEditPhone={handleOpenPhoneModal}
+                  />
               </div>
             </div>
           </div>
@@ -179,9 +241,26 @@ export const TitularDetailPage = () => {
             </div>
           </div>
         </div>
-      </div>
+          </div>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      <TitularEditModal
+        titular={titular}
+        isOpen={isEditModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        onSave={handleSaveTitular}
+        isSaving={isUpdating}
+      />
+      {editingPhone && (
+        <TitularPhoneEditModal
+          titularId={titular.id}
+          phone={editingPhone}
+          isOpen={Boolean(editingPhone)}
+          onClose={handleClosePhoneModal}
+        />
+      )}
     </div>
   );
 };

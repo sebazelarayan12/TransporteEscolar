@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { PasajeroResponse } from '../types/pasajero.types';
 
 interface PasajerosListState {
@@ -17,7 +17,7 @@ const normalize = (value: string) => value.normalize('NFD').replace(/\p{Diacriti
 
 export const usePasajerosList = (pasajeros?: PasajeroResponse[]): PasajerosListState => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPasajero, setSelectedPasajero] = useState<PasajeroResponse | null>(null);
+  const [selectedPasajeroId, setSelectedPasajeroId] = useState<number | null>(null);
 
   const filteredPasajeros = useMemo(() => {
     if (!pasajeros || pasajeros.length === 0) return [];
@@ -37,27 +37,30 @@ export const usePasajerosList = (pasajeros?: PasajeroResponse[]): PasajerosListS
     );
   }, [pasajeros, searchQuery]);
 
-  useEffect(() => {
+  const selectedPasajero = (() => {
     if (filteredPasajeros.length === 0) {
-      setSelectedPasajero(null);
-      return;
+      return null;
     }
 
-    setSelectedPasajero((current) => {
-      if (current && filteredPasajeros.some((pasajero) => pasajero.id === current.id)) {
-        return current;
-      }
+    if (selectedPasajeroId === null) {
       return filteredPasajeros[0];
-    });
-  }, [filteredPasajeros]);
+    }
+
+    return filteredPasajeros.find((pasajero) => pasajero.id === selectedPasajeroId) ?? filteredPasajeros[0];
+  })();
+
+  const handleSearchQueryChange = (value: string) => {
+    setSearchQuery(value);
+    setSelectedPasajeroId(null);
+  };
 
   const selectPasajero = (pasajero: PasajeroResponse) => {
-    setSelectedPasajero(pasajero);
+    setSelectedPasajeroId(pasajero.id);
   };
 
   return {
     searchQuery,
-    setSearchQuery,
+    setSearchQuery: handleSearchQueryChange,
     filteredPasajeros,
     selectedPasajero,
     selectPasajero,

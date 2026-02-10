@@ -13,6 +13,7 @@ Skills Reference: For detailed patterns, use these skills
 - zod-4 – Form validations with Zod v4 (paired with React Hook Form).
 - better-auth-best-practices – Preparing axios interceptors/auth flows (future use).
 - playwright – Playwright E2E testing patterns.
+- vitest – Pruebas unitarias con Vitest (React/Vite).
 Auto-invoke Skills
 When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 Action | Skill
@@ -26,6 +27,7 @@ Design complex UI, dashboards, layouts | frontend-design or interface-design
 Write/adjust TypeScript types/interfaces | typescript
 Add new schema validation/forms | typescript + zod-4
 Configure auth/interceptors in apiClient | better-auth-best-practices
+Write or update unit tests | vitest
 Author Playwright E2E tests | playwright
 CRITICAL RULES – NON-NEGOTIABLE
 React & State

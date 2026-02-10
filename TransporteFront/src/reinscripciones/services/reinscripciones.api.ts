@@ -1,14 +1,27 @@
 import { apiClient } from '../../api/client';
-import type { ReinscripcionDetallada, CrearReinscripcionRequest } from '../types/reinscripcion.types';
+import type {
+  ReinscripcionDetallada,
+  CrearReinscripcionRequest,
+  ReinscripcionListParams,
+  ReinscripcionListResponse,
+} from '../types/reinscripcion.types';
 
 const BASE_PATH = '/reinscripciones';
 
 export const reinscripcionesApi = {
   /**
-   * GET /reinscripciones?anio=2024 - Obtiene todas las reinscripciones de un año
+   * GET /reinscripciones - Obtiene las reinscripciones filtradas/paginadas por año + estado
    */
-  getAll: async (anio: number): Promise<ReinscripcionDetallada[]> => {
-    return apiClient.get<ReinscripcionDetallada[]>(`${BASE_PATH}?anio=${anio}`);
+  getAll: async (params: ReinscripcionListParams): Promise<ReinscripcionListResponse> => {
+    const searchParams = new URLSearchParams({
+      anio: params.anio.toString(),
+      mes: params.mes.toString(),
+      estado: params.estado,
+      pageNumber: params.pageNumber.toString(),
+      pageSize: params.pageSize.toString(),
+    });
+
+    return apiClient.get<ReinscripcionListResponse>(`${BASE_PATH}?${searchParams.toString()}`);
   },
 
   /**

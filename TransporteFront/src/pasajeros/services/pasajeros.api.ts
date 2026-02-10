@@ -28,6 +28,13 @@ export const pasajerosApi = {
   },
 
   /**
+   * GET /pasajeros/activos-disponibles?anio=YYYY - Pasajeros activos sin reinscripción confirmada en el año
+   */
+  getActivosDisponibles: async (anio: number): Promise<PasajeroResponse[]> => {
+    return apiClient.get<PasajeroResponse[]>(`/pasajeros/activos-disponibles?anio=${anio}`);
+  },
+
+  /**
    * GET /pasajeros/paginados - Obtiene pasajeros activos con paginación
    */
   getPaginados: async (filter: PasajeroFilterRequest): Promise<PasajeroPaginationResponse> => {

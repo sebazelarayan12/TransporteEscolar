@@ -1,21 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reinscripcionesApi } from './reinscripciones.api';
-import type { CrearReinscripcionRequest } from '../types/reinscripcion.types';
+import type { CrearReinscripcionRequest, ReinscripcionListParams } from '../types/reinscripcion.types';
+import { pasajerosKeys } from '../../pasajeros/services/pasajeros.queries';
 
-export const QUERY_KEYS = {
-  reinscripciones: (anio: number) => ['reinscripciones', anio] as const,
-  reinscripcionById: (id: number) => ['reinscripciones', id] as const,
+export const reinscripcionesKeys = {
+  root: ['reinscripciones'] as const,
+  list: (params: ReinscripcionListParams) => [...reinscripcionesKeys.root, 'list', params] as const,
+  detail: (id: number) => [...reinscripcionesKeys.root, 'detail', id] as const,
 };
 
+const idleListKey = [...reinscripcionesKeys.root, 'list', 'idle'] as const;
+
 /**
- * Hook para obtener todas las reinscripciones de un año
+ * Hook para obtener las reinscripciones por año + estado con paginación
  */
-export function useReinscripciones(anio: number = new Date().getFullYear()) {
+export function useReinscripciones(params: ReinscripcionListParams | null, options?: { enabled?: boolean }) {
+  const enabled = Boolean(params) && (options?.enabled ?? true);
+
   return useQuery({
-    queryKey: QUERY_KEYS.reinscripciones(anio),
+    queryKey: params ? reinscripcionesKeys.list(params) : idleListKey,
     queryFn: async () => {
-      return await reinscripcionesApi.getAll(anio);
+      return await reinscripcionesApi.getAll(params!);
     },
+    enabled,
+    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -24,7 +32,7 @@ export function useReinscripciones(anio: number = new Date().getFullYear()) {
  */
 export function useReinscripcionById(id: number | null) {
   return useQuery({
-    queryKey: QUERY_KEYS.reinscripcionById(id!),
+    queryKey: reinscripcionesKeys.detail(id!),
     queryFn: async () => {
       return await reinscripcionesApi.getById(id!);
     },
@@ -41,8 +49,8 @@ export function useCrearReinscripcion() {
   return useMutation({
     mutationFn: (data: CrearReinscripcionRequest) => reinscripcionesApi.create(data),
     onSuccess: (_, variables) => {
-      // Invalidar cache para el año correspondiente
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.reinscripciones(variables.anio) });
+      queryClient.invalidateQueries({ queryKey: reinscripcionesKeys.root });
+      queryClient.invalidateQueries({ queryKey: pasajerosKeys.disponibles(variables.anio) });
     },
   });
 }
@@ -56,8 +64,8 @@ export function useConfirmarReinscripcion() {
   return useMutation({
     mutationFn: (id: number) => reinscripcionesApi.confirmar(id),
     onSuccess: () => {
-      // Invalidar todas las queries de reinscripciones
-      queryClient.invalidateQueries({ queryKey: ['reinscripciones'] });
+      queryClient.invalidateQueries({ queryKey: reinscripcionesKeys.root });
+      queryClient.invalidateQueries({ queryKey: pasajerosKeys.all });
     },
   });
 }
@@ -71,8 +79,8 @@ export function useMarcarComoNoContinua() {
   return useMutation({
     mutationFn: (id: number) => reinscripcionesApi.marcarComoNoContinua(id),
     onSuccess: () => {
-      // Invalidar todas las queries de reinscripciones
-      queryClient.invalidateQueries({ queryKey: ['reinscripciones'] });
+      queryClient.invalidateQueries({ queryKey: reinscripcionesKeys.root });
+      queryClient.invalidateQueries({ queryKey: pasajerosKeys.all });
     },
   });
 }

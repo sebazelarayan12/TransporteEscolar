@@ -5,6 +5,7 @@ import type {
   TitularUpdateRequest,
   TitularSelectorItem,
   TitularTelefonoResponse,
+  TitularTelefonoRequest,
   TitularFilterRequest,
   TitularPaginationResponse,
 } from '../types/titular.types';
@@ -84,5 +85,36 @@ export const titularesApi = {
    */
   getTelefonos: async (id: number): Promise<TitularTelefonoResponse[]> => {
     return apiClient.get<TitularTelefonoResponse[]>(`/titulares/${id}/telefonos`);
+  },
+
+  /**
+   * POST /titulares/{id}/telefonos - Agrega un teléfono al titular
+   */
+  addTelefono: async (id: number, data: TitularTelefonoRequest): Promise<TitularTelefonoResponse> => {
+    return apiClient.post<TitularTelefonoResponse, TitularTelefonoRequest>(
+      `/titulares/${id}/telefonos`,
+      data
+    );
+  },
+
+  /**
+   * PUT /titulares/{id}/telefonos/{telefonoId}/marcar-principal - Marca un teléfono como principal
+   */
+  markTelefonoPrincipal: async (titularId: number, telefonoId: number): Promise<void> => {
+    return apiClient.put<void>(`/titulares/${titularId}/telefonos/${telefonoId}/marcar-principal`);
+  },
+
+  /**
+   * PUT /titulares/{id}/telefonos/{telefonoId} - Actualiza un teléfono existente
+   */
+  updateTelefono: async (
+    titularId: number,
+    telefonoId: number,
+    numeroE164: string
+  ): Promise<void> => {
+    return apiClient.put<void>(
+      `/titulares/${titularId}/telefonos/${telefonoId}`,
+      { numeroE164 }
+    );
   },
 };

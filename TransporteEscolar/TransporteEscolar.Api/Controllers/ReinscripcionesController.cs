@@ -10,6 +10,7 @@ public class ReinscripcionesController : ControllerBase
 {
     private readonly IReinscripcionService _service;
     private readonly ILogger<ReinscripcionesController> _logger;
+    private static readonly string[] EstadosPermitidos = new[] { "Pendiente", "Confirmado", "NoContinua" };
 
     public ReinscripcionesController(
         IReinscripcionService service,
@@ -20,13 +21,41 @@ public class ReinscripcionesController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene todas las reinscripciones de un año específico
+    /// Obtiene reinscripciones filtradas y paginadas por año, mes y estado
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<List<ReinscripcionModel.ResponseDetallada>>> GetAll([FromQuery] int anio = 2024)
+    public async Task<ActionResult<PaginationModel.ResponsePagination<ReinscripcionModel.ResponseDetallada>>> GetAll(
+        [FromQuery] int anio = 2024,
+        [FromQuery] string? estado = null,
+        [FromQuery] int? mes = null,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var dtos = await _service.ObtenerTodosAsync(anio);
-        return Ok(dtos);
+        if (!EsEstadoValido(estado, out var estadoNormalizado))
+            return BadRequest($"Estado inválido: {estado}");
+
+        var mesFiltrado = mes ?? DateTime.UtcNow.Month;
+
+        if (mesFiltrado < 1 || mesFiltrado > 12)
+            return BadRequest("mes debe estar entre 1 y 12");
+
+        if (pageNumber < 1)
+            return BadRequest("pageNumber debe ser mayor o igual a 1");
+
+        if (pageSize < 1 || pageSize > 100)
+            return BadRequest("pageSize debe estar entre 1 y 100");
+
+        var request = new ReinscripcionModel.FilterRequest(anio, estadoNormalizado, mesFiltrado, pageNumber, pageSize);
+
+        try
+        {
+            var dtos = await _service.ObtenerTodosAsync(request);
+            return Ok(dtos);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     /// <summary>
@@ -117,5 +146,24 @@ public class ReinscripcionesController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+    }
+
+    private static bool EsEstadoValido(string? estado, out string? estadoNormalizado)
+    {
+        estadoNormalizado = null;
+
+        if (string.IsNullOrWhiteSpace(estado))
+            return true;
+
+        foreach (var permitido in EstadosPermitidos)
+        {
+            if (string.Equals(permitido, estado, StringComparison.OrdinalIgnoreCase))
+            {
+                estadoNormalizado = permitido;
+                return true;
+            }
+        }
+
+        return false;
     }
 }

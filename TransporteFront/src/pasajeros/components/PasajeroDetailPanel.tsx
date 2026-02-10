@@ -79,13 +79,6 @@ export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelPr
 
         <div className="grid grid-cols-1 gap-3 text-sm">
           <Link
-            to={`/pasajeros/${pasajero.id}`}
-            className="flex items-center justify-center gap-2 rounded-xl border border-[#007a8a] px-4 py-2 font-semibold text-[#007a8a] transition hover:bg-[#007a8a]/10"
-          >
-            <span className="material-symbols-outlined text-[18px]">visibility</span>
-            Ver detalle completo
-          </Link>
-          <Link
             to={`/titulares/${pasajero.titularId}`}
             className="flex items-center justify-center gap-2 rounded-xl bg-[#007a8a] px-4 py-2 font-semibold text-white transition hover:bg-[#00626e]"
           >

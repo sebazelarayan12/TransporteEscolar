@@ -16,6 +16,7 @@ public interface ITitularService
     // Gestión de teléfonos
     Task<List<TelefonoModel.Response>> ObtenerTelefonosAsync(int titularId, CancellationToken cancellationToken = default);
     Task<TelefonoModel.Response> AgregarTelefonoAsync(int titularId, TelefonoModel.Request dto, CancellationToken cancellationToken = default);
+    Task ActualizarTelefonoAsync(int titularId, int telefonoId, TelefonoModel.UpdateRequest dto, CancellationToken cancellationToken = default);
     Task MarcarTelefonoComoPrincipalAsync(int titularId, int telefonoId, CancellationToken cancellationToken = default);
     Task EliminarTelefonoAsync(int titularId, int telefonoId, CancellationToken cancellationToken = default);
 }

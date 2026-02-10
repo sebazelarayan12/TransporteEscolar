@@ -25,6 +25,9 @@ public static class PasajeroValidator
 
     public static void ValidateUpdate(PasajeroModel.UpdateRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Nombre))
+            throw new ValidationException("El nombre es requerido");
+
         if (string.IsNullOrWhiteSpace(request.Colegio))
             throw new ValidationException("El colegio es requerido");
 

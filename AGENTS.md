@@ -313,6 +313,7 @@ Generic Skills (cualquier componente)
 | typescript | Tipado estricto y utilidades TS | .claude/skills/typescript/SKILL.md |
 | zod-4 | Validaciones Zod v4 | .claude/skills/zod-4/SKILL.md |
 | playwright | Testing end-to-end | .claude/skills/playwright/SKILL.md |
+| vitest | Pruebas unitarias con Vitest (React/Vite) | .agents/skills/vitest/SKILL.md |
 Skills específicas de Transporte
 | Skill | Cuándo usarla | Ubicación |
 | --- | --- | --- |
@@ -336,6 +337,7 @@ Auto-invoke Skills
 | Tipos TS / Zod schemas | typescript, zod-4 |
 | Formularios/validaciones front | typescript + zod-4 |
 | Auth/interceptors | better-auth-best-practices |
+| Pruebas unitarias con Vitest | vitest |
 | Testing E2E | playwright |
 Project Overview
 | Componente | Ubicación | Stack |

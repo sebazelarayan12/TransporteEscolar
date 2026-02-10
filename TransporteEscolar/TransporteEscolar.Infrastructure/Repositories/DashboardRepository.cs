@@ -30,11 +30,13 @@ public class DashboardRepository : IDashboardRepository
             .Select(p => p.MontoGenerado - (p.Movimientos.Sum(m => (decimal?)m.Monto) ?? 0m))
             .Where(saldo => saldo > 0);
 
-        var totalPendiente = await pendientesQuery.DefaultIfEmpty(0m).SumAsync(cancellationToken);
-        var cantidadPendiente = await pendientesQuery.CountAsync(cancellationToken);
+        var pendientesSaldos = await pendientesQuery.ToListAsync(cancellationToken);
+        var totalPendiente = pendientesSaldos.Sum();
+        var cantidadPendiente = pendientesSaldos.Count;
 
-        var totalVencido = await vencidosQuery.DefaultIfEmpty(0m).SumAsync(cancellationToken);
-        var cantidadVencido = await vencidosQuery.CountAsync(cancellationToken);
+        var vencidosSaldos = await vencidosQuery.ToListAsync(cancellationToken);
+        var totalVencido = vencidosSaldos.Sum();
+        var cantidadVencido = vencidosSaldos.Count;
 
         var titularesActivos = await _context.Titulares
             .AsNoTracking()
@@ -61,7 +63,7 @@ public class DashboardRepository : IDashboardRepository
         var inicioYear = inicio.Year;
         var inicioMes = inicio.Month;
 
-        var datos = await _context.PagosMensuales
+        var pagos = await _context.PagosMensuales
             .AsNoTracking()
             .Where(p => p.Anio > inicioYear || (p.Anio == inicioYear && p.Mes >= inicioMes))
             .Select(p => new
@@ -71,6 +73,9 @@ public class DashboardRepository : IDashboardRepository
                 p.MontoGenerado,
                 TotalPagado = p.Movimientos.Sum(m => (decimal?)m.Monto) ?? 0m
             })
+            .ToListAsync(cancellationToken);
+
+        var datos = pagos
             .GroupBy(x => new { x.Anio, x.Mes })
             .Select(g => new
             {
@@ -81,7 +86,7 @@ public class DashboardRepository : IDashboardRepository
             })
             .OrderBy(x => x.Anio)
             .ThenBy(x => x.Mes)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         return datos
             .Select(x => new DashboardModel.RevenuePoint(

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePagosPaginados, useEstadisticasMes } from '../services/pagos.queries';
 import { getPagoEstado } from '../helpers/periodo.helpers';
@@ -22,10 +22,10 @@ export const PagosListPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const debouncedSearch = useDebounce(search, 300);
 
-  // Reset to page 1 when search changes
-  useEffect(() => {
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
     setPageNumber(1);
-  }, [debouncedSearch]);
+  };
 
   // Fetch paginated data
   const { data: paginatedData, isLoading, isFetching } = usePagosPaginados(
@@ -89,7 +89,7 @@ export const PagosListPage = () => {
         <div className="relative">
           <SearchInput 
             value={search}
-            onChange={setSearch}
+            onChange={handleSearchChange}
             placeholder="Buscar por apellido del titular..."
           />
           {isFetching && (

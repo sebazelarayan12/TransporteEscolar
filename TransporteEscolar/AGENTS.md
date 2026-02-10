@@ -1,6 +1,6 @@
 1. Header & Skills Reference
    - Title: “TransporteEscolar API – AI Agent Ruleset”.
-   - “Skills Reference” list will include backend-relevant skills: csharp-developer, systematic-debugging, api-design-principles, error-handling-patterns, brainstorming, plus testing/infra skills such as playwright? No, backend-specific include csharp-developer, systematic-debugging, api-design-principles, error-handling-patterns, maybe general brainstorming for creative changes. Possibly mention typescript? not needed for backend.
+   - “Skills Reference” list will include backend-relevant skills: csharp-developer, systematic-debugging, api-design-principles, error-handling-patterns, brainstorming, plus testing/infra skills such as playwright? No, backend-specific include csharp-developer, systematic-debugging, api-design-principles, error-handling-patterns, maybe general brainstorming for creative changes. Possibly mention typescript? not needed for backend. Incluye también vitest para guiar pruebas unitarias compartidas/front (Vitest) cuando sean relevantes.
    - Provide short descriptions referencing .agents/skills/....
 2. Auto-invoke Skills table
    - Mirror format (Action | Skill). Actions tailored to backend:
@@ -9,7 +9,8 @@
      - “Crear/editar controllers, services, repos” → csharp-developer.
      - “Diseñar endpoints REST, contratos HTTP” → api-design-principles.
      - “Añadir middleware/manejo de errores” → error-handling-patterns.
-     - “Crear tests backend (cuando existan)” → maybe systematic-debugging or upcoming test skill (none). Could include systematic-debugging.
+      - “Crear tests backend (cuando existan)” → maybe systematic-debugging or upcoming test skill (none). Could include systematic-debugging.
+      - “Escribir/ajustar pruebas unitarias con Vitest (front/shared)” → vitest.
      - “Planear migraciones/DB” -> csharp-developer.
      - “Tareas creativas (nuevas reglas)” -> brainstorming.
    - Possibly include “Investigating CORS/security” -> error-handling-patterns? Maybe not.

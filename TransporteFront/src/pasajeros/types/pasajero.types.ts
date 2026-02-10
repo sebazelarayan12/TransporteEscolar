@@ -29,6 +29,7 @@ export interface PasajeroRequest {
 }
 
 export interface PasajeroUpdateRequest {
+  nombre: string;
   colegio: string;
   gradoCurso: string;
   turno: string;
@@ -46,4 +47,3 @@ export interface PasajeroPaginationResponse {
   data: PasajeroResponse[];
   totalCount: number;
 }
-

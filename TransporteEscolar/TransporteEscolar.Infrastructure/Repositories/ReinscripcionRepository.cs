@@ -53,6 +53,40 @@ public class ReinscripcionRepository : IReinscripcionRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<(List<ReinscripcionPasajero> Reinscripciones, int TotalCount)> GetByAnioConDetallesPaginadoAsync(
+        int anio,
+        int mes,
+        string? estado,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.ReinscripcionesPasajeros
+            .Include(r => r.Pasajero)
+                .ThenInclude(p => p.Titular)
+            .Where(r => r.Anio == anio);
+
+        if (mes is >= 1 and <= 12)
+        {
+            query = query.Where(r => r.FechaCreacion.Month == mes);
+        }
+
+        if (!string.IsNullOrEmpty(estado))
+        {
+            query = query.Where(r => r.Estado == estado);
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var data = await query
+            .OrderByDescending(r => r.FechaCreacion)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (data, totalCount);
+    }
+
     public async Task<bool> ExisteParaPasajeroYAnioAsync(int pasajeroId, int anio, CancellationToken cancellationToken = default)
     {
         return await _context.ReinscripcionesPasajeros
