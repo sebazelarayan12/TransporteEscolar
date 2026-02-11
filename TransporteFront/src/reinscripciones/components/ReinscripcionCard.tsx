@@ -23,12 +23,80 @@ const statusConfig: Record<ReinscripcionEstado, { label: string; chip: string; c
 
 interface ReinscripcionCardProps {
   registro: ReinscripcionDetallada;
-  onConfirm: (id: number) => void;
-  onMarkAsNotContinuing: (id: number) => void;
+  onConfirm?: (registro: ReinscripcionDetallada) => void;
+  onMarkAsNotContinuing?: (registro: ReinscripcionDetallada) => void;
+  onMarkAsPending?: (registro: ReinscripcionDetallada) => void;
 }
 
-export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing }: ReinscripcionCardProps) => {
+export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, onMarkAsPending }: ReinscripcionCardProps) => {
   const getInitial = (nombre: string) => nombre.charAt(0).toUpperCase();
+
+  const renderActionButtons = () => {
+    if (registro.estado === 'Pendiente') {
+      return (
+        <div className="flex gap-1">
+          <button
+            onClick={() => onConfirm?.(registro)}
+            className="rounded-lg bg-emerald-500 p-1.5 text-white hover:bg-emerald-600 transition"
+            title="Confirmar reinscripción"
+          >
+            <span className="material-symbols-outlined text-[18px]">check</span>
+          </button>
+          <button
+            onClick={() => onMarkAsNotContinuing?.(registro)}
+            className="rounded-lg bg-slate-400 p-1.5 text-white hover:bg-slate-500 transition"
+            title="Marcar como no continúa"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      );
+    }
+
+    if (registro.estado === 'Confirmado') {
+      return (
+        <div className="flex gap-1">
+          <button
+            onClick={() => onMarkAsPending?.(registro)}
+            className="rounded-lg bg-amber-500 p-1.5 text-white hover:bg-amber-600 transition"
+            title="Marcar como pendiente"
+          >
+            <span className="material-symbols-outlined text-[18px]">schedule</span>
+          </button>
+          <button
+            onClick={() => onMarkAsNotContinuing?.(registro)}
+            className="rounded-lg bg-slate-400 p-1.5 text-white hover:bg-slate-500 transition"
+            title="Marcar como no continúa"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      );
+    }
+
+    if (registro.estado === 'NoContinua') {
+      return (
+        <div className="flex gap-1">
+          <button
+            onClick={() => onMarkAsPending?.(registro)}
+            className="rounded-lg bg-amber-500 p-1.5 text-white hover:bg-amber-600 transition"
+            title="Marcar como pendiente"
+          >
+            <span className="material-symbols-outlined text-[18px]">schedule</span>
+          </button>
+          <button
+            onClick={() => onConfirm?.(registro)}
+            className="rounded-lg bg-emerald-500 p-1.5 text-white hover:bg-emerald-600 transition"
+            title="Confirmar reinscripción"
+          >
+            <span className="material-symbols-outlined text-[18px]">check</span>
+          </button>
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <article
@@ -62,24 +130,7 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing }
           >
             {statusConfig[registro.estado].label}
           </span>
-          {registro.estado === 'Pendiente' && (
-            <div className="flex gap-1">
-              <button
-                onClick={() => onConfirm(registro.id)}
-                className="rounded-lg bg-emerald-500 p-1.5 text-white hover:bg-emerald-600 transition"
-                title="Confirmar reinscripción"
-              >
-                <span className="material-symbols-outlined text-[18px]">check</span>
-              </button>
-              <button
-                onClick={() => onMarkAsNotContinuing(registro.id)}
-                className="rounded-lg bg-slate-400 p-1.5 text-white hover:bg-slate-500 transition"
-                title="Marcar como no continúa"
-              >
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            </div>
-          )}
+          {renderActionButtons()}
         </div>
       </div>
 

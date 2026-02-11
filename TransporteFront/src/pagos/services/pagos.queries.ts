@@ -66,6 +66,14 @@ export function usePagoMensualById(id: number | null) {
 }
 
 /**
+ * Hook para obtener el detalle completo de un pago mensual (con movimientos)
+ * Alias de usePagoMensualById para mayor claridad semántica
+ */
+export function usePagoDetalle(id: number | null) {
+  return usePagoMensualById(id);
+}
+
+/**
  * Hook para obtener pagos mensuales paginados filtrados por mes/año
  */
 export function usePagosPaginados(

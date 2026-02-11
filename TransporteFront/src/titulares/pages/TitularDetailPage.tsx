@@ -177,16 +177,15 @@ export const TitularDetailPage = () => {
               </div>
               <div className="p-6">
                  <TitularPhoneList
-                   phones={telefonos}
-                   isLoading={telefonosLoading}
-                   error={telefonosError ? 'No se pudieron cargar los teléfonos.' : undefined}
-                   onRetry={refetchTelefonos}
-                   showHeader={false}
-                   titularNombre={titular.nombreContacto}
-                   titularId={titular.id}
-                   onMarkPrincipal={handleMarkTelefonoPrincipal}
-                   markingPhoneId={markingPhoneId}
-                   onEditPhone={handleOpenPhoneModal}
+                    phones={telefonos}
+                    isLoading={telefonosLoading}
+                    error={telefonosError ? 'No se pudieron cargar los teléfonos.' : undefined}
+                    onRetry={refetchTelefonos}
+                    showHeader={false}
+                    titularId={titular.id}
+                    onMarkPrincipal={handleMarkTelefonoPrincipal}
+                    markingPhoneId={markingPhoneId}
+                    onEditPhone={handleOpenPhoneModal}
                   />
               </div>
             </div>

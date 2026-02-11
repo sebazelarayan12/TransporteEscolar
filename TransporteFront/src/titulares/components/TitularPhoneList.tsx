@@ -1,6 +1,7 @@
 import { SectionHeader, Spinner, Alert } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
 import type { TitularTelefonoResponse } from '../types/titular.types';
+import { buildWhatsappUrl, formatPhoneNumber } from '../helpers/phone.helpers';
 
 interface TitularPhoneListProps {
   phones?: TitularTelefonoResponse[];
@@ -8,7 +9,6 @@ interface TitularPhoneListProps {
   error?: string;
   onRetry?: () => void;
   showHeader?: boolean;
-  titularNombre?: string;
   onAddPhone?: () => void;
   titularId?: number;
   onMarkPrincipal?: (telefonoId: number) => void;
@@ -17,32 +17,12 @@ interface TitularPhoneListProps {
   onEditPhone?: (phone: TitularTelefonoResponse) => void;
 }
 
-const formatPhoneNumber = (numero: string) => {
-  if (!numero) return '-';
-  const normalized = numero.replace(/\s+/g, '');
-  if (!/^\+?\d+$/.test(normalized)) {
-    return numero;
-  }
-
-  const withoutPrefix = normalized.startsWith('+') ? normalized.slice(1) : normalized;
-  if (withoutPrefix.length <= 6) {
-    return numero;
-  }
-
-  const country = normalized.startsWith('+') ? `+${withoutPrefix.slice(0, 2)}` : withoutPrefix.slice(0, 2);
-  const rest = withoutPrefix.slice(2);
-  const middle = rest.slice(0, Math.max(2, rest.length - 4));
-  const last = rest.slice(-4);
-  return `${country} ${middle} ${last}`.trim();
-};
-
 export const TitularPhoneList = ({
   phones,
   isLoading,
   error,
   onRetry,
   showHeader = true,
-  titularNombre,
   onAddPhone,
   onMarkPrincipal,
   markingPhoneId = null,
@@ -50,7 +30,6 @@ export const TitularPhoneList = ({
   onEditPhone,
 }: TitularPhoneListProps) => {
   const { showSuccess, showError } = useToast();
-  const whatsappMessageName = encodeURIComponent(titularNombre?.trim() || 'Titular');
 
   const handleCopyNumber = async (numeroE164?: string) => {
     if (!numeroE164 || typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
@@ -68,19 +47,11 @@ export const TitularPhoneList = ({
     }
   };
 
-  const buildWhatsappUrl = (numeroE164?: string) => {
-    if (!numeroE164) return null;
-    const digits = numeroE164.replace(/\D/g, '');
-    if (!digits) return null;
-    return `https://wa.me/${digits}?text=Hola%20${whatsappMessageName}`;
-  };
-
-  const handleWhatsappClick = (numeroE164?: string) => {
-    const url = buildWhatsappUrl(numeroE164);
+  const handleWhatsappClick = (url: string | null) => {
     if (!url || typeof window === 'undefined') {
       return;
     }
-    window.open(url, '_blank', 'noreferrer');
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const hasPhones = (phones?.length ?? 0) > 0;
@@ -134,6 +105,8 @@ export const TitularPhoneList = ({
                 : phone.activo
                   ? 'Marcar como principal'
                   : 'Teléfono inactivo';
+              const whatsappUrl = buildWhatsappUrl(phone.numeroE164);
+              const isWhatsappDisabled = !phone.activo || !whatsappUrl;
 
               const handleMarkPrincipalClick = () => {
                 if (starButtonDisabled || !onMarkPrincipal) {
@@ -205,10 +178,10 @@ export const TitularPhoneList = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleWhatsappClick(phone.numeroE164)}
+                      onClick={() => handleWhatsappClick(whatsappUrl)}
                       aria-label="Abrir WhatsApp"
                       title="Abrir WhatsApp"
-                      disabled={!phone.activo || !buildWhatsappUrl(phone.numeroE164)}
+                      disabled={isWhatsappDisabled}
                       className="p-1.5 rounded text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/10 disabled:text-gray-300 dark:disabled:text-gray-600 disabled:hover:text-gray-300 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                     >
                       <span className="material-symbols-outlined text-[16px]">call</span>

@@ -16,6 +16,7 @@ import {
 } from '../services/titulares.queries';
 import { useToast } from '../../shared/hooks';
 import { Button } from '../../shared/ui/Button';
+import { buildWhatsappUrl, formatPhoneNumber, getPrincipalTelefono } from '../helpers/phone.helpers';
 
 interface TitularDetailPanelProps {
   titular: TitularResponse | null;
@@ -48,6 +49,9 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
   const { mutateAsync: reactivateTitular, isPending: isReactivatingTitular } = useReactivarTitular();
   const pasajerosCount = pasajeros?.length ?? 0;
   const statusMutationPending = isDeletingTitular || isReactivatingTitular;
+  const principalPhone = getPrincipalTelefono(telefonos);
+  const principalWhatsappUrl = buildWhatsappUrl(principalPhone?.numeroE164);
+  const whatsappButtonDisabled = telefonosLoading || !principalWhatsappUrl;
 
   const resolveErrorMessage = (error: unknown, fallback: string) => {
     if (error && typeof error === 'object' && 'message' in error) {
@@ -89,6 +93,14 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
     }
   };
 
+  const handleWhatsappPrincipalClick = () => {
+    if (!principalWhatsappUrl || typeof window === 'undefined') {
+      showError('No hay un teléfono principal activo para WhatsApp');
+      return;
+    }
+    window.open(principalWhatsappUrl, '_blank', 'noopener,noreferrer');
+  };
+
   const handleConfirmDeactivate = async () => {
     if (!titular) {
       return;
@@ -126,12 +138,34 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
       <TitularDetailHeader titular={titular} onClose={onClose} />
       
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+        <div className="rounded-2xl border border-green-100 bg-green-50/80 p-4 shadow-sm dark:border-green-900/40 dark:bg-green-900/10">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-green-900 dark:text-green-200">WhatsApp principal</p>
+              <p className="mt-1 text-xs text-green-800/80 dark:text-green-200/70">
+                {principalPhone
+                  ? `Se usará ${formatPhoneNumber(principalPhone.numeroE164)}`
+                  : 'Define un teléfono principal activo para habilitar esta acción.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleWhatsappPrincipalClick}
+              disabled={whatsappButtonDisabled}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-green-300"
+              aria-label="Contactar por WhatsApp"
+              title={whatsappButtonDisabled ? 'Agrega un teléfono principal' : 'Abrir WhatsApp'}
+            >
+              <span className="material-symbols-outlined text-[18px]">chat</span>
+              <span>WhatsApp</span>
+            </button>
+          </div>
+        </div>
         <TitularPhoneList
           phones={telefonos}
           isLoading={telefonosLoading}
           error={telefonosError ? 'No se pudieron cargar los teléfonos.' : undefined}
           onRetry={refetchTelefonos}
-          titularNombre={titular.nombreContacto}
           onAddPhone={titular ? () => setPhoneModalOpen(true) : undefined}
           titularId={titular.id}
           onMarkPrincipal={handleMarkPrincipal}
@@ -151,7 +185,7 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
 
       <div className="p-4 border-t border-[#e4e4e7] dark:border-[#3f3f46] bg-gray-50 dark:bg-white/5 flex flex-col sm:flex-row gap-3 sticky bottom-0">
         <Button
-          variant="ghost"
+          variant="secondary"
           onClick={() => navigate(`/titulares/${titular.id}`)}
           disabled={statusMutationPending}
           className="w-full flex items-center justify-center gap-2"

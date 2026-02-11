@@ -21,9 +21,14 @@ export interface PagoMensual {
 export interface PagoMovimiento {
   id: number;
   monto: number;
-  fechaPago: string;
+  fechaPago: string; // ISO DateTime from backend
   medioPago: string; // "Efectivo" | "Transferencia" | "Cheque"
   observaciones: string | null;
+}
+
+// Backend DTOs (mapeo directo desde PagoMensualModel)
+export interface PagoMensualDetalle extends PagoMensual {
+  movimientos: PagoMovimiento[];
 }
 
 export interface RegistrarPagoRequest {

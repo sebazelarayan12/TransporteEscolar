@@ -8,8 +8,11 @@ import {
   useCrearReinscripcion,
   useMarcarComoNoContinua,
 } from '../services/reinscripciones.queries';
+import { LastPendingConfirmationModal } from './LastPendingConfirmationModal';
+import { isLastPendingForTitular } from '../helpers/last-pending.helper';
 
 type ActionVariant = 'pendiente' | 'confirmado' | 'noContinua';
+type CriticalActionVariant = Exclude<ActionVariant, 'pendiente'>;
 
 interface ReinscripcionCreateModalProps {
   isOpen: boolean;
@@ -65,6 +68,10 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
   const [searchValue, setSearchValue] = useState('');
   const [selectedPasajeroId, setSelectedPasajeroId] = useState<number | null>(null);
   const [actionInProgress, setActionInProgress] = useState<ActionVariant | null>(null);
+  const [criticalAction, setCriticalAction] = useState<{
+    variant: CriticalActionVariant;
+    pasajero: PasajeroResponse;
+  } | null>(null);
 
   const { showSuccess, showError, showWarning } = useToast();
   const {
@@ -84,6 +91,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
       setSearchValue('');
       setSelectedPasajeroId(null);
       setActionInProgress(null);
+      setCriticalAction(null);
     }
   }, [isOpen]);
 
@@ -108,20 +116,15 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
 
   const listStateMessage = normalizedSearch
     ? 'No hay pasajeros que coincidan con la búsqueda aplicada.'
-    : 'No hay pasajeros activos disponibles para reinscribirse en este ciclo.';
+    : 'Todos los pasajeros activos ya tienen una reinscripción en curso. Gestioná las pendientes desde la pestaña "Pendientes".';
 
   const fetchErrorMessage = error instanceof Error ? error.message : 'No pudimos cargar los pasajeros disponibles.';
 
-  const handleAction = async (variant: ActionVariant) => {
-    if (!selectedPasajeroId) {
-      showWarning('Seleccioná un pasajero antes de continuar.');
-      return;
-    }
-
+  const executeAction = async (variant: ActionVariant, pasajeroId: number) => {
     setActionInProgress(variant);
 
     try {
-      const nuevaReinscripcion = await crearReinscripcion({ pasajeroId: selectedPasajeroId, anio });
+      const nuevaReinscripcion = await crearReinscripcion({ pasajeroId, anio });
 
       if (variant === 'confirmado') {
         await confirmarReinscripcion(nuevaReinscripcion.id);
@@ -143,6 +146,42 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
     } finally {
       setActionInProgress(null);
     }
+  };
+
+  const handleAction = (variant: ActionVariant) => {
+    if (!selectedPasajero) {
+      showWarning('Seleccioná un pasajero antes de continuar.');
+      return;
+    }
+
+    if (variant === 'pendiente') {
+      void executeAction(variant, selectedPasajero.id);
+      return;
+    }
+
+    const requiereConfirmacionCritica = isLastPendingForTitular({
+      collection: pasajerosDisponibles,
+      titularKey: selectedPasajero.titularId,
+      getTitularKey: (pasajero) => pasajero.titularId,
+    });
+
+    if (requiereConfirmacionCritica) {
+      setCriticalAction({ variant, pasajero: selectedPasajero });
+      return;
+    }
+
+    void executeAction(variant, selectedPasajero.id);
+  };
+
+  const closeCriticalConfirmation = () => setCriticalAction(null);
+
+  const handleCriticalConfirm = () => {
+    if (!criticalAction) {
+      return;
+    }
+
+    closeCriticalConfirmation();
+    void executeAction(criticalAction.variant, criticalAction.pasajero.id);
   };
 
   const renderList = () => {
@@ -210,20 +249,28 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
   };
 
   const isActionDisabled = !selectedPasajeroId || actionInProgress !== null;
+  const isCriticalModalOpen = Boolean(criticalAction);
+  const criticalActionLabel =
+    criticalAction?.variant === 'confirmado' ? 'Confirmar reinscripción' : 'Marcar como no continúa';
+  const criticalPasajeroNombre = criticalAction?.pasajero.nombreCompleto ?? '';
+  const criticalTitularNombre = criticalAction?.pasajero.titularApellido
+    ? `Familia ${criticalAction.pasajero.titularApellido}`
+    : undefined;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Nueva reinscripción ${anio}`} maxWidth="lg">
-      <div className="space-y-5">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Seleccioná un pasajero activo sin reinscripción confirmada para el ciclo {anio}.
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Pasajeros disponibles: {pasajerosDisponibles.length}
-          </p>
-        </div>
+    <>
+      <Modal isOpen={isOpen} onClose={onClose} title={`Nueva reinscripción ${anio}`} maxWidth="lg">
+        <div className="space-y-5">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Seleccioná un pasajero activo sin reinscripción confirmada para el ciclo {anio}.
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Pasajeros disponibles: {pasajerosDisponibles.length}
+            </p>
+          </div>
 
-        <SearchInput
+          <SearchInput
           value={searchValue}
           onChange={setSearchValue}
           placeholder="Buscar por nombre, colegio o turno"
@@ -282,7 +329,17 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
             );
           })}
         </div>
-      </div>
-    </Modal>
+        </div>
+      </Modal>
+      <LastPendingConfirmationModal
+        isOpen={isCriticalModalOpen}
+        onCancel={closeCriticalConfirmation}
+        onConfirm={handleCriticalConfirm}
+        pasajeroNombre={criticalPasajeroNombre}
+        titularNombre={criticalTitularNombre}
+        actionLabel={criticalActionLabel}
+        isProcessing={actionInProgress !== null}
+      />
+    </>
   );
 };

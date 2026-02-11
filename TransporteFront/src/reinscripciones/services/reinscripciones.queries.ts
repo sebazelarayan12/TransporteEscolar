@@ -84,3 +84,19 @@ export function useMarcarComoNoContinua() {
     },
   });
 }
+
+/**
+ * Hook para marcar como "Pendiente"
+ */
+export function useMarcarComoPendiente() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => reinscripcionesApi.marcarComoPendiente(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: reinscripcionesKeys.root });
+      queryClient.invalidateQueries({ queryKey: pasajerosKeys.all });
+    },
+  });
+}
+

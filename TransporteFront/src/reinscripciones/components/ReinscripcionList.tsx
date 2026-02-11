@@ -3,11 +3,12 @@ import { ReinscripcionCard } from './ReinscripcionCard';
 
 interface ReinscripcionListProps {
   reinscripciones: ReinscripcionDetallada[];
-  onConfirm: (id: number) => void;
-  onMarkAsNotContinuing: (id: number) => void;
+  onConfirm: (registro: ReinscripcionDetallada) => void;
+  onMarkAsNotContinuing: (registro: ReinscripcionDetallada) => void;
+  onMarkAsPending: (registro: ReinscripcionDetallada) => void;
 }
 
-export const ReinscripcionList = ({ reinscripciones, onConfirm, onMarkAsNotContinuing }: ReinscripcionListProps) => {
+export const ReinscripcionList = ({ reinscripciones, onConfirm, onMarkAsNotContinuing, onMarkAsPending }: ReinscripcionListProps) => {
   if (reinscripciones.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-[#1f1f24]">
@@ -24,6 +25,7 @@ export const ReinscripcionList = ({ reinscripciones, onConfirm, onMarkAsNotConti
           registro={registro}
           onConfirm={onConfirm}
           onMarkAsNotContinuing={onMarkAsNotContinuing}
+          onMarkAsPending={onMarkAsPending}
         />
       ))}
     </section>

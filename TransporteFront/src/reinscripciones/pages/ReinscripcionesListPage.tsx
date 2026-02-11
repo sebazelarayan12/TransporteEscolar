@@ -1,13 +1,24 @@
 import { useState } from 'react';
-import { useConfirmarReinscripcion, useMarcarComoNoContinua } from '../services/reinscripciones.queries';
+import { useConfirmarReinscripcion, useMarcarComoNoContinua, useMarcarComoPendiente } from '../services/reinscripciones.queries';
 import { useReinscripcionesPaginadas } from '../hooks/useReinscripcionesPaginadas';
-import { ReinscripcionStats, ReinscripcionFilters, ReinscripcionList, ReinscripcionCreateModal } from '../components';
+import {
+  ReinscripcionStats,
+  ReinscripcionFilters,
+  ReinscripcionList,
+  ReinscripcionCreateModal,
+  LastPendingConfirmationModal,
+} from '../components';
 import { Button, LoadingScreen, ErrorState, EmptyState, Pagination, MonthYearFilter } from '../../shared/ui';
 import type { ReinscripcionDetallada } from '../types/reinscripcion.types';
+import { isLastPendingForTitular } from '../helpers/last-pending.helper';
 
 export const ReinscripcionesListPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [criticalAction, setCriticalAction] = useState<{
+    variant: 'confirmado' | 'noContinua';
+    registro: ReinscripcionDetallada;
+  } | null>(null);
   const {
     mes,
     anio,
@@ -63,9 +74,71 @@ export const ReinscripcionesListPage = () => {
   ];
 
   // Mutaciones
-  const { mutate: confirmar } = useConfirmarReinscripcion();
-  const { mutate: marcarNoContinua } = useMarcarComoNoContinua();
+  const confirmarReinscripcionMutation = useConfirmarReinscripcion();
+  const marcarNoContinuaMutation = useMarcarComoNoContinua();
+  const marcarPendienteMutation = useMarcarComoPendiente();
   const errorMessage = error ? 'Error al cargar las reinscripciones' : '';
+
+  const shouldShowCriticalConfirmation = (registro: ReinscripcionDetallada) => {
+    if (registro.estado !== 'Pendiente') {
+      return false;
+    }
+
+    return isLastPendingForTitular({
+      collection: reinscripciones,
+      titularKey: registro.titularNombre,
+      getTitularKey: (item) => item.titularNombre,
+      isPending: (item) => item.estado === 'Pendiente',
+    });
+  };
+
+  const handleConfirmReinscripcion = (registro: ReinscripcionDetallada) => {
+    if (shouldShowCriticalConfirmation(registro)) {
+      setCriticalAction({ variant: 'confirmado', registro });
+      return;
+    }
+
+    confirmarReinscripcionMutation.mutate(registro.id);
+  };
+
+  const handleMarcarNoContinua = (registro: ReinscripcionDetallada) => {
+    if (shouldShowCriticalConfirmation(registro)) {
+      setCriticalAction({ variant: 'noContinua', registro });
+      return;
+    }
+
+    marcarNoContinuaMutation.mutate(registro.id);
+  };
+
+  const handleMarcarPendiente = (registro: ReinscripcionDetallada) => {
+    marcarPendienteMutation.mutate(registro.id);
+  };
+
+  const closeCriticalAction = () => setCriticalAction(null);
+
+  const handleCriticalConfirm = () => {
+    if (!criticalAction) {
+      return;
+    }
+
+    const reinscripcionId = criticalAction.registro.id;
+    const variant = criticalAction.variant;
+    closeCriticalAction();
+
+    if (variant === 'confirmado') {
+      confirmarReinscripcionMutation.mutate(reinscripcionId);
+      return;
+    }
+
+    marcarNoContinuaMutation.mutate(reinscripcionId);
+  };
+
+  const isCriticalProcessing =
+    confirmarReinscripcionMutation.isPending || marcarNoContinuaMutation.isPending;
+  const criticalActionLabel =
+    criticalAction?.variant === 'confirmado' ? 'Confirmar reinscripción' : 'Marcar como no continúa';
+  const criticalPasajeroNombre = criticalAction?.registro.pasajeroNombre ?? '';
+  const criticalTitularNombre = criticalAction?.registro.titularNombre;
 
   return (
     <div className="min-h-full w-full bg-[#f6f8f8] dark:bg-[#0f1416] text-[#0f181a] dark:text-white">
@@ -78,13 +151,6 @@ export const ReinscripcionesListPage = () => {
               <h1 className="text-2xl font-bold text-[#0f181a] dark:text-white">Reinscripciones</h1>
               <p className="text-sm text-gray-500">Gestiona el estado de las familias que renovarán el servicio para el próximo ciclo.</p>
             </div>
-            <Button
-              variant="ghost"
-              className="flex items-center justify-center gap-2 rounded-full border border-[#1d8ca5] px-5 py-2 text-[#1d8ca5] hover:bg-[#1d8ca5]/10"
-            >
-              <span className="material-symbols-outlined text-base">download</span>
-              Exportar Reporte
-            </Button>
           </div>
         </header>
 
@@ -155,8 +221,9 @@ export const ReinscripcionesListPage = () => {
                   <>
                     <ReinscripcionList
                       reinscripciones={filteredReinscripciones}
-                      onConfirm={confirmar}
-                      onMarkAsNotContinuing={marcarNoContinua}
+                      onConfirm={handleConfirmReinscripcion}
+                      onMarkAsNotContinuing={handleMarcarNoContinua}
+                      onMarkAsPending={handleMarcarPendiente}
                     />
                     <Pagination
                       currentPage={pageNumber}
@@ -176,6 +243,15 @@ export const ReinscripcionesListPage = () => {
         onClose={() => setIsCreateModalOpen(false)}
         anio={anio}
         onCreated={() => refetch()}
+      />
+      <LastPendingConfirmationModal
+        isOpen={Boolean(criticalAction)}
+        onCancel={closeCriticalAction}
+        onConfirm={handleCriticalConfirm}
+        pasajeroNombre={criticalPasajeroNombre}
+        titularNombre={criticalTitularNombre}
+        actionLabel={criticalActionLabel}
+        isProcessing={isCriticalProcessing}
       />
     </div>
   );

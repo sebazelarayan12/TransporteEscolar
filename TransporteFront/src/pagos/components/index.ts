@@ -7,3 +7,4 @@ export { PaymentDetailPanel } from './PaymentDetailPanel';
 export { PaymentList } from './PaymentList';
 export { RegistrarPagoModal } from './RegistrarPagoModal';
 export { PagosStatusFilters } from './PagosStatusFilters';
+export { PagoDetalleModal } from './PagoDetalleModal';

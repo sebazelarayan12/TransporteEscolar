@@ -47,7 +47,8 @@ public class PasajeroRepository : IPasajeroRepository
             .Include(p => p.Titular)
             .Include(p => p.Reinscripciones)
             .Where(p => p.FechaBaja == null)
-            .Where(p => !p.Reinscripciones.Any(r => r.Anio == anio && r.Estado == "Confirmado"))
+            .Where(p => !p.Reinscripciones.Any(r =>
+                r.Anio == anio && (r.Estado == "Confirmado" || r.Estado == "Pendiente" || r.Estado == "NoContinua")))
             .OrderBy(p => p.Titular.Apellido)
             .ThenBy(p => p.Nombre)
             .ToListAsync(cancellationToken);

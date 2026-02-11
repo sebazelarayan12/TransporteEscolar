@@ -51,4 +51,11 @@ export const reinscripcionesApi = {
   marcarComoNoContinua: async (id: number): Promise<void> => {
     return apiClient.patch<void>(`${BASE_PATH}/${id}/no-continua`);
   },
+
+  /**
+   * PATCH /reinscripciones/{id}/pendiente - Marca como "Pendiente"
+   */
+  marcarComoPendiente: async (id: number): Promise<void> => {
+    return apiClient.patch<void>(`${BASE_PATH}/${id}/pendiente`);
+  },
 };

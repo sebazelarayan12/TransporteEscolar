@@ -123,6 +123,18 @@ public class ReinscripcionService : IReinscripcionService
         await VerificarYGenerarPagosMensualesAsync(reinscripcion.PasajeroId, reinscripcion.Anio);
     }
 
+    public async Task MarcarComoPendienteAsync(int id)
+    {
+        var reinscripcion = await _repository.GetByIdAsync(id);
+        if (reinscripcion == null)
+            throw new KeyNotFoundException($"Reinscripción {id} no encontrada");
+
+        reinscripcion.MarcarComoPendiente();
+        await _repository.UpdateAsync(reinscripcion);
+
+        await VerificarYGenerarPagosMensualesAsync(reinscripcion.PasajeroId, reinscripcion.Anio);
+    }
+
     private static string? NormalizarEstado(string? estado)
     {
         if (string.IsNullOrWhiteSpace(estado))

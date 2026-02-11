@@ -12,7 +12,7 @@ import {
 } from '../../shared/ui';
 import { useDebounce } from '../../shared/hooks/useDebounce';
 import type { PagoEstado, PagoMensual, PagosEstadoFiltro } from '../types/pago.types';
-import { RegistrarPagoModal, PagosStatusFilters } from '../components';
+import { RegistrarPagoModal, PagosStatusFilters, PagoDetalleModal } from '../components';
 
 export const PagosListPage = () => {
   // Initialize with current month
@@ -23,7 +23,19 @@ export const PagosListPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [estadoFiltro, setEstadoFiltro] = useState<PagosEstadoFiltro>('todos');
+  const [selectedPagoId, setSelectedPagoId] = useState<number | null>(null);
+  const [isDetalleModalOpen, setIsDetalleModalOpen] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
+
+  const handleOpenDetalleModal = (pagoId: number) => {
+    setSelectedPagoId(pagoId);
+    setIsDetalleModalOpen(true);
+  };
+
+  const handleCloseDetalleModal = () => {
+    setIsDetalleModalOpen(false);
+    setSelectedPagoId(null);
+  };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -196,7 +208,8 @@ export const PagosListPage = () => {
                           return (
                             <tr
                               key={pago.id}
-                              className="transition-colors hover:bg-gray-50 dark:hover:bg-[#27272a]"
+                              onClick={() => handleOpenDetalleModal(pago.id)}
+                              className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-[#27272a]"
                             >
                               <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                                 <div className="flex flex-col">
@@ -238,7 +251,12 @@ export const PagosListPage = () => {
                     {filteredPagos.map((pago: PagoMensual) => {
                       const estado = getPagoEstado(pago);
                       return (
-                        <div key={pago.id} className="p-4 transition-colors hover:bg-gray-50 dark:hover:bg-[#27272a]">
+                        <button
+                          type="button"
+                          key={pago.id}
+                          onClick={() => handleOpenDetalleModal(pago.id)}
+                          className="w-full cursor-pointer p-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#27272a]"
+                        >
                           <div className="mb-2 flex items-start justify-between">
                             <div>
                               <div>
@@ -274,7 +292,7 @@ export const PagosListPage = () => {
                               </p>
                             </div>
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
@@ -299,6 +317,11 @@ export const PagosListPage = () => {
             refetchPagos();
             refetchEstadisticas();
           }}
+        />
+        <PagoDetalleModal
+          isOpen={isDetalleModalOpen}
+          onClose={handleCloseDetalleModal}
+          pagoId={selectedPagoId}
         />
       </div>
     </div>

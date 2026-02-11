@@ -9,4 +9,5 @@ public interface IReinscripcionService
     Task<ReinscripcionModel.ResponseDetallada> CrearAsync(int pasajeroId, int anio);
     Task ConfirmarAsync(int id);
     Task MarcarComoNoContinuaAsync(int id);
+    Task MarcarComoPendienteAsync(int id);
 }

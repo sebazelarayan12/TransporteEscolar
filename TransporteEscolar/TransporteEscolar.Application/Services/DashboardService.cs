@@ -17,39 +17,33 @@ public class DashboardService : IDashboardService
         int limiteActividad = 6,
         CancellationToken cancellationToken = default)
     {
-        var meses = Math.Max(mesesHistorico, 1);
         var limite = Math.Max(limiteActividad, 1);
 
         var resumen = await _repository.ObtenerResumenAsync(cancellationToken);
 
-        var fechaInicio = CalcularFechaInicio(meses);
+        // Calcular ciclo lectivo (marzo-diciembre del año actual)
+        var anioActual = DateTime.UtcNow.Year;
+        var fechaInicio = new DateTime(anioActual, 3, 1); // Marzo del año actual
+
         var recaudacion = await _repository.ObtenerRecaudacionHistoricoAsync(fechaInicio, cancellationToken);
-        var recaudacionNormalizada = NormalizarRecaudacion(fechaInicio, meses, recaudacion);
+        var recaudacionNormalizada = NormalizarRecaudacionCicloLectivo(anioActual, recaudacion);
 
         var actividadReciente = await _repository.ObtenerActividadRecienteAsync(limite, cancellationToken);
 
         return new DashboardModel.Response(resumen, recaudacionNormalizada, actividadReciente);
     }
 
-    private static DateTime CalcularFechaInicio(int meses)
-    {
-        var referencia = DateTime.UtcNow.Date;
-        var primerDiaMesActual = new DateTime(referencia.Year, referencia.Month, 1);
-        return primerDiaMesActual.AddMonths(-(meses - 1));
-    }
-
-    private static List<DashboardModel.RevenuePoint> NormalizarRecaudacion(
-        DateTime fechaInicio,
-        int meses,
+    private static List<DashboardModel.RevenuePoint> NormalizarRecaudacionCicloLectivo(
+        int anioActual,
         IReadOnlyCollection<DashboardModel.RevenuePoint> datos)
     {
         var mapa = datos.ToDictionary(p => (p.Anio, p.Mes));
-        var resultado = new List<DashboardModel.RevenuePoint>(meses);
+        var resultado = new List<DashboardModel.RevenuePoint>(10);
 
-        for (var i = 0; i < meses; i++)
+        // Recorrer meses 3 (marzo) a 12 (diciembre)
+        for (var mes = 3; mes <= 12; mes++)
         {
-            var fecha = fechaInicio.AddMonths(i);
-            var clave = (fecha.Year, fecha.Month);
+            var clave = (anioActual, mes);
 
             if (mapa.TryGetValue(clave, out var punto))
             {
@@ -64,8 +58,8 @@ public class DashboardService : IDashboardService
             else
             {
                 resultado.Add(new DashboardModel.RevenuePoint(
-                    fecha.Year,
-                    fecha.Month,
+                    anioActual,
+                    mes,
                     0m,
                     0m,
                     0m));

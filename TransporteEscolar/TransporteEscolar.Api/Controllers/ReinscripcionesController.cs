@@ -148,6 +148,28 @@ public class ReinscripcionesController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Marca una reinscripción como "Pendiente"
+    /// </summary>
+    [HttpPatch("{id}/pendiente")]
+    public async Task<ActionResult> MarcarComoPendiente(int id)
+    {
+        try
+        {
+            await _service.MarcarComoPendienteAsync(id);
+            _logger.LogInformation("Reinscripción marcada como pendiente (ID: {Id})", id);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
     private static bool EsEstadoValido(string? estado, out string? estadoNormalizado)
     {
         estadoNormalizado = null;

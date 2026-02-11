@@ -41,4 +41,13 @@ public class ReinscripcionPasajero
         Estado = "NoContinua";
         FechaConfirmacion = DateTime.UtcNow.Date;
     }
+
+    public void MarcarComoPendiente()
+    {
+        if (Estado == "Pendiente")
+            throw new InvalidOperationException("La reinscripción ya está en estado pendiente");
+
+        Estado = "Pendiente";
+        FechaConfirmacion = null;
+    }
 }

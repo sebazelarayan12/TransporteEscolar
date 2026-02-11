@@ -71,7 +71,6 @@ export const DashboardPage = () => {
     return 'No se pudieron cargar los datos del dashboard.';
   };
   const adminDisplayName = 'Esteban Albornoz';
-  const adminFirstName = adminDisplayName.split(' ')[0] ?? adminDisplayName;
   const adminInitials = getNameInitials(adminDisplayName);
 
   return (
@@ -109,7 +108,7 @@ export const DashboardPage = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-medium uppercase tracking-wide text-gray-500">Resumen general</p>
-            <h2 className="text-3xl font-bold text-[#0f181a] dark:text-white">Hola, {adminFirstName} 👋</h2>
+            <h2 className="text-3xl font-bold text-[#0f181a] dark:text-white">Hola Estela y Esteban 👋</h2>
             <p className="text-sm text-gray-500">Conoce rápidamente el estado del servicio de transporte escolar.</p>
           </div>
           <div className={`flex items-center gap-2 rounded-full border px-3 py-1 shadow-sm ${
@@ -209,7 +208,7 @@ export const DashboardPage = () => {
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
             <div>
               <h3 className="text-lg font-bold text-[#0f181a] dark:text-white">Recaudación</h3>
-              <p className="text-xs text-gray-500">Últimos 6 meses</p>
+              <p className="text-xs text-gray-500">Ciclo lectivo (Mar-Dic)</p>
             </div>
             <div className="ml-auto flex rounded-2xl border border-[#e1e8ec] bg-[#f6f8f8] p-1 dark:border-white/5 dark:bg-[#0f1416] w-full sm:w-auto">
               <button
@@ -226,10 +225,10 @@ export const DashboardPage = () => {
               </button>
             </div>
           </div>
-          <div className="flex h-48 items-end gap-3">
+          <div className="flex h-48 items-end gap-2 overflow-x-auto pb-2 -mx-2 px-2 no-scrollbar sm:gap-3 sm:overflow-x-visible sm:mx-0 sm:px-0">
             {showChartSkeleton &&
-              Array.from({ length: 6 }).map((_, index) => (
-                <div key={`chart-skeleton-${index}`} className="flex flex-1 flex-col items-center gap-2">
+              Array.from({ length: 10 }).map((_, index) => (
+                <div key={`chart-skeleton-${index}`} className="flex min-w-[40px] flex-1 flex-col items-center gap-2 sm:min-w-0">
                   <div className="relative w-full rounded-2xl bg-[#e9eff2] dark:bg-white/5" style={{ height: '160px' }}>
                     <div
                       className="absolute inset-x-0 bottom-0 rounded-2xl bg-[#8ed2df] dark:bg-white/10 animate-pulse"
@@ -244,7 +243,7 @@ export const DashboardPage = () => {
                 const percent = Math.min(((point.totalPagado ?? 0) / maxValue) * 100, 100);
                 const isLatest = index === chartData.length - 1;
                 return (
-                  <div key={`${point.anio}-${point.mes}`} className="flex flex-1 flex-col items-center gap-2">
+                  <div key={`${point.anio}-${point.mes}`} className="flex min-w-[40px] flex-1 flex-col items-center gap-2 sm:min-w-0">
                     <div className="relative w-full rounded-2xl bg-[#e9eff2] dark:bg-white/5" style={{ height: '160px' }}>
                       {isLatest && point.totalPagado > 0 && (
                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 rounded-full bg-[#0f181a] px-2 py-1 text-[10px] font-semibold text-white shadow-sm dark:bg-white/10 dark:text-white">
