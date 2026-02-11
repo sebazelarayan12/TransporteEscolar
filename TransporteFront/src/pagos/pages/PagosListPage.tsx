@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { usePagosPaginados, useEstadisticasMes } from '../services/pagos.queries';
 import { getPagoEstado } from '../helpers/periodo.helpers';
 import {
@@ -108,15 +109,24 @@ export const PagosListPage = () => {
               <h1 className="text-2xl font-bold text-[#0f181a] dark:text-white">Pagos y Recaudación</h1>
               <p className="text-sm text-gray-500">Seguimiento en tiempo real de vencimientos, saldos y registros manuales.</p>
             </div>
-            <Button
-              type="button"
-              variant="brand"
-              onClick={() => setIsRegisterModalOpen(true)}
-              className="flex items-center justify-center gap-2 rounded-full px-5 py-2 font-semibold"
-            >
-              <span className="material-symbols-outlined text-[20px]">payments</span>
-              Registrar Pago
-            </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                to="/pagos/movimientos"
+                className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-[#1d8ca5]/60 hover:text-[#1d8ca5]"
+              >
+                <span className="material-symbols-outlined text-[18px]">history</span>
+                Ver historial
+              </Link>
+              <Button
+                type="button"
+                variant="brand"
+                onClick={() => setIsRegisterModalOpen(true)}
+                className="flex items-center justify-center gap-2 rounded-full px-5 py-2 font-semibold"
+              >
+                <span className="material-symbols-outlined text-[20px]">payments</span>
+                Registrar Pago
+              </Button>
+            </div>
           </div>
         </header>
 

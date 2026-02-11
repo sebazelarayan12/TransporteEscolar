@@ -10,6 +10,7 @@ import { TitularPhoneEditModal } from '../components/TitularPhoneEditModal';
 import { useToast } from '../../shared/hooks';
 import type { UpdateTitularFormData } from '../schemas/titular.schema';
 import type { TitularTelefonoResponse } from '../types/titular.types';
+import { formatCurrency } from '../../shared/utils/currency.helpers';
 
 const formatDate = (value: string | null) => {
   if (!value) return null;
@@ -17,9 +18,6 @@ const formatDate = (value: string | null) => {
   return formatter.format(new Date(value));
 };
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value);
-};
 
 export const TitularDetailPage = () => {
   const { id } = useParams<{ id: string }>();

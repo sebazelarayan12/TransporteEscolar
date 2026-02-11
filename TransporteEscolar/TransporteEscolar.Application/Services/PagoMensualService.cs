@@ -106,6 +106,39 @@ public class PagoMensualService : IPagoMensualService
         return new PaginationModel.ResponsePagination<TitularModel.Response>(data, totalCount);
     }
 
+    public async Task<PaginationModel.ResponsePagination<PagoMovimientoModel.Response>> ObtenerMovimientosAsync(
+        PagoMovimientoModel.FilterRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var hoy = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var fechaDesde = request.FechaDesde ?? hoy.AddDays(-30);
+        var fechaHasta = request.FechaHasta ?? hoy;
+
+        if (fechaHasta < fechaDesde)
+            throw new ValidationException("fechaHasta debe ser mayor o igual a fechaDesde.");
+
+        if (request.PageNumber <= 0 || request.PageSize <= 0)
+            throw new ValidationException("pageNumber y pageSize deben ser mayores a 0.");
+
+        var fechaDesdeDateTime = fechaDesde.ToDateTime(TimeOnly.MinValue);
+        var fechaHastaExclusive = fechaHasta.ToDateTime(TimeOnly.MinValue).AddDays(1);
+
+        var (movimientos, totalCount) = await _repository.ObtenerMovimientosAsync(
+            fechaDesdeDateTime,
+            fechaHastaExclusive,
+            request.TitularId,
+            request.MedioPago,
+            request.PageNumber,
+            request.PageSize,
+            cancellationToken);
+
+        var data = movimientos
+            .Select(MapearMovimiento)
+            .ToList();
+
+        return new PaginationModel.ResponsePagination<PagoMovimientoModel.Response>(data, totalCount);
+    }
+
     public async Task<PagoMensualModel.EstadisticasMes> ObtenerEstadisticasMesAsync(
         int mes, 
         int anio, 
@@ -264,4 +297,29 @@ public class PagoMensualService : IPagoMensualService
             pagoMensual.Observaciones,
             pagoMensual.Movimientos.Select(m => new PagoMensualModel.MovimientoResponse(
                 m.Id, m.Monto, m.FechaPago, m.MedioPago, m.Observaciones)).ToList());
+
+    private static PagoMovimientoModel.Response MapearMovimiento(PagoMovimiento movimiento)
+    {
+        var pagoMensual = movimiento.PagoMensual;
+        var titular = pagoMensual?.Titular;
+        var titularApellido = titular?.Apellido ?? string.Empty;
+        var titularNombre = titular?.NombreContacto ?? string.Empty;
+        var titularNombreCompleto = string.Join(" ", new[] { titularApellido, titularNombre }
+            .Where(value => !string.IsNullOrWhiteSpace(value))).Trim();
+
+        return new PagoMovimientoModel.Response(
+            movimiento.Id,
+            movimiento.PagoMensualId,
+            pagoMensual?.TitularId ?? 0,
+            titularApellido,
+            titularNombre,
+            titularNombreCompleto,
+            pagoMensual?.Mes ?? 0,
+            pagoMensual?.Anio ?? 0,
+            pagoMensual is null ? string.Empty : $"{pagoMensual.Mes:D2}/{pagoMensual.Anio}",
+            movimiento.FechaPago,
+            movimiento.Monto,
+            movimiento.MedioPago,
+            movimiento.Observaciones);
+    }
 }

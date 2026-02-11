@@ -11,21 +11,31 @@ const LayoutContentFallback = () => (
   </div>
 );
 
+type NavigationItem = {
+  name: string;
+  href: string;
+  icon: string;
+  match?: 'exact' | 'startsWith';
+};
+
 export const MainLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const navigation = [
-    { name: 'Dashboard', href: '/', icon: 'dashboard' },
-    { name: 'Titulares', href: '/titulares', icon: 'group' },
-    { name: 'Pasajeros', href: '/pasajeros', icon: 'face' },
-    { name: 'Reinscripciones', href: '/reinscripciones', icon: 'assignment_returned' },
-    { name: 'Pagos', href: '/pagos', icon: 'payments' },
+  const navigation: NavigationItem[] = [
+    { name: 'Dashboard', href: '/', icon: 'dashboard', match: 'exact' },
+    { name: 'Titulares', href: '/titulares', icon: 'group', match: 'startsWith' },
+    { name: 'Pasajeros', href: '/pasajeros', icon: 'face', match: 'startsWith' },
+    { name: 'Reinscripciones', href: '/reinscripciones', icon: 'assignment_returned', match: 'startsWith' },
+    { name: 'Pagos', href: '/pagos', icon: 'payments', match: 'exact' },
+    { name: 'Historial de movimientos', href: '/pagos/movimientos', icon: 'history', match: 'startsWith' },
   ];
 
-  const isActive = (path: string) => {
-    if (path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(path);
+  const isActive = (item: NavigationItem) => {
+    if (item.match === 'exact') {
+      return location.pathname === item.href;
+    }
+    return location.pathname === item.href || location.pathname.startsWith(`${item.href}/`);
   };
 
   const closeSidebar = () => setSidebarOpen(false);
@@ -74,13 +84,13 @@ export const MainLayout = () => {
               className={`
                 flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group
                 ${
-                  isActive(item.href)
+                  isActive(item)
                     ? 'bg-[#007a8a]/10 text-[#007a8a] dark:text-cyan-400 font-semibold shadow-sm ring-1 ring-[#007a8a]/20 dark:ring-[#007a8a]/40'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
                 }
               `}
             >
-              <span className={`material-symbols-outlined text-[22px] transition-colors ${isActive(item.href) ? '[font-variation-settings:\'FILL\'_1]' : 'group-hover:text-[#007a8a]'}`}>
+              <span className={`material-symbols-outlined text-[22px] transition-colors ${isActive(item) ? "[font-variation-settings:'FILL'_1]" : 'group-hover:text-[#007a8a]'}`}>
                 {item.icon}
               </span>
               <span className="text-sm font-medium">{item.name}</span>
@@ -119,7 +129,7 @@ export const MainLayout = () => {
             </button>
             
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              {navigation.find((item) => isActive(item.href))?.name || 'Dashboard'}
+              {navigation.find((item) => isActive(item))?.name || 'Dashboard'}
             </h2>
           </div>
         </header>

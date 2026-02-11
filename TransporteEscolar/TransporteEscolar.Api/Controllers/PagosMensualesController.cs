@@ -95,6 +95,33 @@ public class PagosMensualesController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene el historial paginado de movimientos registrados
+    /// </summary>
+    [HttpGet("movimientos")]
+    public async Task<ActionResult<PaginationModel.ResponsePagination<PagoMovimientoModel.Response>>> GetMovimientos(
+        [FromQuery] DateOnly? fechaDesde,
+        [FromQuery] DateOnly? fechaHasta,
+        [FromQuery] int? titularId,
+        [FromQuery] string? medioPago,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        if (pageNumber <= 0 || pageSize <= 0)
+            return BadRequest("pageNumber y pageSize deben ser mayores a 0.");
+
+        var request = new PagoMovimientoModel.FilterRequest(
+            fechaDesde,
+            fechaHasta,
+            titularId,
+            medioPago,
+            pageNumber,
+            pageSize);
+
+        var resultado = await _service.ObtenerMovimientosAsync(request);
+        return Ok(resultado);
+    }
+
+    /// <summary>
     /// Obtiene pagos por titular
     /// </summary>
     [HttpGet("titular/{titularId}")]

@@ -1,4 +1,5 @@
 import type { PagoMensual, PaymentStatus } from '../types/pago.types';
+import { formatDateOnlyCompact } from '../../shared/utils/date.helpers';
 
 interface PaymentCardProps {
   pago: PagoMensual;
@@ -77,7 +78,7 @@ export const PaymentCard = ({ pago, isSelected, onSelect, status }: PaymentCardP
           </div>
         </div>
         <div className="mt-2 text-xs text-gray-500">
-          Vence {new Date(pago.fechaVencimiento).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+          Vence {formatDateOnlyCompact(pago.fechaVencimiento)}
         </div>
       </div>
     </button>

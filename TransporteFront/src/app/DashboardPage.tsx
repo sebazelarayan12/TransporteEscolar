@@ -3,6 +3,7 @@ import { useBackendHealth } from '../shared/hooks/useBackendHealth';
 import { useDashboardResumen } from './services/dashboard.queries';
 import { Spinner } from '../shared/ui/Spinner';
 import { Alert } from '../shared/ui/Alert';
+import { formatCurrency } from '../shared/utils/currency.helpers';
 
 const quickActions = [
   {
@@ -50,8 +51,6 @@ export const DashboardPage = () => {
   const showChartSkeleton = isLoading && chartData.length === 0;
   const showActivitySpinner = isLoading && activityItems.length === 0;
 
-  const currencyFormatter = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
-  const formatCurrency = (value?: number) => currencyFormatter.format(value ?? 0);
   const formatMonth = (anio: number, mes: number) =>
     new Date(anio, mes - 1).toLocaleString('es-AR', { month: 'short' }).replace('.', '');
   const formatFechaCorta = (iso: string) =>

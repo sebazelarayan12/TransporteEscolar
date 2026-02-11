@@ -1,4 +1,5 @@
 import type { PagoMovimiento } from '../types/pago.types';
+import { formatDateOnly } from '../../shared/utils/date.helpers';
 
 interface PaymentHistoryProps {
   movimientos: PagoMovimiento[];
@@ -29,7 +30,7 @@ export const PaymentHistory = ({ movimientos }: PaymentHistoryProps) => {
             <div className="flex items-start justify-between text-gray-500">
               <span className="font-bold text-[#0f181a] dark:text-white">Pago registrado</span>
               <span className="text-xs">
-                {new Date(movimiento.fechaPago).toLocaleDateString('es-AR', {
+                {formatDateOnly(movimiento.fechaPago, {
                   day: 'numeric',
                   month: 'short',
                   hour: '2-digit',

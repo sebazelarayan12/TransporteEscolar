@@ -1,17 +1,6 @@
 import type { PagoMensual, PagoEstado } from '../types/pago.types';
 
 /**
- * Formatea un monto a moneda argentina
- */
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 2,
-  }).format(amount);
-}
-
-/**
  * Determina el estado de un pago mensual
  */
 export function getPagoEstado(pago: PagoMensual): PagoEstado {

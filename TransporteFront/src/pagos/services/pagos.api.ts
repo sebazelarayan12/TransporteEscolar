@@ -1,6 +1,13 @@
 import { apiClient } from '../../api/client';
 import type { TitularFilterRequest, TitularPaginationResponse } from '../../titulares/types/titular.types';
-import type { PagoMensual, RegistrarPagoRequest, PagoFilterRequest, PagoPaginationResponse, EstadisticasMes } from '../types/pago.types';
+import type {
+  PagoMensual,
+  RegistrarPagoRequest,
+  PagoFilterRequest,
+  PagoPaginationResponse,
+  EstadisticasMes,
+} from '../types/pago.types';
+import type { MovimientosFilterRequest, MovimientosPaginationResponse } from '../types/movimientos.types';
 
 const BASE_PATH = '/pagosmensuales';
 
@@ -102,5 +109,27 @@ export const pagosApi = {
     });
     
     return apiClient.get<EstadisticasMes>(`${BASE_PATH}/estadisticas?${searchParams}`);
+  },
+
+  /**
+   * GET /pagosmensuales/movimientos - Obtiene el historial paginado de movimientos registrados
+   */
+  getMovimientos: async (filter: MovimientosFilterRequest): Promise<MovimientosPaginationResponse> => {
+    const params = new URLSearchParams();
+
+    params.append('fechaDesde', filter.fechaDesde);
+    params.append('fechaHasta', filter.fechaHasta);
+    params.append('pageNumber', filter.pageNumber.toString());
+    params.append('pageSize', filter.pageSize.toString());
+
+    if (typeof filter.titularId === 'number') {
+      params.append('titularId', filter.titularId.toString());
+    }
+
+    if (filter.medioPago) {
+      params.append('medioPago', filter.medioPago);
+    }
+
+    return apiClient.get<MovimientosPaginationResponse>(`${BASE_PATH}/movimientos?${params}`);
   },
 };

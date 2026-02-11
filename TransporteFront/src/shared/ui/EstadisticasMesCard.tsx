@@ -1,3 +1,5 @@
+import { formatCurrency } from '../utils/currency.helpers';
+
 interface EstadisticasMes {
   totalPagos: number;
   cantidadPagados: number;
@@ -10,14 +12,6 @@ interface EstadisticasMes {
 interface EstadisticasMesCardProps {
   estadisticas: EstadisticasMes;
 }
-
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 2,
-  }).format(amount);
-};
 
 export const EstadisticasMesCard = ({ estadisticas }: EstadisticasMesCardProps) => {
   return (

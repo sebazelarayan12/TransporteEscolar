@@ -1,6 +1,6 @@
 import { Modal, Spinner, ErrorState, EmptyState } from '../../shared/ui';
 import { usePagoDetalle } from '../services/pagos.queries';
-import { formatCurrency } from '../helpers/periodo.helpers';
+import { formatCurrency } from '../../shared/utils/currency.helpers';
 
 interface PagoDetalleModalProps {
   isOpen: boolean;

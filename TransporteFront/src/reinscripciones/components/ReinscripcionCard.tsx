@@ -1,4 +1,5 @@
 import type { ReinscripcionDetallada, ReinscripcionEstado } from '../types/reinscripcion.types';
+import { formatDateOnlyCompact } from '../../shared/utils/date.helpers';
 
 const statusConfig: Record<ReinscripcionEstado, { label: string; chip: string; card: string; foreground: string }> = {
   Confirmado: {
@@ -155,13 +156,13 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
       <div className="flex items-center gap-3 pt-1 text-xs text-gray-400">
         <span className="inline-flex items-center gap-1 text-[#1d8ca5]">
           <span className="material-symbols-outlined text-[16px]">timeline</span>
-          Creada {new Date(registro.fechaCreacion).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+          Creada {formatDateOnlyCompact(registro.fechaCreacion)}
         </span>
         {registro.fechaConfirmacion && (
           <>
             <span>•</span>
             <span>
-              Confirmada {new Date(registro.fechaConfirmacion).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+              Confirmada {formatDateOnlyCompact(registro.fechaConfirmacion)}
             </span>
           </>
         )}

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { pagosApi } from './pagos.api';
 import type { RegistrarPagoRequest } from '../types/pago.types';
+import type { MovimientosFilterRequest } from '../types/movimientos.types';
 
 export const QUERY_KEYS = {
   pagos: ['pagos'] as const,
@@ -14,6 +15,7 @@ export const QUERY_KEYS = {
   pendientes: ['pagos', 'pendientes'] as const,
   titularesConPagos: (search: string, pageNumber: number, pageSize: number) =>
     ['pagos', 'titulares-con-pagos', search, pageNumber, pageSize] as const,
+  movimientos: (filter: MovimientosFilterRequest) => ['pagos', 'movimientos', filter] as const,
 };
 
 /**
@@ -131,7 +133,14 @@ export function usePagosPorTitular(titularId: number | null) {
 /**
  * Hook para obtener titulares con cuotas generadas
  */
-export function useTitularesConPagos(search: string, pageNumber: number, pageSize: number = 10) {
+export function useTitularesConPagos(
+  search: string,
+  pageNumber: number,
+  pageSize: number = 10,
+  options?: { enabled?: boolean }
+) {
+  const enabled = options?.enabled ?? true;
+
   return useQuery({
     queryKey: QUERY_KEYS.titularesConPagos(search, pageNumber, pageSize),
     queryFn: async () => {
@@ -141,6 +150,22 @@ export function useTitularesConPagos(search: string, pageNumber: number, pageSiz
         pageSize,
       });
     },
+    enabled,
+    placeholderData: (previousData) => previousData,
+    staleTime: 30000,
+  });
+}
+
+/**
+ * Hook para obtener el historial paginado de movimientos registrando todos los filtros
+ */
+export function usePagosMovimientos(filter: MovimientosFilterRequest) {
+  return useQuery({
+    queryKey: QUERY_KEYS.movimientos(filter),
+    queryFn: async () => {
+      return await pagosApi.getMovimientos(filter);
+    },
+    enabled: Boolean(filter.fechaDesde && filter.fechaHasta),
     placeholderData: (previousData) => previousData,
     staleTime: 30000,
   });

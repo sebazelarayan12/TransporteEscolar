@@ -82,6 +82,49 @@ public class PagoMensualRepository : IPagoMensualRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<(List<PagoMovimiento> Movimientos, int TotalCount)> ObtenerMovimientosAsync(
+        DateTime fechaDesde,
+        DateTime fechaHasta,
+        int? titularId,
+        string? medioPago,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var safePageNumber = Math.Max(pageNumber, 1);
+        var safePageSize = Math.Max(pageSize, 1);
+
+        var movimientosQuery = _context.PagosMovimientos
+            .AsNoTracking()
+            .Include(m => m.PagoMensual)
+                .ThenInclude(p => p.Titular)
+            .Where(m => m.FechaPago >= fechaDesde && m.FechaPago < fechaHasta);
+
+        if (titularId.HasValue)
+        {
+            movimientosQuery = movimientosQuery.Where(m => m.PagoMensual != null && m.PagoMensual.TitularId == titularId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(medioPago))
+        {
+            var normalizedMedioPago = medioPago.Trim().ToUpper();
+            movimientosQuery = movimientosQuery.Where(m => m.MedioPago.ToUpper() == normalizedMedioPago);
+        }
+
+        var totalCount = await movimientosQuery.CountAsync(cancellationToken);
+
+        var orderedQuery = movimientosQuery
+            .OrderByDescending(m => m.FechaPago)
+            .ThenByDescending(m => m.Id);
+
+        var movimientos = await orderedQuery
+            .Skip((safePageNumber - 1) * safePageSize)
+            .Take(safePageSize)
+            .ToListAsync(cancellationToken);
+
+        return (movimientos, totalCount);
+    }
+
     public async Task<(List<Titular> Titulares, int TotalCount)> GetTitularesConPagosAsync(
         string? search,
         int pageNumber,

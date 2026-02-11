@@ -31,6 +31,9 @@ const ReinscripcionesListPage = lazy(() =>
 const PagosListPage = lazy(() =>
   import('./pagos/pages/PagosListPage').then((module) => ({ default: module.PagosListPage }))
 );
+const PagosMovimientosPage = lazy(() =>
+  import('./pagos/pages/PagosMovimientosPage').then((module) => ({ default: module.PagosMovimientosPage }))
+);
 const NotFoundPage = lazy(() =>
   import('./app/NotFoundPage').then((module) => ({ default: module.NotFoundPage }))
 );
@@ -62,6 +65,7 @@ function App() {
               <Route path="reinscripciones" element={<ReinscripcionesListPage />} />
               {/* <Route path="reinscripciones/nueva" element={<ReinscripcionCreatePage />} /> */}
               <Route path="pagos" element={<PagosListPage />} />
+              <Route path="pagos/movimientos" element={<PagosMovimientosPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
