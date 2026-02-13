@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ['dotnet-sdk_8']
+
+[phases.build]
+cmds = [
+  'dotnet restore TransporteEscolar.Api/TransporteEscolar.Api.csproj',
+  'dotnet publish TransporteEscolar.Api/TransporteEscolar.Api.csproj -c Release -o out'
+]
+
+[start]
+cmd = 'dotnet out/TransporteEscolar.Api.dll'
