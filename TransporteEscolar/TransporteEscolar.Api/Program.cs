@@ -80,16 +80,19 @@ namespace TransporteEscolar.Api
             app.UseAuthorization();
             app.MapControllers();
 
-            // ===== AMBIENTE DE TESTING =====
-            // Descomentar las líneas de abajo para habilitar el seeder de datos de prueba
-            // NOTA: Esto solo se ejecuta en el ambiente "Testing" y NO toca la base de datos de producción
+            // ===== AUTO-MIGRATION Y SEED =====
+            // Ejecuta migraciones automáticamente y carga datos iniciales si la BD está vacía
+            // Funciona en entornos Development, Testing y Production
             
-            if (app.Environment.IsEnvironment("Testing"))
+            using (var scope = app.Services.CreateScope())
             {
-                using var scope = app.Services.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                
+                // Ejecutar migraciones pendientes
                 context.Database.Migrate();
-                TransporteEscolar.Infrastructure.Persistence.Seeders.TestDataSeeder.SeedTestData(context);
+                
+                // Cargar datos iniciales (solo si la tabla Titulares está vacía)
+                DatabaseSeeder.SeedDevelopmentDataAsync(context).Wait();
             }
             // ===============================
 
