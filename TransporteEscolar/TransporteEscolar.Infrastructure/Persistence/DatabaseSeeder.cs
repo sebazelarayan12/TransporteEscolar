@@ -7,18 +7,18 @@ public static class DatabaseSeeder
 {
     public static async Task SeedDevelopmentDataAsync(AppDbContext context)
     {
-        // Solo ejecutar en desarrollo y si la DB está vacía
+        // Solo ejecutar en desarrollo y si la DB estï¿½ vacï¿½a
         if (await context.Titulares.AnyAsync())
             return;
 
         var titulares = new[]
         {
-            new Titular("González", "María González", "Calle Falsa 123", 50000m),
-            new Titular("Pérez", "Juan Pérez", "Av. Siempreviva 742", 45000m),
-            new Titular("Rodríguez", "Ana Rodríguez", "Pasaje Los Álamos 456", 55000m)
+            new Titular("Gonzï¿½lez", "Marï¿½a Gonzï¿½lez", "Calle Falsa 123", 50000m),
+            new Titular("Pï¿½rez", "Juan Pï¿½rez", "Av. Siempreviva 742", 45000m),
+            new Titular("Rodrï¿½guez", "Ana Rodrï¿½guez", "Pasaje Los ï¿½lamos 456", 55000m)
         };
 
         context.Titulares.AddRange(titulares);
         await context.SaveChangesAsync();
-    }
+    } /*hola*/
 }
