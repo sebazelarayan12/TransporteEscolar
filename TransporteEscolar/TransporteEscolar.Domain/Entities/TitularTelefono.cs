@@ -21,7 +21,7 @@ public class TitularTelefono
         TitularId = titularId;
         NumeroE164 = numeroE164;
         EsPrincipal = esPrincipal;
-        FechaAlta = DateTime.UtcNow.Date;
+        FechaAlta = NormalizarFechaUtc(DateTime.UtcNow);
     }
 
     public void MarcarComoPrincipal()
@@ -36,7 +36,7 @@ public class TitularTelefono
 
     public void DarDeBaja()
     {
-        FechaBaja = DateTime.UtcNow;
+        FechaBaja = NormalizarFechaUtc(DateTime.UtcNow);
         EsPrincipal = false;
     }
 
@@ -51,5 +51,17 @@ public class TitularTelefono
             throw new ArgumentException("El número de teléfono no puede estar vacío", nameof(nuevoNumero));
         
         NumeroE164 = nuevoNumero;
+    }
+
+    private static DateTime NormalizarFechaUtc(DateTime valor)
+    {
+        var fechaUtc = valor.Kind switch
+        {
+            DateTimeKind.Utc => valor,
+            DateTimeKind.Local => valor.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(valor, DateTimeKind.Utc)
+        };
+
+        return DateTime.SpecifyKind(fechaUtc.Date, DateTimeKind.Utc);
     }
 }

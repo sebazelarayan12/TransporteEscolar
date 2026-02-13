@@ -1,9 +1,9 @@
 Ver versión (smoke test)
 
-docker compose exec sqlserver bash -lc '/opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -P "$MSSQL_SA_PASSWORD" -C -Q "SELECT @@VERSION;"'
+docker compose exec postgres psql -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-TransporteEscolarDb} -c "SELECT version();"
 Ver bases (útil para confirmar DB)
 
-docker compose exec sqlserver bash -lc '/opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -P "$MSSQL_SA_PASSWORD" -C -Q "SELECT name FROM sys.databases;"'
+docker compose exec postgres psql -U ${POSTGRES_USER:-postgres} -c "\l"
 
 
 ambiente de testing

@@ -16,7 +16,7 @@ public class DashboardRepository : IDashboardRepository
 
     public async Task<DashboardModel.Summary> ObtenerResumenAsync(CancellationToken cancellationToken = default)
     {
-        var hoy = DateTime.UtcNow.Date;
+        var hoy = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
         var mesActual = hoy.Month;
         var anioActual = hoy.Year;
 
@@ -64,7 +64,7 @@ public class DashboardRepository : IDashboardRepository
         DateTime fechaInicio,
         CancellationToken cancellationToken = default)
     {
-        var inicio = new DateTime(fechaInicio.Year, fechaInicio.Month, 1);
+        var inicio = new DateTime(fechaInicio.Year, fechaInicio.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var inicioYear = inicio.Year;
         var inicioMes = inicio.Month;
 

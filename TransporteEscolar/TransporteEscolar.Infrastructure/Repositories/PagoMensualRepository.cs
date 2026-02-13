@@ -46,7 +46,7 @@ public class PagoMensualRepository : IPagoMensualRepository
 
     public async Task<List<PagoMensual>> GetVencidosAsync(CancellationToken cancellationToken = default)
     {
-        var hoy = DateTime.UtcNow.Date;
+        var hoy = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
         return await _context.PagosMensuales
             .Include(p => p.Titular)
             .Include(p => p.Movimientos)
@@ -93,12 +93,14 @@ public class PagoMensualRepository : IPagoMensualRepository
     {
         var safePageNumber = Math.Max(pageNumber, 1);
         var safePageSize = Math.Max(pageSize, 1);
+        var fechaDesdeUtc = NormalizarUtc(fechaDesde);
+        var fechaHastaUtc = NormalizarUtc(fechaHasta);
 
         var movimientosQuery = _context.PagosMovimientos
             .AsNoTracking()
             .Include(m => m.PagoMensual)
                 .ThenInclude(p => p.Titular)
-            .Where(m => m.FechaPago >= fechaDesde && m.FechaPago < fechaHasta);
+            .Where(m => m.FechaPago >= fechaDesdeUtc && m.FechaPago < fechaHastaUtc);
 
         if (titularId.HasValue)
         {
@@ -123,6 +125,16 @@ public class PagoMensualRepository : IPagoMensualRepository
             .ToListAsync(cancellationToken);
 
         return (movimientos, totalCount);
+    }
+
+    private static DateTime NormalizarUtc(DateTime valor)
+    {
+        return valor.Kind switch
+        {
+            DateTimeKind.Utc => valor,
+            DateTimeKind.Local => valor.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(valor, DateTimeKind.Utc)
+        };
     }
 
     public async Task<(List<Titular> Titulares, int TotalCount)> GetTitularesConPagosAsync(

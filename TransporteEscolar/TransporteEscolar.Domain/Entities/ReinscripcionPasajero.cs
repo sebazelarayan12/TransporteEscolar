@@ -21,7 +21,7 @@ public class ReinscripcionPasajero
         PasajeroId = pasajeroId;
         Anio = anio;
         Estado = "Pendiente";
-        FechaCreacion = DateTime.UtcNow.Date;
+        FechaCreacion = NormalizarFechaUtc(DateTime.UtcNow);
     }
 
     public void Confirmar()
@@ -30,7 +30,7 @@ public class ReinscripcionPasajero
             throw new InvalidOperationException("Solo se puede confirmar una reinscripción pendiente");
 
         Estado = "Confirmado";
-        FechaConfirmacion = DateTime.UtcNow.Date;
+        FechaConfirmacion = NormalizarFechaUtc(DateTime.UtcNow);
     }
 
     public void MarcarComoNoContinua()
@@ -39,7 +39,7 @@ public class ReinscripcionPasajero
             throw new InvalidOperationException("Solo se puede marcar como no continúa una reinscripción pendiente");
 
         Estado = "NoContinua";
-        FechaConfirmacion = DateTime.UtcNow.Date;
+        FechaConfirmacion = NormalizarFechaUtc(DateTime.UtcNow);
     }
 
     public void MarcarComoPendiente()
@@ -49,5 +49,17 @@ public class ReinscripcionPasajero
 
         Estado = "Pendiente";
         FechaConfirmacion = null;
+    }
+
+    private static DateTime NormalizarFechaUtc(DateTime valor)
+    {
+        var fechaUtc = valor.Kind switch
+        {
+            DateTimeKind.Utc => valor,
+            DateTimeKind.Local => valor.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(valor, DateTimeKind.Utc)
+        };
+
+        return DateTime.SpecifyKind(fechaUtc.Date, DateTimeKind.Utc);
     }
 }

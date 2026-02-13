@@ -25,8 +25,18 @@ public class PagoMovimiento
     {
         PagoMensualId = pagoMensualId;
         Monto = monto;
-        FechaPago = fechaPago;
+        FechaPago = NormalizarFechaUtc(fechaPago);
         MedioPago = medioPago;
         Observaciones = observaciones;
+    }
+
+    private static DateTime NormalizarFechaUtc(DateTime valor)
+    {
+        return valor.Kind switch
+        {
+            DateTimeKind.Utc => valor,
+            DateTimeKind.Local => valor.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(valor, DateTimeKind.Utc)
+        };
     }
 }

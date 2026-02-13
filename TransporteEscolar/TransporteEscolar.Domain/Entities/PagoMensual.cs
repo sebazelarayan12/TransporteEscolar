@@ -32,7 +32,7 @@ public class PagoMensual
         Mes = mes;
         Anio = anio;
         MontoGenerado = montoGenerado;
-        FechaVencimiento = new DateTime(anio, mes, 10); // Vence día 10 de cada mes
+        FechaVencimiento = CrearFechaVencimiento(anio, mes);
         Observaciones = observaciones;
         Movimientos = new List<PagoMovimiento>();
     }
@@ -49,7 +49,7 @@ public class PagoMensual
 
     public bool EstaVencido()
     {
-        var hoy = DateTime.UtcNow.Date;
+        var hoy = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
         return hoy > FechaVencimiento.Date && !EstaPagado();
     }
 
@@ -62,5 +62,10 @@ public class PagoMensual
     public void ActualizarObservaciones(string? observaciones)
     {
         Observaciones = observaciones;
+    }
+
+    private static DateTime CrearFechaVencimiento(int anio, int mes)
+    {
+        return new DateTime(anio, mes, 10, 0, 0, 0, DateTimeKind.Utc);
     }
 }

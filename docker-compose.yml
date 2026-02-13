@@ -1,13 +1,14 @@
 services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+  postgres:
+    image: postgres:16-alpine
     environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-TransporteEscolarDb}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-ChangeMe}
     ports:
-      - "1433:1433"
+      - "5432:5432"
     volumes:
-      - sql_data_volume:/var/opt/mssql
+      - postgres_data_volume:/var/lib/postgresql/data
     restart: unless-stopped
 
   # api:  # ← COMENTADO para desarrollo local
@@ -15,7 +16,7 @@ services:
   #     context: ./TransporteEscolar
   #     dockerfile: TransporteEscolar.Api/Dockerfile
   #   depends_on:
-  #     - sqlserver
+  #     - postgres
   #   ports:
   #     - "8080:8080"
   #   environment:
@@ -25,4 +26,4 @@ services:
   #   restart: unless-stopped
 
 volumes:
-  sql_data_volume:
+  postgres_data_volume:

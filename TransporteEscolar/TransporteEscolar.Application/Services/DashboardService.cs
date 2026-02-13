@@ -23,7 +23,7 @@ public class DashboardService : IDashboardService
 
         // Calcular ciclo lectivo (marzo-diciembre del año actual)
         var anioActual = DateTime.UtcNow.Year;
-        var fechaInicio = new DateTime(anioActual, 3, 1); // Marzo del año actual
+        var fechaInicio = new DateTime(anioActual, 3, 1, 0, 0, 0, DateTimeKind.Utc); // Marzo del año actual
 
         var recaudacion = await _repository.ObtenerRecaudacionHistoricoAsync(fechaInicio, cancellationToken);
         var recaudacionNormalizada = NormalizarRecaudacionCicloLectivo(anioActual, recaudacion);

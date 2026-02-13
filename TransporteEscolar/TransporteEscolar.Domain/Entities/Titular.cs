@@ -31,7 +31,8 @@ public class Titular
         NombreContacto = nombreContacto;
         Direccion = direccion;
         MontoMensualPactado = montoMensualPactado;
-        FechaAlta = fechaAlta?.Date ?? DateTime.UtcNow.Date;
+        var referencia = fechaAlta ?? DateTime.UtcNow;
+        FechaAlta = NormalizarFechaUtc(referencia);
         Telefonos = new List<TitularTelefono>();
     }
 
@@ -45,11 +46,23 @@ public class Titular
 
     public void DarDeBaja()
     {
-        FechaBaja = DateTime.UtcNow.Date;
+        FechaBaja = NormalizarFechaUtc(DateTime.UtcNow);
     }
 
     public void Reactivar()
     {
         FechaBaja = null;
+    }
+
+    private static DateTime NormalizarFechaUtc(DateTime valor)
+    {
+        var fechaUtc = valor.Kind switch
+        {
+            DateTimeKind.Utc => valor,
+            DateTimeKind.Local => valor.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(valor, DateTimeKind.Utc)
+        };
+
+        return DateTime.SpecifyKind(fechaUtc.Date, DateTimeKind.Utc);
     }
 }

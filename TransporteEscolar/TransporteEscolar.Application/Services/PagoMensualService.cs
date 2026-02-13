@@ -110,7 +110,8 @@ public class PagoMensualService : IPagoMensualService
         PagoMovimientoModel.FilterRequest request,
         CancellationToken cancellationToken = default)
     {
-        var hoy = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        var hoyUtc = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+        var hoy = DateOnly.FromDateTime(hoyUtc);
         var fechaDesde = request.FechaDesde ?? hoy.AddDays(-30);
         var fechaHasta = request.FechaHasta ?? hoy;
 
@@ -120,8 +121,13 @@ public class PagoMensualService : IPagoMensualService
         if (request.PageNumber <= 0 || request.PageSize <= 0)
             throw new ValidationException("pageNumber y pageSize deben ser mayores a 0.");
 
-        var fechaDesdeDateTime = fechaDesde.ToDateTime(TimeOnly.MinValue);
-        var fechaHastaExclusive = fechaHasta.ToDateTime(TimeOnly.MinValue).AddDays(1);
+        var fechaDesdeDateTime = DateTime.SpecifyKind(
+            fechaDesde.ToDateTime(TimeOnly.MinValue),
+            DateTimeKind.Utc);
+        var fechaHastaDateTime = DateTime.SpecifyKind(
+            fechaHasta.ToDateTime(TimeOnly.MinValue),
+            DateTimeKind.Utc);
+        var fechaHastaExclusive = fechaHastaDateTime.AddDays(1);
 
         var (movimientos, totalCount) = await _repository.ObtenerMovimientosAsync(
             fechaDesdeDateTime,

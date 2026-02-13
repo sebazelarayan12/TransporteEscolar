@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace TransporteEscolar.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCreatePostgres : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,14 +16,14 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                 name: "Titulares",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Apellido = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    NombreContacto = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    Direccion = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    MontoMensualPactado = table.Column<decimal>(type: "decimal(12,2)", nullable: false),
-                    FechaAlta = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FechaBaja = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Apellido = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    NombreContacto = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    Direccion = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    MontoMensualPactado = table.Column<decimal>(type: "numeric(12,2)", nullable: false),
+                    FechaAlta = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    FechaBaja = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -33,14 +34,14 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                 name: "PagosMensuales",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TitularId = table.Column<int>(type: "int", nullable: false),
-                    Mes = table.Column<int>(type: "int", nullable: false),
-                    Anio = table.Column<int>(type: "int", nullable: false),
-                    MontoGenerado = table.Column<decimal>(type: "decimal(12,2)", nullable: false),
-                    FechaVencimiento = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Observaciones = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TitularId = table.Column<int>(type: "integer", nullable: false),
+                    Mes = table.Column<int>(type: "integer", nullable: false),
+                    Anio = table.Column<int>(type: "integer", nullable: false),
+                    MontoGenerado = table.Column<decimal>(type: "numeric(12,2)", nullable: false),
+                    FechaVencimiento = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Observaciones = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -57,17 +58,16 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                 name: "Pasajeros",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TitularId = table.Column<int>(type: "int", nullable: false),
-                    Nombre = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Apellido = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Colegio = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    GradoCurso = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Turno = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Observaciones = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    FechaAlta = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FechaBaja = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TitularId = table.Column<int>(type: "integer", nullable: false),
+                    Nombre = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Colegio = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    GradoCurso = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Turno = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Observaciones = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    FechaAlta = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    FechaBaja = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -84,13 +84,13 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                 name: "TitularesTelefonos",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TitularId = table.Column<int>(type: "int", nullable: false),
-                    NumeroE164 = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    EsPrincipal = table.Column<bool>(type: "bit", nullable: false),
-                    FechaAlta = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FechaBaja = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TitularId = table.Column<int>(type: "integer", nullable: false),
+                    NumeroE164 = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    EsPrincipal = table.Column<bool>(type: "boolean", nullable: false),
+                    FechaAlta = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    FechaBaja = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -107,13 +107,13 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                 name: "PagosMovimientos",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PagoMensualId = table.Column<int>(type: "int", nullable: false),
-                    Monto = table.Column<decimal>(type: "decimal(12,2)", nullable: false),
-                    FechaPago = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    MedioPago = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Observaciones = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PagoMensualId = table.Column<int>(type: "integer", nullable: false),
+                    Monto = table.Column<decimal>(type: "numeric(12,2)", nullable: false),
+                    FechaPago = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    MedioPago = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Observaciones = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -130,13 +130,13 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                 name: "ReinscripcionesPasajeros",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PasajeroId = table.Column<int>(type: "int", nullable: false),
-                    Anio = table.Column<int>(type: "int", nullable: false),
-                    Estado = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FechaConfirmacion = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PasajeroId = table.Column<int>(type: "integer", nullable: false),
+                    Anio = table.Column<int>(type: "integer", nullable: false),
+                    Estado = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    FechaCreacion = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    FechaConfirmacion = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -166,9 +166,9 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                 column: "PagoMensualId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Pasajeros_TitularId_Nombre_Apellido",
+                name: "IX_Pasajeros_TitularId_Nombre",
                 table: "Pasajeros",
-                columns: new[] { "TitularId", "Nombre", "Apellido" },
+                columns: new[] { "TitularId", "Nombre" },
                 unique: true);
 
             migrationBuilder.CreateIndex(

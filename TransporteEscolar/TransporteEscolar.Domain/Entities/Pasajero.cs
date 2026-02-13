@@ -38,7 +38,8 @@ public class Pasajero
         GradoCurso = gradoCurso;
         Turno = turno;
         Observaciones = observaciones;
-        FechaAlta = fechaAlta?.Date ?? DateTime.UtcNow.Date;
+        var referencia = fechaAlta ?? DateTime.UtcNow;
+        FechaAlta = NormalizarFechaUtc(referencia);
         Reinscripciones = new List<ReinscripcionPasajero>();
     }
 
@@ -58,7 +59,7 @@ public class Pasajero
 
     public void DarDeBaja()
     {
-        FechaBaja = DateTime.UtcNow.Date;
+        FechaBaja = NormalizarFechaUtc(DateTime.UtcNow);
     }
 
     public void Reactivar()
@@ -67,4 +68,16 @@ public class Pasajero
     }
 
     public string NombreCompleto() => $"{Nombre} {Titular.Apellido}";
+
+    private static DateTime NormalizarFechaUtc(DateTime valor)
+    {
+        var fechaUtc = valor.Kind switch
+        {
+            DateTimeKind.Utc => valor,
+            DateTimeKind.Local => valor.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(valor, DateTimeKind.Utc)
+        };
+
+        return DateTime.SpecifyKind(fechaUtc.Date, DateTimeKind.Utc);
+    }
 }

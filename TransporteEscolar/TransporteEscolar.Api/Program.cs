@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 using TransporteEscolar.Api.Converters;
 using TransporteEscolar.Api.DependencyInjection;
 using TransporteEscolar.Api.Middleware;
@@ -15,7 +16,7 @@ namespace TransporteEscolar.Api
             // DbContext
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("Default"));
             });
 
             // Registrar servicios y repositorios

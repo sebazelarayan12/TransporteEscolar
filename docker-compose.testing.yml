@@ -1,16 +1,15 @@
-version: '3.8'
-
 services:
-  sqlserver-test:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+  postgres-test:
+    image: postgres:16-alpine
     container_name: transporte-test-db
     environment:
-      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD_TEST}
-      - ACCEPT_EULA=Y
+      - POSTGRES_DB=TransporteEscolarDb_Test
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_TEST:-Testing2026}
     ports:
-      - "1434:1433"
+      - "5433:5432"
     volumes:
-      - transporte-test-data:/var/opt/mssql
+      - transporte-test-data:/var/lib/postgresql/data
     networks:
       - transporte-test-network
 
