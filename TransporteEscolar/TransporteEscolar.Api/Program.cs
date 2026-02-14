@@ -43,7 +43,7 @@ namespace TransporteEscolar.Api
                         // Fallback para desarrollo local si no hay variable configurada
                         policy.WithOrigins(
                                   "http://localhost:5173",
-                                  "http://192.168.1.23:5173"
+                                  "http://127.0.0.1:5173"
                               )
                               .AllowAnyHeader()
                               .AllowAnyMethod()
@@ -87,9 +87,8 @@ namespace TransporteEscolar.Api
             app.UseAuthorization();
             app.MapControllers();
 
-            // ===== AUTO-MIGRATION Y SEED =====
-            // Ejecuta migraciones automáticamente y carga datos iniciales si la BD está vacía
-            // Funciona en entornos Development, Testing y Production
+            // ===== AUTO-MIGRATION =====
+            // Ejecuta migraciones automáticamente al iniciar la aplicación en cualquier entorno
             
             using (var scope = app.Services.CreateScope())
             {
@@ -97,9 +96,6 @@ namespace TransporteEscolar.Api
                 
                 // Ejecutar migraciones pendientes
                 context.Database.Migrate();
-                
-                // Cargar datos iniciales (solo si la tabla Titulares está vacía)
-                DatabaseSeeder.SeedDevelopmentDataAsync(context).Wait();
             }
             // ===============================
 
