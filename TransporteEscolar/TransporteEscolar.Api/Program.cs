@@ -22,26 +22,33 @@ namespace TransporteEscolar.Api
             // Registrar servicios y repositorios
             builder.Services.AddApplicationServices();
 
-            // ⚠️ CORS - SOLO PARA DESARROLLO ⚠️
-            // 🔒 ANTES DE PRODUCCIÓN: 
-            //    1. Eliminar AllowAnyOrigin() y usar WithOrigins() con dominios específicos
-            //    2. Validar que solo dominios de producción estén permitidos
-            //    3. Considerar usar políticas CORS más restrictivas
-            //    4. NO usar AllowCredentials() con AllowAnyOrigin()
+            // CORS - Configurado dinámicamente mediante variable de entorno
+            var allowedOrigins = builder.Configuration.GetValue<string>("AllowedOrigins")
+                ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                ?? Array.Empty<string>();
+
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    // DESARROLLO: Permite localhost y red local (192.168.1.23 es la IP local de desarrollo)
-                    policy.WithOrigins(
-                              "http://localhost:5173",           // Desarrollo en PC
-                              "http://192.168.1.23:5173",        // Mobile/tablet en red local
-                              "http://localhost:5074",           // Backend local
-                              "http://192.168.1.23:5074"         // Backend en red local
-                          )
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials();
+                    if (allowedOrigins.Length > 0)
+                    {
+                        policy.WithOrigins(allowedOrigins)
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+                    }
+                    else
+                    {
+                        // Fallback para desarrollo local si no hay variable configurada
+                        policy.WithOrigins(
+                                  "http://localhost:5173",
+                                  "http://192.168.1.23:5173"
+                              )
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+                    }
                 });
             });
 
