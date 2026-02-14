@@ -1,3 +1,4 @@
+using System.Linq;
 using TransporteEscolar.Domain.Entities;
 
 namespace TransporteEscolar.Infrastructure.Persistence.Seeders;
@@ -19,19 +20,22 @@ public static class TestDataSeeder
         var hoyUtc = DateTime.SpecifyKind(ahoraUtc.Date, DateTimeKind.Utc);
         // Crear titulares de prueba (solo apellido y monto pactado)
         var fechaAltaSeeder = hoyUtc;
-        var titular1 = new Titular("González", "Contacto Test", "Dirección Test", 25000, fechaAltaSeeder);
-        var titular2 = new Titular("Rodríguez", "Contacto Test", "Dirección Test", 30000, fechaAltaSeeder);
-        var titular3 = new Titular("Fernández", "Contacto Test", "Dirección Test", 20000, fechaAltaSeeder);
-        var titular4 = new Titular("López", "Contacto Test", "Dirección Test", 28000, fechaAltaSeeder);
-        var titular5 = new Titular("Martínez", "Contacto Test", "Dirección Test", 22000, fechaAltaSeeder);
+        var titulares = Enumerable.Range(1, 5)
+            .Select(i => new Titular(
+                $"Familia Demo {i:00}",
+                $"Contacto Demo {i:00}",
+                $"Dirección Demo {i:00}",
+                20000m + i * 5000m,
+                fechaAltaSeeder))
+            .ToList();
 
-        context.Titulares.AddRange(titular1, titular2, titular3, titular4, titular5);
+        context.Titulares.AddRange(titulares);
         context.SaveChanges();
 
         // Crear pagos mensuales (facturas) de los últimos 3 meses
 
         // Mes actual y 2 meses anteriores para cada titular
-        foreach (var titular in new[] { titular1, titular2, titular3, titular4, titular5 })
+        foreach (var titular in titulares)
         {
             for (int i = 2; i >= 0; i--)
             {

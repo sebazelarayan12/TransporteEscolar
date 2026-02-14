@@ -54,8 +54,10 @@ Configura estas variables al lanzar `TransporteEscolar.Api` (puedes usar `.runse
 
 ```bash
 ASPNETCORE_ENVIRONMENT=Testing
-ConnectionStrings__Default="Host=localhost;Port=5433;Database=TransporteEscolarDb_Test;Username=postgres;Password=Testing2026;Include Error Detail=true"
+ConnectionStrings__Default="Host=localhost;Port=5433;Database=TransporteEscolarDb_Test;Username=postgres;Password=<TU_PASSWORD>;Include Error Detail=true"
 ```
+
+En la raíz existen `.env.example` y `.env.testing.example` listos para copiar/renombrar; nunca publiques los valores reales; los archivos reales `.env` y `.env.testing` permanecen ignorados en Git.
 
 - Mantén el seeder `TestDataSeeder` habilitado únicamente en `Testing` para evitar escrituras en producción (Neon.tech).
 - Todos los `DateTime/DateOnly` deben persistirse en UTC para cumplir con PostgreSQL.
@@ -67,6 +69,8 @@ Crear `TransporteFront/.env` (no versionar):
 ```bash
 VITE_API_BASE_URL=http://localhost:5074/api
 ```
+
+`TransporteFront/.env.example` actúa como plantilla oficial para generar este archivo local.
 
 - El cliente Axios (`src/api/client.ts`) toma esta URL para todas las llamadas. No hardcodees rutas absolutas en componentes.
 
