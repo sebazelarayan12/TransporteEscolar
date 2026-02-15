@@ -341,7 +341,9 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
                   }`}
                 >
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{horario.label}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white" title={horario.label}>
+                      {horario.label}
+                    </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {horario.value === principalHorarioId ? 'Horario principal' : 'Horario secundario'}
                     </p>
@@ -350,23 +352,21 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
                     <button
                       type="button"
                       onClick={() => handleSeleccionarPrincipal(horario.value)}
-                      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition ${
                         horario.value === principalHorarioId
                           ? 'border-emerald-400 bg-emerald-100 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100'
                           : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600 dark:border-white/10 dark:text-gray-400'
                       }`}
                       disabled={horario.value === principalHorarioId}
                     >
-                      <span className="material-symbols-outlined text-[16px]">star</span>
                       Principal
                     </button>
                     <button
                       type="button"
                       onClick={() => handleEliminarHorarioSeleccionado(horario.value)}
-                      className="inline-flex items-center gap-1 rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-800/50 dark:text-red-300 dark:hover:bg-red-900/30"
+                      className="inline-flex items-center rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-800/50 dark:text-red-300 dark:hover:bg-red-900/30"
                       disabled={isAssigningHorarios}
                     >
-                      <span className="material-symbols-outlined text-[16px]">close</span>
                       Quitar
                     </button>
                   </div>

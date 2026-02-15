@@ -93,16 +93,13 @@ export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelPr
                     key={`${horario.horarioId}-${horario.prioridad ?? 'sin-prioridad'}`}
                     className="flex flex-col gap-3 rounded-xl border border-gray-100 px-3 py-3 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-2xl bg-[#007a8a]/10 p-2 text-[#007a8a] dark:bg-[#007a8a]/20 dark:text-white">
-                        <span className="material-symbols-outlined text-[20px]">schedule</span>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-white">
-                          {horario.nombreHorario}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{horario.colegio}</p>
-                      </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white" title={`${horario.nombreHorario} · ${horario.colegio}`}>
+                        {horario.nombreHorario} · {horario.colegio}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {horario.esPrincipal ? 'Horario principal' : 'Horario secundario'}
+                      </p>
                     </div>
                     <Button
                       variant="ghost"

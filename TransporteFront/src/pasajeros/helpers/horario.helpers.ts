@@ -44,3 +44,24 @@ export const getPasajeroHorarioAsignado = (
 
 export const formatPasajeroHorariosListado = (horarios: PasajeroHorarioAsignado[] = []) =>
   horarios.map((horario) => horario.nombreHorario).join(', ');
+
+const buildHorarioKey = (horario: PasajeroHorarioAsignado) =>
+  `${horario.horarioId}-${horario.prioridad ?? 'sin-prioridad'}`;
+
+export const formatPasajeroHorarioEtiqueta = (horario: PasajeroHorarioAsignado) =>
+  `${horario.nombreHorario} · ${horario.colegio}`;
+
+export const getPasajeroHorariosResumen = (
+  horarios: PasajeroHorarioAsignado[] = [],
+  maxVisible?: number,
+) => {
+  const entries = horarios.map((horario) => ({
+    key: buildHorarioKey(horario),
+    label: formatPasajeroHorarioEtiqueta(horario),
+  }));
+  const limit = typeof maxVisible === 'number' ? Math.max(Math.floor(maxVisible), 0) : entries.length;
+  const visible = limit === 0 ? [] : entries.slice(0, limit || entries.length);
+  const remaining = Math.max(entries.length - visible.length, 0);
+
+  return { visible, remaining };
+};

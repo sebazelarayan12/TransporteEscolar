@@ -1,6 +1,5 @@
 import type { PasajeroResponse } from '../types/pasajero.types';
-import { PasajeroHorarioBadges } from './PasajeroHorarioBadges';
-import { formatPasajeroHorariosListado, getPasajeroHorarioAsignado } from '../helpers/horario.helpers';
+import { getPasajeroHorarioAsignado, getPasajeroHorariosResumen } from '../helpers/horario.helpers';
 
 interface PasajeroSelectableListProps {
   pasajeros: PasajeroResponse[];
@@ -63,14 +62,11 @@ export const PasajeroSelectableList = ({
       : 'Seleccioná un horario para ver asignados';
   const availableEmptyMessage = emptyMessage;
 
-  const renderSectionHeader = (icon: string, label: string, count: number) => {
+  const renderSectionHeader = (label: string, count: number) => {
     const countLabel = count === 1 ? '1 pasajero' : `${count} pasajeros`;
     return (
       <div className="flex items-center justify-between bg-gray-50/70 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-white/[0.04] dark:text-gray-300">
-        <span className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-base text-[#007a8a]">{icon}</span>
-          {label}
-        </span>
+        <span>{label}</span>
         <span className="text-[10px] font-medium text-gray-400 dark:text-gray-400">{countLabel}</span>
       </div>
     );
@@ -85,7 +81,11 @@ export const PasajeroSelectableList = ({
     );
     const willBeAssigned = section === 'assigned' && !isAssignedToTarget;
     const willBeRemoved = section === 'available' && isAssignedToTarget;
-    const horariosListado = formatPasajeroHorariosListado(pasajero.horariosAsignados) || 'Sin horarios asignados';
+    const { visible: horariosVisibles, remaining: horariosRestantes } = getPasajeroHorariosResumen(
+      pasajero.horariosAsignados,
+      2,
+    );
+    const tieneHorarios = horariosVisibles.length > 0;
 
     return (
       <label
@@ -108,23 +108,34 @@ export const PasajeroSelectableList = ({
         <div className="pl-7 lg:pl-0">
           <div className="flex flex-col gap-1">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Horarios</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{horariosListado}</p>
-            <PasajeroHorarioBadges horarios={pasajero.horariosAsignados} size="sm" />
+            {tieneHorarios ? (
+              <ul className="mt-1 space-y-1 text-xs text-gray-700 dark:text-gray-200">
+                {horariosVisibles.map((horario) => (
+                  <li key={horario.key} className="truncate" title={horario.label}>
+                    {horario.label}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Sin horarios asignados</p>
+            )}
+            {horariosRestantes > 0 ? (
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                +{horariosRestantes} más
+              </p>
+            ) : null}
             {assignedToOther && !isAssignedToTarget ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
-                <span className="material-symbols-outlined text-[14px]">share</span>
+              <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
                 Tiene otros horarios
               </span>
             ) : null}
             {willBeAssigned ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#007a8a]/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#007a8a]">
-                <span className="material-symbols-outlined text-[14px]">arrow_outward</span>
+              <span className="inline-flex rounded-full bg-[#007a8a]/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#007a8a]">
                 Se asignará
               </span>
             ) : null}
             {willBeRemoved ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
-                <span className="material-symbols-outlined text-[14px]">block</span>
+              <span className="inline-flex rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
                 Se quitará
               </span>
             ) : null}
@@ -150,9 +161,9 @@ export const PasajeroSelectableList = ({
         <span>Horarios</span>
       </div>
       <div className="divide-y divide-gray-100 dark:divide-white/5">
-        {renderSectionHeader('done_all', 'Asignados a este horario', assigned.length)}
+        {renderSectionHeader('Asignados a este horario', assigned.length)}
         {renderRows(assigned, 'assigned')}
-        {renderSectionHeader('playlist_add', 'Disponibles para agregar', available.length)}
+        {renderSectionHeader('Disponibles para agregar', available.length)}
         {renderRows(available, 'available')}
       </div>
     </div>

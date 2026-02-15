@@ -38,17 +38,17 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
         <div className="flex gap-1">
           <button
             onClick={() => onConfirm?.(registro)}
-            className="rounded-lg bg-emerald-500 p-1.5 text-white hover:bg-emerald-600 transition"
+            className="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition"
             title="Confirmar reinscripción"
           >
-            <span className="material-symbols-outlined text-[18px]">check</span>
+            Confirmar
           </button>
           <button
             onClick={() => onMarkAsNotContinuing?.(registro)}
-            className="rounded-lg bg-slate-400 p-1.5 text-white hover:bg-slate-500 transition"
+            className="rounded-lg bg-slate-400 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-500 transition"
             title="Marcar como no continúa"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            No continúa
           </button>
         </div>
       );
@@ -59,17 +59,17 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
         <div className="flex gap-1">
           <button
             onClick={() => onMarkAsPending?.(registro)}
-            className="rounded-lg bg-amber-500 p-1.5 text-white hover:bg-amber-600 transition"
+            className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 transition"
             title="Marcar como pendiente"
           >
-            <span className="material-symbols-outlined text-[18px]">schedule</span>
+            Pendiente
           </button>
           <button
             onClick={() => onMarkAsNotContinuing?.(registro)}
-            className="rounded-lg bg-slate-400 p-1.5 text-white hover:bg-slate-500 transition"
+            className="rounded-lg bg-slate-400 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-500 transition"
             title="Marcar como no continúa"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            No continúa
           </button>
         </div>
       );
@@ -80,17 +80,17 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
         <div className="flex gap-1">
           <button
             onClick={() => onMarkAsPending?.(registro)}
-            className="rounded-lg bg-amber-500 p-1.5 text-white hover:bg-amber-600 transition"
+            className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 transition"
             title="Marcar como pendiente"
           >
-            <span className="material-symbols-outlined text-[18px]">schedule</span>
+            Pendiente
           </button>
           <button
             onClick={() => onConfirm?.(registro)}
-            className="rounded-lg bg-emerald-500 p-1.5 text-white hover:bg-emerald-600 transition"
+            className="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition"
             title="Confirmar reinscripción"
           >
-            <span className="material-symbols-outlined text-[18px]">check</span>
+            Confirmar
           </button>
         </div>
       );
@@ -135,25 +135,22 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
         </div>
       </div>
 
-      <div className="grid gap-y-2 gap-x-4 border-t border-dashed border-gray-200 pt-3 text-sm dark:border-gray-700 sm:grid-cols-2">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-gray-400">account_circle</span>
-          <span className="text-gray-600 dark:text-gray-300">{registro.titularNombre}</span>
+      <div className="grid gap-y-3 gap-x-4 border-t border-dashed border-gray-200 pt-3 text-sm dark:border-gray-700 sm:grid-cols-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Titular</p>
+          <p className="text-gray-600 dark:text-gray-300">{registro.titularNombre}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-gray-400">school</span>
-          <span className="text-gray-600 dark:text-gray-300">{registro.colegio}</span>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Colegio</p>
+          <p className="text-gray-600 dark:text-gray-300">{registro.colegio}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-gray-400">local_library</span>
-          <span className="text-gray-600 dark:text-gray-300">{registro.curso}</span>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Curso</p>
+          <p className="text-gray-600 dark:text-gray-300">{registro.curso}</p>
         </div>
       </div>
       <div className="flex items-center gap-3 pt-1 text-xs text-gray-400">
-        <span className="inline-flex items-center gap-1 text-[#1d8ca5]">
-          <span className="material-symbols-outlined text-[16px]">timeline</span>
-          Creada {formatDateOnlyCompact(registro.fechaCreacion)}
-        </span>
+        <span className="text-[#1d8ca5]">Creada {formatDateOnlyCompact(registro.fechaCreacion)}</span>
         {registro.fechaConfirmacion && (
           <>
             <span>•</span>
