@@ -1,3 +1,4 @@
+using System.Linq;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Helpers;
@@ -14,17 +15,20 @@ public class PasajeroService : IPasajeroService
     private readonly ITitularRepository _titularRepository;
     private readonly IPagoMensualService _pagoMensualService;
     private readonly IHorarioRepository _horarioRepository;
+    private readonly IPasajeroHorarioRepository _pasajeroHorarioRepository;
 
     public PasajeroService(
         IPasajeroRepository repository,
         ITitularRepository titularRepository,
         IPagoMensualService pagoMensualService,
-        IHorarioRepository horarioRepository)
+        IHorarioRepository horarioRepository,
+        IPasajeroHorarioRepository pasajeroHorarioRepository)
     {
         _repository = repository;
         _titularRepository = titularRepository;
         _pagoMensualService = pagoMensualService;
         _horarioRepository = horarioRepository;
+        _pasajeroHorarioRepository = pasajeroHorarioRepository;
     }
 
     public async Task<PasajeroModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
@@ -111,11 +115,28 @@ public class PasajeroService : IPasajeroService
             dto.GradoCurso, 
             dto.Turno, 
             dto.Observaciones,
-            dto.HorarioId,
             dto.FechaAlta);
 
-        var pasajeroCreado = await _repository.AddAsync(pasajero, cancellationToken);
-        return PasajeroMapper.MapearAResponse(pasajeroCreado);
+        Pasajero pasajeroCreado = pasajero;
+
+        await _pasajeroHorarioRepository.ExecuteInTransactionAsync(async () =>
+        {
+            pasajeroCreado = await _repository.AddAsync(pasajero, cancellationToken);
+
+            if (dto.HorarioId.HasValue)
+            {
+                await CrearAsignacionSiNoExisteAsync(
+                    pasajeroCreado.Id,
+                    dto.HorarioId.Value,
+                    true,
+                    null,
+                    cancellationToken);
+                await MarcarPrincipalAsync(pasajeroCreado.Id, dto.HorarioId.Value, cancellationToken);
+            }
+        });
+
+        var pasajeroCompleto = await _repository.GetByIdAsync(pasajeroCreado.Id, cancellationToken) ?? pasajeroCreado;
+        return PasajeroMapper.MapearAResponse(pasajeroCompleto);
     }
 
     public async Task ActualizarAsync(int id, PasajeroModel.UpdateRequest dto, CancellationToken cancellationToken = default)
@@ -128,8 +149,12 @@ public class PasajeroService : IPasajeroService
         await ValidarHorarioAsync(dto.HorarioId, cancellationToken);
 
         pasajero.ActualizarDatos(dto.Nombre, dto.Colegio, dto.GradoCurso, dto.Turno, dto.Observaciones);
-        pasajero.AsignarHorario(dto.HorarioId);
-        await _repository.UpdateAsync(pasajero, cancellationToken);
+
+        await _pasajeroHorarioRepository.ExecuteInTransactionAsync(async () =>
+        {
+            await _repository.UpdateAsync(pasajero, cancellationToken);
+            await ActualizarHorarioPrincipalAsync(pasajero.Id, dto.HorarioId, cancellationToken);
+        });
     }
 
     public async Task DarDeBajaAsync(int id, CancellationToken cancellationToken = default)
@@ -150,13 +175,75 @@ public class PasajeroService : IPasajeroService
         await _repository.UpdateAsync(pasajero, cancellationToken);
     }
 
-    public async Task QuitarHorarioAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<PasajeroModel.Response> AgregarHorarioAsync(int pasajeroId, PasajeroHorarioModel.AsignacionRequest dto, CancellationToken cancellationToken = default)
+    {
+        PasajeroHorarioValidator.Validate(dto);
+
+        var pasajero = await RepositoryHelper.GetByIdOrThrowAsync(
+            _repository.GetByIdAsync, pasajeroId, nameof(Pasajero), cancellationToken);
+
+        await ValidarHorarioAsync(dto.HorarioId, cancellationToken);
+
+        await _pasajeroHorarioRepository.ExecuteInTransactionAsync(async () =>
+        {
+            var existente = await _pasajeroHorarioRepository.GetAsync(pasajeroId, dto.HorarioId, cancellationToken);
+            if (existente != null)
+                throw new ValidationException("El pasajero ya tiene asignado este horario");
+
+            await CrearAsignacionSiNoExisteAsync(
+                pasajeroId,
+                dto.HorarioId,
+                dto.EsPrincipal,
+                dto.Prioridad,
+                cancellationToken);
+
+            if (dto.EsPrincipal)
+            {
+                await MarcarPrincipalAsync(pasajeroId, dto.HorarioId, cancellationToken);
+            }
+        });
+
+        var actualizado = await _repository.GetByIdAsync(pasajeroId, cancellationToken) ?? pasajero;
+        return PasajeroMapper.MapearAResponse(actualizado);
+    }
+
+    public async Task QuitarHorarioAsync(int pasajeroId, int horarioId, CancellationToken cancellationToken = default)
+    {
+        if (horarioId <= 0)
+            throw new ValidationException("HorarioId inválido");
+
+        await RepositoryHelper.GetByIdOrThrowAsync(
+            _repository.GetByIdAsync, pasajeroId, nameof(Pasajero), cancellationToken);
+
+        var asignacion = await _pasajeroHorarioRepository.GetAsync(pasajeroId, horarioId, cancellationToken);
+        if (asignacion == null)
+            throw new NotFoundException(nameof(PasajeroHorario), horarioId);
+
+        await _pasajeroHorarioRepository.ExecuteInTransactionAsync(async () =>
+        {
+            var eraPrincipal = asignacion.EsPrincipal;
+            await _pasajeroHorarioRepository.RemoveAsync(asignacion, cancellationToken);
+
+            if (eraPrincipal)
+            {
+                await PromoverSiguientePrincipalAsync(pasajeroId, cancellationToken);
+            }
+        });
+    }
+
+    public async Task QuitarHorarioPrincipalAsync(int pasajeroId, CancellationToken cancellationToken = default)
     {
         var pasajero = await RepositoryHelper.GetByIdOrThrowAsync(
-            _repository.GetByIdAsync, id, nameof(Pasajero), cancellationToken);
+            _repository.GetByIdAsync, pasajeroId, nameof(Pasajero), cancellationToken);
 
-        pasajero.AsignarHorario(null);
-        await _repository.UpdateAsync(pasajero, cancellationToken);
+        var principal = pasajero.PasajeroHorarios
+            .FirstOrDefault(ph => ph.EsPrincipal)
+            ?? pasajero.PasajeroHorarios.FirstOrDefault();
+
+        if (principal == null)
+            return;
+
+        await QuitarHorarioAsync(pasajeroId, principal.HorarioId, cancellationToken);
     }
 
     // Gestión de reinscripciones
@@ -220,6 +307,90 @@ public class PasajeroService : IPasajeroService
 
         reinscripcion.MarcarComoNoContinua();
         await _repository.UpdateAsync(pasajero, cancellationToken);
+    }
+
+    private async Task ActualizarHorarioPrincipalAsync(int pasajeroId, int? horarioId, CancellationToken cancellationToken)
+    {
+        if (!horarioId.HasValue)
+        {
+            await RemoverPrincipalAsync(pasajeroId, cancellationToken);
+            return;
+        }
+
+        await CrearAsignacionSiNoExisteAsync(pasajeroId, horarioId.Value, true, null, cancellationToken);
+        await MarcarPrincipalAsync(pasajeroId, horarioId.Value, cancellationToken);
+    }
+
+    private async Task RemoverPrincipalAsync(int pasajeroId, CancellationToken cancellationToken)
+    {
+        var asignaciones = await _pasajeroHorarioRepository.GetByPasajeroIdAsync(pasajeroId, cancellationToken);
+        if (asignaciones.Count == 0)
+            return;
+
+        var seActualizo = false;
+        foreach (var asignacion in asignaciones.Where(a => a.EsPrincipal))
+        {
+            asignacion.DefinirPrincipal(false);
+            seActualizo = true;
+        }
+
+        if (seActualizo)
+        {
+            await _pasajeroHorarioRepository.UpdateRangeAsync(asignaciones, cancellationToken);
+        }
+    }
+
+    private async Task CrearAsignacionSiNoExisteAsync(int pasajeroId, int horarioId, bool esPrincipal, int? prioridad, CancellationToken cancellationToken)
+    {
+        var existente = await _pasajeroHorarioRepository.GetAsync(pasajeroId, horarioId, cancellationToken);
+        if (existente != null)
+            return;
+
+        var prioridadCalculada = await ResolverPrioridadAsync(pasajeroId, prioridad, cancellationToken);
+        var asignacion = new PasajeroHorario(pasajeroId, horarioId, esPrincipal, prioridadCalculada);
+        await _pasajeroHorarioRepository.AddAsync(asignacion, cancellationToken);
+    }
+
+    private async Task MarcarPrincipalAsync(int pasajeroId, int horarioId, CancellationToken cancellationToken)
+    {
+        var asignaciones = await _pasajeroHorarioRepository.GetByPasajeroIdAsync(pasajeroId, cancellationToken);
+        if (asignaciones.Count == 0)
+            return;
+
+        foreach (var asignacion in asignaciones)
+        {
+            var esPrincipal = asignacion.HorarioId == horarioId;
+            asignacion.DefinirPrincipal(esPrincipal);
+            if (esPrincipal)
+            {
+                asignacion.ActualizarFechaAsignacion();
+            }
+        }
+
+        await _pasajeroHorarioRepository.UpdateRangeAsync(asignaciones, cancellationToken);
+    }
+
+    private async Task PromoverSiguientePrincipalAsync(int pasajeroId, CancellationToken cancellationToken)
+    {
+        var restantes = await _pasajeroHorarioRepository.GetByPasajeroIdAsync(pasajeroId, cancellationToken);
+        if (restantes.Count == 0)
+            return;
+
+        var siguiente = restantes.First();
+        if (!siguiente.EsPrincipal)
+        {
+            siguiente.DefinirPrincipal(true);
+            siguiente.ActualizarFechaAsignacion();
+            await _pasajeroHorarioRepository.UpdateAsync(siguiente, cancellationToken);
+        }
+    }
+
+    private async Task<int> ResolverPrioridadAsync(int pasajeroId, int? prioridad, CancellationToken cancellationToken)
+    {
+        if (prioridad.HasValue && prioridad.Value > 0)
+            return prioridad.Value;
+
+        return await _pasajeroHorarioRepository.ObtenerSiguientePrioridadAsync(pasajeroId, cancellationToken);
     }
 
     private async Task ValidarHorarioAsync(int? horarioId, CancellationToken cancellationToken)

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { LoadingScreen, MobileDrawer, Modal } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
-import { usePasajerosActivos } from '../../pasajeros/services/pasajeros.queries';
-import { useAsignarPasajerosAHorario, useHorarioPasajeros, useHorarios, sortHorariosByOrden } from '../services/horarios.queries';
+import { useAgregarHorarioPasajero, useEliminarHorarioPasajero, usePasajerosActivos } from '../../pasajeros/services/pasajeros.queries';
+import { useHorarioPasajeros, useHorarios, sortHorariosByOrden } from '../services/horarios.queries';
 import {
   HorarioAsignacionPanel,
   HorariosGrid,
@@ -12,6 +12,7 @@ import {
   HorariosEmptyState,
 } from '../components';
 import type { HorarioPasajerosResponse } from '../types/horario.types';
+import { formatPasajeroHorariosListado } from '../../pasajeros/helpers/horario.helpers';
 
 export const HorariosPage = () => {
   const { data: horarios, isLoading, isError, refetch } = useHorarios();
@@ -36,14 +37,16 @@ export const HorariosPage = () => {
     enabled: drawerOpen && Boolean(selectedHorarioId),
     onSuccess: syncSelection,
   });
-  const asignarPasajeros = useAsignarPasajerosAHorario();
+  const agregarHorarioPasajero = useAgregarHorarioPasajero();
+  const eliminarHorarioPasajero = useEliminarHorarioPasajero();
+  const [isPersisting, setIsPersisting] = useState(false);
 
   const filteredPasajeros = (() => {
     if (!pasajerosActivos) return [];
     const query = search.trim().toLowerCase();
     if (!query) return pasajerosActivos;
     return pasajerosActivos.filter((pasajero) =>
-      `${pasajero.nombreCompleto} ${pasajero.titularApellido ?? ''} ${pasajero.colegio} ${pasajero.gradoCurso} ${pasajero.horarioDescripcion ?? ''}`
+      `${pasajero.nombreCompleto} ${pasajero.titularApellido ?? ''} ${pasajero.colegio} ${pasajero.gradoCurso} ${formatPasajeroHorariosListado(pasajero.horariosAsignados)}`
         .toLowerCase()
         .includes(query)
     );
@@ -85,16 +88,29 @@ export const HorariosPage = () => {
 
   const handleSave = async () => {
     if (!selectedHorarioId) return;
+    const selectionOrder = Array.from(selectedPasajeros);
+    const toAdd = selectionOrder.filter((id) => !snapshot.has(id));
+    const toRemove = Array.from(snapshot).filter((id) => !selectedPasajeros.has(id));
+
     try {
-      await asignarPasajeros.mutateAsync({
-        horarioId: selectedHorarioId,
-        pasajeroIds: Array.from(selectedPasajeros),
-      });
-      showSuccess('Horario actualizado');
+      setIsPersisting(true);
+      for (const pasajeroId of toAdd) {
+        await agregarHorarioPasajero.mutateAsync({
+          pasajeroId,
+          horarioId: selectedHorarioId,
+          prioridad: selectionOrder.indexOf(pasajeroId) + 1,
+        });
+      }
+      for (const pasajeroId of toRemove) {
+        await eliminarHorarioPasajero.mutateAsync({ pasajeroId, horarioId: selectedHorarioId });
+      }
+      showSuccess('Asignaciones actualizadas');
       handleCloseDrawer();
     } catch (error: unknown) {
       const message = error && typeof error === 'object' && 'message' in error ? String(error.message) : 'Error al guardar los cambios';
       showError(message);
+    } finally {
+      setIsPersisting(false);
     }
   };
 
@@ -126,7 +142,7 @@ export const HorariosPage = () => {
       hasChanges={hasChanges}
       onCancel={handleCloseDrawer}
       onSave={handleSave}
-      isSaving={asignarPasajeros.isPending}
+      isSaving={isPersisting || agregarHorarioPasajero.isPending || eliminarHorarioPasajero.isPending}
       targetHorarioId={selectedHorarioId}
     />
   );

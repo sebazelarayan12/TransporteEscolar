@@ -1,10 +1,31 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { pasajerosApi } from './pasajeros.api';
-import type { PasajeroRequest, PasajeroUpdateRequest, PasajeroFilterRequest } from '../types/pasajero.types';
+import type {
+  PasajeroRequest,
+  PasajeroUpdateRequest,
+  PasajeroFilterRequest,
+  PasajeroHorarioAsignacionPayload,
+  PasajeroResponse,
+} from '../types/pasajero.types';
 import { pasajerosKeys } from './pasajeros.keys';
 import { horariosKeys } from '../../horarios/services/horarios.keys';
 
 export { pasajerosKeys } from './pasajeros.keys';
+
+const invalidateHorarioById = (queryClient: ReturnType<typeof useQueryClient>, horarioId: number) => {
+  queryClient.invalidateQueries({ queryKey: horariosKeys.detail(horarioId) });
+  queryClient.invalidateQueries({ queryKey: horariosKeys.pasajeros(horarioId) });
+};
+
+const invalidateHorariosFromPasajero = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  pasajero?: PasajeroResponse,
+) => {
+  if (!pasajero) return;
+  for (const asignacion of pasajero.horariosAsignados ?? []) {
+    invalidateHorarioById(queryClient, asignacion.horarioId);
+  }
+};
 
 /**
  * Hook para obtener todos los pasajeros
@@ -89,10 +110,7 @@ export const useCreatePasajero = () => {
       });
       queryClient.invalidateQueries({ queryKey: horariosKeys.list() });
       queryClient.invalidateQueries({ queryKey: horariosKeys.all });
-      if (typeof newPasajero.horarioId === 'number') {
-        queryClient.invalidateQueries({ queryKey: horariosKeys.detail(newPasajero.horarioId) });
-        queryClient.invalidateQueries({ queryKey: horariosKeys.pasajeros(newPasajero.horarioId) });
-      }
+      invalidateHorariosFromPasajero(queryClient, newPasajero);
     },
   });
 };
@@ -113,10 +131,6 @@ export const useUpdatePasajero = () => {
       queryClient.invalidateQueries({ queryKey: pasajerosKeys.activos() });
       queryClient.invalidateQueries({ queryKey: pasajerosKeys.all }); // Invalida paginados también
       queryClient.invalidateQueries({ queryKey: horariosKeys.all });
-      if (typeof variables.data.horarioId === 'number') {
-        queryClient.invalidateQueries({ queryKey: horariosKeys.detail(variables.data.horarioId) });
-        queryClient.invalidateQueries({ queryKey: horariosKeys.pasajeros(variables.data.horarioId) });
-      }
     },
   });
 };
@@ -137,26 +151,45 @@ export const useDeletePasajero = () => {
   });
 };
 
-interface QuitarHorarioVariables {
+interface AgregarHorarioVariables extends PasajeroHorarioAsignacionPayload {
   pasajeroId: number;
-  horarioId?: number | null;
 }
 
-export const useQuitarHorarioDePasajero = () => {
+interface EliminarHorarioVariables {
+  pasajeroId: number;
+  horarioId: number;
+}
+
+export const useAgregarHorarioPasajero = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ pasajeroId }: QuitarHorarioVariables) => pasajerosApi.removeHorario(pasajeroId),
+    mutationFn: ({ pasajeroId, ...payload }: AgregarHorarioVariables) =>
+      pasajerosApi.addHorario(pasajeroId, payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: pasajerosKeys.detail(variables.pasajeroId) });
       queryClient.invalidateQueries({ queryKey: pasajerosKeys.all });
       queryClient.invalidateQueries({ queryKey: pasajerosKeys.activos() });
       queryClient.invalidateQueries({ queryKey: horariosKeys.list() });
       queryClient.invalidateQueries({ queryKey: horariosKeys.all });
-      if (typeof variables.horarioId === 'number') {
-        queryClient.invalidateQueries({ queryKey: horariosKeys.detail(variables.horarioId) });
-        queryClient.invalidateQueries({ queryKey: horariosKeys.pasajeros(variables.horarioId) });
-      }
+      invalidateHorarioById(queryClient, variables.horarioId);
+    },
+  });
+};
+
+export const useEliminarHorarioPasajero = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ pasajeroId, horarioId }: EliminarHorarioVariables) =>
+      pasajerosApi.deleteHorario(pasajeroId, horarioId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: pasajerosKeys.detail(variables.pasajeroId) });
+      queryClient.invalidateQueries({ queryKey: pasajerosKeys.all });
+      queryClient.invalidateQueries({ queryKey: pasajerosKeys.activos() });
+      queryClient.invalidateQueries({ queryKey: horariosKeys.list() });
+      queryClient.invalidateQueries({ queryKey: horariosKeys.all });
+      invalidateHorarioById(queryClient, variables.horarioId);
     },
   });
 };

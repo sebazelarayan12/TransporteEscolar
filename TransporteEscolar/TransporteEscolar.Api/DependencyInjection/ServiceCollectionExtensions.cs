@@ -11,6 +11,7 @@ public static class ServiceCollectionExtensions
         // Repositorios
         services.AddScoped<ITitularRepository, TitularRepository>();
         services.AddScoped<IPasajeroRepository, PasajeroRepository>();
+        services.AddScoped<IPasajeroHorarioRepository, PasajeroHorarioRepository>();
         services.AddScoped<IPagoMensualRepository, PagoMensualRepository>();
         services.AddScoped<IReinscripcionRepository, ReinscripcionRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();

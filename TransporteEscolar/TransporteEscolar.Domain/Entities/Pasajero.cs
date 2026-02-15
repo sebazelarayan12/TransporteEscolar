@@ -9,18 +9,18 @@ public class Pasajero
     public string GradoCurso { get; private set; } = null!;
     public string Turno { get; private set; } = null!;
     public string? Observaciones { get; private set; }
-    public int? HorarioId { get; private set; }
     public DateTime FechaAlta { get; private set; }
     public DateTime? FechaBaja { get; private set; }
 
     // Navegación
     public Titular Titular { get; private set; } = null!;
-    public Horario? Horario { get; private set; }
+    public ICollection<PasajeroHorario> PasajeroHorarios { get; private set; } = null!;
     public ICollection<ReinscripcionPasajero> Reinscripciones { get; private set; } = null!;
 
     // Constructor para EF Core
-    private Pasajero() 
+    private Pasajero()
     {
+        PasajeroHorarios = new List<PasajeroHorario>();
         Reinscripciones = new List<ReinscripcionPasajero>();
     }
 
@@ -32,7 +32,6 @@ public class Pasajero
         string gradoCurso,
         string turno,
         string? observaciones = null,
-        int? horarioId = null,
         DateTime? fechaAlta = null)
     {
         TitularId = titularId;
@@ -41,9 +40,9 @@ public class Pasajero
         GradoCurso = gradoCurso;
         Turno = turno;
         Observaciones = observaciones;
-        HorarioId = horarioId;
         var referencia = fechaAlta ?? DateTime.UtcNow;
         FechaAlta = NormalizarFechaUtc(referencia);
+        PasajeroHorarios = new List<PasajeroHorario>();
         Reinscripciones = new List<ReinscripcionPasajero>();
     }
 
@@ -59,11 +58,6 @@ public class Pasajero
         GradoCurso = gradoCurso;
         Turno = turno;
         Observaciones = observaciones;
-    }
-
-    public void AsignarHorario(int? horarioId)
-    {
-        HorarioId = horarioId;
     }
 
     public void DarDeBaja()

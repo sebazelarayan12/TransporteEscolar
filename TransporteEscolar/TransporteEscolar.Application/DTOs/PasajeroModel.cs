@@ -36,5 +36,6 @@ public record PasajeroModel
         DateTime? FechaBaja,
         bool Activo,
         string? TitularApellido,
-        HorarioModel.Resumen? Horario);
+        HorarioModel.Resumen? Horario,
+        IReadOnlyList<PasajeroHorarioModel.Response> HorariosAsignados);
 }

@@ -4,9 +4,13 @@
 
 import type { PasajeroTurno } from '../constants/turnos.constants';
 
-export interface PasajeroHorarioResumen {
-  id: number;
-  etiqueta: string;
+export interface PasajeroHorarioAsignado {
+  horarioId: number;
+  nombreHorario: string;
+  colegio: string;
+  esPrincipal: boolean;
+  prioridad: number | null;
+  fechaAsignacion: string;
 }
 
 export interface PasajeroResponse {
@@ -19,13 +23,11 @@ export interface PasajeroResponse {
   gradoCurso: string;
   turno: PasajeroTurno;
   observaciones: string | null;
-  horarioId: number | null;
-  horarioDescripcion: string | null;
   fechaAlta: string;
   fechaBaja: string | null;
   activo: boolean;
   titularApellido: string | null;
-  horario?: PasajeroHorarioResumen | null;
+  horariosAsignados: PasajeroHorarioAsignado[];
 }
 
 export interface PasajeroRequest {
@@ -35,7 +37,6 @@ export interface PasajeroRequest {
   gradoCurso: string;
   turno: PasajeroTurno;
   observaciones?: string;
-  horarioId?: number | null;
   fechaAlta?: string;
 }
 
@@ -45,7 +46,12 @@ export interface PasajeroUpdateRequest {
   gradoCurso: string;
   turno: PasajeroTurno;
   observaciones?: string;
-  horarioId?: number | null;
+}
+
+export interface PasajeroHorarioAsignacionPayload {
+  horarioId: number;
+  esPrincipal?: boolean;
+  prioridad?: number | null;
 }
 
 // Paginación

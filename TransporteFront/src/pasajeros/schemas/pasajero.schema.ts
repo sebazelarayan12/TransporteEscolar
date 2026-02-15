@@ -25,15 +25,6 @@ export const createPasajeroSchema = z.object({
   turno: z.enum(TURNO_OPTIONS, {
     message: 'Debe seleccionar un turno válido',
   }),
-  horarioId: z
-    .union([
-      z
-        .number({ error: 'El horario seleccionado no es válido' })
-        .int({ message: 'El horario debe ser válido' })
-        .positive({ message: 'Selecciona un horario válido' }),
-      z.literal(null),
-    ])
-    .optional(),
   observaciones: z
     .string()
     .max(500, { message: 'Las observaciones no pueden exceder 500 caracteres' })
@@ -63,15 +54,6 @@ export const updatePasajeroSchema = z.object({
   turno: z.enum(TURNO_OPTIONS, {
     message: 'Debe seleccionar un turno válido',
   }),
-  horarioId: z
-    .union([
-      z
-        .number({ error: 'El horario seleccionado no es válido' })
-        .int({ message: 'El horario debe ser válido' })
-        .positive({ message: 'Selecciona un horario válido' }),
-      z.literal(null),
-    ])
-    .optional(),
   observaciones: z
     .string()
     .max(500, { message: 'Las observaciones no pueden exceder 500 caracteres' })

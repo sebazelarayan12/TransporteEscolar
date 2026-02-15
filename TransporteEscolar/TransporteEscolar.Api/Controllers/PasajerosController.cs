@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Mvc;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Interfaces;
@@ -147,14 +148,41 @@ public class PasajerosController : ControllerBase
     }
 
     /// <summary>
-    /// Quita el horario asignado a un pasajero
+    /// Agrega un horario adicional al pasajero
     /// </summary>
-    [HttpDelete("{id}/horario")]
-    public async Task<ActionResult> QuitarHorario(int id)
+    [HttpPost("{id}/horarios")]
+    public async Task<ActionResult<PasajeroModel.Response>> AgregarHorario(int id, [FromBody] PasajeroHorarioModel.AsignacionRequest dto)
     {
-        await _service.QuitarHorarioAsync(id);
+        var resultado = await _service.AgregarHorarioAsync(id, dto);
 
-        _logger.LogInformation("Horario removido para el pasajero {Id}", id);
+        _logger.LogInformation("Horario {HorarioId} agregado al pasajero {Id}", dto.HorarioId, id);
+
+        return Ok(resultado);
+    }
+
+    /// <summary>
+    /// Quita una asignación específica del pasajero
+    /// </summary>
+    [HttpDelete("{id}/horarios/{horarioId}")]
+    public async Task<ActionResult> QuitarHorario(int id, int horarioId)
+    {
+        await _service.QuitarHorarioAsync(id, horarioId);
+
+        _logger.LogInformation("Horario {HorarioId} removido del pasajero {Id}", horarioId, id);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Quita el horario principal asignado a un pasajero (compatibilidad)
+    /// </summary>
+    [Obsolete("Usar DELETE /api/pasajeros/{id}/horarios/{horarioId}")]
+    [HttpDelete("{id}/horario")]
+    public async Task<ActionResult> QuitarHorarioPrincipal(int id)
+    {
+        await _service.QuitarHorarioPrincipalAsync(id);
+
+        _logger.LogInformation("Horario principal removido para el pasajero {Id}", id);
 
         return NoContent();
     }

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { createPasajeroSchema, type CreatePasajeroFormData } from '../schemas/pasajero.schema';
-import { useCreatePasajero } from '../services/pasajeros.queries';
+import { useAgregarHorarioPasajero, useCreatePasajero } from '../services/pasajeros.queries';
 import { useTitularesActivos } from '../../titulares/services/titulares.queries';
 import { Button } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
@@ -19,10 +19,15 @@ interface PasajeroFormProps {
 export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroFormProps) => {
   const navigate = useNavigate();
   const createPasajero = useCreatePasajero();
+  const agregarHorarioPasajero = useAgregarHorarioPasajero();
   const { showSuccess, showError } = useToast();
   const { data: titulares, isLoading: isLoadingTitulares } = useTitularesActivos();
   const { options: horariosOptions, isLoading: isLoadingHorarios } = useHorariosOptions();
   const [titularId, setTitularId] = useState(initialTitularId ?? 0);
+  const [horariosSeleccionados, setHorariosSeleccionados] = useState<number[]>([]);
+  const [principalHorarioId, setPrincipalHorarioId] = useState<number | null>(null);
+  const [horarioToAdd, setHorarioToAdd] = useState<number | ''>('');
+  const [isAssigningHorarios, setIsAssigningHorarios] = useState(false);
 
   const form = useForm<CreatePasajeroFormData>({
     resolver: zodResolver(createPasajeroSchema),
@@ -33,7 +38,6 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
       gradoCurso: '',
       turno: 'Mañana',
       observaciones: '',
-      horarioId: null,
     },
   });
 
@@ -41,11 +45,54 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
     register,
     handleSubmit,
     setValue,
-    control,
     getValues,
     formState: { errors, isSubmitting },
   } = form;
   const selectedTitular = titularId > 0 ? titulares?.find((t) => t.id === titularId) : undefined;
+
+  const selectedHorarioObjects = horariosSeleccionados
+    .map((horarioId) => horariosOptions.find((option) => option.value === horarioId))
+    .filter((option): option is { value: number; label: string } => Boolean(option));
+
+  const syncTurnoDesdeHorario = (horarioId: number | null) => {
+    if (!horarioId) return;
+    const etiqueta = horariosOptions.find((option) => option.value === horarioId)?.label;
+    const turnoInferido = inferirTurnoDesdeEtiqueta(etiqueta, getValues('turno'));
+    setValue('turno', turnoInferido, { shouldDirty: true });
+  };
+
+  const handleAgregarHorarioSeleccionado = () => {
+    if (typeof horarioToAdd !== 'number') return;
+    setHorariosSeleccionados((prev) => [...prev, horarioToAdd]);
+    if (!principalHorarioId) {
+      setPrincipalHorarioId(horarioToAdd);
+      syncTurnoDesdeHorario(horarioToAdd);
+    }
+    setHorarioToAdd('');
+  };
+
+  const handleEliminarHorarioSeleccionado = (horarioId: number) => {
+    setHorariosSeleccionados((prev) => {
+      const next = prev.filter((id) => id !== horarioId);
+      if (principalHorarioId === horarioId) {
+        const siguientePrincipal = next[0] ?? null;
+        setPrincipalHorarioId(siguientePrincipal ?? null);
+        if (siguientePrincipal) {
+          syncTurnoDesdeHorario(siguientePrincipal);
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleSeleccionarPrincipal = (horarioId: number) => {
+    setPrincipalHorarioId(horarioId);
+    syncTurnoDesdeHorario(horarioId);
+  };
+
+  const selectableHorarios = horariosOptions.filter((option) => !horariosSeleccionados.includes(option.value));
+  const canAddHorario = typeof horarioToAdd === 'number' && !horariosSeleccionados.includes(horarioToAdd);
+  const isSaving = isSubmitting || createPasajero.isPending || isAssigningHorarios;
 
   const handleTitularChange = (value: number) => {
     setTitularId(value);
@@ -54,19 +101,46 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
 
   const onSubmit = async (data: CreatePasajeroFormData) => {
     try {
-      // Limpiar observaciones vacías
       const payload = {
         ...data,
         observaciones: data.observaciones?.trim() || undefined,
       };
-      await createPasajero.mutateAsync(payload);
-      showSuccess('¡Pasajero registrado exitosamente!');
+
+      const nuevoPasajero = await createPasajero.mutateAsync(payload);
+      let assignmentsFailed = false;
+
+      if (horariosSeleccionados.length) {
+        setIsAssigningHorarios(true);
+        try {
+          for (let index = 0; index < horariosSeleccionados.length; index += 1) {
+            const horarioId = horariosSeleccionados[index];
+            await agregarHorarioPasajero.mutateAsync({
+              pasajeroId: nuevoPasajero.id,
+              horarioId,
+              esPrincipal: horarioId === principalHorarioId,
+              prioridad: index + 1,
+            });
+          }
+        } catch {
+          assignmentsFailed = true;
+        } finally {
+          setIsAssigningHorarios(false);
+        }
+      }
+
+      if (assignmentsFailed) {
+        showError('El pasajero se registró pero no pudimos asignar todos los horarios. Revisalo luego desde su ficha.');
+      } else {
+        showSuccess('¡Pasajero registrado exitosamente!');
+      }
       navigate('/pasajeros');
     } catch (error: unknown) {
-      const errorMessage = error && typeof error === 'object' && 'message' in error 
-        ? String(error.message) 
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String(error.message)
         : 'Error al registrar el pasajero';
       showError(errorMessage);
+    } finally {
+      setIsAssigningHorarios(false);
     }
   };
 
@@ -96,7 +170,7 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
             value={titularId || 0}
             onChange={handleTitularChange}
             error={errors.titularId?.message}
-            disabled={isSubmitting}
+            disabled={isSaving}
             initialSearchTerm={titularApellido}
           />
         )}
@@ -221,51 +295,88 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
         )}
       </div>
 
-      {/* Campo Horario */}
-      <div>
-        <label
-          htmlFor="horarioId"
-          className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          Horario asignado
-        </label>
-        <Controller
-          control={control}
-          name="horarioId"
-          render={({ field }) => (
-            <select
-              id="horarioId"
-              value={field.value ?? ''}
-              onChange={(event) => {
-                const rawValue = event.target.value;
-                const parsedValue = rawValue ? Number(rawValue) : null;
-                field.onChange(parsedValue);
-                const etiqueta = horariosOptions.find((option) => option.value === parsedValue)?.label;
-                const turnoInferido = inferirTurnoDesdeEtiqueta(etiqueta, getValues('turno'));
-                setValue('turno', turnoInferido, { shouldDirty: true });
-              }}
-              disabled={isSubmitting || createPasajero.isPending || isLoadingHorarios}
-              className={`w-full rounded-lg border px-4 py-2.5 text-gray-900 transition focus:outline-none focus:ring-2 focus:ring-[#007a8a] dark:bg-[#27272a] dark:text-white ${
-                errors.horarioId
-                  ? 'border-red-500 dark:border-red-500'
-                  : 'border-gray-300 dark:border-[#3f3f46]'
-              }`}
-            >
-              <option value="">Sin horario asignado</option>
-              {horariosOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
+      {/* Horarios del pasajero */}
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Horarios del pasajero
+          </label>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Agrega uno o varios horarios y marca cuál será el principal.</p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <select
+            value={horarioToAdd === '' ? '' : horarioToAdd}
+            onChange={(event) => {
+              const rawValue = event.target.value;
+              setHorarioToAdd(rawValue ? Number(rawValue) : '');
+            }}
+            disabled={isSaving || isLoadingHorarios || !selectableHorarios.length}
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#007a8a] dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white"
+          >
+            <option value="">{selectableHorarios.length ? 'Seleccioná un horario' : 'No hay más horarios disponibles'}</option>
+            {selectableHorarios.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleAgregarHorarioSeleccionado}
+            disabled={!canAddHorario || isSaving || isLoadingHorarios}
+            className="w-full sm:w-auto"
+          >
+            Agregar horario
+          </Button>
+        </div>
+        <div className="rounded-2xl border border-dashed border-gray-200 p-4 dark:border-white/10">
+          {selectedHorarioObjects.length ? (
+            <div className="space-y-3">
+              {selectedHorarioObjects.map((horario) => (
+                <div
+                  key={horario.value}
+                  className={`flex flex-col gap-2 rounded-xl border px-4 py-3 text-sm transition dark:border-white/10 sm:flex-row sm:items-center sm:justify-between ${
+                    horario.value === principalHorarioId ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-900/10' : 'border-gray-200'
+                  }`}
+                >
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-white">{horario.label}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {horario.value === principalHorarioId ? 'Horario principal' : 'Horario secundario'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSeleccionarPrincipal(horario.value)}
+                      className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                        horario.value === principalHorarioId
+                          ? 'border-emerald-400 bg-emerald-100 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100'
+                          : 'border-gray-200 text-gray-600 hover:border-emerald-300 hover:text-emerald-600 dark:border-white/10 dark:text-gray-400'
+                      }`}
+                      disabled={horario.value === principalHorarioId}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">star</span>
+                      Principal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleEliminarHorarioSeleccionado(horario.value)}
+                      className="inline-flex items-center gap-1 rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-800/50 dark:text-red-300 dark:hover:bg-red-900/30"
+                      disabled={isAssigningHorarios}
+                    >
+                      <span className="material-symbols-outlined text-[16px]">close</span>
+                      Quitar
+                    </button>
+                  </div>
+                </div>
               ))}
-            </select>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">Sin horarios asignados. Podés agregarlos ahora o desde el módulo de Horarios.</p>
           )}
-        />
-        {errors.horarioId && (
-          <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{errors.horarioId.message as string}</p>
-        )}
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Puedes dejarlo sin horario y asignarlo luego desde la pantalla de Horarios.
-        </p>
+        </div>
       </div>
 
       {/* Campo Observaciones (TEXTAREA) */}
@@ -308,17 +419,17 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
           type="button"
           variant="ghost"
           onClick={handleCancel}
-          disabled={isSubmitting || createPasajero.isPending}
+          disabled={isSaving}
           className="w-full sm:w-auto order-2 sm:order-1"
         >
           Cancelar
         </Button>
         <Button
           type="submit"
-          disabled={isSubmitting || createPasajero.isPending || isLoadingTitulares}
+          disabled={isSaving || isLoadingTitulares}
           className="w-full sm:flex-1 sm:order-2 bg-[#007a8a] hover:bg-[#00626e] text-white disabled:bg-gray-400 disabled:hover:bg-gray-400"
         >
-          {isSubmitting || createPasajero.isPending ? (
+          {isSaving ? (
             <span className="flex items-center justify-center gap-2">
               <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
               Guardando...

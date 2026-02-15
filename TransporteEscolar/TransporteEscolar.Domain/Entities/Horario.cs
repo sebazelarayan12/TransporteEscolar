@@ -6,11 +6,11 @@ public class Horario
     public string Etiqueta { get; private set; } = null!;
     public int Orden { get; private set; }
 
-    public ICollection<Pasajero> Pasajeros { get; private set; }
+    public ICollection<PasajeroHorario> PasajeroHorarios { get; private set; }
 
     private Horario()
     {
-        Pasajeros = new List<Pasajero>();
+        PasajeroHorarios = new List<PasajeroHorario>();
     }
 
     public Horario(string etiqueta, int orden)
@@ -20,7 +20,7 @@ public class Horario
 
         Etiqueta = etiqueta.Trim();
         Orden = orden;
-        Pasajeros = new List<Pasajero>();
+        PasajeroHorarios = new List<PasajeroHorario>();
     }
 
     public void ActualizarEtiqueta(string etiqueta)

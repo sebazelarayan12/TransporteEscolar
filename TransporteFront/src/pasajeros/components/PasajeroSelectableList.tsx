@@ -1,4 +1,6 @@
 import type { PasajeroResponse } from '../types/pasajero.types';
+import { PasajeroHorarioBadges } from './PasajeroHorarioBadges';
+import { getPasajeroHorarioAsignado } from '../helpers/horario.helpers';
 
 interface PasajeroSelectableListProps {
   pasajeros: PasajeroResponse[];
@@ -24,16 +26,6 @@ const splitPasajerosBySeleccion = (pasajeros: PasajeroResponse[], selectedIds: S
   }
 
   return { assigned, available };
-};
-
-const getHorarioLabel = (pasajero: PasajeroResponse) => {
-  if (pasajero.horarioDescripcion) {
-    return pasajero.horarioDescripcion;
-  }
-  if (pasajero.horario?.etiqueta) {
-    return pasajero.horario.etiqueta;
-  }
-  return 'Sin horario asignado';
 };
 
 export const PasajeroSelectableList = ({
@@ -86,11 +78,14 @@ export const PasajeroSelectableList = ({
 
   const renderRow = (pasajero: PasajeroResponse, section: PasajeroSelectableSection) => {
     const isSelected = selectedIds.has(pasajero.id);
-    const isAssignedToTarget = targetHorarioId !== null && pasajero.horarioId === targetHorarioId;
-    const horarioLabel = getHorarioLabel(pasajero);
-    const assignedToOther = typeof pasajero.horarioId === 'number' && pasajero.horarioId !== targetHorarioId;
+    const asignacionActual = getPasajeroHorarioAsignado(pasajero, targetHorarioId);
+    const isAssignedToTarget = Boolean(asignacionActual);
+    const assignedToOther = pasajero.horariosAsignados.some(
+      (horario) => horario.horarioId !== targetHorarioId,
+    );
     const willBeAssigned = section === 'assigned' && !isAssignedToTarget;
     const willBeRemoved = section === 'available' && isAssignedToTarget;
+    const esPrincipalEnHorario = asignacionActual?.esPrincipal ?? false;
 
     return (
       <label
@@ -104,6 +99,9 @@ export const PasajeroSelectableList = ({
           <div>
             <p className="font-semibold text-gray-900 dark:text-white">{pasajero.nombreCompleto}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">Titular: {pasajero.titularApellido ?? 'Sin titular'}</p>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500">
+              {pasajero.horariosAsignados.length} horario{pasajero.horariosAsignados.length === 1 ? '' : 's'} asignado{pasajero.horariosAsignados.length === 1 ? '' : 's'}
+            </p>
           </div>
         </div>
         <div className="pl-7 text-sm text-gray-600 dark:text-gray-300 lg:pl-0">
@@ -112,17 +110,19 @@ export const PasajeroSelectableList = ({
         </div>
         <div className="pl-7 lg:pl-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                isAssignedToTarget
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
-                  : assignedToOther
-                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200'
-                    : 'bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-gray-200'
-              }`}
-            >
-              {horarioLabel}
-            </span>
+            <PasajeroHorarioBadges horarios={pasajero.horariosAsignados} size="sm" />
+            {esPrincipalEnHorario ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+                <span className="material-symbols-outlined text-[14px]">star</span>
+                Principal aquí
+              </span>
+            ) : null}
+            {assignedToOther && !isAssignedToTarget ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
+                <span className="material-symbols-outlined text-[14px]">share</span>
+                Tiene otros horarios
+              </span>
+            ) : null}
             {willBeAssigned ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[#007a8a]/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#007a8a]">
                 <span className="material-symbols-outlined text-[14px]">arrow_outward</span>
@@ -138,11 +138,7 @@ export const PasajeroSelectableList = ({
           </div>
         </div>
         <div className="pl-7 text-xs text-gray-500 lg:pl-0">
-          {pasajero.horarioDescripcion ? (
-            <span className="text-gray-500 dark:text-gray-400">Turno: {pasajero.turno}</span>
-          ) : (
-            <span className="text-gray-500 dark:text-gray-400">{pasajero.turno || '—'}</span>
-          )}
+          <span className="text-gray-500 dark:text-gray-400">Turno: {pasajero.turno}</span>
         </div>
       </label>
     );

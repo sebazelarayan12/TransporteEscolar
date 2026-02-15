@@ -3,7 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { horariosApi } from './horarios.api';
 import { horariosKeys } from './horarios.keys';
 import { pasajerosKeys } from '../../pasajeros/services/pasajeros.keys';
-import type { HorarioResponse, HorarioPasajerosResponse } from '../types/horario.types';
+import type {
+  HorarioResponse,
+  HorarioPasajerosResponse,
+  HorarioAsignacionDetalle,
+} from '../types/horario.types';
 
 export { horariosKeys } from './horarios.keys';
 
@@ -55,15 +59,18 @@ export const useHorarioPasajeros = (
 
 interface AsignarPasajerosVariables {
   horarioId: number;
-  pasajeroIds: number[];
+  pasajeros: HorarioAsignacionDetalle[];
 }
 
 export const useAsignarPasajerosAHorario = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ horarioId, pasajeroIds }: AsignarPasajerosVariables) =>
-      horariosApi.asignarPasajeros(horarioId, { pasajeroIds }),
+    mutationFn: ({ horarioId, pasajeros }: AsignarPasajerosVariables) =>
+      horariosApi.asignarPasajeros(horarioId, {
+        pasajeros,
+        pasajeroIds: pasajeros.map((pasajero) => pasajero.pasajeroId),
+      }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: horariosKeys.list() });
       queryClient.invalidateQueries({ queryKey: horariosKeys.detail(variables.horarioId) });

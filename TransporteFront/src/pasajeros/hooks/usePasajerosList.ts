@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { PasajeroResponse } from '../types/pasajero.types';
+import { formatPasajeroHorariosListado } from '../helpers/horario.helpers';
 
 interface PasajerosListState {
   searchQuery: string;
@@ -32,7 +33,7 @@ export const usePasajerosList = (pasajeros?: PasajeroResponse[]): PasajerosListS
           pasajero.colegio,
           pasajero.gradoCurso,
           pasajero.turno,
-          pasajero.horarioDescripcion ?? '',
+          formatPasajeroHorariosListado(pasajero.horariosAsignados) ?? '',
         ].join(' '),
       ).includes(query),
     );

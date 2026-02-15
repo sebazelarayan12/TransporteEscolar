@@ -22,11 +22,6 @@ public class HorarioConfiguration : IEntityTypeConfiguration<Horario>
         builder.Property(h => h.Orden)
             .IsRequired();
 
-        builder.HasMany(h => h.Pasajeros)
-            .WithOne(p => p.Horario)
-            .HasForeignKey(p => p.HorarioId)
-            .OnDelete(DeleteBehavior.SetNull);
-
         builder.HasData(
             new { Id = 1, Etiqueta = "8 San Patricio", Orden = 1 },
             new { Id = 2, Etiqueta = "8 Boisdron", Orden = 2 },

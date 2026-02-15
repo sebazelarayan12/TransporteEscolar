@@ -5,6 +5,7 @@ import type {
   PasajeroUpdateRequest,
   PasajeroFilterRequest,
   PasajeroPaginationResponse,
+  PasajeroHorarioAsignacionPayload,
 } from '../types/pasajero.types';
 
 /**
@@ -85,9 +86,16 @@ export const pasajerosApi = {
   },
 
   /**
-   * DELETE /pasajeros/{id}/horario - Quita el horario asignado
+   * POST /pasajeros/{id}/horarios - Asigna un horario al pasajero
    */
-  removeHorario: async (id: number): Promise<void> => {
-    return apiClient.delete<void>(`/pasajeros/${id}/horario`);
+  addHorario: async (id: number, data: PasajeroHorarioAsignacionPayload): Promise<void> => {
+    return apiClient.post<void>(`/pasajeros/${id}/horarios`, data);
+  },
+
+  /**
+   * DELETE /pasajeros/{id}/horarios/{horarioId} - Quita un horario específico
+   */
+  deleteHorario: async (id: number, horarioId: number): Promise<void> => {
+    return apiClient.delete<void>(`/pasajeros/${id}/horarios/${horarioId}`);
   },
 };

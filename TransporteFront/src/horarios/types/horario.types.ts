@@ -1,10 +1,11 @@
-import type { PasajeroResponse } from '../../pasajeros/types/pasajero.types';
+import type { PasajeroHorarioAsignado, PasajeroResponse } from '../../pasajeros/types/pasajero.types';
 
 export interface HorarioResponse {
   id: number;
   etiqueta: string;
   orden: number;
   pasajerosActivos: number;
+  pasajerosAsignados?: PasajeroHorarioAsignado[];
 }
 
 export interface HorarioResumen {
@@ -17,6 +18,13 @@ export interface HorarioPasajerosResponse {
   pasajeros: PasajeroResponse[];
 }
 
+export interface HorarioAsignacionDetalle {
+  pasajeroId: number;
+  esPrincipal?: boolean;
+  prioridad?: number | null;
+}
+
 export interface HorarioAsignacionRequest {
-  pasajeroIds: number[];
+  pasajeros: HorarioAsignacionDetalle[];
+  pasajeroIds?: number[];
 }

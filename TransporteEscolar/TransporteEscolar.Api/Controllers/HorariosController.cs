@@ -38,7 +38,8 @@ public class HorariosController : ControllerBase
     {
         await _horarioService.AsignarPasajerosAsync(id, request);
 
-        _logger.LogInformation("Horario {HorarioId} actualizado con {Cantidad} pasajeros", id, request.PasajeroIds?.Count ?? 0);
+        var total = request?.Pasajeros?.Count ?? request?.PasajeroIds?.Count ?? 0;
+        _logger.LogInformation("Horario {HorarioId} actualizado con {Cantidad} pasajeros", id, total);
 
         return NoContent();
     }

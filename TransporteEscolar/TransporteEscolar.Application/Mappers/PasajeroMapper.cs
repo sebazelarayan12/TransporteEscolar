@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Domain.Entities;
 
@@ -9,16 +11,28 @@ public static class PasajeroMapper
     {
         var apellido = pasajero.Titular?.Apellido ?? string.Empty;
 
+        var horariosAsignados = pasajero.PasajeroHorarios?
+            .OrderBy(ph => ph.Prioridad)
+            .ThenBy(ph => ph.FechaAsignacion)
+            .Select(ph => new PasajeroHorarioModel.Response(
+                ph.HorarioId,
+                ph.Horario?.Etiqueta ?? string.Empty,
+                ph.EsPrincipal,
+                ph.Prioridad,
+                ph.FechaAsignacion))
+            .ToList() ?? new List<PasajeroHorarioModel.Response>();
+
+        var horarioPrincipal = horariosAsignados.FirstOrDefault(h => h.EsPrincipal) ?? horariosAsignados.FirstOrDefault();
+
         HorarioModel.Resumen? horario = null;
         string? horarioDescripcion = null;
-        if (pasajero.HorarioId.HasValue)
+        int? horarioId = null;
+
+        if (horarioPrincipal != null && !string.IsNullOrWhiteSpace(horarioPrincipal.HorarioEtiqueta))
         {
-            var etiqueta = pasajero.Horario?.Etiqueta;
-            if (!string.IsNullOrWhiteSpace(etiqueta))
-            {
-                horarioDescripcion = etiqueta;
-                horario = new HorarioModel.Resumen(pasajero.HorarioId.Value, etiqueta);
-            }
+            horarioDescripcion = horarioPrincipal.HorarioEtiqueta;
+            horarioId = horarioPrincipal.HorarioId;
+            horario = new HorarioModel.Resumen(horarioPrincipal.HorarioId, horarioPrincipal.HorarioEtiqueta);
         }
 
         return new PasajeroModel.Response(
@@ -31,12 +45,13 @@ public static class PasajeroMapper
             pasajero.GradoCurso,
             pasajero.Turno,
             pasajero.Observaciones,
-            pasajero.HorarioId,
+            horarioId,
             horarioDescripcion,
             pasajero.FechaAlta,
             pasajero.FechaBaja,
             pasajero.FechaBaja == null,
             apellido,
-            horario);
+            horario,
+            horariosAsignados);
     }
 }

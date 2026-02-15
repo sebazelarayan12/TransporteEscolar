@@ -1,3 +1,4 @@
+using System.Linq;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Helpers;
@@ -11,13 +12,16 @@ public class HorarioService : IHorarioService
 {
     private readonly IHorarioRepository _horarioRepository;
     private readonly IPasajeroRepository _pasajeroRepository;
+    private readonly IPasajeroHorarioRepository _pasajeroHorarioRepository;
 
     public HorarioService(
         IHorarioRepository horarioRepository,
-        IPasajeroRepository pasajeroRepository)
+        IPasajeroRepository pasajeroRepository,
+        IPasajeroHorarioRepository pasajeroHorarioRepository)
     {
         _horarioRepository = horarioRepository;
         _pasajeroRepository = pasajeroRepository;
+        _pasajeroHorarioRepository = pasajeroHorarioRepository;
     }
 
     public async Task<List<HorarioModel.Response>> ObtenerHorariosAsync(CancellationToken cancellationToken = default)
@@ -45,22 +49,39 @@ public class HorarioService : IHorarioService
 
         var pasajeros = await _pasajeroRepository.GetActivosPorHorarioAsync(horarioId, cancellationToken);
 
+        var resumen = new HorarioModel.Resumen(horario.Id, horario.Etiqueta);
+
+        var asignados = pasajeros
+            .Select(p =>
+            {
+                var asignacion = p.PasajeroHorarios.First(ph => ph.HorarioId == horarioId);
+                var apellido = p.Titular?.Apellido ?? string.Empty;
+                return new PasajeroHorarioModel.PasajeroAsignado(
+                    p.Id,
+                    p.Nombre,
+                    apellido,
+                    $"{p.Nombre} {apellido}".Trim(),
+                    asignacion.EsPrincipal,
+                    asignacion.Prioridad,
+                    asignacion.FechaAsignacion);
+            })
+            .OrderBy(a => a.Prioridad)
+            .ThenBy(a => a.Nombre)
+            .ToList();
+
         return new HorarioModel.PasajerosResponse(
-            new HorarioModel.Resumen(horario.Id, horario.Etiqueta),
-            pasajeros.Select(PasajeroMapper.MapearAResponse).ToList());
+            resumen,
+            pasajeros.Select(PasajeroMapper.MapearAResponse).ToList(),
+            new HorarioModel.PasajerosAsignados(horario.Id, horario.Etiqueta, asignados));
     }
 
     public async Task AsignarPasajerosAsync(int horarioId, HorarioModel.AsignacionRequest request, CancellationToken cancellationToken = default)
     {
-        if (request?.PasajeroIds == null)
+        if (request == null)
             throw new ValidationException("Debes indicar los pasajeros a asignar al horario");
 
-        var ids = request.PasajeroIds
-            .Where(id => id > 0)
-            .Distinct()
-            .ToList();
-
-        if (ids.Count == 0)
+        var asignaciones = NormalizarAsignaciones(request);
+        if (asignaciones.Count == 0)
             throw new ValidationException("No se encontraron pasajeros válidos para asignar");
 
         await RepositoryHelper.GetByIdOrThrowAsync(
@@ -69,6 +90,7 @@ public class HorarioService : IHorarioService
             nameof(Horario),
             cancellationToken);
 
+        var ids = asignaciones.Select(a => a.PasajeroId).ToList();
         var pasajeros = await _pasajeroRepository.GetByIdsAsync(ids, cancellationToken);
         if (pasajeros.Count != ids.Count)
         {
@@ -81,10 +103,98 @@ public class HorarioService : IHorarioService
         {
             if (pasajero.FechaBaja != null)
                 throw new ValidationException($"El pasajero {pasajero.Nombre} está dado de baja y no puede asignarse a un horario");
-
-            pasajero.AsignarHorario(horarioId);
         }
 
-        await _pasajeroRepository.UpdateRangeAsync(pasajeros, cancellationToken);
+        await _pasajeroHorarioRepository.ExecuteInTransactionAsync(async () =>
+        {
+            foreach (var asignacion in asignaciones)
+            {
+                await ProcesarAsignacionAsync(asignacion, horarioId, cancellationToken);
+            }
+        });
+    }
+
+    private static List<HorarioModel.AsignacionDetalle> NormalizarAsignaciones(HorarioModel.AsignacionRequest request)
+    {
+        var detalles = request.Pasajeros?
+            .Where(p => p.PasajeroId > 0)
+            .GroupBy(p => p.PasajeroId)
+            .Select(g => g.First())
+            .ToList() ?? new List<HorarioModel.AsignacionDetalle>();
+
+        if (detalles.Count == 0 && request.PasajeroIds != null)
+        {
+            detalles = request.PasajeroIds
+                .Where(id => id > 0)
+                .Distinct()
+                .Select(id => new HorarioModel.AsignacionDetalle(id, false, null))
+                .ToList();
+        }
+
+        return detalles;
+    }
+
+    private async Task ProcesarAsignacionAsync(HorarioModel.AsignacionDetalle detalle, int horarioId, CancellationToken cancellationToken)
+    {
+        var prioridad = await ResolverPrioridadAsync(detalle.PasajeroId, detalle.Prioridad, cancellationToken);
+        var asignacion = await _pasajeroHorarioRepository.GetAsync(detalle.PasajeroId, horarioId, cancellationToken);
+
+        if (asignacion == null)
+        {
+            var nuevaAsignacion = new PasajeroHorario(detalle.PasajeroId, horarioId, detalle.EsPrincipal, prioridad);
+            await _pasajeroHorarioRepository.AddAsync(nuevaAsignacion, cancellationToken);
+
+            if (detalle.EsPrincipal)
+            {
+                await ActualizarPrincipalDesdeHorarioAsync(detalle.PasajeroId, horarioId, cancellationToken);
+            }
+
+            return;
+        }
+
+        asignacion.DefinirPrincipal(detalle.EsPrincipal);
+        if (detalle.Prioridad.HasValue && detalle.Prioridad.Value > 0)
+        {
+            asignacion.ActualizarPrioridad(detalle.Prioridad.Value);
+        }
+
+        if (detalle.EsPrincipal)
+        {
+            asignacion.ActualizarFechaAsignacion();
+        }
+
+        await _pasajeroHorarioRepository.UpdateAsync(asignacion, cancellationToken);
+
+        if (detalle.EsPrincipal)
+        {
+            await ActualizarPrincipalDesdeHorarioAsync(detalle.PasajeroId, horarioId, cancellationToken);
+        }
+    }
+
+    private async Task ActualizarPrincipalDesdeHorarioAsync(int pasajeroId, int horarioId, CancellationToken cancellationToken)
+    {
+        var asignaciones = await _pasajeroHorarioRepository.GetByPasajeroIdAsync(pasajeroId, cancellationToken);
+        if (asignaciones.Count == 0)
+            return;
+
+        foreach (var asignacion in asignaciones)
+        {
+            var esPrincipal = asignacion.HorarioId == horarioId;
+            asignacion.DefinirPrincipal(esPrincipal);
+            if (esPrincipal)
+            {
+                asignacion.ActualizarFechaAsignacion();
+            }
+        }
+
+        await _pasajeroHorarioRepository.UpdateRangeAsync(asignaciones, cancellationToken);
+    }
+
+    private async Task<int> ResolverPrioridadAsync(int pasajeroId, int? prioridad, CancellationToken cancellationToken)
+    {
+        if (prioridad.HasValue && prioridad.Value > 0)
+            return prioridad.Value;
+
+        return await _pasajeroHorarioRepository.ObtenerSiguientePrioridadAsync(pasajeroId, cancellationToken);
     }
 }

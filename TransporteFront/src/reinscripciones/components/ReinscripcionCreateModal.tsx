@@ -10,6 +10,7 @@ import {
 } from '../services/reinscripciones.queries';
 import { LastPendingConfirmationModal } from './LastPendingConfirmationModal';
 import { isLastPendingForTitular } from '../helpers/last-pending.helper';
+import { formatPasajeroHorariosListado } from '../../pasajeros/helpers/horario.helpers';
 
 type ActionVariant = 'pendiente' | 'confirmado' | 'noContinua';
 type CriticalActionVariant = Exclude<ActionVariant, 'pendiente'>;
@@ -103,7 +104,8 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
 
   const filteredPasajeros = normalizedSearch
     ? pasajerosDisponibles.filter((pasajero: PasajeroResponse) => {
-        const hayCoincidencia = `${pasajero.nombreCompleto} ${pasajero.colegio} ${pasajero.gradoCurso} ${pasajero.turno} ${pasajero.horarioDescripcion ?? ''}`
+        const horariosTexto = formatPasajeroHorariosListado(pasajero.horariosAsignados);
+        const hayCoincidencia = `${pasajero.nombreCompleto} ${pasajero.colegio} ${pasajero.gradoCurso} ${pasajero.turno} ${horariosTexto}`
           .toLowerCase()
           .includes(normalizedSearch);
         return hayCoincidencia;
@@ -239,7 +241,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
                 )}
               </div>
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                {pasajero.gradoCurso} • {pasajero.horarioDescripcion || 'Sin horario'} • Turno {pasajero.turno}
+                {pasajero.gradoCurso} • {formatPasajeroHorariosListado(pasajero.horariosAsignados) || 'Sin horarios'} • Turno {pasajero.turno}
               </p>
             </button>
           );
@@ -288,7 +290,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
                 {selectedPasajero.nombreCompleto}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {selectedPasajero.colegio} • {selectedPasajero.gradoCurso} • {selectedPasajero.horarioDescripcion || 'Sin horario'} • Turno {selectedPasajero.turno}
+                {selectedPasajero.colegio} • {selectedPasajero.gradoCurso} • {formatPasajeroHorariosListado(selectedPasajero.horariosAsignados) || 'Sin horarios'} • Turno {selectedPasajero.turno}
               </p>
             </div>
           ) : (
