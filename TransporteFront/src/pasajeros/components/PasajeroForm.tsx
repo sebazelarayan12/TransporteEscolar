@@ -107,53 +107,6 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
         )}
       </div>
 
-      {/* Campo Horario */}
-      <div>
-        <label
-          htmlFor="horarioId"
-          className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          Horario asignado
-        </label>
-        <Controller
-          control={control}
-          name="horarioId"
-          render={({ field }) => (
-            <select
-              id="horarioId"
-              value={field.value ?? ''}
-              onChange={(event) => {
-                const rawValue = event.target.value;
-                const parsedValue = rawValue ? Number(rawValue) : null;
-                field.onChange(parsedValue);
-                const etiqueta = horariosOptions.find((option) => option.value === parsedValue)?.label;
-                const turnoInferido = inferirTurnoDesdeEtiqueta(etiqueta, getValues('turno'));
-                setValue('turno', turnoInferido, { shouldDirty: true });
-              }}
-              disabled={isSubmitting || createPasajero.isPending || isLoadingHorarios}
-              className={`w-full rounded-lg border px-4 py-2.5 text-gray-900 transition focus:outline-none focus:ring-2 focus:ring-[#007a8a] dark:bg-[#27272a] dark:text-white ${
-                errors.horarioId
-                  ? 'border-red-500 dark:border-red-500'
-                  : 'border-gray-300 dark:border-[#3f3f46]'
-              }`}
-            >
-              <option value="">Sin horario asignado</option>
-              {horariosOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          )}
-        />
-        {errors.horarioId && (
-          <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{errors.horarioId.message as string}</p>
-        )}
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Puedes dejarlo sin horario y asignarlo luego desde la pantalla de Horarios.
-        </p>
-      </div>
-
       {/* Campo Dirección del Titular (read-only, aparece automáticamente) */}
       {titularId > 0 && (
         <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg">
@@ -266,6 +219,53 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
             {errors.gradoCurso.message}
           </p>
         )}
+      </div>
+
+      {/* Campo Horario */}
+      <div>
+        <label
+          htmlFor="horarioId"
+          className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Horario asignado
+        </label>
+        <Controller
+          control={control}
+          name="horarioId"
+          render={({ field }) => (
+            <select
+              id="horarioId"
+              value={field.value ?? ''}
+              onChange={(event) => {
+                const rawValue = event.target.value;
+                const parsedValue = rawValue ? Number(rawValue) : null;
+                field.onChange(parsedValue);
+                const etiqueta = horariosOptions.find((option) => option.value === parsedValue)?.label;
+                const turnoInferido = inferirTurnoDesdeEtiqueta(etiqueta, getValues('turno'));
+                setValue('turno', turnoInferido, { shouldDirty: true });
+              }}
+              disabled={isSubmitting || createPasajero.isPending || isLoadingHorarios}
+              className={`w-full rounded-lg border px-4 py-2.5 text-gray-900 transition focus:outline-none focus:ring-2 focus:ring-[#007a8a] dark:bg-[#27272a] dark:text-white ${
+                errors.horarioId
+                  ? 'border-red-500 dark:border-red-500'
+                  : 'border-gray-300 dark:border-[#3f3f46]'
+              }`}
+            >
+              <option value="">Sin horario asignado</option>
+              {horariosOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          )}
+        />
+        {errors.horarioId && (
+          <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{errors.horarioId.message as string}</p>
+        )}
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Puedes dejarlo sin horario y asignarlo luego desde la pantalla de Horarios.
+        </p>
       </div>
 
       {/* Campo Observaciones (TEXTAREA) */}
