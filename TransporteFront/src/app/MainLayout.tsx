@@ -26,6 +26,7 @@ export const MainLayout = () => {
     { name: 'Dashboard', href: '/', icon: 'dashboard', match: 'exact' },
     { name: 'Titulares', href: '/titulares', icon: 'group', match: 'startsWith' },
     { name: 'Pasajeros', href: '/pasajeros', icon: 'face', match: 'startsWith' },
+    { name: 'Horarios', href: '/horarios', icon: 'schedule', match: 'startsWith' },
     { name: 'Reinscripciones', href: '/reinscripciones', icon: 'assignment_returned', match: 'startsWith' },
     { name: 'Pagos', href: '/pagos', icon: 'payments', match: 'exact' },
     { name: 'Historial de movimientos', href: '/pagos/movimientos', icon: 'history', match: 'startsWith' },

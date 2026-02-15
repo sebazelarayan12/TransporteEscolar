@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
 import type { PasajeroResponse } from '../types/pasajero.types';
+import { useQuitarHorarioDePasajero } from '../services/pasajeros.queries';
+import { useToast } from '../../shared/hooks';
+import { Button } from '../../shared/ui/Button';
 
 interface PasajeroDetailPanelProps {
   pasajero: PasajeroResponse | null;
@@ -13,6 +16,22 @@ const formatDate = (value: string | null) => {
 };
 
 export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelProps) => {
+  const quitarHorario = useQuitarHorarioDePasajero();
+  const { showSuccess, showError } = useToast();
+
+  const handleRemoveHorario = async () => {
+    if (!pasajero?.horarioId) return;
+    try {
+      await quitarHorario.mutateAsync({ pasajeroId: pasajero.id, horarioId: pasajero.horarioId });
+      showSuccess('Horario quitado correctamente');
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String(error.message)
+        : 'No se pudo quitar el horario';
+      showError(errorMessage);
+    }
+  };
+
   if (!pasajero) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -57,17 +76,40 @@ export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelPr
         </div>
 
         <div className="space-y-4 text-sm">
-          {[
-            { label: 'Titular', value: pasajero.titularApellido || 'Sin titular asignado' },
-            { label: 'Colegio', value: pasajero.colegio },
-            { label: 'Grado / Curso', value: pasajero.gradoCurso },
-            { label: 'Turno', value: pasajero.turno },
-          ].map((item) => (
-            <div key={item.label} className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{item.label}</p>
-              <p className="text-base font-medium text-gray-900 dark:text-white">{item.value}</p>
+          <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Horario</p>
+                <p className="text-base font-bold text-gray-900 dark:text-white">
+                  {pasajero.horarioDescripcion || pasajero.horario?.etiqueta || 'Sin horario'}
+                </p>
+                <p className="text-xs text-gray-500">Turno legacy: {pasajero.turno}</p>
+              </div>
+              {pasajero.horarioId && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={quitarHorario.isPending}
+                  onClick={handleRemoveHorario}
+                  className="text-xs"
+                >
+                  {quitarHorario.isPending ? 'Quitando...' : 'Quitar horario'}
+                </Button>
+              )}
             </div>
-          ))}
+          </div>
+          <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Titular</p>
+            <p className="text-base font-medium text-gray-900 dark:text-white">{pasajero.titularApellido || 'Sin titular asignado'}</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Colegio</p>
+            <p className="text-base font-medium text-gray-900 dark:text-white">{pasajero.colegio}</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Grado / Curso</p>
+            <p className="text-base font-medium text-gray-900 dark:text-white">{pasajero.gradoCurso}</p>
+          </div>
         </div>
 
         <div className="rounded-xl border border-dashed border-gray-200 p-4 dark:border-white/10">

@@ -146,6 +146,19 @@ public class PasajerosController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Quita el horario asignado a un pasajero
+    /// </summary>
+    [HttpDelete("{id}/horario")]
+    public async Task<ActionResult> QuitarHorario(int id)
+    {
+        await _service.QuitarHorarioAsync(id);
+
+        _logger.LogInformation("Horario removido para el pasajero {Id}", id);
+
+        return NoContent();
+    }
+
     // Endpoints para reinscripciones
     /// <summary>
     /// Obtiene las reinscripciones de un pasajero

@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
-import { createPasajeroSchema, TURNO_OPTIONS, type CreatePasajeroFormData } from '../schemas/pasajero.schema';
+import { createPasajeroSchema, type CreatePasajeroFormData } from '../schemas/pasajero.schema';
 import { useCreatePasajero } from '../services/pasajeros.queries';
 import { useTitularesActivos } from '../../titulares/services/titulares.queries';
 import { Button } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
 import { TitularCombobox } from './TitularCombobox';
+import { useHorariosOptions } from '../../horarios/services/horarios.queries';
+import { inferirTurnoDesdeEtiqueta } from '../helpers/horario.helpers';
 
 interface PasajeroFormProps {
   initialTitularId?: number;
@@ -19,6 +21,7 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
   const createPasajero = useCreatePasajero();
   const { showSuccess, showError } = useToast();
   const { data: titulares, isLoading: isLoadingTitulares } = useTitularesActivos();
+  const { options: horariosOptions, isLoading: isLoadingHorarios } = useHorariosOptions();
   const [titularId, setTitularId] = useState(initialTitularId ?? 0);
 
   const form = useForm<CreatePasajeroFormData>({
@@ -30,6 +33,7 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
       gradoCurso: '',
       turno: 'Mañana',
       observaciones: '',
+      horarioId: null,
     },
   });
 
@@ -37,6 +41,8 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
     register,
     handleSubmit,
     setValue,
+    control,
+    getValues,
     formState: { errors, isSubmitting },
   } = form;
   const selectedTitular = titularId > 0 ? titulares?.find((t) => t.id === titularId) : undefined;
@@ -70,6 +76,7 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <input type="hidden" {...register('turno')} />
       {/* Campo Titular (Combobox con búsqueda) */}
       <div>
         <label
@@ -98,6 +105,53 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
             {errors.titularId.message}
           </p>
         )}
+      </div>
+
+      {/* Campo Horario */}
+      <div>
+        <label
+          htmlFor="horarioId"
+          className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Horario asignado
+        </label>
+        <Controller
+          control={control}
+          name="horarioId"
+          render={({ field }) => (
+            <select
+              id="horarioId"
+              value={field.value ?? ''}
+              onChange={(event) => {
+                const rawValue = event.target.value;
+                const parsedValue = rawValue ? Number(rawValue) : null;
+                field.onChange(parsedValue);
+                const etiqueta = horariosOptions.find((option) => option.value === parsedValue)?.label;
+                const turnoInferido = inferirTurnoDesdeEtiqueta(etiqueta, getValues('turno'));
+                setValue('turno', turnoInferido, { shouldDirty: true });
+              }}
+              disabled={isSubmitting || createPasajero.isPending || isLoadingHorarios}
+              className={`w-full rounded-lg border px-4 py-2.5 text-gray-900 transition focus:outline-none focus:ring-2 focus:ring-[#007a8a] dark:bg-[#27272a] dark:text-white ${
+                errors.horarioId
+                  ? 'border-red-500 dark:border-red-500'
+                  : 'border-gray-300 dark:border-[#3f3f46]'
+              }`}
+            >
+              <option value="">Sin horario asignado</option>
+              {horariosOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          )}
+        />
+        {errors.horarioId && (
+          <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{errors.horarioId.message as string}</p>
+        )}
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Puedes dejarlo sin horario y asignarlo luego desde la pantalla de Horarios.
+        </p>
       </div>
 
       {/* Campo Dirección del Titular (read-only, aparece automáticamente) */}
@@ -210,44 +264,6 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
         {errors.gradoCurso && (
           <p id="gradoCurso-error" className="mt-1.5 text-sm text-red-600 dark:text-red-400">
             {errors.gradoCurso.message}
-          </p>
-        )}
-      </div>
-
-      {/* Campo Turno (SELECT) */}
-      <div>
-        <label
-          htmlFor="turno"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          Turno <span className="text-red-500">*</span>
-        </label>
-        <select
-          id="turno"
-          {...register('turno')}
-          aria-invalid={errors.turno ? 'true' : 'false'}
-          aria-describedby={errors.turno ? 'turno-error' : undefined}
-          className={`
-            w-full px-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
-            bg-white dark:bg-[#27272a]
-            focus:outline-none focus:ring-2 focus:ring-[#007a8a] focus:border-transparent
-            transition-colors
-            ${
-              errors.turno
-                ? 'border-red-500 dark:border-red-500'
-                : 'border-gray-300 dark:border-[#3f3f46]'
-            }
-          `}
-        >
-          {TURNO_OPTIONS.map((turno) => (
-            <option key={turno} value={turno}>
-              {turno}
-            </option>
-          ))}
-        </select>
-        {errors.turno && (
-          <p id="turno-error" className="mt-1.5 text-sm text-red-600 dark:text-red-400">
-            {errors.turno.message}
           </p>
         )}
       </div>

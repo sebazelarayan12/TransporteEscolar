@@ -31,6 +31,13 @@ export const PasajeroCompactCard = ({ pasajero, isSelected, onClick }: PasajeroC
           {pasajero.colegio}
         </span>
       </div>
+
+      <div className="mt-2 flex items-center gap-2 text-xs">
+        <span className="rounded-full bg-[#007a8a]/10 px-2 py-1 font-semibold text-[#007a8a] dark:bg-cyan-400/10 dark:text-cyan-200">
+          {pasajero.horarioDescripcion || pasajero.horario?.etiqueta || 'Sin horario'}
+        </span>
+        <span className="text-gray-500">{pasajero.turno}</span>
+      </div>
     </div>
   );
 };

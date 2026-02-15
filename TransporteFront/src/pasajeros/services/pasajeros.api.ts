@@ -83,4 +83,11 @@ export const pasajerosApi = {
   delete: async (id: number): Promise<void> => {
     return apiClient.delete<void>(`/pasajeros/${id}`);
   },
+
+  /**
+   * DELETE /pasajeros/{id}/horario - Quita el horario asignado
+   */
+  removeHorario: async (id: number): Promise<void> => {
+    return apiClient.delete<void>(`/pasajeros/${id}/horario`);
+  },
 };

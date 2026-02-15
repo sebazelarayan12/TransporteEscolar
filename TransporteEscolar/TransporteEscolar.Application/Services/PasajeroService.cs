@@ -2,6 +2,7 @@ using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Helpers;
 using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Application.Mappers;
 using TransporteEscolar.Application.Validation;
 using TransporteEscolar.Domain.Entities;
 
@@ -12,39 +13,42 @@ public class PasajeroService : IPasajeroService
     private readonly IPasajeroRepository _repository;
     private readonly ITitularRepository _titularRepository;
     private readonly IPagoMensualService _pagoMensualService;
+    private readonly IHorarioRepository _horarioRepository;
 
     public PasajeroService(
         IPasajeroRepository repository,
         ITitularRepository titularRepository,
-        IPagoMensualService pagoMensualService)
+        IPagoMensualService pagoMensualService,
+        IHorarioRepository horarioRepository)
     {
         _repository = repository;
         _titularRepository = titularRepository;
         _pagoMensualService = pagoMensualService;
+        _horarioRepository = horarioRepository;
     }
 
     public async Task<PasajeroModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
     {
         var pasajero = await _repository.GetByIdAsync(id, cancellationToken);
-        return pasajero != null ? MapearAResponse(pasajero) : null;
+        return pasajero != null ? PasajeroMapper.MapearAResponse(pasajero) : null;
     }
 
     public async Task<List<PasajeroModel.Response>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
     {
         var pasajeros = await _repository.GetAllAsync(cancellationToken);
-        return pasajeros.Select(MapearAResponse).ToList();
+        return pasajeros.Select(PasajeroMapper.MapearAResponse).ToList();
     }
 
     public async Task<List<PasajeroModel.Response>> ObtenerActivosAsync(CancellationToken cancellationToken = default)
     {
         var pasajeros = await _repository.GetActivosAsync(cancellationToken);
-        return pasajeros.Select(MapearAResponse).ToList();
+        return pasajeros.Select(PasajeroMapper.MapearAResponse).ToList();
     }
 
     public async Task<List<PasajeroModel.Response>> ObtenerActivosDisponiblesParaReinscripcionAsync(int anio, CancellationToken cancellationToken = default)
     {
         var pasajeros = await _repository.GetActivosDisponiblesParaReinscripcionAsync(anio, cancellationToken);
-        return pasajeros.Select(MapearAResponse).ToList();
+        return pasajeros.Select(PasajeroMapper.MapearAResponse).ToList();
     }
 
     public async Task<PaginationModel.ResponsePagination<PasajeroModel.Response>> ObtenerPaginadosAsync(
@@ -76,7 +80,7 @@ public class PasajeroService : IPasajeroService
         var pasajerosPaginados = pasajerosOrdenados
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(MapearAResponse)
+            .Select(PasajeroMapper.MapearAResponse)
             .ToList();
 
         return new PaginationModel.ResponsePagination<PasajeroModel.Response>(
@@ -87,7 +91,7 @@ public class PasajeroService : IPasajeroService
     public async Task<List<PasajeroModel.Response>> ObtenerPorTitularAsync(int titularId, CancellationToken cancellationToken = default)
     {
         var pasajeros = await _repository.GetByTitularIdAsync(titularId, cancellationToken);
-        return pasajeros.Select(MapearAResponse).ToList();
+        return pasajeros.Select(PasajeroMapper.MapearAResponse).ToList();
     }
 
     public async Task<PasajeroModel.Response> CrearAsync(PasajeroModel.Request dto, CancellationToken cancellationToken = default)
@@ -98,6 +102,8 @@ public class PasajeroService : IPasajeroService
         if (titular == null)
             throw new NotFoundException(nameof(Titular), dto.TitularId);
 
+        await ValidarHorarioAsync(dto.HorarioId, cancellationToken);
+
         var pasajero = new Pasajero(
             dto.TitularId, 
             dto.Nombre, 
@@ -105,10 +111,11 @@ public class PasajeroService : IPasajeroService
             dto.GradoCurso, 
             dto.Turno, 
             dto.Observaciones,
+            dto.HorarioId,
             dto.FechaAlta);
 
         var pasajeroCreado = await _repository.AddAsync(pasajero, cancellationToken);
-        return MapearAResponse(pasajeroCreado);
+        return PasajeroMapper.MapearAResponse(pasajeroCreado);
     }
 
     public async Task ActualizarAsync(int id, PasajeroModel.UpdateRequest dto, CancellationToken cancellationToken = default)
@@ -118,7 +125,10 @@ public class PasajeroService : IPasajeroService
         var pasajero = await RepositoryHelper.GetByIdOrThrowAsync(
             _repository.GetByIdAsync, id, nameof(Pasajero), cancellationToken);
 
+        await ValidarHorarioAsync(dto.HorarioId, cancellationToken);
+
         pasajero.ActualizarDatos(dto.Nombre, dto.Colegio, dto.GradoCurso, dto.Turno, dto.Observaciones);
+        pasajero.AsignarHorario(dto.HorarioId);
         await _repository.UpdateAsync(pasajero, cancellationToken);
     }
 
@@ -137,6 +147,15 @@ public class PasajeroService : IPasajeroService
             _repository.GetByIdAsync, id, nameof(Pasajero), cancellationToken);
 
         pasajero.Reactivar();
+        await _repository.UpdateAsync(pasajero, cancellationToken);
+    }
+
+    public async Task QuitarHorarioAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var pasajero = await RepositoryHelper.GetByIdOrThrowAsync(
+            _repository.GetByIdAsync, id, nameof(Pasajero), cancellationToken);
+
+        pasajero.AsignarHorario(null);
         await _repository.UpdateAsync(pasajero, cancellationToken);
     }
 
@@ -203,22 +222,13 @@ public class PasajeroService : IPasajeroService
         await _repository.UpdateAsync(pasajero, cancellationToken);
     }
 
-    private static PasajeroModel.Response MapearAResponse(Pasajero pasajero)
+    private async Task ValidarHorarioAsync(int? horarioId, CancellationToken cancellationToken)
     {
-        var apellido = pasajero.Titular?.Apellido ?? string.Empty;
-        return new(
-            pasajero.Id, 
-            pasajero.TitularId, 
-            pasajero.Nombre, 
-            apellido,
-            $"{pasajero.Nombre} {apellido}", 
-            pasajero.Colegio, 
-            pasajero.GradoCurso,
-            pasajero.Turno, 
-            pasajero.Observaciones, 
-            pasajero.FechaAlta, 
-            pasajero.FechaBaja,
-            pasajero.FechaBaja == null, 
-            apellido);
+        if (!horarioId.HasValue)
+            return;
+
+        var existe = await _horarioRepository.ExisteAsync(horarioId.Value, cancellationToken);
+        if (!existe)
+            throw new NotFoundException(nameof(Horario), horarioId.Value);
     }
 }

@@ -32,6 +32,7 @@ export const usePasajerosList = (pasajeros?: PasajeroResponse[]): PasajerosListS
           pasajero.colegio,
           pasajero.gradoCurso,
           pasajero.turno,
+          pasajero.horarioDescripcion ?? '',
         ].join(' '),
       ).includes(query),
     );

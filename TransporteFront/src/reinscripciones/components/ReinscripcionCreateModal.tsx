@@ -103,7 +103,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
 
   const filteredPasajeros = normalizedSearch
     ? pasajerosDisponibles.filter((pasajero: PasajeroResponse) => {
-        const hayCoincidencia = `${pasajero.nombreCompleto} ${pasajero.colegio} ${pasajero.gradoCurso} ${pasajero.turno}`
+        const hayCoincidencia = `${pasajero.nombreCompleto} ${pasajero.colegio} ${pasajero.gradoCurso} ${pasajero.turno} ${pasajero.horarioDescripcion ?? ''}`
           .toLowerCase()
           .includes(normalizedSearch);
         return hayCoincidencia;
@@ -239,7 +239,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
                 )}
               </div>
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                {pasajero.gradoCurso} • Turno {pasajero.turno}
+                {pasajero.gradoCurso} • {pasajero.horarioDescripcion || 'Sin horario'} • Turno {pasajero.turno}
               </p>
             </button>
           );
@@ -273,7 +273,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
           <SearchInput
           value={searchValue}
           onChange={setSearchValue}
-          placeholder="Buscar por nombre, colegio o turno"
+          placeholder="Buscar por nombre, colegio, horario o turno"
           className="w-full"
         />
 
@@ -288,7 +288,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
                 {selectedPasajero.nombreCompleto}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {selectedPasajero.colegio} • {selectedPasajero.gradoCurso} • Turno {selectedPasajero.turno}
+                {selectedPasajero.colegio} • {selectedPasajero.gradoCurso} • {selectedPasajero.horarioDescripcion || 'Sin horario'} • Turno {selectedPasajero.turno}
               </p>
             </div>
           ) : (

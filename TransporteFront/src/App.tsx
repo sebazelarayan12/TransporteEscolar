@@ -25,6 +25,9 @@ const PasajeroCreatePage = lazy(() =>
 const ReinscripcionesListPage = lazy(() =>
   import('./reinscripciones/pages/ReinscripcionesListPage').then((module) => ({ default: module.ReinscripcionesListPage }))
 );
+const HorariosPage = lazy(() =>
+  import('./horarios/pages/HorariosPage').then((module) => ({ default: module.HorariosPage }))
+);
 // const ReinscripcionCreatePage = lazy(() =>
 //   import('./reinscripciones/pages/ReinscripcionCreatePage').then((module) => ({ default: module.ReinscripcionCreatePage }))
 // );
@@ -62,6 +65,7 @@ function App() {
               <Route path="titulares/:id" element={<TitularDetailPage />} />
               <Route path="pasajeros" element={<PasajerosListPage />} />
               <Route path="pasajeros/nuevo" element={<PasajeroCreatePage />} />
+              <Route path="horarios" element={<HorariosPage />} />
               <Route path="reinscripciones" element={<ReinscripcionesListPage />} />
               {/* <Route path="reinscripciones/nueva" element={<ReinscripcionCreatePage />} /> */}
               <Route path="pagos" element={<PagosListPage />} />

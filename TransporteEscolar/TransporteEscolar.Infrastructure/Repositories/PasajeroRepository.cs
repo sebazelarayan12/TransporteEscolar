@@ -18,6 +18,7 @@ public class PasajeroRepository : IPasajeroRepository
     {
         return await _context.Pasajeros
             .Include(p => p.Titular)
+            .Include(p => p.Horario)
             .Include(p => p.Reinscripciones)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
@@ -26,6 +27,7 @@ public class PasajeroRepository : IPasajeroRepository
     {
         return await _context.Pasajeros
             .Include(p => p.Titular)
+            .Include(p => p.Horario)
             .OrderBy(p => p.Titular.Apellido)
             .ThenBy(p => p.Nombre)
             .ToListAsync(cancellationToken);
@@ -35,6 +37,7 @@ public class PasajeroRepository : IPasajeroRepository
     {
         return await _context.Pasajeros
             .Include(p => p.Titular)
+            .Include(p => p.Horario)
             .Where(p => p.FechaBaja == null)
             .OrderBy(p => p.Titular.Apellido)
             .ThenBy(p => p.Nombre)
@@ -45,6 +48,7 @@ public class PasajeroRepository : IPasajeroRepository
     {
         return await _context.Pasajeros
             .Include(p => p.Titular)
+            .Include(p => p.Horario)
             .Include(p => p.Reinscripciones)
             .Where(p => p.FechaBaja == null)
             .Where(p => !p.Reinscripciones.Any(r =>
@@ -58,11 +62,46 @@ public class PasajeroRepository : IPasajeroRepository
     {
         return await _context.Pasajeros
             .Include(p => p.Titular)
+            .Include(p => p.Horario)
             .Include(p => p.Reinscripciones)
             .Where(p => p.TitularId == titularId)
             .OrderBy(p => p.Titular.Apellido)
             .ThenBy(p => p.Nombre)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<Pasajero>> GetActivosPorHorarioAsync(int horarioId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Pasajeros
+            .Include(p => p.Titular)
+            .Include(p => p.Horario)
+            .Where(p => p.HorarioId == horarioId)
+            .Where(p => p.FechaBaja == null)
+            .OrderBy(p => p.Titular.Apellido)
+            .ThenBy(p => p.Nombre)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<Pasajero>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        var idsList = ids.Distinct().ToList();
+        if (idsList.Count == 0)
+            return new List<Pasajero>();
+
+        return await _context.Pasajeros
+            .Include(p => p.Titular)
+            .Include(p => p.Horario)
+            .Where(p => idsList.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Dictionary<int, int>> GetActivosCountByHorarioAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Pasajeros
+            .Where(p => p.FechaBaja == null && p.HorarioId.HasValue)
+            .GroupBy(p => p.HorarioId!.Value)
+            .Select(group => new { HorarioId = group.Key, Total = group.Count() })
+            .ToDictionaryAsync(x => x.HorarioId, x => x.Total, cancellationToken);
     }
 
     public async Task<Pasajero> AddAsync(Pasajero pasajero, CancellationToken cancellationToken = default)
@@ -75,6 +114,12 @@ public class PasajeroRepository : IPasajeroRepository
     public async Task UpdateAsync(Pasajero pasajero, CancellationToken cancellationToken = default)
     {
         _context.Pasajeros.Update(pasajero);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdateRangeAsync(IEnumerable<Pasajero> pasajeros, CancellationToken cancellationToken = default)
+    {
+        _context.Pasajeros.UpdateRange(pasajeros);
         await _context.SaveChangesAsync(cancellationToken);
     }
 

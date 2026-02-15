@@ -1,9 +1,11 @@
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { updatePasajeroSchema, TURNO_OPTIONS, type UpdatePasajeroFormData } from '../schemas/pasajero.schema';
+import { updatePasajeroSchema, type UpdatePasajeroFormData } from '../schemas/pasajero.schema';
 import type { PasajeroResponse } from '../types/pasajero.types';
 import { Modal } from '../../shared/ui/Modal';
 import { Button } from '../../shared/ui/Button';
+import { useHorariosOptions } from '../../horarios/services/horarios.queries';
+import { inferirTurnoDesdeEtiqueta } from '../helpers/horario.helpers';
 
 interface PasajeroEditModalProps {
   pasajero: PasajeroResponse;
@@ -23,6 +25,9 @@ export const PasajeroEditModal = ({
   const {
     register,
     handleSubmit,
+    setValue,
+    control,
+    getValues,
     formState: { errors, isDirty },
   } = useForm<UpdatePasajeroFormData>({
     resolver: zodResolver(updatePasajeroSchema),
@@ -30,14 +35,17 @@ export const PasajeroEditModal = ({
       nombre: pasajero.nombre,
       colegio: pasajero.colegio,
       gradoCurso: pasajero.gradoCurso,
-      turno: pasajero.turno as typeof TURNO_OPTIONS[number],
+      turno: pasajero.turno,
       observaciones: pasajero.observaciones || '',
+      horarioId: pasajero.horarioId ?? null,
     },
   });
 
-  const handleFormSubmit = handleSubmit(async (data: UpdatePasajeroFormData) => {
+  const { options: horariosOptions, isLoading: isLoadingHorarios } = useHorariosOptions();
+
+  const onSubmit = async (data: UpdatePasajeroFormData) => {
     await onSave(data);
-  });
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Editar Pasajero" maxWidth="lg">
@@ -51,7 +59,8 @@ export const PasajeroEditModal = ({
         </div>
       )}
 
-      <form onSubmit={handleFormSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <input type="hidden" {...register('turno')} />
         {/* Campo Apellido (read-only - heredado del titular) */}
         <div>
           <label
@@ -173,42 +182,47 @@ export const PasajeroEditModal = ({
           )}
         </div>
 
-        {/* Campo Turno (SELECT) */}
+        {/* Campo Horario */}
         <div>
           <label
-            htmlFor="turno"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            htmlFor="horarioId"
+            className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Turno <span className="text-red-500">*</span>
+            Horario asignado
           </label>
-          <select
-            id="turno"
-            {...register('turno')}
-            aria-invalid={errors.turno ? 'true' : 'false'}
-            aria-describedby={errors.turno ? 'turno-error' : undefined}
-            className={`
-              w-full px-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
-              bg-white dark:bg-[#27272a]
-              focus:outline-none focus:ring-2 focus:ring-[#007a8a] focus:border-transparent
-              transition-colors
-              ${
-                errors.turno
-                  ? 'border-red-500 dark:border-red-500'
-                  : 'border-gray-300 dark:border-[#3f3f46]'
-              }
-            `}
-            disabled={isSaving}
-          >
-            {TURNO_OPTIONS.map((turno) => (
-              <option key={turno} value={turno}>
-                {turno}
-              </option>
-            ))}
-          </select>
-          {errors.turno && (
-            <p id="turno-error" className="mt-1.5 text-sm text-red-600 dark:text-red-400">
-              {errors.turno.message}
-            </p>
+          <Controller
+            control={control}
+            name="horarioId"
+            render={({ field }) => (
+              <select
+                id="horarioId"
+                value={field.value ?? ''}
+                onChange={(event) => {
+                  const rawValue = event.target.value;
+                  const parsedValue = rawValue ? Number(rawValue) : null;
+                  field.onChange(parsedValue);
+                  const etiqueta = horariosOptions.find((option) => option.value === parsedValue)?.label;
+                  const turnoInferido = inferirTurnoDesdeEtiqueta(etiqueta, getValues('turno'));
+                  setValue('turno', turnoInferido, { shouldDirty: true });
+                }}
+                disabled={isSaving || isLoadingHorarios}
+                className={`w-full rounded-lg border px-4 py-2.5 text-gray-900 transition focus:outline-none focus:ring-2 focus:ring-[#007a8a] dark:bg-[#27272a] dark:text-white ${
+                  errors.horarioId
+                    ? 'border-red-500 dark:border-red-500'
+                    : 'border-gray-300 dark:border-[#3f3f46]'
+                }`}
+              >
+                <option value="">Sin horario asignado</option>
+                {horariosOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          />
+          {errors.horarioId && (
+            <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{errors.horarioId.message as string}</p>
           )}
         </div>
 

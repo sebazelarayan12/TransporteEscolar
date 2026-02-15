@@ -14,6 +14,7 @@ public interface IPasajeroService
     Task ActualizarAsync(int id, PasajeroModel.UpdateRequest dto, CancellationToken cancellationToken = default);
     Task DarDeBajaAsync(int id, CancellationToken cancellationToken = default);
     Task ReactivarAsync(int id, CancellationToken cancellationToken = default);
+    Task QuitarHorarioAsync(int id, CancellationToken cancellationToken = default);
     
     // Gestión de reinscripciones
     Task<List<ReinscripcionModel.Response>> ObtenerReinscripcionesAsync(int pasajeroId, CancellationToken cancellationToken = default);

@@ -21,6 +21,9 @@ public static class PasajeroValidator
 
         if (string.IsNullOrWhiteSpace(request.Turno))
             throw new ValidationException("El turno es requerido");
+
+        if (request.HorarioId.HasValue && request.HorarioId <= 0)
+            throw new ValidationException("HorarioId inválido");
     }
 
     public static void ValidateUpdate(PasajeroModel.UpdateRequest request)
@@ -36,5 +39,8 @@ public static class PasajeroValidator
 
         if (string.IsNullOrWhiteSpace(request.Turno))
             throw new ValidationException("El turno es requerido");
+
+        if (request.HorarioId.HasValue && request.HorarioId <= 0)
+            throw new ValidationException("HorarioId inválido");
     }
 }

@@ -151,9 +151,12 @@ export const TitularPasajerosList = ({
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                     {pasajero.colegio} · {pasajero.gradoCurso}
                   </p>
-                  <div className="flex items-center gap-2 text-xs bg-gray-50 dark:bg-white/5 p-1.5 rounded-md border border-gray-100 dark:border-gray-700">
+                  <div className="flex flex-wrap items-center gap-2 text-xs bg-gray-50 dark:bg-white/5 p-1.5 rounded-md border border-gray-100 dark:border-gray-700">
                     <span className="material-symbols-outlined text-[14px] text-[#007a8a]">schedule</span>
-                    <span className="truncate font-medium text-gray-700 dark:text-gray-300">{pasajero.turno}</span>
+                    <span className="truncate font-semibold text-gray-700 dark:text-gray-300">
+                      {pasajero.horarioDescripcion || pasajero.horario?.etiqueta || 'Sin horario'}
+                    </span>
+                    <span className="text-gray-500">Turno {pasajero.turno}</span>
                   </div>
                 </div>
               </div>
