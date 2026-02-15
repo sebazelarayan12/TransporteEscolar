@@ -2,8 +2,8 @@ name: Railway PostgreSQL Backup
 
 on:
     schedule:
-        # Ejecutar todos los días a las 2 AM UTC (11 PM Argentina)
-        - cron: "0 2 * * *"
+        # Ejecutar todos los domingos a las 2 AM UTC (11 PM Sábado Argentina)
+        - cron: "0 2 * * 0"
     workflow_dispatch: # Permite ejecutar manualmente
 
 jobs:
@@ -32,14 +32,4 @@ jobs:
               with:
                   name: postgres-backup-${{ github.run_number }}
                   path: backup_*.sql.gz
-                  retention-days: 30 # Guardar por 30 días
-
-            - name: Upload to Release (opcional - backups semanales)
-              if: github.event.schedule == '0 2 * * 0' # Solo domingos
-              uses: softprops/action-gh-release@v1
-              with:
-                  tag_name: backup-${{ github.run_number }}
-                  files: backup_*.sql.gz
-                  body: |
-                      Backup automático de base de datos Railway PostgreSQL Production
-                      Fecha: ${{ github.event.head_commit.timestamp }}
+                  retention-days: 90 # Guardar por 90 días (backups semanales)

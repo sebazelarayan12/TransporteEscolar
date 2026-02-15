@@ -19,6 +19,8 @@ docker-compose.override.yml
 *.sql
 CargaTitulares.sql
 Scripts/
+backups/
+backups/
 
 # Datos de clientes
 **/datos_clientes.*
