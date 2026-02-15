@@ -6,8 +6,7 @@ import type { PasajeroTurno } from '../constants/turnos.constants';
 
 export interface PasajeroHorarioAsignado {
   horarioId: number;
-  nombreHorario: string;
-  colegio: string;
+  horarioEtiqueta: string;
   esPrincipal: boolean;
   prioridad: number | null;
   fechaAsignacion: string;

@@ -4,7 +4,7 @@ import type { PasajeroResponse } from '../types/pasajero.types';
 import { useEliminarHorarioPasajero } from '../services/pasajeros.queries';
 import { useToast } from '../../shared/hooks';
 import { Button } from '../../shared/ui/Button';
-import { getHorariosAsignados } from '../helpers/horario.helpers';
+import { getHorariosAsignados, formatPasajeroHorarioEtiqueta } from '../helpers/horario.helpers';
 
 interface PasajeroDetailPanelProps {
   pasajero: PasajeroResponse | null;
@@ -88,32 +88,35 @@ export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelPr
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Horarios asignados</p>
             <div className="mt-4 space-y-3">
               {horariosAsignados.length ? (
-                horariosAsignados.map((horario) => (
-                  <div
-                    key={`${horario.horarioId}-${horario.prioridad ?? 'sin-prioridad'}`}
-                    className="flex flex-col gap-3 rounded-xl border border-gray-100 px-3 py-3 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white" title={`${horario.nombreHorario} · ${horario.colegio}`}>
-                        {horario.nombreHorario} · {horario.colegio}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {horario.esPrincipal ? 'Horario principal' : 'Horario secundario'}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={
-                        eliminarHorario.isPending && horarioEnProceso === horario.horarioId
-                      }
-                      onClick={() => handleRemoveHorario(horario.horarioId)}
-                      className="text-xs"
+                horariosAsignados.map((horario) => {
+                  const etiqueta = formatPasajeroHorarioEtiqueta(horario);
+                  return (
+                    <div
+                      key={`${horario.horarioId}-${horario.prioridad ?? 'sin-prioridad'}`}
+                      className="flex flex-col gap-3 rounded-xl border border-gray-100 px-3 py-3 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      {eliminarHorario.isPending && horarioEnProceso === horario.horarioId ? 'Quitando...' : 'Quitar horario'}
-                    </Button>
-                  </div>
-                ))
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white" title={etiqueta}>
+                          {etiqueta}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {horario.esPrincipal ? 'Horario principal' : 'Horario secundario'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={
+                          eliminarHorario.isPending && horarioEnProceso === horario.horarioId
+                        }
+                        onClick={() => handleRemoveHorario(horario.horarioId)}
+                        className="text-xs"
+                      >
+                        {eliminarHorario.isPending && horarioEnProceso === horario.horarioId ? 'Quitando...' : 'Quitar horario'}
+                      </Button>
+                    </div>
+                  );
+                })
               ) : (
                 <p className="text-sm text-gray-500 dark:text-gray-400">Este pasajero todavía no tiene horarios asignados.</p>
               )}

@@ -9,7 +9,7 @@ import { Button } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
 import { TitularCombobox } from './TitularCombobox';
 import { useHorariosOptions } from '../../horarios/services/horarios.queries';
-import { inferirTurnoDesdeEtiqueta } from '../helpers/horario.helpers';
+import { inferirTurnoDesdeEtiqueta, getHorarioEtiquetaDisplay } from '../helpers/horario.helpers';
 
 interface PasajeroFormProps {
   initialTitularId?: number;
@@ -52,7 +52,8 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
 
   const selectedHorarioObjects = horariosSeleccionados
     .map((horarioId) => horariosOptions.find((option) => option.value === horarioId))
-    .filter((option): option is { value: number; label: string } => Boolean(option));
+    .filter((option): option is { value: number; label: string } => Boolean(option))
+    .map((option) => ({ ...option, label: getHorarioEtiquetaDisplay(option.label) }));
 
   const syncTurnoDesdeHorario = (horarioId: number | null) => {
     if (!horarioId) return;
@@ -316,7 +317,7 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
             <option value="">{selectableHorarios.length ? 'Seleccioná un horario' : 'No hay más horarios disponibles'}</option>
             {selectableHorarios.map((option) => (
               <option key={option.value} value={option.value}>
-                {option.label}
+                {getHorarioEtiquetaDisplay(option.label)}
               </option>
             ))}
           </select>

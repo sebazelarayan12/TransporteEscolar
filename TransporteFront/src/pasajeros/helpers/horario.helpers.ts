@@ -2,6 +2,12 @@ import type { PasajeroTurno } from '../constants/turnos.constants';
 import type { PasajeroHorarioAsignado, PasajeroResponse } from '../types/pasajero.types';
 
 const FALLBACK_TURNO: PasajeroTurno = 'Mañana';
+const HORARIO_SIN_ETIQUETA = 'Horario sin nombre';
+
+export const getHorarioEtiquetaDisplay = (etiqueta?: string | null) => {
+  const value = etiqueta?.trim();
+  return value && value.length > 0 ? value : HORARIO_SIN_ETIQUETA;
+};
 
 export const inferirTurnoDesdeEtiqueta = (
   etiqueta?: string | null,
@@ -43,13 +49,13 @@ export const getPasajeroHorarioAsignado = (
 };
 
 export const formatPasajeroHorariosListado = (horarios: PasajeroHorarioAsignado[] = []) =>
-  horarios.map((horario) => horario.nombreHorario).join(', ');
+  horarios.map((horario) => getHorarioEtiquetaDisplay(horario.horarioEtiqueta)).join(', ');
 
 const buildHorarioKey = (horario: PasajeroHorarioAsignado) =>
   `${horario.horarioId}-${horario.prioridad ?? 'sin-prioridad'}`;
 
 export const formatPasajeroHorarioEtiqueta = (horario: PasajeroHorarioAsignado) =>
-  `${horario.nombreHorario} · ${horario.colegio}`;
+  getHorarioEtiquetaDisplay(horario.horarioEtiqueta);
 
 export const getPasajeroHorariosResumen = (
   horarios: PasajeroHorarioAsignado[] = [],
