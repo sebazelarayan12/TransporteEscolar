@@ -46,10 +46,20 @@ export const HorarioAsignacionPanel = ({
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#007a8a]">Horario seleccionado</p>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedHorario?.etiqueta ?? 'Seleccioná un horario'}</h2>
-        <p className="text-sm text-gray-500">Seleccioná los pasajeros que deben viajar en este horario.</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#007a8a]">Horario seleccionado</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedHorario?.etiqueta ?? 'Seleccioná un horario'}</h2>
+          <p className="text-sm text-gray-500">Seleccioná los pasajeros que deben viajar en este horario.</p>
+        </div>
+        <button
+          type="button"
+          onClick={onCancel}
+          aria-label="Cerrar panel"
+          className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-lg font-semibold text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007a8a] dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/10"
+        >
+          ×
+        </button>
       </div>
 
       <div className="flex flex-col gap-3 border-b border-gray-100 pb-4 dark:border-white/10 sm:flex-row sm:justify-end">
