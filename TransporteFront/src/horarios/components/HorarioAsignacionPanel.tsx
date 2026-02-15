@@ -38,6 +38,11 @@ export const HorarioAsignacionPanel = ({
 }: HorarioAsignacionPanelProps) => {
   const emptyMessage = search ? 'No hay coincidencias con ese criterio' : 'No hay pasajeros activos para asignar';
   const isListLoading = isLoadingDetalle || isLoadingPasajeros;
+  const assignedVisibleCount = filteredPasajeros.reduce(
+    (acc, pasajero) => (selectedPasajeros.has(pasajero.id) ? acc + 1 : acc),
+    0,
+  );
+  const availableVisibleCount = filteredPasajeros.length - assignedVisibleCount;
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -62,10 +67,21 @@ export const HorarioAsignacionPanel = ({
 
       <SearchInput value={search} onChange={onSearchChange} placeholder="Buscar por nombre, colegio o titular" />
 
+      <div className="rounded-xl border border-dashed border-gray-200 bg-white/60 px-4 py-3 text-xs text-gray-600 dark:border-gray-700 dark:bg-white/5 dark:text-gray-300">
+        <p>
+          Los pasajeros ya asignados aparecen primero en la lista y mantienen el badge verde. Debajo encontrarás el resto disponible
+          para agregarlos con el mismo selector.
+        </p>
+      </div>
+
       <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
         <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200">
           <span className="material-symbols-outlined text-[16px]">groups</span>
-          {selectedPasajeros.size} pasajeros asignados
+          {selectedPasajeros.size} pasajeros asignados ({assignedVisibleCount} visibles)
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200">
+          <span className="material-symbols-outlined text-[16px]">filter_alt</span>
+          {availableVisibleCount} disponibles en esta vista
         </span>
         {detalleHorario ? (
           <span className="text-xs text-gray-500">Asignados originalmente: {detalleHorario.pasajeros.length}</span>

@@ -14,3 +14,4 @@ export { EstadisticasMesCard } from './EstadisticasMesCard';
 export { PagoStatusBadge } from './PagoStatusBadge';
 export { Toast } from './Toast';
 export { ToastProvider } from './ToastProvider';
+export * from './icons';
