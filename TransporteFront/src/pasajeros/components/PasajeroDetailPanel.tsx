@@ -4,8 +4,7 @@ import type { PasajeroResponse } from '../types/pasajero.types';
 import { useEliminarHorarioPasajero } from '../services/pasajeros.queries';
 import { useToast } from '../../shared/hooks';
 import { Button } from '../../shared/ui/Button';
-import { PasajeroHorarioBadges } from './PasajeroHorarioBadges';
-import { getHorariosAsignados, getHorarioPrincipal } from '../helpers/horario.helpers';
+import { getHorariosAsignados } from '../helpers/horario.helpers';
 
 interface PasajeroDetailPanelProps {
   pasajero: PasajeroResponse | null;
@@ -49,7 +48,6 @@ export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelPr
   }
 
   const horariosAsignados = getHorariosAsignados(pasajero);
-  const horarioPrincipal = getHorarioPrincipal(pasajero);
 
   return (
     <div className="flex h-full flex-col">
@@ -87,33 +85,24 @@ export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelPr
 
         <div className="space-y-4 text-sm">
           <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Horarios asignados</p>
-                <p className="text-base font-bold text-gray-900 dark:text-white">
-                  {horariosAsignados.length ? `${horariosAsignados.length} activo${horariosAsignados.length !== 1 ? 's' : ''}` : 'Sin horarios'}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Principal: {horarioPrincipal?.nombreHorario ?? 'Sin definir'}
-                </p>
-              </div>
-              <PasajeroHorarioBadges horarios={horariosAsignados} />
-            </div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Horarios asignados</p>
             <div className="mt-4 space-y-3">
               {horariosAsignados.length ? (
                 horariosAsignados.map((horario) => (
                   <div
                     key={`${horario.horarioId}-${horario.prioridad ?? 'sin-prioridad'}`}
-                    className="flex flex-col gap-3 rounded-xl border border-gray-100 px-3 py-2 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 rounded-xl border border-gray-100 px-3 py-3 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">
-                        {horario.nombreHorario}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {horario.esPrincipal ? 'Principal • ' : ''}
-                        Asignado {formatDate(horario.fechaAsignacion) ?? '—'}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-2xl bg-[#007a8a]/10 p-2 text-[#007a8a] dark:bg-[#007a8a]/20 dark:text-white">
+                        <span className="material-symbols-outlined text-[20px]">schedule</span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {horario.nombreHorario}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{horario.colegio}</p>
+                      </div>
                     </div>
                     <Button
                       variant="ghost"
@@ -129,10 +118,9 @@ export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelPr
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">Aún no tiene horarios asignados. Podés sumarlos desde el módulo de Horarios.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Este pasajero todavía no tiene horarios asignados.</p>
               )}
             </div>
-            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Turno legado: {pasajero.turno}</p>
           </div>
           <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Titular</p>

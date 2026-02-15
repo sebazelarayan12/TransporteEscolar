@@ -5,6 +5,7 @@ import { useToast } from '../../shared/hooks';
 import { useUpdatePasajero } from '../../pasajeros/services/pasajeros.queries';
 import { PasajeroEditModal } from '../../pasajeros/components/PasajeroEditModal';
 import { PasajeroHorarioBadges } from '../../pasajeros/components/PasajeroHorarioBadges';
+import { formatPasajeroHorariosListado } from '../../pasajeros/helpers/horario.helpers';
 import type { PasajeroResponse } from '../../pasajeros/types/pasajero.types';
 import type { UpdatePasajeroFormData } from '../../pasajeros/schemas/pasajero.schema';
 
@@ -118,8 +119,11 @@ export const TitularPasajerosList = ({
 
         {!isLoading && !error && cantidad > 0 && (
           <>
-          {pasajeros!.map((pasajero) => (
-            <div 
+          {pasajeros!.map((pasajero) => {
+            const horariosListado = formatPasajeroHorariosListado(pasajero.horariosAsignados) || 'Sin horarios asignados';
+
+            return (
+              <div 
               key={pasajero.id}
               className="p-3 rounded-xl border border-[#e4e4e7] dark:border-[#3f3f46] bg-white dark:bg-[#27272a] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
             >
@@ -153,16 +157,18 @@ export const TitularPasajerosList = ({
                     {pasajero.colegio} · {pasajero.gradoCurso}
                   </p>
                   <div className="flex flex-col gap-1 rounded-md border border-gray-100 bg-gray-50 p-1.5 text-xs dark:border-gray-700 dark:bg-white/5">
-                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                       <span className="material-symbols-outlined text-[14px] text-[#007a8a]">schedule</span>
-                      <span>Turno {pasajero.turno}</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-wide">Horarios</span>
                     </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">{horariosListado}</p>
                     <PasajeroHorarioBadges horarios={pasajero.horariosAsignados} size="sm" />
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
           </>
         )}
 

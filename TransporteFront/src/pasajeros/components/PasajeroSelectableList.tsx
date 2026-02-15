@@ -1,6 +1,6 @@
 import type { PasajeroResponse } from '../types/pasajero.types';
 import { PasajeroHorarioBadges } from './PasajeroHorarioBadges';
-import { getPasajeroHorarioAsignado } from '../helpers/horario.helpers';
+import { formatPasajeroHorariosListado, getPasajeroHorarioAsignado } from '../helpers/horario.helpers';
 
 interface PasajeroSelectableListProps {
   pasajeros: PasajeroResponse[];
@@ -85,12 +85,12 @@ export const PasajeroSelectableList = ({
     );
     const willBeAssigned = section === 'assigned' && !isAssignedToTarget;
     const willBeRemoved = section === 'available' && isAssignedToTarget;
-    const esPrincipalEnHorario = asignacionActual?.esPrincipal ?? false;
+    const horariosListado = formatPasajeroHorariosListado(pasajero.horariosAsignados) || 'Sin horarios asignados';
 
     return (
       <label
         key={pasajero.id}
-        className={`flex flex-col gap-2 px-4 py-3 transition lg:grid lg:grid-cols-[auto_1.5fr_1fr_1fr] lg:items-center lg:gap-3 ${
+        className={`flex flex-col gap-2 px-4 py-3 transition lg:grid lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1.1fr)_minmax(0,1.6fr)] lg:items-center lg:gap-3 ${
           isSelected ? 'bg-[#007a8a]/5 ring-1 ring-[#007a8a]/20 dark:bg-[#0f343a]' : 'hover:bg-gray-50 dark:hover:bg-white/5'
         }`}
       >
@@ -99,9 +99,6 @@ export const PasajeroSelectableList = ({
           <div>
             <p className="font-semibold text-gray-900 dark:text-white">{pasajero.nombreCompleto}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">Titular: {pasajero.titularApellido ?? 'Sin titular'}</p>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500">
-              {pasajero.horariosAsignados.length} horario{pasajero.horariosAsignados.length === 1 ? '' : 's'} asignado{pasajero.horariosAsignados.length === 1 ? '' : 's'}
-            </p>
           </div>
         </div>
         <div className="pl-7 text-sm text-gray-600 dark:text-gray-300 lg:pl-0">
@@ -109,14 +106,10 @@ export const PasajeroSelectableList = ({
           <p className="text-xs text-gray-500">{pasajero.gradoCurso}</p>
         </div>
         <div className="pl-7 lg:pl-0">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Horarios</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{horariosListado}</p>
             <PasajeroHorarioBadges horarios={pasajero.horariosAsignados} size="sm" />
-            {esPrincipalEnHorario ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
-                <span className="material-symbols-outlined text-[14px]">star</span>
-                Principal aquí
-              </span>
-            ) : null}
             {assignedToOther && !isAssignedToTarget ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
                 <span className="material-symbols-outlined text-[14px]">share</span>
@@ -137,9 +130,6 @@ export const PasajeroSelectableList = ({
             ) : null}
           </div>
         </div>
-        <div className="pl-7 text-xs text-gray-500 lg:pl-0">
-          <span className="text-gray-500 dark:text-gray-400">Turno: {pasajero.turno}</span>
-        </div>
       </label>
     );
   };
@@ -154,11 +144,10 @@ export const PasajeroSelectableList = ({
 
   return (
     <div className="rounded-xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a]">
-      <div className="hidden px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 lg:grid lg:grid-cols-[auto_1.5fr_1fr_1fr] lg:gap-3">
+      <div className="hidden px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 lg:grid lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1.1fr)_minmax(0,1.6fr)] lg:gap-3">
         <span className="pl-6">Pasajero</span>
         <span>Colegio / Curso</span>
-        <span>Horario</span>
-        <span>Turno legado</span>
+        <span>Horarios</span>
       </div>
       <div className="divide-y divide-gray-100 dark:divide-white/5">
         {renderSectionHeader('done_all', 'Asignados a este horario', assigned.length)}

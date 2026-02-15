@@ -148,10 +148,6 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
           <span className="material-symbols-outlined text-[18px] text-gray-400">local_library</span>
           <span className="text-gray-600 dark:text-gray-300">{registro.curso}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-gray-400">wb_sunny</span>
-          <span className="text-gray-600 dark:text-gray-300">Turno {registro.turno}</span>
-        </div>
       </div>
       <div className="flex items-center gap-3 pt-1 text-xs text-gray-400">
         <span className="inline-flex items-center gap-1 text-[#1d8ca5]">

@@ -1,5 +1,6 @@
 import type { PasajeroResponse } from '../types/pasajero.types';
 import { PasajeroHorarioBadges } from './PasajeroHorarioBadges';
+import { formatPasajeroHorariosListado } from '../helpers/horario.helpers';
 
 interface PasajeroCompactCardProps {
   pasajero: PasajeroResponse;
@@ -8,6 +9,8 @@ interface PasajeroCompactCardProps {
 }
 
 export const PasajeroCompactCard = ({ pasajero, isSelected, onClick }: PasajeroCompactCardProps) => {
+  const horariosListado = formatPasajeroHorariosListado(pasajero.horariosAsignados) || 'Sin horarios asignados';
+
   return (
     <div
       onClick={onClick}
@@ -33,9 +36,12 @@ export const PasajeroCompactCard = ({ pasajero, isSelected, onClick }: PasajeroC
         </span>
       </div>
 
-      <div className="mt-2 flex items-center gap-2 text-xs">
-        <PasajeroHorarioBadges horarios={pasajero.horariosAsignados} size="sm" />
-        <span className="text-gray-500">{pasajero.turno}</span>
+      <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-2 text-xs dark:border-gray-700 dark:bg-white/5">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Horarios</p>
+        <p className="text-[11px] text-gray-500 dark:text-gray-400">{horariosListado}</p>
+        <div className="mt-1">
+          <PasajeroHorarioBadges horarios={pasajero.horariosAsignados} size="sm" />
+        </div>
       </div>
     </div>
   );

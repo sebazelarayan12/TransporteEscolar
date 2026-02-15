@@ -16,7 +16,7 @@ export const PasajeroTableRow = ({ pasajero, isSelected, onSelect }: PasajeroTab
     <button
       type="button"
       onClick={() => onSelect(pasajero)}
-      className={`grid w-full grid-cols-9 items-center gap-3 px-5 py-4 text-left text-sm transition hover:bg-gray-50 dark:hover:bg-white/5 ${
+      className={`grid w-full grid-cols-8 items-center gap-3 px-5 py-4 text-left text-sm transition hover:bg-gray-50 dark:hover:bg-white/5 ${
         isSelected ? 'bg-[#007a8a]/5 ring-1 ring-[#007a8a]/30' : ''
       }`}
     >
@@ -35,7 +35,6 @@ export const PasajeroTableRow = ({ pasajero, isSelected, onSelect }: PasajeroTab
       <div className="text-sm font-medium text-gray-700 dark:text-gray-200">
         <PasajeroHorarioBadges horarios={pasajero.horariosAsignados} />
       </div>
-      <span className="text-xs uppercase tracking-wide text-gray-500">{pasajero.turno}</span>
       <span className={`inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-bold ${statusStyles}`}>
         {pasajero.activo ? 'Activo' : 'Inactivo'}
       </span>

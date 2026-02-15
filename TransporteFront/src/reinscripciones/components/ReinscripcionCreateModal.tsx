@@ -105,7 +105,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
   const filteredPasajeros = normalizedSearch
     ? pasajerosDisponibles.filter((pasajero: PasajeroResponse) => {
         const horariosTexto = formatPasajeroHorariosListado(pasajero.horariosAsignados);
-        const hayCoincidencia = `${pasajero.nombreCompleto} ${pasajero.colegio} ${pasajero.gradoCurso} ${pasajero.turno} ${horariosTexto}`
+        const hayCoincidencia = `${pasajero.nombreCompleto} ${pasajero.colegio} ${pasajero.gradoCurso} ${horariosTexto}`
           .toLowerCase()
           .includes(normalizedSearch);
         return hayCoincidencia;
@@ -217,6 +217,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
       <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
         {filteredPasajeros.map((pasajero) => {
           const isSelected = selectedPasajeroId === pasajero.id;
+          const horariosTexto = formatPasajeroHorariosListado(pasajero.horariosAsignados) || 'Sin horarios';
 
           return (
             <button
@@ -241,7 +242,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
                 )}
               </div>
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                {pasajero.gradoCurso} • {formatPasajeroHorariosListado(pasajero.horariosAsignados) || 'Sin horarios'} • Turno {pasajero.turno}
+                {pasajero.gradoCurso} • {horariosTexto}
               </p>
             </button>
           );
@@ -275,7 +276,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
           <SearchInput
           value={searchValue}
           onChange={setSearchValue}
-          placeholder="Buscar por nombre, colegio, horario o turno"
+          placeholder="Buscar por nombre, colegio u horario"
           className="w-full"
         />
 
@@ -290,7 +291,7 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
                 {selectedPasajero.nombreCompleto}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {selectedPasajero.colegio} • {selectedPasajero.gradoCurso} • {formatPasajeroHorariosListado(selectedPasajero.horariosAsignados) || 'Sin horarios'} • Turno {selectedPasajero.turno}
+                {selectedPasajero.colegio} • {selectedPasajero.gradoCurso} • {formatPasajeroHorariosListado(selectedPasajero.horariosAsignados) || 'Sin horarios'}
               </p>
             </div>
           ) : (
