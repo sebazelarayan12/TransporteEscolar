@@ -36,6 +36,7 @@ export interface TitularRequest {
 }
 
 export interface TitularUpdateRequest {
+  apellido: string;
   nombreContacto: string;
   direccion: string;
   montoMensualPactado: number;

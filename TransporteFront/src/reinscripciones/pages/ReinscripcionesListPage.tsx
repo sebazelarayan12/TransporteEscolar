@@ -40,7 +40,7 @@ export const ReinscripcionesListPage = () => {
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const filteredReinscripciones = normalizedSearch
     ? reinscripciones.filter((registro: ReinscripcionDetallada) => {
-        const target = `${registro.pasajeroNombre} ${registro.titularNombre} ${registro.colegio} ${registro.curso} ${registro.turno}`.toLowerCase();
+        const target = `${registro.pasajeroNombre} ${registro.titularNombre} ${registro.colegio} ${registro.curso}`.toLowerCase();
         return target.includes(normalizedSearch);
       })
     : reinscripciones;

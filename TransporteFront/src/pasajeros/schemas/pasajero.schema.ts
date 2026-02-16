@@ -1,13 +1,5 @@
 import { z } from 'zod';
-
-/**
- * Opciones válidas para el turno del pasajero
- */
-export const TURNO_OPTIONS = [
-  'Mañana',
-  'Tarde',
-  'Doble turno',
-] as const;
+import { TURNO_OPTIONS } from '../constants/turnos.constants';
 
 /**
  * Schema de validación para creación de Pasajero

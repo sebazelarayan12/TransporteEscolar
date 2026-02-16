@@ -9,6 +9,7 @@ public record PasajeroModel
         string GradoCurso,
         string Turno,
         string? Observaciones,
+        int? HorarioId = null,
         DateTime? FechaAlta = null); // Opcional: si no se especifica, usa fecha actual
 
     public record UpdateRequest(
@@ -16,7 +17,8 @@ public record PasajeroModel
         string Colegio,
         string GradoCurso,
         string Turno,
-        string? Observaciones);
+        string? Observaciones,
+        int? HorarioId);
 
     public record Response(
         int Id,
@@ -28,8 +30,12 @@ public record PasajeroModel
         string GradoCurso,
         string Turno,
         string? Observaciones,
+        int? HorarioId,
+        string? HorarioDescripcion,
         DateTime FechaAlta,
         DateTime? FechaBaja,
         bool Activo,
-        string? TitularApellido);
+        string? TitularApellido,
+        HorarioModel.Resumen? Horario,
+        IReadOnlyList<PasajeroHorarioModel.Response> HorariosAsignados);
 }

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reinscripcionesApi } from './reinscripciones.api';
 import type { CrearReinscripcionRequest, ReinscripcionListParams } from '../types/reinscripcion.types';
-import { pasajerosKeys } from '../../pasajeros/services/pasajeros.queries';
+import { pasajerosKeys } from '../../pasajeros/services/pasajeros.keys';
 
 export const reinscripcionesKeys = {
   root: ['reinscripciones'] as const,

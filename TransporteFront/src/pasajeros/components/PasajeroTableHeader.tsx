@@ -5,7 +5,7 @@ export const PasajeroTableHeader = () => {
       <span>Titular</span>
       <span>Colegio</span>
       <span>Curso</span>
-      <span>Turno</span>
+      <span>Horarios asignados</span>
       <span>Estado</span>
     </div>
   );

@@ -1,4 +1,5 @@
 import type { PasajeroResponse } from '../types/pasajero.types';
+import { PasajeroHorarioBadges } from './PasajeroHorarioBadges';
 
 interface PasajeroTableRowProps {
   pasajero: PasajeroResponse;
@@ -31,7 +32,9 @@ export const PasajeroTableRow = ({ pasajero, isSelected, onSelect }: PasajeroTab
       <span className="truncate text-sm text-gray-600 dark:text-gray-300">{pasajero.titularApellido || '—'}</span>
       <span className="truncate text-sm text-gray-600 dark:text-gray-300">{pasajero.colegio}</span>
       <span className="text-sm text-gray-600 dark:text-gray-300">{pasajero.gradoCurso}</span>
-      <span className="text-sm text-gray-600 dark:text-gray-300">{pasajero.turno}</span>
+      <div className="text-sm font-medium text-gray-700 dark:text-gray-200">
+        <PasajeroHorarioBadges horarios={pasajero.horariosAsignados} maxVisible={2} />
+      </div>
       <span className={`inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-bold ${statusStyles}`}>
         {pasajero.activo ? 'Activo' : 'Inactivo'}
       </span>

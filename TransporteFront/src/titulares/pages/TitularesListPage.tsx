@@ -19,7 +19,7 @@ export const TitularesListPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>(STATUS_FILTERS.ALL);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(STATUS_FILTERS.ACTIVE);
 
   const handleSelectTitular = (titular: TitularResponse) => {
     setSelectedTitular(titular);

@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { updatePasajeroSchema, TURNO_OPTIONS, type UpdatePasajeroFormData } from '../schemas/pasajero.schema';
+import { updatePasajeroSchema, type UpdatePasajeroFormData } from '../schemas/pasajero.schema';
 import type { PasajeroResponse } from '../types/pasajero.types';
 import { Modal } from '../../shared/ui/Modal';
 import { Button } from '../../shared/ui/Button';
@@ -30,14 +30,14 @@ export const PasajeroEditModal = ({
       nombre: pasajero.nombre,
       colegio: pasajero.colegio,
       gradoCurso: pasajero.gradoCurso,
-      turno: pasajero.turno as typeof TURNO_OPTIONS[number],
+      turno: pasajero.turno,
       observaciones: pasajero.observaciones || '',
     },
   });
 
-  const handleFormSubmit = handleSubmit(async (data: UpdatePasajeroFormData) => {
+  const onSubmit = async (data: UpdatePasajeroFormData) => {
     await onSave(data);
-  });
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Editar Pasajero" maxWidth="lg">
@@ -51,7 +51,8 @@ export const PasajeroEditModal = ({
         </div>
       )}
 
-      <form onSubmit={handleFormSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <input type="hidden" {...register('turno')} />
         {/* Campo Apellido (read-only - heredado del titular) */}
         <div>
           <label
@@ -173,44 +174,6 @@ export const PasajeroEditModal = ({
           )}
         </div>
 
-        {/* Campo Turno (SELECT) */}
-        <div>
-          <label
-            htmlFor="turno"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-          >
-            Turno <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="turno"
-            {...register('turno')}
-            aria-invalid={errors.turno ? 'true' : 'false'}
-            aria-describedby={errors.turno ? 'turno-error' : undefined}
-            className={`
-              w-full px-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
-              bg-white dark:bg-[#27272a]
-              focus:outline-none focus:ring-2 focus:ring-[#007a8a] focus:border-transparent
-              transition-colors
-              ${
-                errors.turno
-                  ? 'border-red-500 dark:border-red-500'
-                  : 'border-gray-300 dark:border-[#3f3f46]'
-              }
-            `}
-            disabled={isSaving}
-          >
-            {TURNO_OPTIONS.map((turno) => (
-              <option key={turno} value={turno}>
-                {turno}
-              </option>
-            ))}
-          </select>
-          {errors.turno && (
-            <p id="turno-error" className="mt-1.5 text-sm text-red-600 dark:text-red-400">
-              {errors.turno.message}
-            </p>
-          )}
-        </div>
 
         {/* Campo Observaciones (TEXTAREA) */}
         <div>

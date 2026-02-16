@@ -27,7 +27,7 @@ public class Titular
         decimal montoMensualPactado,
         DateTime? fechaAlta = null)
     {
-        Apellido = apellido;
+        Apellido = NormalizarApellido(apellido);
         NombreContacto = nombreContacto;
         Direccion = direccion;
         MontoMensualPactado = montoMensualPactado;
@@ -37,8 +37,9 @@ public class Titular
     }
 
     // Métodos simples de actualización
-    public void ActualizarDatos(string nombreContacto, string direccion, decimal montoMensualPactado)
+    public void ActualizarDatos(string apellido, string nombreContacto, string direccion, decimal montoMensualPactado)
     {
+        Apellido = NormalizarApellido(apellido);
         NombreContacto = nombreContacto;
         Direccion = direccion;
         MontoMensualPactado = montoMensualPactado;
@@ -64,5 +65,10 @@ public class Titular
         };
 
         return DateTime.SpecifyKind(fechaUtc.Date, DateTimeKind.Utc);
+    }
+
+    private static string NormalizarApellido(string valor)
+    {
+        return valor.Trim().ToUpperInvariant();
     }
 }

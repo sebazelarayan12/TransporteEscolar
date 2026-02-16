@@ -31,24 +31,26 @@ interface ReinscripcionCardProps {
 
 export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, onMarkAsPending }: ReinscripcionCardProps) => {
   const getInitial = (nombre: string) => nombre.charAt(0).toUpperCase();
+  const actionButtonsWrapperClass = 'flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2';
+  const actionButtonBaseClass = 'inline-flex w-full items-center justify-center rounded-lg px-3 py-1.5 text-center text-xs font-semibold text-white transition sm:w-auto';
 
   const renderActionButtons = () => {
     if (registro.estado === 'Pendiente') {
       return (
-        <div className="flex gap-1">
+        <div className={actionButtonsWrapperClass}>
           <button
             onClick={() => onConfirm?.(registro)}
-            className="rounded-lg bg-emerald-500 p-1.5 text-white hover:bg-emerald-600 transition"
+            className={`${actionButtonBaseClass} bg-emerald-500 hover:bg-emerald-600`}
             title="Confirmar reinscripción"
           >
-            <span className="material-symbols-outlined text-[18px]">check</span>
+            Confirmar
           </button>
           <button
             onClick={() => onMarkAsNotContinuing?.(registro)}
-            className="rounded-lg bg-slate-400 p-1.5 text-white hover:bg-slate-500 transition"
+            className={`${actionButtonBaseClass} bg-slate-400 hover:bg-slate-500`}
             title="Marcar como no continúa"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            No continúa
           </button>
         </div>
       );
@@ -56,20 +58,20 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
 
     if (registro.estado === 'Confirmado') {
       return (
-        <div className="flex gap-1">
+        <div className={actionButtonsWrapperClass}>
           <button
             onClick={() => onMarkAsPending?.(registro)}
-            className="rounded-lg bg-amber-500 p-1.5 text-white hover:bg-amber-600 transition"
+            className={`${actionButtonBaseClass} bg-amber-500 hover:bg-amber-600`}
             title="Marcar como pendiente"
           >
-            <span className="material-symbols-outlined text-[18px]">schedule</span>
+            Pendiente
           </button>
           <button
             onClick={() => onMarkAsNotContinuing?.(registro)}
-            className="rounded-lg bg-slate-400 p-1.5 text-white hover:bg-slate-500 transition"
+            className={`${actionButtonBaseClass} bg-slate-400 hover:bg-slate-500`}
             title="Marcar como no continúa"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            No continúa
           </button>
         </div>
       );
@@ -77,20 +79,20 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
 
     if (registro.estado === 'NoContinua') {
       return (
-        <div className="flex gap-1">
+        <div className={actionButtonsWrapperClass}>
           <button
             onClick={() => onMarkAsPending?.(registro)}
-            className="rounded-lg bg-amber-500 p-1.5 text-white hover:bg-amber-600 transition"
+            className={`${actionButtonBaseClass} bg-amber-500 hover:bg-amber-600`}
             title="Marcar como pendiente"
           >
-            <span className="material-symbols-outlined text-[18px]">schedule</span>
+            Pendiente
           </button>
           <button
             onClick={() => onConfirm?.(registro)}
-            className="rounded-lg bg-emerald-500 p-1.5 text-white hover:bg-emerald-600 transition"
+            className={`${actionButtonBaseClass} bg-emerald-500 hover:bg-emerald-600`}
             title="Confirmar reinscripción"
           >
-            <span className="material-symbols-outlined text-[18px]">check</span>
+            Confirmar
           </button>
         </div>
       );
@@ -105,7 +107,7 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
         statusConfig[registro.estado].card
       }`}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3">
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-full bg-[#1d8ca5]/10 text-lg font-bold text-[#1d8ca5] ${
@@ -123,7 +125,7 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
             <p className="text-xs text-gray-500">ID #{registro.id}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-3">
           <span
             className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-bold ring-1 ring-inset ${
               statusConfig[registro.estado].chip
@@ -135,29 +137,22 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
         </div>
       </div>
 
-      <div className="grid gap-y-2 gap-x-4 border-t border-dashed border-gray-200 pt-3 text-sm dark:border-gray-700 sm:grid-cols-2">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-gray-400">account_circle</span>
-          <span className="text-gray-600 dark:text-gray-300">{registro.titularNombre}</span>
+      <div className="grid gap-y-3 gap-x-4 border-t border-dashed border-gray-200 pt-3 text-sm dark:border-gray-700 sm:grid-cols-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Titular</p>
+          <p className="text-gray-600 dark:text-gray-300">{registro.titularNombre}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-gray-400">school</span>
-          <span className="text-gray-600 dark:text-gray-300">{registro.colegio}</span>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Colegio</p>
+          <p className="text-gray-600 dark:text-gray-300">{registro.colegio}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-gray-400">local_library</span>
-          <span className="text-gray-600 dark:text-gray-300">{registro.curso}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px] text-gray-400">wb_sunny</span>
-          <span className="text-gray-600 dark:text-gray-300">Turno {registro.turno}</span>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Curso</p>
+          <p className="text-gray-600 dark:text-gray-300">{registro.curso}</p>
         </div>
       </div>
       <div className="flex items-center gap-3 pt-1 text-xs text-gray-400">
-        <span className="inline-flex items-center gap-1 text-[#1d8ca5]">
-          <span className="material-symbols-outlined text-[16px]">timeline</span>
-          Creada {formatDateOnlyCompact(registro.fechaCreacion)}
-        </span>
+        <span className="text-[#1d8ca5]">Creada {formatDateOnlyCompact(registro.fechaCreacion)}</span>
         {registro.fechaConfirmacion && (
           <>
             <span>•</span>

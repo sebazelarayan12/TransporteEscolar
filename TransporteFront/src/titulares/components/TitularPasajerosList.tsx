@@ -4,6 +4,7 @@ import { SectionHeader, Spinner, Alert } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
 import { useUpdatePasajero } from '../../pasajeros/services/pasajeros.queries';
 import { PasajeroEditModal } from '../../pasajeros/components/PasajeroEditModal';
+import { PasajeroHorarioBadges } from '../../pasajeros/components/PasajeroHorarioBadges';
 import type { PasajeroResponse } from '../../pasajeros/types/pasajero.types';
 import type { UpdatePasajeroFormData } from '../../pasajeros/schemas/pasajero.schema';
 
@@ -117,8 +118,9 @@ export const TitularPasajerosList = ({
 
         {!isLoading && !error && cantidad > 0 && (
           <>
-          {pasajeros!.map((pasajero) => (
-            <div 
+          {pasajeros!.map((pasajero) => {
+            return (
+              <div 
               key={pasajero.id}
               className="p-3 rounded-xl border border-[#e4e4e7] dark:border-[#3f3f46] bg-white dark:bg-[#27272a] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
             >
@@ -151,14 +153,15 @@ export const TitularPasajerosList = ({
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                     {pasajero.colegio} · {pasajero.gradoCurso}
                   </p>
-                  <div className="flex items-center gap-2 text-xs bg-gray-50 dark:bg-white/5 p-1.5 rounded-md border border-gray-100 dark:border-gray-700">
-                    <span className="material-symbols-outlined text-[14px] text-[#007a8a]">schedule</span>
-                    <span className="truncate font-medium text-gray-700 dark:text-gray-300">{pasajero.turno}</span>
+                  <div className="flex flex-col gap-1 rounded-md border border-gray-100 bg-gray-50 p-1.5 text-xs dark:border-gray-700 dark:bg-white/5">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Horarios</span>
+                    <PasajeroHorarioBadges horarios={pasajero.horariosAsignados} size="sm" maxVisible={2} />
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
           </>
         )}
 

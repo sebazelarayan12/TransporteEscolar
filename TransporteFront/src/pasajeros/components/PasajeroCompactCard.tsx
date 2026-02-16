@@ -1,4 +1,5 @@
 import type { PasajeroResponse } from '../types/pasajero.types';
+import { PasajeroHorarioBadges } from './PasajeroHorarioBadges';
 
 interface PasajeroCompactCardProps {
   pasajero: PasajeroResponse;
@@ -30,6 +31,13 @@ export const PasajeroCompactCard = ({ pasajero, isSelected, onClick }: PasajeroC
         <span className="truncate">
           {pasajero.colegio}
         </span>
+      </div>
+
+      <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-2 text-xs dark:border-gray-700 dark:bg-white/5">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Horarios</p>
+        <div className="mt-1">
+          <PasajeroHorarioBadges horarios={pasajero.horariosAsignados} size="sm" maxVisible={2} />
+        </div>
       </div>
     </div>
   );

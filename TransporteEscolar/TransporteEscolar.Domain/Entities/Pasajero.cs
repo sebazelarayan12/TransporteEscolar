@@ -14,11 +14,13 @@ public class Pasajero
 
     // Navegación
     public Titular Titular { get; private set; } = null!;
+    public ICollection<PasajeroHorario> PasajeroHorarios { get; private set; } = null!;
     public ICollection<ReinscripcionPasajero> Reinscripciones { get; private set; } = null!;
 
     // Constructor para EF Core
-    private Pasajero() 
+    private Pasajero()
     {
+        PasajeroHorarios = new List<PasajeroHorario>();
         Reinscripciones = new List<ReinscripcionPasajero>();
     }
 
@@ -40,6 +42,7 @@ public class Pasajero
         Observaciones = observaciones;
         var referencia = fechaAlta ?? DateTime.UtcNow;
         FechaAlta = NormalizarFechaUtc(referencia);
+        PasajeroHorarios = new List<PasajeroHorario>();
         Reinscripciones = new List<ReinscripcionPasajero>();
     }
 

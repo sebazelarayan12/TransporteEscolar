@@ -17,9 +17,10 @@ export type CreateTitularFormData = z.output<typeof createTitularSchema>;
 
 /**
  * Schema de validación para actualización de Titular
- * Solo permite editar: nombreContacto, direccion, montoMensualPactado
+ * Permite editar apellido, nombreContacto, direccion y montoMensualPactado
  */
 export const updateTitularSchema = z.object({
+  apellido: z.string().min(1, { message: 'El apellido es requerido' }),
   nombreContacto: z.string().min(1, { message: 'El nombre de contacto es requerido' }),
   direccion: z.string().min(1, { message: 'La dirección es requerida' }),
   montoMensualPactado: z.coerce

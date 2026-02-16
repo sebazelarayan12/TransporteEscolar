@@ -1,5 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { PasajeroResponse } from '../types/pasajero.types';
+import { useEliminarHorarioPasajero } from '../services/pasajeros.queries';
+import { useToast } from '../../shared/hooks';
+import { Button } from '../../shared/ui/Button';
+import { getHorariosAsignados, formatPasajeroHorarioEtiqueta } from '../helpers/horario.helpers';
 
 interface PasajeroDetailPanelProps {
   pasajero: PasajeroResponse | null;
@@ -13,6 +18,26 @@ const formatDate = (value: string | null) => {
 };
 
 export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelProps) => {
+  const eliminarHorario = useEliminarHorarioPasajero();
+  const [horarioEnProceso, setHorarioEnProceso] = useState<number | null>(null);
+  const { showSuccess, showError } = useToast();
+
+  const handleRemoveHorario = async (horarioId: number) => {
+    if (!pasajero) return;
+    try {
+      setHorarioEnProceso(horarioId);
+      await eliminarHorario.mutateAsync({ pasajeroId: pasajero.id, horarioId });
+      showSuccess('Horario quitado correctamente');
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === 'object' && 'message' in error
+        ? String(error.message)
+        : 'No se pudo quitar el horario';
+      showError(errorMessage);
+    } finally {
+      setHorarioEnProceso(null);
+    }
+  };
+
   if (!pasajero) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -21,6 +46,8 @@ export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelPr
       </div>
     );
   }
+
+  const horariosAsignados = getHorariosAsignados(pasajero);
 
   return (
     <div className="flex h-full flex-col">
@@ -57,17 +84,56 @@ export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelPr
         </div>
 
         <div className="space-y-4 text-sm">
-          {[
-            { label: 'Titular', value: pasajero.titularApellido || 'Sin titular asignado' },
-            { label: 'Colegio', value: pasajero.colegio },
-            { label: 'Grado / Curso', value: pasajero.gradoCurso },
-            { label: 'Turno', value: pasajero.turno },
-          ].map((item) => (
-            <div key={item.label} className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{item.label}</p>
-              <p className="text-base font-medium text-gray-900 dark:text-white">{item.value}</p>
+          <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Horarios asignados</p>
+            <div className="mt-4 space-y-3">
+              {horariosAsignados.length ? (
+                horariosAsignados.map((horario) => {
+                  const etiqueta = formatPasajeroHorarioEtiqueta(horario);
+                  return (
+                    <div
+                      key={`${horario.horarioId}-${horario.prioridad ?? 'sin-prioridad'}`}
+                      className="flex flex-col gap-3 rounded-xl border border-gray-100 px-3 py-3 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white" title={etiqueta}>
+                          {etiqueta}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {horario.esPrincipal ? 'Horario principal' : 'Horario secundario'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={
+                          eliminarHorario.isPending && horarioEnProceso === horario.horarioId
+                        }
+                        onClick={() => handleRemoveHorario(horario.horarioId)}
+                        className="text-xs"
+                      >
+                        {eliminarHorario.isPending && horarioEnProceso === horario.horarioId ? 'Quitando...' : 'Quitar horario'}
+                      </Button>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Este pasajero todavía no tiene horarios asignados.</p>
+              )}
             </div>
-          ))}
+          </div>
+          <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Titular</p>
+            <p className="text-base font-medium text-gray-900 dark:text-white">{pasajero.titularApellido || 'Sin titular asignado'}</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Colegio</p>
+            <p className="text-base font-medium text-gray-900 dark:text-white">{pasajero.colegio}</p>
+          </div>
+          <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Grado / Curso</p>
+            <p className="text-base font-medium text-gray-900 dark:text-white">{pasajero.gradoCurso}</p>
+          </div>
         </div>
 
         <div className="rounded-xl border border-dashed border-gray-200 p-4 dark:border-white/10">

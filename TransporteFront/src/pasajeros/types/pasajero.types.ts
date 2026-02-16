@@ -2,6 +2,16 @@
  * Tipos de Pasajeros - Mapeados desde DTOs del backend
  */
 
+import type { PasajeroTurno } from '../constants/turnos.constants';
+
+export interface PasajeroHorarioAsignado {
+  horarioId: number;
+  horarioEtiqueta: string;
+  esPrincipal: boolean;
+  prioridad: number | null;
+  fechaAsignacion: string;
+}
+
 export interface PasajeroResponse {
   id: number;
   titularId: number;
@@ -10,12 +20,13 @@ export interface PasajeroResponse {
   nombreCompleto: string;
   colegio: string;
   gradoCurso: string;
-  turno: string;
+  turno: PasajeroTurno;
   observaciones: string | null;
   fechaAlta: string;
   fechaBaja: string | null;
   activo: boolean;
   titularApellido: string | null;
+  horariosAsignados: PasajeroHorarioAsignado[];
 }
 
 export interface PasajeroRequest {
@@ -23,7 +34,7 @@ export interface PasajeroRequest {
   nombre: string;
   colegio: string;
   gradoCurso: string;
-  turno: string;
+  turno: PasajeroTurno;
   observaciones?: string;
   fechaAlta?: string;
 }
@@ -32,8 +43,14 @@ export interface PasajeroUpdateRequest {
   nombre: string;
   colegio: string;
   gradoCurso: string;
-  turno: string;
+  turno: PasajeroTurno;
   observaciones?: string;
+}
+
+export interface PasajeroHorarioAsignacionPayload {
+  horarioId: number;
+  esPrincipal?: boolean;
+  prioridad?: number | null;
 }
 
 // Paginación

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { pasajerosKeys } from '../../pasajeros/services/pasajeros.queries';
+import { pasajerosKeys } from '../../pasajeros/services/pasajeros.keys';
 import { titularesApi } from './titulares.api';
 import type {
   TitularRequest,

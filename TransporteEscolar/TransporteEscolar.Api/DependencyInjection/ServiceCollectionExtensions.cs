@@ -11,9 +11,11 @@ public static class ServiceCollectionExtensions
         // Repositorios
         services.AddScoped<ITitularRepository, TitularRepository>();
         services.AddScoped<IPasajeroRepository, PasajeroRepository>();
+        services.AddScoped<IPasajeroHorarioRepository, PasajeroHorarioRepository>();
         services.AddScoped<IPagoMensualRepository, PagoMensualRepository>();
         services.AddScoped<IReinscripcionRepository, ReinscripcionRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();
+        services.AddScoped<IHorarioRepository, HorarioRepository>();
         
         // Servicios
         services.AddScoped<ITitularService, TitularService>();
@@ -21,6 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPagoMensualService, PagoMensualService>();
         services.AddScoped<IReinscripcionService, ReinscripcionService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IHorarioService, HorarioService>();
         
         return services;
     }

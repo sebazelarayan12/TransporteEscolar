@@ -9,7 +9,11 @@ public interface IPasajeroRepository
     Task<List<Pasajero>> GetActivosAsync(CancellationToken cancellationToken = default);
     Task<List<Pasajero>> GetActivosDisponiblesParaReinscripcionAsync(int anio, CancellationToken cancellationToken = default);
     Task<List<Pasajero>> GetByTitularIdAsync(int titularId, CancellationToken cancellationToken = default);
+    Task<List<Pasajero>> GetActivosPorHorarioAsync(int horarioId, CancellationToken cancellationToken = default);
+    Task<List<Pasajero>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
+    Task<Dictionary<int, int>> GetActivosCountByHorarioAsync(CancellationToken cancellationToken = default);
     Task<Pasajero> AddAsync(Pasajero pasajero, CancellationToken cancellationToken = default);
     Task UpdateAsync(Pasajero pasajero, CancellationToken cancellationToken = default);
+    Task UpdateRangeAsync(IEnumerable<Pasajero> pasajeros, CancellationToken cancellationToken = default);
     Task<bool> ExisteAsync(int id, CancellationToken cancellationToken = default);
 }

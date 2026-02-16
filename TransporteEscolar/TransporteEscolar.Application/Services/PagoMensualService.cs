@@ -302,7 +302,7 @@ public class PagoMensualService : IPagoMensualService
             pagoMensual.FechaVencimiento, pagoMensual.EstaPagado(), pagoMensual.EstaVencido(),
             pagoMensual.Observaciones,
             pagoMensual.Movimientos.Select(m => new PagoMensualModel.MovimientoResponse(
-                m.Id, m.Monto, m.FechaPago, m.MedioPago, m.Observaciones)).ToList());
+                m.Id, m.Monto, NormalizarFechaUtc(m.FechaPago), m.MedioPago, m.Observaciones)).ToList());
 
     private static PagoMovimientoModel.Response MapearMovimiento(PagoMovimiento movimiento)
     {
@@ -323,9 +323,16 @@ public class PagoMensualService : IPagoMensualService
             pagoMensual?.Mes ?? 0,
             pagoMensual?.Anio ?? 0,
             pagoMensual is null ? string.Empty : $"{pagoMensual.Mes:D2}/{pagoMensual.Anio}",
-            movimiento.FechaPago,
+            NormalizarFechaUtc(movimiento.FechaPago),
             movimiento.Monto,
             movimiento.MedioPago,
             movimiento.Observaciones);
     }
+
+    private static DateTime NormalizarFechaUtc(DateTime fecha) => fecha.Kind switch
+    {
+        DateTimeKind.Utc => fecha,
+        DateTimeKind.Local => fecha.ToUniversalTime(),
+        _ => DateTime.SpecifyKind(fecha, DateTimeKind.Utc)
+    };
 }
