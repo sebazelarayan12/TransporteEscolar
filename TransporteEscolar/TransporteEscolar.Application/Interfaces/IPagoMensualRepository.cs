@@ -12,8 +12,8 @@ public interface IPagoMensualRepository
     Task<PagoMensual?> GetByTitularMesAnioAsync(int titularId, int mes, int anio, CancellationToken cancellationToken = default);
     Task<List<PagoMensual>> GetByMesAnioAsync(int mes, int anio, CancellationToken cancellationToken = default);
     Task<(List<PagoMovimiento> Movimientos, int TotalCount)> ObtenerMovimientosAsync(
-        DateTime fechaDesde,
-        DateTime fechaHasta,
+        DateTimeOffset fechaDesde,
+        DateTimeOffset fechaHasta,
         int? titularId,
         string? medioPago,
         int pageNumber,

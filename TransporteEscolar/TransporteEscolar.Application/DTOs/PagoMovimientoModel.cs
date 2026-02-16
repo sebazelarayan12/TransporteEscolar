@@ -20,7 +20,7 @@ public record PagoMovimientoModel
         int Mes,
         int Anio,
         string Periodo,
-        DateTime FechaPago,
+        DateTimeOffset FechaPago,
         decimal Monto,
         string MedioPago,
         string? Observaciones);

@@ -11,7 +11,7 @@ public record PagoMensualModel
 
     public record RegistrarPagoRequest(
         decimal Monto,
-        DateTime FechaPago,
+        DateTimeOffset FechaPago,
         string MedioPago,
         string? Observaciones);
 
@@ -53,7 +53,7 @@ public record PagoMensualModel
     public record MovimientoResponse(
         int Id,
         decimal Monto,
-        DateTime FechaPago,
+        DateTimeOffset FechaPago,
         string MedioPago,
         string? Observaciones);
 }
