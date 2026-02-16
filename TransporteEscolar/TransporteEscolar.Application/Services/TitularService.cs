@@ -88,7 +88,7 @@ public class TitularService : ITitularService
         var titular = await RepositoryHelper.GetByIdOrThrowAsync(
             _repository.GetByIdAsync, id, nameof(Titular), cancellationToken);
 
-        titular.ActualizarDatos(dto.NombreContacto, dto.Direccion, dto.MontoMensualPactado);
+        titular.ActualizarDatos(dto.Apellido, dto.NombreContacto, dto.Direccion, dto.MontoMensualPactado);
         await _repository.UpdateAsync(titular, cancellationToken);
     }
 

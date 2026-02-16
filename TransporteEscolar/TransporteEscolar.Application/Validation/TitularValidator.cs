@@ -22,6 +22,9 @@ public static class TitularValidator
 
     public static void ValidateUpdate(TitularModel.UpdateRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.Apellido))
+            throw new ValidationException("El apellido es requerido");
+
         if (string.IsNullOrWhiteSpace(request.NombreContacto))
             throw new ValidationException("El nombre de contacto es requerido");
 

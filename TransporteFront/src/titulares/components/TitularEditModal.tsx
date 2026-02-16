@@ -28,6 +28,7 @@ export const TitularEditModal = ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(updateTitularSchema) as any,
     defaultValues: {
+      apellido: titular.apellido,
       nombreContacto: titular.nombreContacto,
       direccion: titular.direccion,
       montoMensualPactado: titular.montoMensualPactado,
@@ -51,20 +52,39 @@ export const TitularEditModal = ({
       )}
 
       <form onSubmit={handleFormSubmit} className="space-y-6">
-        {/* Campo Apellido (read-only) */}
+        {/* Campo Apellido */}
         <div>
           <label
             htmlFor="apellido"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
-            Apellido
+            Apellido <span className="text-red-500">*</span>
           </label>
-          <div className="px-4 py-2.5 rounded-lg bg-gray-100 dark:bg-[#18181b] text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-[#3f3f46]">
-            {titular.apellido}
-          </div>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            El apellido no se puede modificar
-          </p>
+          <input
+            id="apellido"
+            type="text"
+            {...register('apellido')}
+            aria-invalid={errors.apellido ? 'true' : 'false'}
+            aria-describedby={errors.apellido ? 'apellido-error' : undefined}
+            className={`
+              w-full px-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
+              bg-white dark:bg-[#27272a]
+              focus:outline-none focus:ring-2 focus:ring-[#007a8a] focus:border-transparent
+              transition-colors
+              ${
+                errors.apellido
+                  ? 'border-red-500 dark:border-red-500'
+                  : 'border-gray-300 dark:border-[#3f3f46]'
+              }
+            `}
+            placeholder="Ingrese el apellido"
+            disabled={isSaving}
+          />
+          {errors.apellido && (
+            <p id="apellido-error" className="mt-1.5 text-sm text-red-600 dark:text-red-400">
+              {errors.apellido.message}
+            </p>
+          )}
         </div>
 
         {/* Campo Nombre de Contacto */}

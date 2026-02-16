@@ -37,8 +37,9 @@ public class Titular
     }
 
     // Métodos simples de actualización
-    public void ActualizarDatos(string nombreContacto, string direccion, decimal montoMensualPactado)
+    public void ActualizarDatos(string apellido, string nombreContacto, string direccion, decimal montoMensualPactado)
     {
+        Apellido = apellido;
         NombreContacto = nombreContacto;
         Direccion = direccion;
         MontoMensualPactado = montoMensualPactado;
