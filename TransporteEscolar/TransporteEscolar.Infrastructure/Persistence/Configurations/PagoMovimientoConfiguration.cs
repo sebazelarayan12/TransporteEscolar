@@ -23,7 +23,8 @@ public class PagoMovimientoConfiguration : IEntityTypeConfiguration<PagoMovimien
             .HasColumnType("decimal(12,2)");
 
         builder.Property(m => m.FechaPago)
-            .IsRequired();
+            .IsRequired()
+            .HasColumnType("timestamp with time zone");
 
         builder.Property(m => m.MedioPago)
             .IsRequired()
@@ -33,7 +34,7 @@ public class PagoMovimientoConfiguration : IEntityTypeConfiguration<PagoMovimien
             .IsRequired(false)
             .HasMaxLength(500);
 
-        // Índices para consultas frecuentes
+        // ï¿½ndices para consultas frecuentes
         builder.HasIndex(m => m.FechaPago);
         builder.HasIndex(m => m.PagoMensualId);
     }

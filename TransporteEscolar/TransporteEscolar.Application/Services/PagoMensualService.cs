@@ -121,16 +121,14 @@ public class PagoMensualService : IPagoMensualService
         if (request.PageNumber <= 0 || request.PageSize <= 0)
             throw new ValidationException("pageNumber y pageSize deben ser mayores a 0.");
 
-        var fechaDesdeDateTime = DateTime.SpecifyKind(
-            fechaDesde.ToDateTime(TimeOnly.MinValue),
-            DateTimeKind.Utc);
-        var fechaHastaDateTime = DateTime.SpecifyKind(
-            fechaHasta.ToDateTime(TimeOnly.MinValue),
-            DateTimeKind.Utc);
-        var fechaHastaExclusive = fechaHastaDateTime.AddDays(1);
+        var fechaDesdeUtc = new DateTimeOffset(
+            DateTime.SpecifyKind(fechaDesde.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc));
+        var fechaHastaUtc = new DateTimeOffset(
+            DateTime.SpecifyKind(fechaHasta.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc));
+        var fechaHastaExclusive = fechaHastaUtc.AddDays(1);
 
         var (movimientos, totalCount) = await _repository.ObtenerMovimientosAsync(
-            fechaDesdeDateTime,
+            fechaDesdeUtc,
             fechaHastaExclusive,
             request.TitularId,
             request.MedioPago,
@@ -302,7 +300,7 @@ public class PagoMensualService : IPagoMensualService
             pagoMensual.FechaVencimiento, pagoMensual.EstaPagado(), pagoMensual.EstaVencido(),
             pagoMensual.Observaciones,
             pagoMensual.Movimientos.Select(m => new PagoMensualModel.MovimientoResponse(
-                m.Id, m.Monto, NormalizarFechaUtc(m.FechaPago), m.MedioPago, m.Observaciones)).ToList());
+                m.Id, m.Monto, m.FechaPago, m.MedioPago, m.Observaciones)).ToList());
 
     private static PagoMovimientoModel.Response MapearMovimiento(PagoMovimiento movimiento)
     {
@@ -323,16 +321,9 @@ public class PagoMensualService : IPagoMensualService
             pagoMensual?.Mes ?? 0,
             pagoMensual?.Anio ?? 0,
             pagoMensual is null ? string.Empty : $"{pagoMensual.Mes:D2}/{pagoMensual.Anio}",
-            NormalizarFechaUtc(movimiento.FechaPago),
+            movimiento.FechaPago,
             movimiento.Monto,
             movimiento.MedioPago,
             movimiento.Observaciones);
     }
-
-    private static DateTime NormalizarFechaUtc(DateTime fecha) => fecha.Kind switch
-    {
-        DateTimeKind.Utc => fecha,
-        DateTimeKind.Local => fecha.ToUniversalTime(),
-        _ => DateTime.SpecifyKind(fecha, DateTimeKind.Utc)
-    };
 }

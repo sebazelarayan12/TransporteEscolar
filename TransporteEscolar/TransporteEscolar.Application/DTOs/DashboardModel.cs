@@ -24,7 +24,7 @@ public record DashboardModel
         string TitularApellido,
         string Periodo,
         decimal Monto,
-        DateTime FechaPago,
+        DateTimeOffset FechaPago,
         string MedioPago,
         decimal SaldoPendiente);
 
