@@ -31,21 +31,23 @@ interface ReinscripcionCardProps {
 
 export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, onMarkAsPending }: ReinscripcionCardProps) => {
   const getInitial = (nombre: string) => nombre.charAt(0).toUpperCase();
+  const actionButtonsWrapperClass = 'flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2';
+  const actionButtonBaseClass = 'inline-flex w-full items-center justify-center rounded-lg px-3 py-1.5 text-center text-xs font-semibold text-white transition sm:w-auto';
 
   const renderActionButtons = () => {
     if (registro.estado === 'Pendiente') {
       return (
-        <div className="flex gap-1">
+        <div className={actionButtonsWrapperClass}>
           <button
             onClick={() => onConfirm?.(registro)}
-            className="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition"
+            className={`${actionButtonBaseClass} bg-emerald-500 hover:bg-emerald-600`}
             title="Confirmar reinscripción"
           >
             Confirmar
           </button>
           <button
             onClick={() => onMarkAsNotContinuing?.(registro)}
-            className="rounded-lg bg-slate-400 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-500 transition"
+            className={`${actionButtonBaseClass} bg-slate-400 hover:bg-slate-500`}
             title="Marcar como no continúa"
           >
             No continúa
@@ -56,17 +58,17 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
 
     if (registro.estado === 'Confirmado') {
       return (
-        <div className="flex gap-1">
+        <div className={actionButtonsWrapperClass}>
           <button
             onClick={() => onMarkAsPending?.(registro)}
-            className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 transition"
+            className={`${actionButtonBaseClass} bg-amber-500 hover:bg-amber-600`}
             title="Marcar como pendiente"
           >
             Pendiente
           </button>
           <button
             onClick={() => onMarkAsNotContinuing?.(registro)}
-            className="rounded-lg bg-slate-400 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-500 transition"
+            className={`${actionButtonBaseClass} bg-slate-400 hover:bg-slate-500`}
             title="Marcar como no continúa"
           >
             No continúa
@@ -77,17 +79,17 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
 
     if (registro.estado === 'NoContinua') {
       return (
-        <div className="flex gap-1">
+        <div className={actionButtonsWrapperClass}>
           <button
             onClick={() => onMarkAsPending?.(registro)}
-            className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 transition"
+            className={`${actionButtonBaseClass} bg-amber-500 hover:bg-amber-600`}
             title="Marcar como pendiente"
           >
             Pendiente
           </button>
           <button
             onClick={() => onConfirm?.(registro)}
-            className="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition"
+            className={`${actionButtonBaseClass} bg-emerald-500 hover:bg-emerald-600`}
             title="Confirmar reinscripción"
           >
             Confirmar
@@ -105,7 +107,7 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
         statusConfig[registro.estado].card
       }`}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3">
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-full bg-[#1d8ca5]/10 text-lg font-bold text-[#1d8ca5] ${
@@ -123,7 +125,7 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
             <p className="text-xs text-gray-500">ID #{registro.id}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end sm:gap-3">
           <span
             className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-bold ring-1 ring-inset ${
               statusConfig[registro.estado].chip

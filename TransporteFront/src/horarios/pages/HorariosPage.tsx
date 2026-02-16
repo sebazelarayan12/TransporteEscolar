@@ -24,6 +24,7 @@ export const HorariosPage = () => {
   const [search, setSearch] = useState('');
   const [selectedPasajeros, setSelectedPasajeros] = useState<Set<number>>(new Set());
   const [snapshot, setSnapshot] = useState<Set<number>>(new Set());
+  const [isGestionMode, setIsGestionMode] = useState(false);
   const { showSuccess, showError } = useToast();
 
   const syncSelection = (data: HorarioPasajerosResponse) => {
@@ -53,6 +54,7 @@ export const HorariosPage = () => {
   })();
 
   const handleToggle = (pasajeroId: number) => {
+    if (!isGestionMode) return;
     setSelectedPasajeros((prev) => {
       const next = new Set(prev);
       if (next.has(pasajeroId)) {
@@ -78,16 +80,24 @@ export const HorariosPage = () => {
     setSearch('');
   };
 
-  const hasChanges = (() => {
+  const selectionChanged = (() => {
     if (snapshot.size !== selectedPasajeros.size) return true;
     for (const id of snapshot) {
       if (!selectedPasajeros.has(id)) return true;
     }
     return false;
   })();
+  const hasChanges = isGestionMode && selectionChanged;
+
+  const handleGestionModeToggle = () => {
+    if (isGestionMode) {
+      setSelectedPasajeros(new Set(snapshot));
+    }
+    setIsGestionMode((prev) => !prev);
+  };
 
   const handleSave = async () => {
-    if (!selectedHorarioId) return;
+    if (!selectedHorarioId || !isGestionMode || !selectionChanged) return;
     const selectionOrder = Array.from(selectedPasajeros);
     const toAdd = selectionOrder.filter((id) => !snapshot.has(id));
     const toRemove = Array.from(snapshot).filter((id) => !selectedPasajeros.has(id));
@@ -144,13 +154,14 @@ export const HorariosPage = () => {
       onSave={handleSave}
       isSaving={isPersisting || agregarHorarioPasajero.isPending || eliminarHorarioPasajero.isPending}
       targetHorarioId={selectedHorarioId}
+      isGestionMode={isGestionMode}
     />
   );
 
   return (
     <div className="min-h-screen bg-[#fafafa] py-8 dark:bg-[#18181b]">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 sm:px-6 lg:px-8">
-        <HorariosHeader />
+        <HorariosHeader isGestionMode={isGestionMode} onGestionModeToggle={handleGestionModeToggle} />
 
         <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
           <HorariosGrid horarios={ordenados} onSelectHorario={handleOpenHorario} />

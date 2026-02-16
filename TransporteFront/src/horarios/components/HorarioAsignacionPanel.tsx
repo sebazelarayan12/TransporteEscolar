@@ -18,6 +18,7 @@ interface HorarioAsignacionPanelProps {
   onSave: () => void;
   isSaving: boolean;
   targetHorarioId: number | null;
+  isGestionMode: boolean;
 }
 
 export const HorarioAsignacionPanel = ({
@@ -35,6 +36,7 @@ export const HorarioAsignacionPanel = ({
   onSave,
   isSaving,
   targetHorarioId,
+  isGestionMode,
 }: HorarioAsignacionPanelProps) => {
   const emptyMessage = search ? 'No hay coincidencias con ese criterio' : 'No hay pasajeros activos para asignar';
   const isListLoading = isLoadingDetalle || isLoadingPasajeros;
@@ -43,6 +45,7 @@ export const HorarioAsignacionPanel = ({
     0,
   );
   const availableVisibleCount = filteredPasajeros.length - assignedVisibleCount;
+  const isReadOnly = !isGestionMode;
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -62,13 +65,22 @@ export const HorarioAsignacionPanel = ({
         </button>
       </div>
 
+      {!isGestionMode ? (
+        <div className="flex items-start gap-3 rounded-xl border border-dashed border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+          <span className="material-symbols-outlined text-base">visibility</span>
+          <span>
+            Estás en modo vista. Presioná <strong>Gestionar</strong> en la parte superior para habilitar la edición de asignaciones.
+          </span>
+        </div>
+      ) : null}
+
       <div className="flex flex-col gap-3 border-b border-gray-100 pb-4 dark:border-white/10 sm:flex-row sm:justify-end">
         <Button variant="ghost" className="sm:w-auto" onClick={onCancel}>
           Cancelar
         </Button>
         <Button
           onClick={onSave}
-          disabled={!hasChanges || isSaving || !targetHorarioId}
+          disabled={isReadOnly || !hasChanges || isSaving || !targetHorarioId}
           className="bg-[#007a8a] text-white hover:bg-[#00626e] disabled:bg-gray-300"
         >
           {isSaving ? 'Guardando...' : 'Guardar cambios'}
@@ -106,6 +118,7 @@ export const HorarioAsignacionPanel = ({
         isLoading={isListLoading}
         emptyMessage={emptyMessage}
         targetHorarioId={targetHorarioId}
+        readOnly={isReadOnly}
       />
     </div>
   );

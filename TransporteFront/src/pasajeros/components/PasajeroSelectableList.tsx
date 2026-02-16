@@ -8,6 +8,7 @@ interface PasajeroSelectableListProps {
   isLoading?: boolean;
   emptyMessage?: string;
   targetHorarioId?: number | null;
+  readOnly?: boolean;
 }
 
 type PasajeroSelectableSection = 'assigned' | 'available';
@@ -34,6 +35,7 @@ export const PasajeroSelectableList = ({
   isLoading = false,
   emptyMessage = 'No hay pasajeros para mostrar',
   targetHorarioId = null,
+  readOnly = false,
 }: PasajeroSelectableListProps) => {
   if (isLoading) {
     return (
@@ -95,7 +97,17 @@ export const PasajeroSelectableList = ({
         }`}
       >
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={isSelected} onChange={() => onToggle(pasajero.id)} className="size-4 accent-[#007a8a]" />
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => {
+              if (readOnly) return;
+              onToggle(pasajero.id);
+            }}
+            disabled={readOnly}
+            aria-readonly={readOnly}
+            className="size-4 accent-[#007a8a] disabled:cursor-not-allowed"
+          />
           <div>
             <p className="font-semibold text-gray-900 dark:text-white">{pasajero.nombreCompleto}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400">Titular: {pasajero.titularApellido ?? 'Sin titular'}</p>
