@@ -176,6 +176,25 @@ public class PagosMensualesController : ControllerBase
     }
 
     /// <summary>
+    /// Elimina un movimiento previamente registrado en un pago mensual
+    /// </summary>
+    [HttpDelete("{pagoMensualId}/movimientos/{movimientoId}")]
+    public async Task<ActionResult> EliminarMovimiento(int pagoMensualId, int movimientoId)
+    {
+        var movimiento = await _service.EliminarMovimientoAsync(pagoMensualId, movimientoId);
+
+        _logger.LogInformation(
+            "Movimiento eliminado (MovimientoId: {MovimientoId}) del pago mensual {PagoMensualId} - Titular {TitularId} ({TitularNombreCompleto}). Monto reversado: {Monto}",
+            movimiento.Id,
+            movimiento.PagoMensualId,
+            movimiento.TitularId,
+            movimiento.TitularNombreCompleto,
+            movimiento.Monto);
+
+        return NoContent();
+    }
+
+    /// <summary>
     /// Actualiza observaciones de un pago mensual
     /// </summary>
     [HttpPut("{id}/observaciones")]

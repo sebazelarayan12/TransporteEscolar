@@ -137,7 +137,7 @@ public class PagoMensualService : IPagoMensualService
             cancellationToken);
 
         var data = movimientos
-            .Select(MapearMovimiento)
+            .Select(movimiento => MapearMovimiento(movimiento))
             .ToList();
 
         return new PaginationModel.ResponsePagination<PagoMovimientoModel.Response>(data, totalCount);
@@ -240,6 +240,42 @@ public class PagoMensualService : IPagoMensualService
         }
     }
 
+    public async Task<PagoMovimientoModel.Response> EliminarMovimientoAsync(
+        int pagoMensualId,
+        int movimientoId,
+        CancellationToken cancellationToken = default)
+    {
+        var pagoMensual = await RepositoryHelper.GetByIdOrThrowAsync(
+            _repository.GetByIdAsync,
+            pagoMensualId,
+            nameof(PagoMensual),
+            cancellationToken);
+
+        var movimiento = pagoMensual.Movimientos.FirstOrDefault(m => m.Id == movimientoId);
+        if (movimiento == null)
+        {
+            var movimientoExistente = await _repository.GetMovimientoByIdAsync(movimientoId, cancellationToken);
+            if (movimientoExistente == null)
+                throw new NotFoundException(nameof(PagoMovimiento), movimientoId);
+
+            throw new ValidationException("El movimiento no pertenece al pago mensual indicado.");
+        }
+
+        if (movimiento.PagoMensualId != pagoMensualId)
+            throw new ValidationException("El movimiento no pertenece al pago mensual indicado.");
+
+        var nuevoTotalPagado = pagoMensual.TotalPagado() - movimiento.Monto;
+        if (nuevoTotalPagado < 0)
+            throw new ValidationException("Eliminar este movimiento generaría un total pagado negativo.");
+
+        var movimientoEliminado = MapearMovimiento(movimiento, pagoMensual);
+
+        pagoMensual.Movimientos.Remove(movimiento);
+        await _repository.UpdateAsync(pagoMensual, cancellationToken);
+
+        return movimientoEliminado;
+    }
+
     public async Task ActualizarObservacionesAsync(int id, PagoMensualModel.UpdateObservacionesRequest dto, CancellationToken cancellationToken = default)
     {
         var pagoMensual = await RepositoryHelper.GetByIdOrThrowAsync(
@@ -302,10 +338,12 @@ public class PagoMensualService : IPagoMensualService
             pagoMensual.Movimientos.Select(m => new PagoMensualModel.MovimientoResponse(
                 m.Id, m.Monto, m.FechaPago, m.MedioPago, m.Observaciones)).ToList());
 
-    private static PagoMovimientoModel.Response MapearMovimiento(PagoMovimiento movimiento)
+    private static PagoMovimientoModel.Response MapearMovimiento(
+        PagoMovimiento movimiento,
+        PagoMensual? pagoMensual = null)
     {
-        var pagoMensual = movimiento.PagoMensual;
-        var titular = pagoMensual?.Titular;
+        var pago = pagoMensual ?? movimiento.PagoMensual;
+        var titular = pago?.Titular;
         var titularApellido = titular?.Apellido ?? string.Empty;
         var titularNombre = titular?.NombreContacto ?? string.Empty;
         var titularNombreCompleto = string.Join(" ", new[] { titularApellido, titularNombre }
@@ -314,13 +352,13 @@ public class PagoMensualService : IPagoMensualService
         return new PagoMovimientoModel.Response(
             movimiento.Id,
             movimiento.PagoMensualId,
-            pagoMensual?.TitularId ?? 0,
+            titular?.Id ?? pago?.TitularId ?? 0,
             titularApellido,
             titularNombre,
             titularNombreCompleto,
-            pagoMensual?.Mes ?? 0,
-            pagoMensual?.Anio ?? 0,
-            pagoMensual is null ? string.Empty : $"{pagoMensual.Mes:D2}/{pagoMensual.Anio}",
+            pago?.Mes ?? 0,
+            pago?.Anio ?? 0,
+            pago is null ? string.Empty : $"{pago.Mes:D2}/{pago.Anio}",
             movimiento.FechaPago,
             movimiento.Monto,
             movimiento.MedioPago,

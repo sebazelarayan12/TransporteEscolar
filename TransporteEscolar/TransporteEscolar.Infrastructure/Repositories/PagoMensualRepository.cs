@@ -125,6 +125,14 @@ public class PagoMensualRepository : IPagoMensualRepository
         return (movimientos, totalCount);
     }
 
+    public async Task<PagoMovimiento?> GetMovimientoByIdAsync(int movimientoId, CancellationToken cancellationToken = default)
+    {
+        return await _context.PagosMovimientos
+            .Include(m => m.PagoMensual)
+                .ThenInclude(p => p.Titular)
+            .FirstOrDefaultAsync(m => m.Id == movimientoId, cancellationToken);
+    }
+
     public async Task<(List<Titular> Titulares, int TotalCount)> GetTitularesConPagosAsync(
         string? search,
         int pageNumber,

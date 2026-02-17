@@ -171,6 +171,27 @@ export function usePagosMovimientos(filter: MovimientosFilterRequest) {
   });
 }
 
+interface EliminarMovimientoInput {
+  pagoMensualId: number;
+  movimientoId: number;
+}
+
+export function useEliminarMovimiento() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ pagoMensualId, movimientoId }: EliminarMovimientoInput) => {
+      await pagosApi.deleteMovimiento(pagoMensualId, movimientoId);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pagoById(variables.pagoMensualId) });
+      queryClient.invalidateQueries({ queryKey: ['pagos', 'paginados'] });
+      queryClient.invalidateQueries({ queryKey: ['pagos', 'estadisticas'] });
+      queryClient.invalidateQueries({ queryKey: ['pagos', 'movimientos'] });
+    },
+  });
+}
+
 /**
  * Hook para registrar un nuevo pago
  */

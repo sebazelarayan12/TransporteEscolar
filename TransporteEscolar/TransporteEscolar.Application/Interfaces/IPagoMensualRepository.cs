@@ -19,6 +19,7 @@ public interface IPagoMensualRepository
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default);
+    Task<PagoMovimiento?> GetMovimientoByIdAsync(int movimientoId, CancellationToken cancellationToken = default);
     Task<(List<Titular> Titulares, int TotalCount)> GetTitularesConPagosAsync(string? search, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
     Task<PagoMensual> AddAsync(PagoMensual pagoMensual, CancellationToken cancellationToken = default);
     Task UpdateAsync(PagoMensual pagoMensual, CancellationToken cancellationToken = default);

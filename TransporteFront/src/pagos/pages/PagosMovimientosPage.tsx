@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button, LoadingScreen, ErrorState, EmptyState, Pagination } from '../../shared/ui';
 import { RegistrarPagoModal } from '../components/RegistrarPagoModal';
-import { usePagosMovimientos } from '../services/pagos.queries';
-import type { MovimientosFilterRequest } from '../types/movimientos.types';
+import { usePagosMovimientos, useEliminarMovimiento } from '../services/pagos.queries';
+import type { MovimientosFilterRequest, MovimientoHistorial } from '../types/movimientos.types';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { formatDateTime } from '../../shared/utils/date.helpers';
 import { MovimientosTitularSearch, type TitularOption } from '../components/movimientos/MovimientosTitularSearch';
 import { useTitular } from '../../titulares/services/titulares.queries';
+import { useToast } from '../../shared/hooks';
+import { EliminarMovimientoDialog } from '../components/EliminarMovimientoDialog';
 
 const MOVIMIENTOS_PAGE_SIZE = 20;
 const MEDIOS_PAGO = ['todos', 'Efectivo', 'Transferencia', 'Cheque'] as const;
@@ -48,6 +50,7 @@ export const PagosMovimientosPage = () => {
   const defaultFechaDesde = toInputDate(subtractDays(today, 30));
   const [searchParams, setSearchParams] = useSearchParams();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [movimientoSeleccionado, setMovimientoSeleccionado] = useState<MovimientoHistorial | null>(null);
 
   const rawDesde = searchParams.get('fechaDesde');
   const rawHasta = searchParams.get('fechaHasta');
@@ -119,6 +122,8 @@ export const PagosMovimientosPage = () => {
   }
 
   const { data, isLoading, isFetching, isError, error, refetch } = usePagosMovimientos(movimientosFilter);
+  const eliminarMovimiento = useEliminarMovimiento();
+  const { showSuccess, showError } = useToast();
 
   const movimientos = data?.data ?? [];
   const totalCount = data?.totalCount ?? 0;
@@ -169,6 +174,40 @@ export const PagosMovimientosPage = () => {
     });
   };
 
+  const handleOpenDelete = (movimiento: MovimientoHistorial) => {
+    if (eliminarMovimiento.isPending) {
+      return;
+    }
+
+    setMovimientoSeleccionado(movimiento);
+  };
+
+  const handleCloseDelete = () => {
+    if (eliminarMovimiento.isPending) {
+      return;
+    }
+
+    setMovimientoSeleccionado(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!movimientoSeleccionado) {
+      return;
+    }
+
+    try {
+      await eliminarMovimiento.mutateAsync({
+        pagoMensualId: movimientoSeleccionado.pagoMensualId,
+        movimientoId: movimientoSeleccionado.id,
+      });
+      showSuccess('Movimiento eliminado correctamente');
+      setMovimientoSeleccionado(null);
+    } catch (mutationError) {
+      console.error(mutationError);
+      showError('No pudimos eliminar el movimiento. Intentalo nuevamente.');
+    }
+  };
+
   if (isLoading) {
     return <LoadingScreen message="Cargando historial de movimientos..." />;
   }
@@ -205,6 +244,7 @@ export const PagosMovimientosPage = () => {
                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Medio de pago</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Observaciones</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Monto</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -222,6 +262,23 @@ export const PagosMovimientosPage = () => {
                   </td>
                   <td className="px-6 py-4 text-right text-sm font-semibold text-[#0f181a] dark:text-white">
                     {formatCurrency(movimiento.monto)}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-100 dark:border-rose-900/30 dark:bg-rose-900/10 dark:text-rose-200"
+                      onClick={() => handleOpenDelete(movimiento)}
+                      disabled={eliminarMovimiento.isPending}
+                    >
+                      {eliminarMovimiento.isPending && movimientoSeleccionado?.id === movimiento.id ? (
+                        <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+                      ) : (
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      )}
+                      <span>Eliminar</span>
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -243,6 +300,23 @@ export const PagosMovimientosPage = () => {
               <p className="text-sm text-gray-600 dark:text-gray-300">{formatDateTime(movimiento.fechaPago)}</p>
               <p className="mt-2 text-sm font-semibold text-[#0f181a] dark:text-white">{formatCurrency(movimiento.monto)}</p>
               <p className="mt-1 text-xs text-gray-500">{movimiento.observaciones || 'Sin observaciones'}</p>
+              <div className="mt-3 flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-100 dark:border-rose-900/30 dark:bg-rose-900/10 dark:text-rose-200"
+                  onClick={() => handleOpenDelete(movimiento)}
+                  disabled={eliminarMovimiento.isPending}
+                >
+                  {eliminarMovimiento.isPending && movimientoSeleccionado?.id === movimiento.id ? (
+                    <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+                  ) : (
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                  )}
+                  <span>Eliminar</span>
+                </Button>
+              </div>
             </div>
           ))}
         </div>
@@ -339,6 +413,26 @@ export const PagosMovimientosPage = () => {
             setIsRegisterModalOpen(false);
             refetch();
           }}
+        />
+        <EliminarMovimientoDialog
+          isOpen={Boolean(movimientoSeleccionado)}
+          resumen={
+            movimientoSeleccionado
+              ? {
+                  monto: movimientoSeleccionado.monto,
+                  medioPago: movimientoSeleccionado.medioPago,
+                  fechaPago: movimientoSeleccionado.fechaPago,
+                  periodo: movimientoSeleccionado.periodo,
+                  titularLabel:
+                    movimientoSeleccionado.titularNombreCompleto ??
+                    `${movimientoSeleccionado.titularApellido}, ${movimientoSeleccionado.titularNombre}`,
+                  observaciones: movimientoSeleccionado.observaciones,
+                }
+              : null
+          }
+          onCancel={handleCloseDelete}
+          onConfirm={handleConfirmDelete}
+          isProcessing={eliminarMovimiento.isPending}
         />
       </div>
     </div>

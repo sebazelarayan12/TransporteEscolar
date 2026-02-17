@@ -24,6 +24,8 @@ export const PaymentDetailPanel = ({ pago, onSubmitPayment, isSubmitting }: Paym
     );
   }
 
+  const titularNombreCompleto = [pago.titularApellido, pago.titularNombre].filter(Boolean).join(', ');
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -70,7 +72,12 @@ export const PaymentDetailPanel = ({ pago, onSubmitPayment, isSubmitting }: Paym
           <span className="material-symbols-outlined text-[18px] text-gray-400">history</span>
           Historial de movimientos
         </h3>
-        <PaymentHistory movimientos={pago.movimientos} />
+        <PaymentHistory
+          movimientos={pago.movimientos}
+          pagoId={pago.id}
+          titularLabel={titularNombreCompleto}
+          periodo={pago.periodo}
+        />
       </div>
 
       {/* Form */}

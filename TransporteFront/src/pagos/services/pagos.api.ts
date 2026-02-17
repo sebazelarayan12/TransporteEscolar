@@ -132,4 +132,11 @@ export const pagosApi = {
 
     return apiClient.get<MovimientosPaginationResponse>(`${BASE_PATH}/movimientos?${params}`);
   },
+
+  /**
+   * DELETE /pagosmensuales/{pagoMensualId}/movimientos/{movimientoId} - Elimina un movimiento y recalcula totales
+   */
+  deleteMovimiento: async (pagoMensualId: number, movimientoId: number): Promise<void> => {
+    return apiClient.delete<void>(`${BASE_PATH}/${pagoMensualId}/movimientos/${movimientoId}`);
+  },
 };
