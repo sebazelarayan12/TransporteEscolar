@@ -54,6 +54,10 @@ export interface CrearIngresoFijoRequest {
   observaciones?: string;
 }
 
+export interface ActualizarIngresoFijoRequest extends CrearIngresoFijoRequest {
+  estaActivo: boolean;
+}
+
 export interface CrearIngresoVariableRequest {
   mes: number;
   anio: number;

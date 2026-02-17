@@ -54,6 +54,27 @@ public class GastoFijoTemplate
             Id);
     }
 
+    public void ActualizarDatos(
+        string categoria,
+        string descripcion,
+        decimal monto,
+        int diaDeAplicacion,
+        string medioPago,
+        bool estaActivo)
+    {
+        Categoria = categoria;
+        Descripcion = descripcion;
+        Monto = monto;
+        DiaDeAplicacion = diaDeAplicacion;
+        MedioPago = medioPago;
+        EstaActivo = estaActivo;
+    }
+
+    public void Desactivar()
+    {
+        EstaActivo = false;
+    }
+
     private DateTime CrearFechaParaMes(int mes, int anio)
     {
         var diasDelMes = DateTime.DaysInMonth(anio, mes);

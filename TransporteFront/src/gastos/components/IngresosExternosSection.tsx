@@ -13,6 +13,9 @@ interface IngresosExternosSectionProps {
   isLoading?: boolean;
   isRefreshing?: boolean;
   onRegistrarIngreso: () => void;
+  onEditIngreso?: (ingreso: IngresoItem) => void;
+  onDeleteIngreso?: (ingreso: IngresoItem) => void;
+  actionsDisabled?: boolean;
 }
 
 export const IngresosExternosSection = ({
@@ -24,6 +27,9 @@ export const IngresosExternosSection = ({
   isLoading = false,
   isRefreshing = false,
   onRegistrarIngreso,
+  onEditIngreso,
+  onDeleteIngreso,
+  actionsDisabled = false,
 }: IngresosExternosSectionProps) => {
   const [activeTab, setActiveTab] = useState<IngresosTabValue>('variables');
   const tabs: Array<{ key: IngresosTabValue; label: string; description: string; total: number; count: number }> = [
@@ -119,7 +125,13 @@ export const IngresosExternosSection = ({
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
           {activeItems.map((ingreso) => (
-            <IngresoCard key={ingreso.id} ingreso={ingreso} />
+            <IngresoCard
+              key={ingreso.id}
+              ingreso={ingreso}
+              onEdit={onEditIngreso}
+              onDelete={onDeleteIngreso}
+              actionsDisabled={actionsDisabled}
+            />
           ))}
         </div>
       )}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, LoadingScreen, ErrorState, MonthYearFilter, EmptyState } from '../../shared/ui';
+import { Button, LoadingScreen, ErrorState, MonthYearFilter, EmptyState, ConfirmDialog } from '../../shared/ui';
 import {
   GastosHeroCard,
   GastosTabs,
@@ -8,9 +8,21 @@ import {
   IngresosExternosSection,
   RegistrarIngresoModal,
 } from '../components';
-import { useGastosResumen } from '../services/gastos.queries';
-import { useIngresosResumen } from '../services/ingresos.queries';
-import type { GastosTabValue } from '../types/gastos.types';
+import {
+  useGastosResumen,
+  useEliminarGastoFijo,
+  useEliminarGastoVariable,
+} from '../services/gastos.queries';
+import {
+  useIngresosResumen,
+  useEliminarIngresoFijo,
+  useEliminarIngresoVariable,
+} from '../services/ingresos.queries';
+import { useToast } from '../../shared/hooks';
+import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { formatDateOnly } from '../../shared/utils/date.helpers';
+import { GASTO_TIPOS, type GastoItem, type GastosTabValue } from '../types/gastos.types';
+import { INGRESO_TIPOS, type IngresoItem } from '../types/ingresos.types';
 
 const monthFormatter = new Intl.DateTimeFormat('es-AR', {
   month: 'long',
@@ -19,6 +31,13 @@ const monthFormatter = new Intl.DateTimeFormat('es-AR', {
 
 const sumByMonto = (items: { monto: number }[]) => items.reduce((acc, item) => acc + item.monto, 0);
 
+type DeleteDialogState =
+  | { scope: 'gasto-fijo'; item: GastoItem }
+  | { scope: 'gasto-variable'; item: GastoItem }
+  | { scope: 'ingreso-fijo'; item: IngresoItem }
+  | { scope: 'ingreso-variable'; item: IngresoItem }
+  | null;
+
 export const GastosControlPage = () => {
   const currentDate = new Date();
   const [selectedMes, setSelectedMes] = useState(currentDate.getMonth() + 1);
@@ -26,6 +45,11 @@ export const GastosControlPage = () => {
   const [activeTab, setActiveTab] = useState<GastosTabValue>('fijos');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isIngresoModalOpen, setIsIngresoModalOpen] = useState(false);
+  const [gastoModalMode, setGastoModalMode] = useState<'create' | 'edit'>('create');
+  const [ingresoModalMode, setIngresoModalMode] = useState<'create' | 'edit'>('create');
+  const [selectedGasto, setSelectedGasto] = useState<GastoItem | null>(null);
+  const [selectedIngreso, setSelectedIngreso] = useState<IngresoItem | null>(null);
+  const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>(null);
 
   const {
     data,
@@ -41,7 +65,13 @@ export const GastosControlPage = () => {
     isError: isIngresosError,
     error: ingresosError,
     isFetching: isIngresosFetching,
+    refetch: refetchIngresos,
   } = useIngresosResumen(selectedMes, selectedAnio);
+  const eliminarGastoFijo = useEliminarGastoFijo();
+  const eliminarGastoVariable = useEliminarGastoVariable();
+  const eliminarIngresoFijo = useEliminarIngresoFijo();
+  const eliminarIngresoVariable = useEliminarIngresoVariable();
+  const { showSuccess, showError } = useToast();
 
   const gastosFijos = data?.gastosFijos ?? [];
   const gastosVariables = data?.gastosVariables ?? [];
@@ -51,6 +81,73 @@ export const GastosControlPage = () => {
     setSelectedMes(mes);
     setSelectedAnio(anio);
     setActiveTab('fijos');
+  };
+
+  const openRegistrarGasto = () => {
+    setGastoModalMode('create');
+    setSelectedGasto(null);
+    setIsModalOpen(true);
+  };
+
+  const openRegistrarIngreso = () => {
+    setIngresoModalMode('create');
+    setSelectedIngreso(null);
+    setIsIngresoModalOpen(true);
+  };
+
+  const handleCloseGastoModal = () => {
+    setIsModalOpen(false);
+    setSelectedGasto(null);
+    setGastoModalMode('create');
+  };
+
+  const handleCloseIngresoModal = () => {
+    setIsIngresoModalOpen(false);
+    setSelectedIngreso(null);
+    setIngresoModalMode('create');
+  };
+
+  const handleGastoModalSuccess = () => {
+    refetch();
+    refetchIngresos();
+    if (gastoModalMode === 'create') {
+      setActiveTab('fijos');
+    }
+  };
+
+  const handleIngresoModalSuccess = () => {
+    refetch();
+    refetchIngresos();
+  };
+
+  const handleEditGasto = (gasto: GastoItem) => {
+    if (!gasto.templateId) {
+      showError('No encontramos la plantilla del gasto fijo para editar.');
+      return;
+    }
+    setSelectedGasto(gasto);
+    setGastoModalMode('edit');
+    setIsModalOpen(true);
+  };
+
+  const handleEditIngreso = (ingreso: IngresoItem) => {
+    if (!ingreso.templateId) {
+      showError('No encontramos la plantilla del ingreso fijo para editar.');
+      return;
+    }
+    setSelectedIngreso(ingreso);
+    setIngresoModalMode('edit');
+    setIsIngresoModalOpen(true);
+  };
+
+  const handleDeleteGasto = (gasto: GastoItem) => {
+    const scope = gasto.tipo === GASTO_TIPOS.FIJO ? 'gasto-fijo' : 'gasto-variable';
+    setDeleteDialog({ scope, item: gasto });
+  };
+
+  const handleDeleteIngreso = (ingreso: IngresoItem) => {
+    const scope = ingreso.tipo === INGRESO_TIPOS.FIJO ? 'ingreso-fijo' : 'ingreso-variable';
+    setDeleteDialog({ scope, item: ingreso });
   };
 
   const isInitialLoading = (isLoading && !data) || (isIngresosLoading && !ingresosData);
@@ -115,6 +212,145 @@ export const GastosControlPage = () => {
     totalIngresosVariables: ingresosData.totales.totalIngresosVariables,
   };
 
+  const gastoActionsDisabled = eliminarGastoFijo.isPending || eliminarGastoVariable.isPending;
+  const ingresoActionsDisabled = eliminarIngresoFijo.isPending || eliminarIngresoVariable.isPending;
+
+  const deleteIsProcessing = (() => {
+    if (!deleteDialog) {
+      return false;
+    }
+    if (deleteDialog.scope === 'gasto-fijo') {
+      return eliminarGastoFijo.isPending;
+    }
+    if (deleteDialog.scope === 'gasto-variable') {
+      return eliminarGastoVariable.isPending;
+    }
+    if (deleteDialog.scope === 'ingreso-fijo') {
+      return eliminarIngresoFijo.isPending;
+    }
+    if (deleteDialog.scope === 'ingreso-variable') {
+      return eliminarIngresoVariable.isPending;
+    }
+    return false;
+  })();
+
+  const getDeleteDialogCopy = () => {
+    if (!deleteDialog) {
+      return null;
+    }
+
+    const montoLabel = formatCurrency(deleteDialog.item.monto);
+    const fechaLabel = formatDateOnly(deleteDialog.item.fecha, { day: '2-digit', month: 'long' });
+    const periodoLabel = `${deleteDialog.item.mes}/${deleteDialog.item.anio}`;
+
+    switch (deleteDialog.scope) {
+      case 'gasto-fijo':
+        return {
+          title: 'Eliminar gasto fijo',
+          message: `Se eliminará la plantilla "${deleteDialog.item.descripcion}" y se recalcularán los totales de ${periodoLabel}.`,
+          confirmLabel: 'Eliminar gasto fijo',
+        };
+      case 'gasto-variable':
+        return {
+          title: 'Eliminar gasto variable',
+          message: `Vas a eliminar el gasto del ${fechaLabel} por ${montoLabel}. Esta acción no se puede deshacer.`,
+          confirmLabel: 'Eliminar gasto variable',
+        };
+      case 'ingreso-fijo':
+        return {
+          title: 'Eliminar ingreso fijo',
+          message: `Se desactivará la plantilla "${deleteDialog.item.descripcion}" y se quitará del periodo ${periodoLabel}.`,
+          confirmLabel: 'Eliminar ingreso fijo',
+        };
+      case 'ingreso-variable':
+        return {
+          title: 'Eliminar ingreso variable',
+          message: `¿Eliminar el ingreso del ${fechaLabel} por ${montoLabel}?`,
+          confirmLabel: 'Eliminar ingreso variable',
+        };
+      default:
+        return null;
+    }
+  };
+
+  const deleteDialogCopy = getDeleteDialogCopy();
+
+  const handleConfirmDelete = async () => {
+    if (!deleteDialog) {
+      return;
+    }
+
+    try {
+      switch (deleteDialog.scope) {
+        case 'gasto-fijo': {
+          const template = deleteDialog.item.templateId;
+          if (!template) {
+            showError('No encontramos la plantilla del gasto fijo.');
+            setDeleteDialog(null);
+            return;
+          }
+          await eliminarGastoFijo.mutateAsync({
+            templateId: template,
+            mes: deleteDialog.item.mes,
+            anio: deleteDialog.item.anio,
+          });
+          showSuccess('Gasto fijo eliminado');
+          break;
+        }
+        case 'gasto-variable': {
+          await eliminarGastoVariable.mutateAsync({
+            id: deleteDialog.item.id,
+            mes: deleteDialog.item.mes,
+            anio: deleteDialog.item.anio,
+          });
+          showSuccess('Gasto variable eliminado');
+          break;
+        }
+        case 'ingreso-fijo': {
+          const template = deleteDialog.item.templateId;
+          if (!template) {
+            showError('No encontramos la plantilla del ingreso fijo.');
+            setDeleteDialog(null);
+            return;
+          }
+          await eliminarIngresoFijo.mutateAsync({
+            templateId: template,
+            mes: deleteDialog.item.mes,
+            anio: deleteDialog.item.anio,
+          });
+          showSuccess('Ingreso fijo eliminado');
+          break;
+        }
+        case 'ingreso-variable': {
+          await eliminarIngresoVariable.mutateAsync({
+            id: deleteDialog.item.id,
+            mes: deleteDialog.item.mes,
+            anio: deleteDialog.item.anio,
+          });
+          showSuccess('Ingreso variable eliminado');
+          break;
+        }
+      }
+
+      setDeleteDialog(null);
+      refetch();
+      refetchIngresos();
+    } catch (error) {
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as { message?: string }).message)
+          : 'No pudimos completar la operación.';
+      showError(message);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    if (deleteIsProcessing) {
+      return;
+    }
+    setDeleteDialog(null);
+  };
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#fafafa] pb-10 dark:bg-[#18181b]">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -133,7 +369,7 @@ export const GastosControlPage = () => {
               type="button"
               variant="ghost"
               className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-teal-600 px-6 text-teal-700 hover:bg-teal-50 dark:border-teal-400 dark:text-teal-200 dark:hover:bg-white/5 sm:w-auto"
-              onClick={() => setIsIngresoModalOpen(true)}
+              onClick={openRegistrarIngreso}
             >
               <span className="material-symbols-outlined text-[20px]">add_card</span>
               Registrar ingreso externo
@@ -142,7 +378,7 @@ export const GastosControlPage = () => {
               type="button"
               variant="brand"
               className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 sm:w-auto"
-              onClick={() => setIsModalOpen(true)}
+              onClick={openRegistrarGasto}
             >
               <span className="material-symbols-outlined text-[20px]">add_circle</span>
               Registrar nuevo gasto
@@ -176,6 +412,9 @@ export const GastosControlPage = () => {
           isLoading={false}
           isRefreshing={isFetching}
           emptyMessage={activeSection.emptyMessage}
+          onEditGasto={handleEditGasto}
+          onDeleteGasto={handleDeleteGasto}
+          actionsDisabled={gastoActionsDisabled}
         />
 
         <IngresosExternosSection
@@ -186,7 +425,10 @@ export const GastosControlPage = () => {
           totalVariables={heroTotals.totalIngresosVariables}
           isLoading={!ingresosData && isIngresosLoading}
           isRefreshing={isIngresosFetching}
-          onRegistrarIngreso={() => setIsIngresoModalOpen(true)}
+          onRegistrarIngreso={openRegistrarIngreso}
+          onEditIngreso={handleEditIngreso}
+          onDeleteIngreso={handleDeleteIngreso}
+          actionsDisabled={ingresoActionsDisabled}
         />
 
         <RegistrarGastoModal
@@ -194,11 +436,11 @@ export const GastosControlPage = () => {
           isOpen={isModalOpen}
           mes={selectedMes}
           anio={selectedAnio}
-          onClose={() => setIsModalOpen(false)}
-          onSuccess={() => {
-            refetch();
-            setActiveTab('fijos');
-          }}
+          onClose={handleCloseGastoModal}
+          onSuccess={handleGastoModalSuccess}
+          modo={gastoModalMode}
+          initialData={selectedGasto}
+          templateId={selectedGasto?.templateId ?? null}
         />
 
         <RegistrarIngresoModal
@@ -206,7 +448,22 @@ export const GastosControlPage = () => {
           isOpen={isIngresoModalOpen}
           mes={selectedMes}
           anio={selectedAnio}
-          onClose={() => setIsIngresoModalOpen(false)}
+          onClose={handleCloseIngresoModal}
+          modo={ingresoModalMode}
+          initialData={selectedIngreso}
+          templateId={selectedIngreso?.templateId ?? null}
+          onSuccess={handleIngresoModalSuccess}
+        />
+
+        <ConfirmDialog
+          isOpen={Boolean(deleteDialog)}
+          title={deleteDialogCopy?.title}
+          message={deleteDialogCopy?.message ?? ''}
+          confirmLabel={deleteDialogCopy?.confirmLabel ?? 'Eliminar'}
+          destructive
+          isProcessing={deleteIsProcessing}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
         />
       </div>
     </div>

@@ -39,6 +39,17 @@ public record IngresoModel
         string MedioCobro,
         string? Observaciones);
 
+    public record UpdateIngresoFijoRequest(
+        int Mes,
+        int Anio,
+        string Categoria,
+        string Descripcion,
+        decimal Monto,
+        int DiaDeAplicacion,
+        string MedioCobro,
+        string? Observaciones,
+        bool EstaActivo);
+
     public record IngresoVariableRequest(
         int Mes,
         int Anio,

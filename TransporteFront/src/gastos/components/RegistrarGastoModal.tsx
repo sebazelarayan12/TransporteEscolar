@@ -1,11 +1,19 @@
-import { useState } from 'react';
-import { useForm, type FieldError, type Resolver, type SubmitHandler } from 'react-hook-form';
+import { useEffect } from 'react';
+import { useForm, useWatch, type FieldError, type Resolver, type SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal, Button, Spinner } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
-import { useCrearGastoFijo, useCrearGastoVariable } from '../services/gastos.queries';
-import { GASTO_CATEGORIAS, GASTO_ESTADOS, GASTO_TIPOS, type GastoEstadoPago, type GastoTipo } from '../types/gastos.types';
+import { useActualizarGastoFijo, useCrearGastoFijo, useCrearGastoVariable } from '../services/gastos.queries';
+import {
+  GASTO_CATEGORIAS,
+  GASTO_ESTADOS,
+  GASTO_TIPOS,
+  type ActualizarGastoFijoRequest,
+  type GastoEstadoPago,
+  type GastoItem,
+  type GastoTipo,
+} from '../types/gastos.types';
 import { MEDIOS_PAGO } from '../../pagos/constants/medios-pago.constants';
 
 interface RegistrarGastoModalProps {
@@ -14,6 +22,9 @@ interface RegistrarGastoModalProps {
   mes: number;
   anio: number;
   onSuccess: () => void;
+  modo?: 'create' | 'edit';
+  initialData?: GastoItem | null;
+  templateId?: number | null;
 }
 
 const registrarGastoSchemaBase = z.discriminatedUnion('tipo', [
@@ -105,9 +116,19 @@ const monthFormatter = new Intl.DateTimeFormat('es-AR', {
   year: 'numeric',
 });
 
-export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: RegistrarGastoModalProps) => {
+export const RegistrarGastoModal = ({
+  isOpen,
+  onClose,
+  mes,
+  anio,
+  onSuccess,
+  modo = 'create',
+  initialData,
+  templateId,
+}: RegistrarGastoModalProps) => {
   const schema = buildSchemaForPeriod(mes, anio);
   const resolver = zodResolver(schema) as Resolver<RegistrarGastoFormData>;
+  const isEditMode = modo === 'edit';
   const form = useForm<RegistrarGastoFormData>({
     resolver,
     defaultValues: getDefaultValues(mes, anio),
@@ -117,30 +138,84 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = form;
   const typedErrors = errors as typeof errors &
     Partial<Record<'diaDeAplicacion' | 'fecha' | 'estadoPago', FieldError | undefined>>;
-  const [selectedTipo, setSelectedTipo] = useState<GastoTipo>(GASTO_TIPOS.VARIABLE);
+  const watchedTipo = useWatch({ control: form.control, name: 'tipo' }) as GastoTipo | undefined;
+  const selectedTipo = watchedTipo ?? (isEditMode ? GASTO_TIPOS.FIJO : GASTO_TIPOS.VARIABLE);
   const { min, max } = getPeriodBounds(mes, anio);
   const { showSuccess, showError } = useToast();
   const crearGastoFijo = useCrearGastoFijo();
   const crearGastoVariable = useCrearGastoVariable();
-  const isPending = isSubmitting || crearGastoFijo.isPending || crearGastoVariable.isPending;
+  const actualizarGastoFijo = useActualizarGastoFijo();
+  const isPending = isSubmitting || crearGastoFijo.isPending || crearGastoVariable.isPending || actualizarGastoFijo.isPending;
   const periodLabel = monthFormatter.format(new Date(anio, mes - 1, 1));
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    if (isEditMode && initialData) {
+      const fallbackDate = getPeriodBounds(initialData.mes ?? mes, initialData.anio ?? anio).min;
+      const diaAplicacion = new Date(initialData.fecha ?? fallbackDate).getUTCDate();
+      reset({
+        tipo: GASTO_TIPOS.FIJO,
+        categoria: initialData.categoria,
+        descripcion: initialData.descripcion,
+        monto: initialData.monto,
+        medioPago: initialData.medioPago,
+        observaciones: initialData.observaciones ?? '',
+        diaDeAplicacion: diaAplicacion,
+      });
+      return;
+    }
+
+    reset(getDefaultValues(mes, anio));
+  }, [anio, initialData, isEditMode, isOpen, mes, reset]);
 
   const closeModal = () => {
     if (isPending) {
       return;
     }
     reset(getDefaultValues(mes, anio));
-    setSelectedTipo(GASTO_TIPOS.VARIABLE);
     onClose();
   };
 
   const onSubmit: SubmitHandler<RegistrarGastoFormData> = async (data) => {
+    const observaciones = data.observaciones?.trim() ? data.observaciones.trim() : undefined;
     try {
-      if (data.tipo === GASTO_TIPOS.FIJO) {
+      if (isEditMode) {
+        const targetTemplateId = templateId ?? initialData?.templateId ?? null;
+        if (!targetTemplateId) {
+          showError('No encontramos la plantilla asociada al gasto fijo.');
+          return;
+        }
+
+        if (data.tipo !== GASTO_TIPOS.FIJO) {
+          showError('Solo podés editar plantillas de gastos fijos. Guardá nuevamente.');
+          return;
+        }
+
+        const payload: ActualizarGastoFijoRequest = {
+          mes,
+          anio,
+          categoria: data.categoria,
+          descripcion: data.descripcion.trim(),
+          monto: data.monto,
+          diaDeAplicacion: data.diaDeAplicacion,
+          medioPago: data.medioPago,
+          observaciones,
+          estaActivo: true,
+        };
+
+        await actualizarGastoFijo.mutateAsync({
+          templateId: targetTemplateId,
+          data: payload,
+        });
+      } else if (data.tipo === GASTO_TIPOS.FIJO) {
         await crearGastoFijo.mutateAsync({
           mes,
           anio,
@@ -149,7 +224,7 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
           monto: data.monto,
           diaDeAplicacion: data.diaDeAplicacion,
           medioPago: data.medioPago,
-          observaciones: data.observaciones?.trim() ? data.observaciones.trim() : undefined,
+          observaciones,
         });
       } else {
         await crearGastoVariable.mutateAsync({
@@ -161,14 +236,13 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
           fecha: data.fecha,
           medioPago: data.medioPago,
           estadoPago: data.estadoPago,
-          observaciones: data.observaciones?.trim() ? data.observaciones.trim() : undefined,
+          observaciones,
         });
       }
 
-      showSuccess('Gasto registrado correctamente');
+      showSuccess(isEditMode ? 'Gasto fijo actualizado' : 'Gasto registrado correctamente');
       onSuccess();
       reset(getDefaultValues(mes, anio));
-      setSelectedTipo(GASTO_TIPOS.VARIABLE);
       onClose();
     } catch (error) {
       const message =
@@ -182,7 +256,12 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
   const categorias = selectedTipo === GASTO_TIPOS.FIJO ? GASTO_CATEGORIAS.FIJOS : GASTO_CATEGORIAS.VARIABLES;
 
   return (
-    <Modal isOpen={isOpen} onClose={closeModal} title="Registrar nuevo gasto" maxWidth="2xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={closeModal}
+      title={isEditMode ? 'Editar gasto fijo' : 'Registrar nuevo gasto'}
+      maxWidth="2xl"
+    >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 dark:bg-white/5 dark:text-slate-200">
           <div className="flex items-center gap-2">
@@ -194,30 +273,36 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
 
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-teal-600">Tipo de gasto</p>
-          <div className="mt-3 inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm dark:border-[#3f3f46] dark:bg-[#1f1f24]">
-            {([GASTO_TIPOS.VARIABLE, GASTO_TIPOS.FIJO] as const).map((tipo) => {
-              const isActive = selectedTipo === tipo;
-              const icon = tipo === GASTO_TIPOS.VARIABLE ? 'dynamic_form' : 'deployed_code';
-              return (
-                <button
-                  key={tipo}
-                  type="button"
-                  onClick={() => {
-                    setSelectedTipo(tipo);
-                    form.setValue('tipo', tipo);
-                  }}
-                  className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    isActive
-                      ? 'bg-teal-600 text-white shadow'
-                      : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[18px]">{icon}</span>
-                  {tipo}
-                </button>
-              );
-            })}
-          </div>
+          {isEditMode ? (
+            <div className="mt-3 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
+              <span className="material-symbols-outlined text-[20px]">info</span>
+              Editás la plantilla del gasto fijo seleccionado. Los cambios impactan en este mes y los próximos.
+            </div>
+          ) : (
+            <div className="mt-3 inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm dark:border-[#3f3f46] dark:bg-[#1f1f24]">
+              {([GASTO_TIPOS.VARIABLE, GASTO_TIPOS.FIJO] as const).map((tipo) => {
+                const isActive = selectedTipo === tipo;
+                const icon = tipo === GASTO_TIPOS.VARIABLE ? 'dynamic_form' : 'deployed_code';
+                return (
+                  <button
+                    key={tipo}
+                    type="button"
+                    onClick={() => {
+                      setValue('tipo', tipo);
+                    }}
+                    className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                      isActive
+                        ? 'bg-teal-600 text-white shadow'
+                        : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">{icon}</span>
+                    {tipo}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
@@ -394,7 +479,7 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
           </Button>
           <Button type="submit" variant="brand" disabled={isPending} className="inline-flex items-center gap-2">
             {isPending ? <Spinner size="sm" /> : <span className="material-symbols-outlined text-[18px]">task_alt</span>}
-            Guardar
+            {isEditMode ? 'Guardar cambios' : 'Guardar'}
           </Button>
         </div>
       </form>

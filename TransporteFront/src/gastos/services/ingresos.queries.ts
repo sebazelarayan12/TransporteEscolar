@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ingresosApi } from './ingresos.api';
 import type {
+  ActualizarIngresoFijoRequest,
   CrearIngresoFijoRequest,
   CrearIngresoVariableRequest,
   IngresosResumenMensualResponse,
@@ -41,6 +42,65 @@ export const useCrearIngresoVariable = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ingresosKeys.resumen(variables.mes, variables.anio) });
       queryClient.invalidateQueries({ queryKey: gastosKeys.resumen(variables.mes, variables.anio) });
+    },
+  });
+};
+
+interface UpdateIngresoFijoVariables {
+  templateId: number;
+  data: ActualizarIngresoFijoRequest;
+}
+
+interface DeleteIngresoPayload {
+  id: number;
+  mes: number;
+  anio: number;
+}
+
+interface DeleteIngresoFijoPayload {
+  templateId: number;
+  mes: number;
+  anio: number;
+}
+
+const invalidateIngresosResumen = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  mes: number,
+  anio: number,
+) => {
+  queryClient.invalidateQueries({ queryKey: ingresosKeys.resumen(mes, anio) });
+  queryClient.invalidateQueries({ queryKey: gastosKeys.resumen(mes, anio) });
+};
+
+export const useActualizarIngresoFijo = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ templateId, data }: UpdateIngresoFijoVariables) => ingresosApi.updateIngresoFijo(templateId, data),
+    onSuccess: (_, variables) => {
+      invalidateIngresosResumen(queryClient, variables.data.mes, variables.data.anio);
+    },
+  });
+};
+
+export const useEliminarIngresoFijo = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ templateId }: DeleteIngresoFijoPayload) => ingresosApi.deleteIngresoFijo(templateId),
+    onSuccess: (_, variables) => {
+      invalidateIngresosResumen(queryClient, variables.mes, variables.anio);
+    },
+  });
+};
+
+export const useEliminarIngresoVariable = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: DeleteIngresoPayload) => ingresosApi.deleteIngresoVariable(id),
+    onSuccess: (_, variables) => {
+      invalidateIngresosResumen(queryClient, variables.mes, variables.anio);
     },
   });
 };

@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Logging;
 using TransporteEscolar.Application.DTOs;
+using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Application.Validation;
 using TransporteEscolar.Domain.Entities;
@@ -9,13 +11,16 @@ public class GastoService : IGastoService
 {
     private readonly IGastoRepository _gastoRepository;
     private readonly IPagoMensualRepository _pagoMensualRepository;
+    private readonly ILogger<GastoService> _logger;
 
     public GastoService(
         IGastoRepository gastoRepository,
-        IPagoMensualRepository pagoMensualRepository)
+        IPagoMensualRepository pagoMensualRepository,
+        ILogger<GastoService> logger)
     {
         _gastoRepository = gastoRepository;
         _pagoMensualRepository = pagoMensualRepository;
+        _logger = logger;
     }
 
     public async Task<GastoModel.ResumenMensualResponse> ObtenerResumenMensualAsync(int mes, int anio, CancellationToken cancellationToken = default)
@@ -86,6 +91,7 @@ public class GastoService : IGastoService
         GastoValidator.ValidateGastoFijo(dto);
 
         var fechaInicio = CrearPrimerDiaMes(dto.Mes, dto.Anio);
+        var observaciones = dto.Observaciones?.Trim();
         var template = new GastoFijoTemplate(
             dto.Categoria.Trim(),
             dto.Descripcion.Trim(),
@@ -95,7 +101,7 @@ public class GastoService : IGastoService
             fechaInicio);
 
         var templateCreado = await _gastoRepository.AgregarTemplateAsync(template, cancellationToken);
-        var gastoGenerado = templateCreado.CrearInstanciaMensual(dto.Mes, dto.Anio, observaciones: dto.Observaciones);
+        var gastoGenerado = templateCreado.CrearInstanciaMensual(dto.Mes, dto.Anio, observaciones: observaciones);
         var gastoCreado = await _gastoRepository.AgregarGastoMensualAsync(gastoGenerado, cancellationToken);
 
         return MapearGasto(gastoCreado);
@@ -122,6 +128,85 @@ public class GastoService : IGastoService
 
         var gastoCreado = await _gastoRepository.AgregarGastoMensualAsync(gasto, cancellationToken);
         return MapearGasto(gastoCreado);
+    }
+
+    public async Task<GastoModel.GastoMensualResponse> ActualizarGastoFijoAsync(
+        int templateId,
+        GastoModel.UpdateGastoFijoRequest dto,
+        CancellationToken cancellationToken = default)
+    {
+        GastoValidator.ValidateUpdateGastoFijo(dto);
+
+        var template = await _gastoRepository.ObtenerTemplatePorIdAsync(templateId, cancellationToken)
+            ?? throw new NotFoundException(nameof(GastoFijoTemplate), templateId);
+
+        var categoria = dto.Categoria.Trim();
+        var descripcion = dto.Descripcion.Trim();
+        var medioPago = dto.MedioPago.Trim();
+        var observaciones = dto.Observaciones?.Trim();
+
+        template.ActualizarDatos(categoria, descripcion, dto.Monto, dto.DiaDeAplicacion, medioPago, dto.EstaActivo);
+        await _gastoRepository.ActualizarTemplateAsync(template, cancellationToken);
+
+        var gastoMensual = await _gastoRepository.ObtenerGastoMensualPorTemplateAsync(templateId, dto.Mes, dto.Anio, cancellationToken);
+
+        if (gastoMensual is null)
+        {
+            var nuevaInstancia = template.CrearInstanciaMensual(dto.Mes, dto.Anio, observaciones: observaciones);
+            gastoMensual = await _gastoRepository.AgregarGastoMensualAsync(nuevaInstancia, cancellationToken);
+        }
+
+        var instanciasFuturas = await _gastoRepository.GetFuturosPorTemplateAsync(templateId, dto.Mes, dto.Anio, cancellationToken);
+
+        if (instanciasFuturas.Count > 0)
+        {
+            foreach (var instancia in instanciasFuturas)
+            {
+                instancia.ActualizarDesdeTemplate(template, observaciones);
+            }
+
+            await _gastoRepository.BulkUpdateAsync(instanciasFuturas, cancellationToken);
+            _logger.LogInformation(
+                "Actualizados {Cantidad} gastos mensuales vinculados al template {TemplateId} desde {Mes}/{Anio}.",
+                instanciasFuturas.Count,
+                templateId,
+                dto.Mes,
+                dto.Anio);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "No se encontraron instancias futuras para el template {TemplateId} desde {Mes}/{Anio}.",
+                templateId,
+                dto.Mes,
+                dto.Anio);
+        }
+
+        var resultado = instanciasFuturas.FirstOrDefault(g => g.Mes == dto.Mes && g.Anio == dto.Anio) ?? gastoMensual;
+        return MapearGasto(resultado);
+    }
+
+    public async Task DesactivarGastoFijoAsync(int templateId, CancellationToken cancellationToken = default)
+    {
+        var template = await _gastoRepository.ObtenerTemplatePorIdAsync(templateId, cancellationToken)
+            ?? throw new NotFoundException(nameof(GastoFijoTemplate), templateId);
+
+        template.Desactivar();
+        await _gastoRepository.ActualizarTemplateAsync(template, cancellationToken);
+
+        var fechaActual = DateTime.UtcNow;
+        await _gastoRepository.EliminarInstanciasFuturasPorTemplateAsync(templateId, fechaActual.Month, fechaActual.Year, cancellationToken);
+    }
+
+    public async Task EliminarGastoVariableAsync(int gastoId, CancellationToken cancellationToken = default)
+    {
+        var gasto = await _gastoRepository.ObtenerGastoMensualPorIdAsync(gastoId, cancellationToken)
+            ?? throw new NotFoundException(nameof(GastoMensual), gastoId);
+
+        if (gasto.Tipo != GastoMensual.TipoVariable)
+            throw new ValidationException("Solo se pueden eliminar gastos variables.");
+
+        await _gastoRepository.EliminarGastoMensualAsync(gasto, cancellationToken);
     }
 
     private static DateTime CrearPrimerDiaMes(int mes, int anio)

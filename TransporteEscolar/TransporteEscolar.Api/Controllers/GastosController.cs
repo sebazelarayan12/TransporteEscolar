@@ -72,4 +72,47 @@ public class GastosController : ControllerBase
             new { mes = gasto.Mes, anio = gasto.Anio },
             gasto);
     }
+
+    /// <summary>
+    /// Actualiza una plantilla de gasto fijo y su instancia del mes filtrado.
+    /// </summary>
+    [HttpPut("fijos/{templateId:int}")]
+    public async Task<ActionResult<GastoModel.GastoMensualResponse>> ActualizarGastoFijo(
+        int templateId,
+        [FromBody] GastoModel.UpdateGastoFijoRequest dto)
+    {
+        var gasto = await _gastoService.ActualizarGastoFijoAsync(templateId, dto);
+
+        _logger.LogInformation(
+            "Gasto fijo actualizado TemplateId {TemplateId} para {Mes}/{Anio}",
+            templateId,
+            gasto.Mes,
+            gasto.Anio);
+
+        return Ok(gasto);
+    }
+
+    /// <summary>
+    /// Desactiva una plantilla de gasto fijo y elimina las instancias futuras.
+    /// </summary>
+    [HttpDelete("fijos/{templateId:int}")]
+    public async Task<IActionResult> DesactivarGastoFijo(int templateId)
+    {
+        await _gastoService.DesactivarGastoFijoAsync(templateId);
+
+        _logger.LogInformation("Gasto fijo desactivado TemplateId {TemplateId}", templateId);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Elimina un gasto variable puntual.
+    /// </summary>
+    [HttpDelete("variables/{id:int}")]
+    public async Task<IActionResult> EliminarGastoVariable(int id)
+    {
+        await _gastoService.EliminarGastoVariableAsync(id);
+
+        _logger.LogInformation("Gasto variable eliminado (ID: {Id})", id);
+        return NoContent();
+    }
 }

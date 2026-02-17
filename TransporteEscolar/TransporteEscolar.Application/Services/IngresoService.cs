@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Logging;
 using TransporteEscolar.Application.DTOs;
+using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Application.Validation;
 using TransporteEscolar.Domain.Entities;
@@ -10,15 +12,18 @@ public class IngresoService : IIngresoService
     private readonly IIngresoRepository _ingresoRepository;
     private readonly IPagoMensualRepository _pagoMensualRepository;
     private readonly IGastoRepository _gastoRepository;
+    private readonly ILogger<IngresoService> _logger;
 
     public IngresoService(
         IIngresoRepository ingresoRepository,
         IPagoMensualRepository pagoMensualRepository,
-        IGastoRepository gastoRepository)
+        IGastoRepository gastoRepository,
+        ILogger<IngresoService> logger)
     {
         _ingresoRepository = ingresoRepository;
         _pagoMensualRepository = pagoMensualRepository;
         _gastoRepository = gastoRepository;
+        _logger = logger;
     }
 
     public async Task<IngresoModel.ResumenMensualResponse> ObtenerResumenMensualAsync(int mes, int anio, CancellationToken cancellationToken = default)
@@ -140,6 +145,87 @@ public class IngresoService : IIngresoService
 
         var ingresoCreado = await _ingresoRepository.AgregarIngresoMensualAsync(ingreso, cancellationToken);
         return MapearIngreso(ingresoCreado);
+    }
+
+    public async Task<IngresoModel.IngresoMensualResponse> ActualizarIngresoFijoAsync(
+        int templateId,
+        IngresoModel.UpdateIngresoFijoRequest dto,
+        CancellationToken cancellationToken = default)
+    {
+        IngresoValidator.ValidateUpdateIngresoFijo(dto);
+
+        var template = await _ingresoRepository.ObtenerTemplatePorIdAsync(templateId, cancellationToken)
+            ?? throw new NotFoundException(nameof(IngresoFijoTemplate), templateId);
+
+        var categoria = dto.Categoria.Trim();
+        var descripcion = dto.Descripcion.Trim();
+        var medioCobro = dto.MedioCobro.Trim();
+        var observaciones = dto.Observaciones?.Trim();
+
+        template.ActualizarDatos(categoria, descripcion, dto.Monto, dto.DiaDeAplicacion, medioCobro, observaciones, dto.EstaActivo);
+        await _ingresoRepository.ActualizarTemplateAsync(template, cancellationToken);
+
+        var ingresoMensual = await _ingresoRepository.ObtenerIngresoMensualPorTemplateAsync(templateId, dto.Mes, dto.Anio, cancellationToken);
+
+        if (ingresoMensual is null)
+        {
+            var nuevaInstancia = template.CrearInstanciaMensual(dto.Mes, dto.Anio, observaciones: observaciones);
+            ingresoMensual = await _ingresoRepository.AgregarIngresoMensualAsync(nuevaInstancia, cancellationToken);
+        }
+
+        var instanciasFuturas = await _ingresoRepository.GetFuturosPorTemplateAsync(templateId, dto.Mes, dto.Anio, cancellationToken);
+
+        if (instanciasFuturas.Count > 0)
+        {
+            foreach (var instancia in instanciasFuturas)
+            {
+                instancia.ActualizarDesdeTemplate(template, observaciones);
+            }
+
+            await _ingresoRepository.BulkUpdateAsync(instanciasFuturas, cancellationToken);
+            _logger.LogInformation(
+                "Actualizados {Cantidad} ingresos mensuales vinculados al template {TemplateId} desde {Mes}/{Anio}.",
+                instanciasFuturas.Count,
+                templateId,
+                dto.Mes,
+                dto.Anio);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "No se encontraron instancias futuras para el template de ingresos {TemplateId} desde {Mes}/{Anio}.",
+                templateId,
+                dto.Mes,
+                dto.Anio);
+        }
+
+        var resultado = instanciasFuturas.FirstOrDefault(i => i.Mes == dto.Mes && i.Anio == dto.Anio) ?? ingresoMensual;
+        return MapearIngreso(resultado);
+    }
+
+    public async Task DesactivarIngresoFijoAsync(int templateId, CancellationToken cancellationToken = default)
+    {
+        var template = await _ingresoRepository.ObtenerTemplatePorIdAsync(templateId, cancellationToken)
+            ?? throw new NotFoundException(nameof(IngresoFijoTemplate), templateId);
+
+        template.Desactivar();
+        await _ingresoRepository.ActualizarTemplateAsync(template, cancellationToken);
+
+        var fechaActual = DateTime.UtcNow;
+        await _ingresoRepository.EliminarInstanciasFuturasPorTemplateAsync(templateId, fechaActual.Month, fechaActual.Year, cancellationToken);
+    }
+
+    public async Task EliminarIngresoVariableAsync(int ingresoId, CancellationToken cancellationToken = default)
+    {
+        var ingreso = await _ingresoRepository.ObtenerIngresoMensualPorIdAsync(ingresoId, cancellationToken)
+            ?? throw new NotFoundException(nameof(IngresoMensual), ingresoId);
+
+        if (ingreso.Tipo != IngresoMensual.TipoVariable)
+        {
+            throw new ValidationException("Solo se pueden eliminar ingresos variables.");
+        }
+
+        await _ingresoRepository.EliminarIngresoMensualAsync(ingreso, cancellationToken);
     }
 
     private static DateTime CrearPrimerDiaMes(int mes, int anio)

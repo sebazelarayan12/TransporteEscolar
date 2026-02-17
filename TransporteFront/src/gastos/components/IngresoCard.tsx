@@ -1,6 +1,7 @@
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
 import { INGRESO_TIPOS, type IngresoItem } from '../types/ingresos.types';
+import { CardActionsMenu, type CardActionItem } from './CardActionsMenu';
 
 const categoriaIconMap: Record<string, string> = {
   Convenios: 'handshake',
@@ -22,9 +23,12 @@ const estadoStyles: Record<string, { bg: string; text: string }> = {
 
 interface IngresoCardProps {
   ingreso: IngresoItem;
+  onEdit?: (ingreso: IngresoItem) => void;
+  onDelete?: (ingreso: IngresoItem) => void;
+  actionsDisabled?: boolean;
 }
 
-export const IngresoCard = ({ ingreso }: IngresoCardProps) => {
+export const IngresoCard = ({ ingreso, onEdit, onDelete, actionsDisabled = false }: IngresoCardProps) => {
   const icon = categoriaIconMap[ingreso.categoria] ?? 'payments';
   const isFijo = ingreso.tipo === INGRESO_TIPOS.FIJO;
   const estadoStyle = estadoStyles[ingreso.estadoCobro] ?? {
@@ -36,10 +40,29 @@ export const IngresoCard = ({ ingreso }: IngresoCardProps) => {
     text: 'text-indigo-700 dark:text-indigo-200',
   };
 
+  const actions: CardActionItem[] = [];
+  if (isFijo && onEdit) {
+    actions.push({
+      id: 'edit',
+      label: 'Editar',
+      icon: 'edit',
+      onSelect: () => onEdit(ingreso),
+    });
+  }
+  if (onDelete) {
+    actions.push({
+      id: 'delete',
+      label: 'Eliminar',
+      icon: 'delete',
+      onSelect: () => onDelete(ingreso),
+      destructive: true,
+    });
+  }
+
   return (
     <article className="flex w-full flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-[#3f3f46] dark:bg-[#1f1f24]">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <div className="flex size-11 items-center justify-center rounded-2xl bg-teal-600/10 text-teal-700 dark:bg-cyan-500/10 dark:text-cyan-200">
             <span className="material-symbols-outlined text-2xl">{icon}</span>
           </div>
@@ -48,7 +71,7 @@ export const IngresoCard = ({ ingreso }: IngresoCardProps) => {
             <p className="text-xs text-gray-500 break-words">{ingreso.descripcion}</p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex w-full flex-col gap-1 sm:w-auto sm:items-end">
           <span
             className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${
               (isFijo ? fijoBadgeStyle : estadoStyle).bg
@@ -60,6 +83,11 @@ export const IngresoCard = ({ ingreso }: IngresoCardProps) => {
             <span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>
             {ingreso.medioCobro}
           </span>
+          {actions.length > 0 ? (
+            <div className="mt-1 flex justify-end">
+              <CardActionsMenu items={actions} disabled={actionsDisabled} />
+            </div>
+          ) : null}
         </div>
       </header>
 

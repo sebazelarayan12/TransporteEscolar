@@ -1,6 +1,7 @@
 import { GASTO_TIPOS, type GastoItem } from '../types/gastos.types';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
+import { CardActionsMenu, type CardActionItem } from './CardActionsMenu';
 
 const categoriaIconMap: Record<string, string> = {
   Combustible: 'local_gas_station',
@@ -23,9 +24,12 @@ const estadoStyles: Record<string, { bg: string; text: string }> = {
 
 interface GastoCardProps {
   gasto: GastoItem;
+  onEdit?: (gasto: GastoItem) => void;
+  onDelete?: (gasto: GastoItem) => void;
+  actionsDisabled?: boolean;
 }
 
-export const GastoCard = ({ gasto }: GastoCardProps) => {
+export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false }: GastoCardProps) => {
   const icon = categoriaIconMap[gasto.categoria] ?? 'receipt_long';
   const isGastoFijo = gasto.tipo === GASTO_TIPOS.FIJO;
   const estadoStyle = estadoStyles[gasto.estadoPago] ?? {
@@ -39,10 +43,29 @@ export const GastoCard = ({ gasto }: GastoCardProps) => {
   const badgeStyle = isGastoFijo ? fijoBadgeStyle : estadoStyle;
   const badgeLabel = isGastoFijo ? 'Fijo' : gasto.estadoPago;
 
+  const actions: CardActionItem[] = [];
+  if (isGastoFijo && onEdit) {
+    actions.push({
+      id: 'edit',
+      label: 'Editar',
+      icon: 'edit',
+      onSelect: () => onEdit(gasto),
+    });
+  }
+  if (onDelete) {
+    actions.push({
+      id: 'delete',
+      label: 'Eliminar',
+      icon: 'delete',
+      onSelect: () => onDelete(gasto),
+      destructive: true,
+    });
+  }
+
   return (
     <article className="flex w-full flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-[#3f3f46] dark:bg-[#1f1f24]">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <div className="flex size-11 items-center justify-center rounded-2xl bg-teal-600/10 text-teal-700 dark:bg-cyan-500/10 dark:text-cyan-200">
             <span className="material-symbols-outlined text-2xl">{icon}</span>
           </div>
@@ -53,9 +76,12 @@ export const GastoCard = ({ gasto }: GastoCardProps) => {
             <p className="text-xs text-gray-500 break-words">{gasto.descripcion}</p>
           </div>
         </div>
-        <span className={`inline-flex w-full items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${badgeStyle.bg} ${badgeStyle.text} sm:w-auto`}>
-          {badgeLabel}
-        </span>
+        <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+          <span className={`inline-flex flex-1 items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${badgeStyle.bg} ${badgeStyle.text} sm:flex-none`}>
+            {badgeLabel}
+          </span>
+          {actions.length > 0 ? <CardActionsMenu items={actions} disabled={actionsDisabled} /> : null}
+        </div>
       </header>
 
       <div className="flex flex-wrap items-end justify-between gap-4">

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useForm, type FieldError, type Resolver, type SubmitHandler } from 'react-hook-form';
+import { useEffect } from 'react';
+import { useForm, useWatch, type FieldError, type Resolver, type SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal, Button, Spinner } from '../../shared/ui';
@@ -9,16 +9,22 @@ import {
   INGRESO_CATEGORIAS,
   INGRESO_ESTADOS_COBRO,
   INGRESO_TIPOS,
+  type ActualizarIngresoFijoRequest,
   type IngresoEstadoCobro,
+  type IngresoItem,
   type IngresoTipo,
 } from '../types/ingresos.types';
-import { useCrearIngresoFijo, useCrearIngresoVariable } from '../services/ingresos.queries';
+import { useActualizarIngresoFijo, useCrearIngresoFijo, useCrearIngresoVariable } from '../services/ingresos.queries';
 
 interface RegistrarIngresoModalProps {
   isOpen: boolean;
   onClose: () => void;
   mes: number;
   anio: number;
+  modo?: 'create' | 'edit';
+  initialData?: IngresoItem | null;
+  templateId?: number | null;
+  onSuccess?: () => void;
 }
 
 const registrarIngresoSchemaBase = z.discriminatedUnion('tipo', [
@@ -110,9 +116,19 @@ const monthFormatter = new Intl.DateTimeFormat('es-AR', {
   year: 'numeric',
 });
 
-export const RegistrarIngresoModal = ({ isOpen, onClose, mes, anio }: RegistrarIngresoModalProps) => {
+export const RegistrarIngresoModal = ({
+  isOpen,
+  onClose,
+  mes,
+  anio,
+  modo = 'create',
+  initialData,
+  templateId,
+  onSuccess = () => {},
+}: RegistrarIngresoModalProps) => {
   const schema = buildSchemaForPeriod(mes, anio);
   const resolver = zodResolver(schema) as Resolver<RegistrarIngresoFormData>;
+  const isEditMode = modo === 'edit';
   const form = useForm<RegistrarIngresoFormData>({
     resolver,
     defaultValues: getDefaultValues(mes, anio),
@@ -122,30 +138,84 @@ export const RegistrarIngresoModal = ({ isOpen, onClose, mes, anio }: RegistrarI
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = form;
   const typedErrors = errors as typeof errors &
     Partial<Record<'diaDeAplicacion' | 'fecha' | 'estadoCobro', FieldError | undefined>>;
-  const [selectedTipo, setSelectedTipo] = useState<IngresoTipo>(INGRESO_TIPOS.VARIABLE);
+  const watchedTipo = useWatch({ control: form.control, name: 'tipo' }) as IngresoTipo | undefined;
+  const selectedTipo = watchedTipo ?? (isEditMode ? INGRESO_TIPOS.FIJO : INGRESO_TIPOS.VARIABLE);
   const { min, max } = getPeriodBounds(mes, anio);
   const { showSuccess, showError } = useToast();
   const crearIngresoFijo = useCrearIngresoFijo();
   const crearIngresoVariable = useCrearIngresoVariable();
-  const isPending = isSubmitting || crearIngresoFijo.isPending || crearIngresoVariable.isPending;
+  const actualizarIngresoFijo = useActualizarIngresoFijo();
+  const isPending = isSubmitting || crearIngresoFijo.isPending || crearIngresoVariable.isPending || actualizarIngresoFijo.isPending;
   const periodLabel = monthFormatter.format(new Date(anio, mes - 1, 1));
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    if (isEditMode && initialData) {
+      const fallbackDate = getPeriodBounds(initialData.mes ?? mes, initialData.anio ?? anio).min;
+      const diaAplicacion = new Date(initialData.fecha ?? fallbackDate).getUTCDate();
+      reset({
+        tipo: INGRESO_TIPOS.FIJO,
+        categoria: initialData.categoria,
+        descripcion: initialData.descripcion,
+        monto: initialData.monto,
+        medioCobro: initialData.medioCobro,
+        observaciones: initialData.observaciones ?? '',
+        diaDeAplicacion: diaAplicacion,
+      });
+      return;
+    }
+
+    reset(getDefaultValues(mes, anio));
+  }, [anio, initialData, isEditMode, isOpen, mes, reset]);
 
   const closeModal = () => {
     if (isPending) {
       return;
     }
     reset(getDefaultValues(mes, anio));
-    setSelectedTipo(INGRESO_TIPOS.VARIABLE);
     onClose();
   };
 
   const onSubmit: SubmitHandler<RegistrarIngresoFormData> = async (data) => {
+    const observaciones = data.observaciones?.trim() ? data.observaciones.trim() : undefined;
     try {
-      if (data.tipo === INGRESO_TIPOS.FIJO) {
+      if (isEditMode) {
+        const targetTemplateId = templateId ?? initialData?.templateId ?? null;
+        if (!targetTemplateId) {
+          showError('No encontramos la plantilla asociada al ingreso fijo.');
+          return;
+        }
+
+        if (data.tipo !== INGRESO_TIPOS.FIJO) {
+          showError('Solo podés editar plantillas de ingresos fijos. Guardá nuevamente.');
+          return;
+        }
+
+        const payload: ActualizarIngresoFijoRequest = {
+          mes,
+          anio,
+          categoria: data.categoria,
+          descripcion: data.descripcion.trim(),
+          monto: data.monto,
+          diaDeAplicacion: data.diaDeAplicacion,
+          medioCobro: data.medioCobro,
+          observaciones,
+          estaActivo: true,
+        };
+
+        await actualizarIngresoFijo.mutateAsync({
+          templateId: targetTemplateId,
+          data: payload,
+        });
+      } else if (data.tipo === INGRESO_TIPOS.FIJO) {
         await crearIngresoFijo.mutateAsync({
           mes,
           anio,
@@ -154,7 +224,7 @@ export const RegistrarIngresoModal = ({ isOpen, onClose, mes, anio }: RegistrarI
           monto: data.monto,
           diaDeAplicacion: data.diaDeAplicacion,
           medioCobro: data.medioCobro,
-          observaciones: data.observaciones?.trim() ? data.observaciones.trim() : undefined,
+          observaciones,
         });
       } else {
         await crearIngresoVariable.mutateAsync({
@@ -166,13 +236,13 @@ export const RegistrarIngresoModal = ({ isOpen, onClose, mes, anio }: RegistrarI
           fecha: data.fecha,
           medioCobro: data.medioCobro,
           estadoCobro: data.estadoCobro,
-          observaciones: data.observaciones?.trim() ? data.observaciones.trim() : undefined,
+          observaciones,
         });
       }
 
-      showSuccess('Ingreso registrado correctamente');
+      showSuccess(isEditMode ? 'Ingreso fijo actualizado' : 'Ingreso registrado correctamente');
+      onSuccess();
       reset(getDefaultValues(mes, anio));
-      setSelectedTipo(INGRESO_TIPOS.VARIABLE);
       onClose();
     } catch (error) {
       const message =
@@ -186,7 +256,12 @@ export const RegistrarIngresoModal = ({ isOpen, onClose, mes, anio }: RegistrarI
   const categorias = selectedTipo === INGRESO_TIPOS.FIJO ? INGRESO_CATEGORIAS.FIJOS : INGRESO_CATEGORIAS.VARIABLES;
 
   return (
-    <Modal isOpen={isOpen} onClose={closeModal} title="Registrar nuevo ingreso" maxWidth="2xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={closeModal}
+      title={isEditMode ? 'Editar ingreso fijo' : 'Registrar nuevo ingreso'}
+      maxWidth="2xl"
+    >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 dark:bg-white/5 dark:text-slate-200">
           <div className="flex items-center gap-2">
@@ -198,30 +273,36 @@ export const RegistrarIngresoModal = ({ isOpen, onClose, mes, anio }: RegistrarI
 
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-teal-600">Tipo de ingreso</p>
-          <div className="mt-3 inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm dark:border-[#3f3f46] dark:bg-[#1f1f24]">
-            {([INGRESO_TIPOS.VARIABLE, INGRESO_TIPOS.FIJO] as const).map((tipo) => {
-              const isActive = selectedTipo === tipo;
-              const icon = tipo === INGRESO_TIPOS.VARIABLE ? 'stacked_line_chart' : 'auto_mode';
-              return (
+          {isEditMode ? (
+            <div className="mt-3 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
+              <span className="material-symbols-outlined text-[20px]">info</span>
+              Estás editando la plantilla del ingreso fijo seleccionado.
+            </div>
+          ) : (
+            <div className="mt-3 inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm dark:border-[#3f3f46] dark:bg-[#1f1f24]">
+              {([INGRESO_TIPOS.VARIABLE, INGRESO_TIPOS.FIJO] as const).map((tipo) => {
+                const isActive = selectedTipo === tipo;
+                const icon = tipo === INGRESO_TIPOS.VARIABLE ? 'stacked_line_chart' : 'auto_mode';
+                return (
                 <button
                   key={tipo}
                   type="button"
                   onClick={() => {
-                    setSelectedTipo(tipo);
-                    form.setValue('tipo', tipo);
+                    setValue('tipo', tipo);
                   }}
                   className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
                     isActive
                       ? 'bg-teal-600 text-white shadow'
-                      : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[18px]">{icon}</span>
-                  {tipo}
-                </button>
-              );
-            })}
-          </div>
+                        : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">{icon}</span>
+                    {tipo}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
@@ -389,7 +470,7 @@ export const RegistrarIngresoModal = ({ isOpen, onClose, mes, anio }: RegistrarI
           </Button>
           <Button type="submit" variant="brand" disabled={isPending} className="inline-flex items-center gap-2">
             {isPending ? <Spinner size="sm" /> : <span className="material-symbols-outlined text-[18px]">task_alt</span>}
-            Guardar ingreso
+            {isEditMode ? 'Guardar cambios' : 'Guardar ingreso'}
           </Button>
         </div>
       </form>

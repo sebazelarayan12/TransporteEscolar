@@ -49,4 +49,21 @@ public class GastoMensual
         Observaciones = observaciones;
         GastoFijoTemplateId = gastoFijoTemplateId;
     }
+
+    public void ActualizarDesdeTemplate(GastoFijoTemplate template, string? observaciones)
+    {
+        Categoria = template.Categoria;
+        Descripcion = template.Descripcion;
+        Monto = template.Monto;
+        MedioPago = template.MedioPago;
+        Observaciones = observaciones;
+        Fecha = CrearFechaNormalizada(template.DiaDeAplicacion);
+    }
+
+    private DateTime CrearFechaNormalizada(int diaDeAplicacion)
+    {
+        var diasDelMes = DateTime.DaysInMonth(Anio, Mes);
+        var dia = Math.Clamp(diaDeAplicacion, 1, diasDelMes);
+        return new DateTime(Anio, Mes, dia, 0, 0, 0, DateTimeKind.Utc);
+    }
 }

@@ -37,6 +37,17 @@ public record GastoModel
         string MedioPago,
         string? Observaciones);
 
+    public record UpdateGastoFijoRequest(
+        int Mes,
+        int Anio,
+        string Categoria,
+        string Descripcion,
+        decimal Monto,
+        int DiaDeAplicacion,
+        string MedioPago,
+        string? Observaciones,
+        bool EstaActivo);
+
     public record GastoVariableRequest(
         int Mes,
         int Anio,
