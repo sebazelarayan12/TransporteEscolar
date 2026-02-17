@@ -159,9 +159,8 @@ export const RegistrarGastoModal = ({
     }
 
     if (isEditMode && initialData) {
-      const periodBounds = getPeriodBounds(initialData.mes ?? mes, initialData.anio ?? anio);
-      const fechaIso = initialData.fecha?.split('T')[0] ?? periodBounds.min;
-      const diaAplicacion = new Date(initialData.fecha).getUTCDate();
+      const fallbackDate = getPeriodBounds(initialData.mes ?? mes, initialData.anio ?? anio).min;
+      const diaAplicacion = new Date(initialData.fecha ?? fallbackDate).getUTCDate();
       reset({
         tipo: GASTO_TIPOS.FIJO,
         categoria: initialData.categoria,
@@ -169,8 +168,6 @@ export const RegistrarGastoModal = ({
         monto: initialData.monto,
         medioPago: initialData.medioPago,
         observaciones: initialData.observaciones ?? '',
-        fecha: fechaIso,
-        estadoPago: (initialData.estadoPago as GastoEstadoPago) ?? GASTO_ESTADOS.PENDIENTE,
         diaDeAplicacion: diaAplicacion,
       });
       return;
@@ -194,6 +191,11 @@ export const RegistrarGastoModal = ({
         const targetTemplateId = templateId ?? initialData?.templateId ?? null;
         if (!targetTemplateId) {
           showError('No encontramos la plantilla asociada al gasto fijo.');
+          return;
+        }
+
+        if (data.tipo !== GASTO_TIPOS.FIJO) {
+          showError('Solo podés editar plantillas de gastos fijos. Guardá nuevamente.');
           return;
         }
 

@@ -159,9 +159,8 @@ export const RegistrarIngresoModal = ({
     }
 
     if (isEditMode && initialData) {
-      const periodBounds = getPeriodBounds(initialData.mes ?? mes, initialData.anio ?? anio);
-      const fechaIso = initialData.fecha?.split('T')[0] ?? periodBounds.min;
-      const diaAplicacion = new Date(initialData.fecha).getUTCDate();
+      const fallbackDate = getPeriodBounds(initialData.mes ?? mes, initialData.anio ?? anio).min;
+      const diaAplicacion = new Date(initialData.fecha ?? fallbackDate).getUTCDate();
       reset({
         tipo: INGRESO_TIPOS.FIJO,
         categoria: initialData.categoria,
@@ -169,8 +168,6 @@ export const RegistrarIngresoModal = ({
         monto: initialData.monto,
         medioCobro: initialData.medioCobro,
         observaciones: initialData.observaciones ?? '',
-        fecha: fechaIso,
-        estadoCobro: (initialData.estadoCobro as IngresoEstadoCobro) ?? INGRESO_ESTADOS_COBRO.PENDIENTE,
         diaDeAplicacion: diaAplicacion,
       });
       return;
@@ -194,6 +191,11 @@ export const RegistrarIngresoModal = ({
         const targetTemplateId = templateId ?? initialData?.templateId ?? null;
         if (!targetTemplateId) {
           showError('No encontramos la plantilla asociada al ingreso fijo.');
+          return;
+        }
+
+        if (data.tipo !== INGRESO_TIPOS.FIJO) {
+          showError('Solo podés editar plantillas de ingresos fijos. Guardá nuevamente.');
           return;
         }
 
