@@ -1,20 +1,35 @@
-import type { ResumenTotales } from '../types/gastos.types';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 
+interface GastosHeroTotals {
+  totalCuotas: number;
+  totalGastosFijos: number;
+  totalGastosVariables: number;
+  totalIngresosExternos: number;
+  totalIngresosFijos: number;
+  totalIngresosVariables: number;
+}
+
 interface GastosHeroCardProps {
-  totales: ResumenTotales;
+  totales: GastosHeroTotals;
   periodLabel: string;
 }
 
-const heroMetrics: Array<{ key: keyof ResumenTotales; label: string; icon: string }> = [
-  { key: 'totalCuotas', label: 'Ingresos estimados', icon: 'savings' },
-  { key: 'totalGastosFijos', label: 'Gastos fijos', icon: 'deployed_code' },
-  { key: 'totalGastosVariables', label: 'Gastos variables', icon: 'local_gas_station' },
-  { key: 'gananciaNeta', label: 'Ganancia neta', icon: 'trending_up' },
-];
-
 export const GastosHeroCard = ({ totales, periodLabel }: GastosHeroCardProps) => {
-  const netPositive = totales.gananciaNeta >= 0;
+  const totalGastos = totales.totalGastosFijos + totales.totalGastosVariables;
+  const netResult = totales.totalCuotas + totales.totalIngresosExternos - totalGastos;
+  const netPositive = netResult >= 0;
+  const heroMetrics = [
+    { key: 'totalCuotas', label: 'Ingresos por cuotas', icon: 'savings', value: totales.totalCuotas },
+    {
+      key: 'totalIngresosExternos',
+      label: 'Ingresos externos',
+      icon: 'volunteer_activism',
+      value: totales.totalIngresosExternos,
+    },
+    { key: 'totalGastosFijos', label: 'Gastos fijos', icon: 'deployed_code', value: totales.totalGastosFijos },
+    { key: 'totalGastosVariables', label: 'Gastos variables', icon: 'local_gas_station', value: totales.totalGastosVariables },
+    { key: 'totalGastos', label: 'Total de gastos', icon: 'account_balance', value: totalGastos },
+  ];
 
   return (
     <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#005a73] via-[#007f96] to-[#00a9a0] text-white shadow-xl">
@@ -33,7 +48,7 @@ export const GastosHeroCard = ({ totales, periodLabel }: GastosHeroCardProps) =>
         <div className="flex flex-col items-start gap-2 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
           <span className="text-xs font-semibold uppercase tracking-widest text-white/70">Resultado neto</span>
           <p className={`text-2xl font-bold ${netPositive ? 'text-emerald-200' : 'text-rose-100'}`}>
-            {formatCurrency(totales.gananciaNeta)}
+            {formatCurrency(netResult)}
           </p>
           <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest">
             <span className="material-symbols-outlined text-[16px]">
@@ -45,7 +60,7 @@ export const GastosHeroCard = ({ totales, periodLabel }: GastosHeroCardProps) =>
       </div>
 
       <div className="relative z-10 border-t border-white/20 px-6 py-5 lg:px-8">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {heroMetrics.map((metric) => (
             <article
               key={metric.key}
@@ -55,9 +70,19 @@ export const GastosHeroCard = ({ totales, periodLabel }: GastosHeroCardProps) =>
                 <span>{metric.label}</span>
                 <span className="material-symbols-outlined text-base text-white">{metric.icon}</span>
               </div>
-              <p className="mt-2 text-2xl font-semibold">
-                {formatCurrency(totales[metric.key])}
-              </p>
+              <p className="mt-2 text-2xl font-semibold">{formatCurrency(metric.value)}</p>
+              {metric.key === 'totalIngresosExternos' ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
+                    <span className="material-symbols-outlined text-[14px]">task_alt</span>
+                    Fijo {formatCurrency(totales.totalIngresosFijos)}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
+                    <span className="material-symbols-outlined text-[14px]">contrast</span>
+                    Variable {formatCurrency(totales.totalIngresosVariables)}
+                  </span>
+                </div>
+              ) : null}
             </article>
           ))}
         </div>

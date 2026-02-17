@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<IHorarioRepository, HorarioRepository>();
         services.AddScoped<IGastoRepository, GastoRepository>();
+        services.AddScoped<IIngresoRepository, IngresoRepository>();
         
         // Servicios
         services.AddScoped<ITitularService, TitularService>();
@@ -26,7 +27,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IHorarioService, HorarioService>();
         services.AddScoped<IGastoService, GastoService>();
-        
+        services.AddScoped<IIngresoService, IngresoService>();
+
         return services;
     }
 }

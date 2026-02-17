@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { Button, LoadingScreen, ErrorState, MonthYearFilter, EmptyState } from '../../shared/ui';
-import { GastosHeroCard, GastosTabs, GastoListSection, RegistrarGastoModal } from '../components';
+import {
+  GastosHeroCard,
+  GastosTabs,
+  GastoListSection,
+  RegistrarGastoModal,
+  IngresosExternosSection,
+  RegistrarIngresoModal,
+} from '../components';
 import { useGastosResumen } from '../services/gastos.queries';
+import { useIngresosResumen } from '../services/ingresos.queries';
 import type { GastosTabValue } from '../types/gastos.types';
 
 const monthFormatter = new Intl.DateTimeFormat('es-AR', {
@@ -17,8 +25,23 @@ export const GastosControlPage = () => {
   const [selectedAnio, setSelectedAnio] = useState(currentDate.getFullYear());
   const [activeTab, setActiveTab] = useState<GastosTabValue>('fijos');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isIngresoModalOpen, setIsIngresoModalOpen] = useState(false);
 
-  const { data, isLoading, isError, error, refetch, isFetching } = useGastosResumen(selectedMes, selectedAnio);
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching,
+  } = useGastosResumen(selectedMes, selectedAnio);
+  const {
+    data: ingresosData,
+    isLoading: isIngresosLoading,
+    isError: isIngresosError,
+    error: ingresosError,
+    isFetching: isIngresosFetching,
+  } = useIngresosResumen(selectedMes, selectedAnio);
 
   const gastosFijos = data?.gastosFijos ?? [];
   const gastosVariables = data?.gastosVariables ?? [];
@@ -30,15 +53,21 @@ export const GastosControlPage = () => {
     setActiveTab('fijos');
   };
 
-  if (isLoading) {
-    return <LoadingScreen message="Cargando resumen de gastos..." />;
+  const isInitialLoading = (isLoading && !data) || (isIngresosLoading && !ingresosData);
+
+  if (isInitialLoading) {
+    return <LoadingScreen message="Cargando resumen financiero..." />;
   }
 
-  if (isError) {
+  if (isError || isIngresosError) {
+    const sourceError = isError ? error : ingresosError;
+    const fallbackMessage = isError
+      ? 'No pudimos obtener el resumen de gastos.'
+      : 'No pudimos obtener los ingresos externos.';
     const message =
-      error && typeof error === 'object' && 'message' in error
-        ? String((error as { message?: string }).message)
-        : 'No pudimos obtener el resumen';
+      sourceError && typeof sourceError === 'object' && 'message' in sourceError
+        ? String((sourceError as { message?: string }).message)
+        : fallbackMessage;
     return (
       <div className="mx-auto max-w-5xl px-4 py-10">
         <ErrorState message={message} />
@@ -46,10 +75,10 @@ export const GastosControlPage = () => {
     );
   }
 
-  if (!data) {
+  if (!data || !ingresosData) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10">
-        <EmptyState message="Aún no hay movimientos de gastos para mostrar." />
+        <EmptyState message="Aún no hay datos financieros para este mes." />
       </div>
     );
   }
@@ -75,6 +104,16 @@ export const GastosControlPage = () => {
   };
 
   const activeSection = sections[activeTab];
+  const ingresosFijos = ingresosData.ingresosFijos ?? [];
+  const ingresosVariables = ingresosData.ingresosVariables ?? [];
+  const heroTotals = {
+    totalCuotas: data.totales.totalCuotas,
+    totalGastosFijos: data.totales.totalGastosFijos,
+    totalGastosVariables: data.totales.totalGastosVariables,
+    totalIngresosExternos: ingresosData.totales.totalIngresosExternos,
+    totalIngresosFijos: ingresosData.totales.totalIngresosFijos,
+    totalIngresosVariables: ingresosData.totales.totalIngresosVariables,
+  };
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-[#fafafa] pb-10 dark:bg-[#18181b]">
@@ -89,20 +128,31 @@ export const GastosControlPage = () => {
               Compará ingresos vs. gastos y accioná rápido sobre variaciones inesperadas.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="brand"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 sm:w-auto"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <span className="material-symbols-outlined text-[20px]">add_circle</span>
-            Registrar Nuevo Gasto
-          </Button>
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-teal-600 px-6 text-teal-700 hover:bg-teal-50 dark:border-teal-400 dark:text-teal-200 dark:hover:bg-white/5 sm:w-auto"
+              onClick={() => setIsIngresoModalOpen(true)}
+            >
+              <span className="material-symbols-outlined text-[20px]">add_card</span>
+              Registrar ingreso externo
+            </Button>
+            <Button
+              type="button"
+              variant="brand"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 sm:w-auto"
+              onClick={() => setIsModalOpen(true)}
+            >
+              <span className="material-symbols-outlined text-[20px]">add_circle</span>
+              Registrar nuevo gasto
+            </Button>
+          </div>
         </header>
 
         <MonthYearFilter selectedMes={selectedMes} selectedAnio={selectedAnio} onFilterChange={handleFilterChange} />
 
-        {data.totales ? <GastosHeroCard totales={data.totales} periodLabel={periodLabel} /> : null}
+        <GastosHeroCard totales={heroTotals} periodLabel={periodLabel} />
 
         <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <GastosTabs
@@ -128,6 +178,17 @@ export const GastosControlPage = () => {
           emptyMessage={activeSection.emptyMessage}
         />
 
+        <IngresosExternosSection
+          ingresosFijos={ingresosFijos}
+          ingresosVariables={ingresosVariables}
+          totalGeneral={heroTotals.totalIngresosExternos}
+          totalFijos={heroTotals.totalIngresosFijos}
+          totalVariables={heroTotals.totalIngresosVariables}
+          isLoading={!ingresosData && isIngresosLoading}
+          isRefreshing={isIngresosFetching}
+          onRegistrarIngreso={() => setIsIngresoModalOpen(true)}
+        />
+
         <RegistrarGastoModal
           key={`${selectedMes}-${selectedAnio}`}
           isOpen={isModalOpen}
@@ -138,6 +199,14 @@ export const GastosControlPage = () => {
             refetch();
             setActiveTab('fijos');
           }}
+        />
+
+        <RegistrarIngresoModal
+          key={`ingresos-${selectedMes}-${selectedAnio}`}
+          isOpen={isIngresoModalOpen}
+          mes={selectedMes}
+          anio={selectedAnio}
+          onClose={() => setIsIngresoModalOpen(false)}
         />
       </div>
     </div>
