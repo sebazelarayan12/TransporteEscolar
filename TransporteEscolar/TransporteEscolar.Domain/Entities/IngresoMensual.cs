@@ -50,4 +50,27 @@ public class IngresoMensual
         Observaciones = observaciones;
         IngresoFijoTemplateId = ingresoFijoTemplateId;
     }
+
+    public void ActualizarDesdeTemplate(
+        string categoria,
+        string descripcion,
+        decimal monto,
+        int diaDeAplicacion,
+        string medioCobro,
+        string? observaciones)
+    {
+        Categoria = categoria;
+        Descripcion = descripcion;
+        Monto = monto;
+        MedioCobro = medioCobro;
+        Observaciones = observaciones;
+        Fecha = CrearFechaNormalizada(diaDeAplicacion);
+    }
+
+    private DateTime CrearFechaNormalizada(int diaDeAplicacion)
+    {
+        var diasDelMes = DateTime.DaysInMonth(Anio, Mes);
+        var dia = Math.Clamp(diaDeAplicacion, 1, diasDelMes);
+        return new DateTime(Anio, Mes, dia, 0, 0, 0, DateTimeKind.Utc);
+    }
 }

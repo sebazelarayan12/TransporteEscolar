@@ -52,6 +52,10 @@ export interface CrearGastoFijoRequest {
   observaciones?: string;
 }
 
+export interface ActualizarGastoFijoRequest extends CrearGastoFijoRequest {
+  estaActivo: boolean;
+}
+
 export interface CrearGastoVariableRequest {
   mes: number;
   anio: number;

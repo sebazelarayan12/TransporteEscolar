@@ -11,6 +11,9 @@ interface GastoListSectionProps {
   isLoading?: boolean;
   isRefreshing?: boolean;
   emptyMessage: string;
+  onEditGasto?: (gasto: GastoItem) => void;
+  onDeleteGasto?: (gasto: GastoItem) => void;
+  actionsDisabled?: boolean;
 }
 
 export const GastoListSection = ({
@@ -21,6 +24,9 @@ export const GastoListSection = ({
   isLoading = false,
   isRefreshing = false,
   emptyMessage,
+  onEditGasto,
+  onDeleteGasto,
+  actionsDisabled = false,
 }: GastoListSectionProps) => {
   if (isLoading) {
     return (
@@ -60,7 +66,13 @@ export const GastoListSection = ({
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
           {gastos.map((gasto) => (
-            <GastoCard key={gasto.id} gasto={gasto} />
+            <GastoCard
+              key={gasto.id}
+              gasto={gasto}
+              onEdit={onEditGasto}
+              onDelete={onDeleteGasto}
+              actionsDisabled={actionsDisabled}
+            />
           ))}
         </div>
       )}

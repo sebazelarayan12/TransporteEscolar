@@ -72,4 +72,47 @@ public class IngresosController : ControllerBase
             new { mes = ingreso.Mes, anio = ingreso.Anio },
             ingreso);
     }
+
+    /// <summary>
+    /// Actualiza una plantilla de ingreso fijo y su instancia del mes filtrado.
+    /// </summary>
+    [HttpPut("fijos/{templateId:int}")]
+    public async Task<ActionResult<IngresoModel.IngresoMensualResponse>> ActualizarIngresoFijo(
+        int templateId,
+        [FromBody] IngresoModel.UpdateIngresoFijoRequest dto)
+    {
+        var ingreso = await _ingresoService.ActualizarIngresoFijoAsync(templateId, dto);
+
+        _logger.LogInformation(
+            "Ingreso fijo actualizado TemplateId {TemplateId} para {Mes}/{Anio}",
+            templateId,
+            ingreso.Mes,
+            ingreso.Anio);
+
+        return Ok(ingreso);
+    }
+
+    /// <summary>
+    /// Desactiva una plantilla de ingreso fijo y elimina instancias futuras.
+    /// </summary>
+    [HttpDelete("fijos/{templateId:int}")]
+    public async Task<IActionResult> DesactivarIngresoFijo(int templateId)
+    {
+        await _ingresoService.DesactivarIngresoFijoAsync(templateId);
+
+        _logger.LogInformation("Ingreso fijo desactivado TemplateId {TemplateId}", templateId);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Elimina un ingreso variable puntual.
+    /// </summary>
+    [HttpDelete("variables/{id:int}")]
+    public async Task<IActionResult> EliminarIngresoVariable(int id)
+    {
+        await _ingresoService.EliminarIngresoVariableAsync(id);
+
+        _logger.LogInformation("Ingreso variable eliminado (ID: {Id})", id);
+        return NoContent();
+    }
 }

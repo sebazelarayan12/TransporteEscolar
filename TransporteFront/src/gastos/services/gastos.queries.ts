@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { gastosApi } from './gastos.api';
 import type {
+  ActualizarGastoFijoRequest,
   CrearGastoFijoRequest,
   CrearGastoVariableRequest,
   ResumenMensualResponse,
@@ -41,6 +42,62 @@ export const useCrearGastoVariable = () => {
   return useMutation({
     mutationFn: async (payload: CrearGastoVariableRequest) => {
       return gastosApi.crearGastoVariable(payload);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: gastosKeys.resumen(variables.mes, variables.anio) });
+    },
+  });
+};
+
+interface UpdateGastoFijoVariables {
+  templateId: number;
+  data: ActualizarGastoFijoRequest;
+}
+
+interface DeleteGastoVariables {
+  id: number;
+  mes: number;
+  anio: number;
+}
+
+interface DeleteGastoFijoVariables {
+  templateId: number;
+  mes: number;
+  anio: number;
+}
+
+export const useActualizarGastoFijo = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ templateId, data }: UpdateGastoFijoVariables) => {
+      return gastosApi.updateGastoFijo(templateId, data);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: gastosKeys.resumen(variables.data.mes, variables.data.anio) });
+    },
+  });
+};
+
+export const useEliminarGastoFijo = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ templateId }: DeleteGastoFijoVariables) => {
+      return gastosApi.deleteGastoFijo(templateId);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: gastosKeys.resumen(variables.mes, variables.anio) });
+    },
+  });
+};
+
+export const useEliminarGastoVariable = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: DeleteGastoVariables) => {
+      return gastosApi.deleteGastoVariable(id);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: gastosKeys.resumen(variables.mes, variables.anio) });

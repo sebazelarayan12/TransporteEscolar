@@ -23,6 +23,21 @@ public static class IngresoValidator
         }
     }
 
+    public static void ValidateUpdateIngresoFijo(IngresoModel.UpdateIngresoFijoRequest dto)
+    {
+        ValidateMesAnio(dto.Mes, dto.Anio);
+        ValidateMonto(dto.Monto);
+        ValidateTexto(dto.Categoria, nameof(dto.Categoria), 120);
+        ValidateTexto(dto.Descripcion, nameof(dto.Descripcion), 300);
+        ValidateTexto(dto.MedioCobro, nameof(dto.MedioCobro), 80);
+        ValidateObservaciones(dto.Observaciones);
+
+        if (dto.DiaDeAplicacion is < 1 or > 31)
+        {
+            throw new ValidationException("diaDeAplicacion debe estar entre 1 y 31.");
+        }
+    }
+
     public static void ValidateIngresoVariable(IngresoModel.IngresoVariableRequest dto)
     {
         ValidateMesAnio(dto.Mes, dto.Anio);

@@ -63,4 +63,57 @@ public class GastoRepository : IGastoRepository
         return await _context.GastosMensuales
             .AnyAsync(g => g.GastoFijoTemplateId == templateId && g.Mes == mes && g.Anio == anio, cancellationToken);
     }
+
+    public async Task<GastoFijoTemplate?> ObtenerTemplatePorIdAsync(int templateId, CancellationToken cancellationToken = default)
+    {
+        return await _context.GastosFijosTemplates
+            .FirstOrDefaultAsync(t => t.Id == templateId, cancellationToken);
+    }
+
+    public async Task<GastoFijoTemplate> ActualizarTemplateAsync(GastoFijoTemplate template, CancellationToken cancellationToken = default)
+    {
+        await _context.SaveChangesAsync(cancellationToken);
+        return template;
+    }
+
+    public async Task<GastoMensual?> ObtenerGastoMensualPorTemplateAsync(int templateId, int mes, int anio, CancellationToken cancellationToken = default)
+    {
+        return await _context.GastosMensuales
+            .FirstOrDefaultAsync(g => g.GastoFijoTemplateId == templateId && g.Mes == mes && g.Anio == anio, cancellationToken);
+    }
+
+    public async Task<GastoMensual?> ObtenerGastoMensualPorIdAsync(int gastoId, CancellationToken cancellationToken = default)
+    {
+        return await _context.GastosMensuales
+            .FirstOrDefaultAsync(g => g.Id == gastoId, cancellationToken);
+    }
+
+    public async Task<GastoMensual> ActualizarGastoMensualAsync(GastoMensual gasto, CancellationToken cancellationToken = default)
+    {
+        await _context.SaveChangesAsync(cancellationToken);
+        return gasto;
+    }
+
+    public async Task EliminarGastoMensualAsync(GastoMensual gasto, CancellationToken cancellationToken = default)
+    {
+        _context.GastosMensuales.Remove(gasto);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<int> EliminarInstanciasFuturasPorTemplateAsync(int templateId, int mesCorte, int anioCorte, CancellationToken cancellationToken = default)
+    {
+        var instancias = await _context.GastosMensuales
+            .Where(g => g.GastoFijoTemplateId == templateId &&
+                        (g.Anio > anioCorte || (g.Anio == anioCorte && g.Mes >= mesCorte)))
+            .ToListAsync(cancellationToken);
+
+        if (instancias.Count == 0)
+        {
+            return 0;
+        }
+
+        _context.GastosMensuales.RemoveRange(instancias);
+        await _context.SaveChangesAsync(cancellationToken);
+        return instancias.Count;
+    }
 }

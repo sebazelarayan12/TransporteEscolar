@@ -1,5 +1,6 @@
 import { apiClient } from '../../api/client';
 import type {
+  ActualizarIngresoFijoRequest,
   CrearIngresoFijoRequest,
   CrearIngresoVariableRequest,
   IngresoItem,
@@ -24,5 +25,17 @@ export const ingresosApi = {
 
   async crearIngresoVariable(payload: CrearIngresoVariableRequest): Promise<IngresoItem> {
     return apiClient.post<IngresoItem, CrearIngresoVariableRequest>(`${BASE_PATH}/variables`, payload);
+  },
+
+  async updateIngresoFijo(templateId: number, payload: ActualizarIngresoFijoRequest): Promise<IngresoItem> {
+    return apiClient.put<IngresoItem, ActualizarIngresoFijoRequest>(`${BASE_PATH}/fijos/${templateId}`, payload);
+  },
+
+  async deleteIngresoFijo(templateId: number): Promise<void> {
+    return apiClient.delete<void>(`${BASE_PATH}/fijos/${templateId}`);
+  },
+
+  async deleteIngresoVariable(id: number): Promise<void> {
+    return apiClient.delete<void>(`${BASE_PATH}/variables/${id}`);
   },
 };
