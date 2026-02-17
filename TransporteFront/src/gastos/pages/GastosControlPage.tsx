@@ -15,7 +15,7 @@ export const GastosControlPage = () => {
   const currentDate = new Date();
   const [selectedMes, setSelectedMes] = useState(currentDate.getMonth() + 1);
   const [selectedAnio, setSelectedAnio] = useState(currentDate.getFullYear());
-  const [activeTab, setActiveTab] = useState<GastosTabValue>('variables');
+  const [activeTab, setActiveTab] = useState<GastosTabValue>('fijos');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useGastosResumen(selectedMes, selectedAnio);
@@ -27,7 +27,7 @@ export const GastosControlPage = () => {
   const handleFilterChange = (mes: number, anio: number) => {
     setSelectedMes(mes);
     setSelectedAnio(anio);
-    setActiveTab('variables');
+    setActiveTab('fijos');
   };
 
   if (isLoading) {
@@ -77,9 +77,9 @@ export const GastosControlPage = () => {
   const activeSection = sections[activeTab];
 
   return (
-    <div className="min-h-full w-full bg-[#fafafa] pb-10 dark:bg-[#18181b]">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#fafafa] pb-10 dark:bg-[#18181b]">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#e1e8ec] bg-white px-6 py-5 shadow-sm dark:border-white/5 dark:bg-[#1f1f24]">
+        <header className="w-full rounded-3xl border border-[#e1e8ec] bg-white px-4 py-5 shadow-sm dark:border-white/5 dark:bg-[#1f1f24] sm:px-6 lg:flex lg:flex-wrap lg:items-center lg:justify-between lg:gap-6">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#1d8ca5]">
               Finanzas operativas
@@ -92,7 +92,7 @@ export const GastosControlPage = () => {
           <Button
             type="button"
             variant="brand"
-            className="inline-flex items-center gap-2 rounded-full px-6"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 sm:w-auto"
             onClick={() => setIsModalOpen(true)}
           >
             <span className="material-symbols-outlined text-[20px]">add_circle</span>
@@ -104,14 +104,14 @@ export const GastosControlPage = () => {
 
         {data.totales ? <GastosHeroCard totales={data.totales} periodLabel={periodLabel} /> : null}
 
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <GastosTabs
             activeTab={activeTab}
             onChange={setActiveTab}
             counts={{ variables: gastosVariables.length, fijos: gastosFijos.length }}
           />
           {isFetching ? (
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-teal-600">
+            <div className="flex w-full items-center justify-start gap-2 text-xs font-semibold uppercase tracking-widest text-teal-600 sm:w-auto sm:justify-center lg:justify-end">
               <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
               Actualizando datos
             </div>
@@ -136,7 +136,7 @@ export const GastosControlPage = () => {
           onClose={() => setIsModalOpen(false)}
           onSuccess={() => {
             refetch();
-            setActiveTab('variables');
+            setActiveTab('fijos');
           }}
         />
       </div>

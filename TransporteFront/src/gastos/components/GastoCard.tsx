@@ -33,9 +33,9 @@ export const GastoCard = ({ gasto }: GastoCardProps) => {
   };
 
   return (
-    <article className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-[#3f3f46] dark:bg-[#1f1f24]">
-      <header className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3">
+    <article className="flex w-full flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-[#3f3f46] dark:bg-[#1f1f24]">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <div className="flex size-11 items-center justify-center rounded-2xl bg-teal-600/10 text-teal-700 dark:bg-cyan-500/10 dark:text-cyan-200">
             <span className="material-symbols-outlined text-2xl">{icon}</span>
           </div>
@@ -43,10 +43,10 @@ export const GastoCard = ({ gasto }: GastoCardProps) => {
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               {gasto.categoria}
             </p>
-            <p className="text-xs text-gray-500">{gasto.descripcion}</p>
+            <p className="text-xs text-gray-500 break-words">{gasto.descripcion}</p>
           </div>
         </div>
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${estadoStyle.bg} ${estadoStyle.text}`}>
+        <span className={`inline-flex w-full items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${estadoStyle.bg} ${estadoStyle.text} sm:w-auto`}>
           {gasto.estadoPago}
         </span>
       </header>
