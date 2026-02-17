@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type FieldError, type Resolver, type SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal, Button, Spinner } from '../../shared/ui';
@@ -107,8 +107,9 @@ const monthFormatter = new Intl.DateTimeFormat('es-AR', {
 
 export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: RegistrarGastoModalProps) => {
   const schema = buildSchemaForPeriod(mes, anio);
+  const resolver = zodResolver(schema) as Resolver<RegistrarGastoFormData>;
   const form = useForm<RegistrarGastoFormData>({
-    resolver: zodResolver(schema),
+    resolver,
     defaultValues: getDefaultValues(mes, anio),
   });
 
@@ -118,6 +119,8 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
     reset,
     formState: { errors, isSubmitting },
   } = form;
+  const typedErrors = errors as typeof errors &
+    Partial<Record<'diaDeAplicacion' | 'fecha' | 'estadoPago', FieldError | undefined>>;
   const [selectedTipo, setSelectedTipo] = useState<GastoTipo>(GASTO_TIPOS.VARIABLE);
   const { min, max } = getPeriodBounds(mes, anio);
   const { showSuccess, showError } = useToast();
@@ -135,7 +138,7 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
     onClose();
   };
 
-  const onSubmit = async (data: RegistrarGastoFormData) => {
+  const onSubmit: SubmitHandler<RegistrarGastoFormData> = async (data) => {
     try {
       if (data.tipo === GASTO_TIPOS.FIJO) {
         await crearGastoFijo.mutateAsync({
@@ -313,15 +316,15 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
                 type="number"
                 min={1}
                 max={31}
-                {...register('diaDeAplicacion', { valueAsNumber: true })}
+            {...register('diaDeAplicacion', { valueAsNumber: true })}
                 disabled={isPending}
                 className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                  errors.diaDeAplicacion ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+                  typedErrors.diaDeAplicacion ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
                 }`}
               />
               <p className="mt-1 text-xs text-gray-500">Usamos este día para programar el registro automático del gasto fijo.</p>
-              {errors.diaDeAplicacion ? (
-                <p className="mt-1 text-xs text-red-600">{errors.diaDeAplicacion.message}</p>
+              {typedErrors.diaDeAplicacion ? (
+                <p className="mt-1 text-xs text-red-600">{typedErrors.diaDeAplicacion.message}</p>
               ) : null}
             </div>
           ) : (
@@ -336,11 +339,11 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
                 {...register('fecha')}
                 disabled={isPending}
                 className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                  errors.fecha ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+                  typedErrors.fecha ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
                 }`}
               />
               <p className="mt-1 text-xs text-gray-500">Solo se permiten fechas dentro del mes filtrado.</p>
-              {errors.fecha ? <p className="mt-1 text-xs text-red-600">{errors.fecha.message}</p> : null}
+              {typedErrors.fecha ? <p className="mt-1 text-xs text-red-600">{typedErrors.fecha.message}</p> : null}
             </div>
           )}
         </div>
@@ -354,7 +357,7 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
               {...register('estadoPago')}
               disabled={isPending}
               className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                errors.estadoPago ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+                typedErrors.estadoPago ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
               }`}
             >
               {Object.values(GASTO_ESTADOS).map((estado) => (
@@ -363,7 +366,7 @@ export const RegistrarGastoModal = ({ isOpen, onClose, mes, anio, onSuccess }: R
                 </option>
               ))}
             </select>
-            {errors.estadoPago ? <p className="mt-1 text-xs text-red-600">{errors.estadoPago.message}</p> : null}
+            {typedErrors.estadoPago ? <p className="mt-1 text-xs text-red-600">{typedErrors.estadoPago.message}</p> : null}
           </div>
         ) : null}
 
