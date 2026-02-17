@@ -70,17 +70,17 @@ export type IngresosTabValue = 'fijos' | 'variables';
 
 export const INGRESO_CATEGORIAS = {
   FIJOS: [
-    { value: 'Convenios', label: 'Convenios empresariales' },
-    { value: 'Subsidios', label: 'Subsidios municipales o provinciales' },
-    { value: 'Patrocinios', label: 'Patrocinios y sponsors' },
-    { value: 'Publicidad', label: 'Publicidad sostenida' },
+    { value: 'AlquilerUnidades', label: 'Alquiler de unidades / traslados especiales' },
+    { value: 'ConveniosEscolares', label: 'Convenios escolares adicionales' },
+    { value: 'Subsidios', label: 'Subsidios o reintegros gubernamentales' },
+    { value: 'Sueldo', label: 'Sueldo / reintegro administrativo' },
   ],
   VARIABLES: [
-    { value: 'Eventos', label: 'Eventos especiales' },
-    { value: 'VentaMateriales', label: 'Venta de materiales' },
-    { value: 'AportesFamilias', label: 'Aportes extraordinarios de familias' },
-    { value: 'Bonos', label: 'Bonos contribución' },
-    { value: 'Otros', label: 'Otros ingresos puntuales' },
+    { value: 'TrasladosPuntuales', label: 'Traslados o servicios puntuales' },
+    { value: 'EventosEspeciales', label: 'Eventos especiales' },
+    { value: 'SubsidiosUnicos', label: 'Subsidios extraordinarios' },
+    { value: 'SueldoExtra', label: 'Sueldo extraordinario' },
+    { value: 'Otros', label: 'Otros ingresos extraordinarios' },
   ],
 } as const;
 
