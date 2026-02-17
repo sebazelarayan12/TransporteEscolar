@@ -68,18 +68,18 @@ export type GastosTabValue = 'variables' | 'fijos';
 
 export const GASTO_CATEGORIAS = {
   FIJOS: [
-    { value: 'Sueldos', label: 'Sueldos y cargas sociales' },
-    { value: 'Seguros', label: 'Seguros y patentes' },
-    { value: 'Servicios', label: 'Servicios y tasas' },
-    { value: 'Alquiler', label: 'Alquiler y cocheras' },
-    { value: 'Licencias', label: 'Licencias / software' },
+    { value: 'ServiciosPublicos', label: 'Servicios públicos (agua, luz, gas, IPV)' },
+    { value: 'Comunicaciones', label: 'Comunicación (celular, teléfono)' },
+    { value: 'EducacionActividades', label: 'Educación y actividades (colegio, deportes)' },
+    { value: 'FinanzasTarjetas', label: 'Tarjetas y préstamos (Naranja, Visa, préstamos ANSES/Merca)' },
+    { value: 'Seguros', label: 'Seguros' },
   ],
   VARIABLES: [
-    { value: 'Combustible', label: 'Combustible' },
-    { value: 'Mantenimiento', label: 'Mantenimiento y repuestos' },
-    { value: 'Insumos', label: 'Insumos del día a día' },
-    { value: 'Peajes', label: 'Peajes y estacionamientos' },
-    { value: 'Extraordinario', label: 'Extraordinarios' },
+    { value: 'Combustible', label: 'Combustible (gasoil)' },
+    { value: 'Mantenimiento', label: 'Mecánicos y repuestos' },
+    { value: 'Alimentacion', label: 'Comida y viáticos' },
+    { value: 'ViajesEventos', label: 'Viajes y eventos especiales' },
+    { value: 'Otros', label: 'Varios / otros gastos' },
   ],
 } as const;
 

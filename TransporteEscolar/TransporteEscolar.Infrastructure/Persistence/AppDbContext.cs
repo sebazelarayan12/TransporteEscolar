@@ -18,6 +18,8 @@ public sealed class AppDbContext : DbContext
     public DbSet<ReinscripcionPasajero> ReinscripcionesPasajeros => Set<ReinscripcionPasajero>();
     public DbSet<GastoFijoTemplate> GastosFijosTemplates => Set<GastoFijoTemplate>();
     public DbSet<GastoMensual> GastosMensuales => Set<GastoMensual>();
+    public DbSet<IngresoFijoTemplate> IngresosFijosTemplates => Set<IngresoFijoTemplate>();
+    public DbSet<IngresoMensual> IngresosMensuales => Set<IngresoMensual>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,5 +36,7 @@ public sealed class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ReinscripcionPasajeroConfiguration());
         modelBuilder.ApplyConfiguration(new GastoFijoTemplateConfiguration());
         modelBuilder.ApplyConfiguration(new GastoMensualConfiguration());
+        modelBuilder.ApplyConfiguration(new IngresoFijoTemplateConfiguration());
+        modelBuilder.ApplyConfiguration(new IngresoMensualConfiguration());
     }
 }
