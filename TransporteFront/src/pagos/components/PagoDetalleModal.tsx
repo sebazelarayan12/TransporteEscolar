@@ -1,6 +1,10 @@
-import { Modal, Spinner, ErrorState, EmptyState } from '../../shared/ui';
-import { usePagoDetalle } from '../services/pagos.queries';
+import { useState } from 'react';
+import { Modal, Spinner, ErrorState, EmptyState, Button } from '../../shared/ui';
+import { usePagoDetalle, useEliminarMovimiento } from '../services/pagos.queries';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { useToast } from '../../shared/hooks';
+import type { PagoMovimiento } from '../types/pago.types';
+import { EliminarMovimientoDialog } from './EliminarMovimientoDialog';
 
 interface PagoDetalleModalProps {
   isOpen: boolean;
@@ -33,6 +37,43 @@ const formatFechaPago = (fechaISO: string): string => {
 
 export const PagoDetalleModal = ({ isOpen, onClose, pagoId }: PagoDetalleModalProps) => {
   const { data: pago, isLoading, isError, error } = usePagoDetalle(pagoId);
+  const [movimientoSeleccionado, setMovimientoSeleccionado] = useState<PagoMovimiento | null>(null);
+  const eliminarMovimiento = useEliminarMovimiento();
+  const { showSuccess, showError } = useToast();
+
+  const handleOpenDelete = (movimiento: PagoMovimiento) => {
+    if (eliminarMovimiento.isPending) {
+      return;
+    }
+
+    setMovimientoSeleccionado(movimiento);
+  };
+
+  const handleCloseDelete = () => {
+    if (eliminarMovimiento.isPending) {
+      return;
+    }
+
+    setMovimientoSeleccionado(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pago || !movimientoSeleccionado) {
+      return;
+    }
+
+    try {
+      await eliminarMovimiento.mutateAsync({
+        pagoMensualId: pago.id,
+        movimientoId: movimientoSeleccionado.id,
+      });
+      showSuccess('Movimiento eliminado correctamente');
+      setMovimientoSeleccionado(null);
+    } catch (mutationError) {
+      console.error(mutationError);
+      showError('No pudimos eliminar el movimiento. Intentalo nuevamente.');
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -165,10 +206,25 @@ export const PagoDetalleModal = ({ isOpen, onClose, pagoId }: PagoDetalleModalPr
                       ) : null}
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="flex flex-col items-end gap-2 text-right">
                     <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
                       {formatCurrency(movimiento.monto)}
                     </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-100 dark:border-rose-900/30 dark:bg-rose-900/10 dark:text-rose-200"
+                      onClick={() => handleOpenDelete(movimiento)}
+                      disabled={eliminarMovimiento.isPending}
+                    >
+                      {eliminarMovimiento.isPending && movimientoSeleccionado?.id === movimiento.id ? (
+                        <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+                      ) : (
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      )}
+                      <span>Eliminar</span>
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -189,14 +245,34 @@ export const PagoDetalleModal = ({ isOpen, onClose, pagoId }: PagoDetalleModalPr
     );
   };
 
+  const movimientoResumen = movimientoSeleccionado && pago
+    ? {
+        monto: movimientoSeleccionado.monto,
+        medioPago: movimientoSeleccionado.medioPago,
+        fechaPago: movimientoSeleccionado.fechaPago,
+        periodo: pago.periodo,
+        titularLabel: [pago.titularApellido, pago.titularNombre].filter(Boolean).join(', '),
+        observaciones: movimientoSeleccionado.observaciones,
+      }
+    : null;
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Detalle del Pago"
-      maxWidth="2xl"
-    >
-      {renderContent()}
-    </Modal>
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Detalle del Pago"
+        maxWidth="2xl"
+      >
+        {renderContent()}
+      </Modal>
+      <EliminarMovimientoDialog
+        isOpen={Boolean(movimientoSeleccionado)}
+        resumen={movimientoResumen}
+        onCancel={handleCloseDelete}
+        onConfirm={handleConfirmDelete}
+        isProcessing={eliminarMovimiento.isPending}
+      />
+    </>
   );
 };
