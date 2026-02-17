@@ -98,6 +98,29 @@ public class IngresoRepository : IIngresoRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<List<IngresoMensual>> GetFuturosPorTemplateAsync(int templateId, int mes, int anio, CancellationToken cancellationToken = default)
+    {
+        return await _context.IngresosMensuales
+            .Where(i => i.IngresoFijoTemplateId == templateId &&
+                        (i.Anio > anio || (i.Anio == anio && i.Mes >= mes)))
+            .OrderBy(i => i.Anio)
+            .ThenBy(i => i.Mes)
+            .ThenBy(i => i.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task BulkUpdateAsync(IEnumerable<IngresoMensual> ingresos, CancellationToken cancellationToken = default)
+    {
+        var entidades = ingresos?.ToList() ?? new List<IngresoMensual>();
+        if (entidades.Count == 0)
+        {
+            return;
+        }
+
+        _context.IngresosMensuales.UpdateRange(entidades);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<int> EliminarInstanciasFuturasPorTemplateAsync(int templateId, int mesCorte, int anioCorte, CancellationToken cancellationToken = default)
     {
         var instancias = await _context.IngresosMensuales

@@ -51,20 +51,14 @@ public class IngresoMensual
         IngresoFijoTemplateId = ingresoFijoTemplateId;
     }
 
-    public void ActualizarDesdeTemplate(
-        string categoria,
-        string descripcion,
-        decimal monto,
-        int diaDeAplicacion,
-        string medioCobro,
-        string? observaciones)
+    public void ActualizarDesdeTemplate(IngresoFijoTemplate template, string? observaciones)
     {
-        Categoria = categoria;
-        Descripcion = descripcion;
-        Monto = monto;
-        MedioCobro = medioCobro;
-        Observaciones = observaciones;
-        Fecha = CrearFechaNormalizada(diaDeAplicacion);
+        Categoria = template.Categoria;
+        Descripcion = template.Descripcion;
+        Monto = template.Monto;
+        MedioCobro = template.MedioCobro;
+        Observaciones = observaciones ?? template.Observaciones;
+        Fecha = CrearFechaNormalizada(template.DiaDeAplicacion);
     }
 
     private DateTime CrearFechaNormalizada(int diaDeAplicacion)

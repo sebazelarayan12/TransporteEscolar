@@ -100,6 +100,29 @@ public class GastoRepository : IGastoRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<List<GastoMensual>> GetFuturosPorTemplateAsync(int templateId, int mes, int anio, CancellationToken cancellationToken = default)
+    {
+        return await _context.GastosMensuales
+            .Where(g => g.GastoFijoTemplateId == templateId &&
+                        (g.Anio > anio || (g.Anio == anio && g.Mes >= mes)))
+            .OrderBy(g => g.Anio)
+            .ThenBy(g => g.Mes)
+            .ThenBy(g => g.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task BulkUpdateAsync(IEnumerable<GastoMensual> gastos, CancellationToken cancellationToken = default)
+    {
+        var entidades = gastos?.ToList() ?? new List<GastoMensual>();
+        if (entidades.Count == 0)
+        {
+            return;
+        }
+
+        _context.GastosMensuales.UpdateRange(entidades);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<int> EliminarInstanciasFuturasPorTemplateAsync(int templateId, int mesCorte, int anioCorte, CancellationToken cancellationToken = default)
     {
         var instancias = await _context.GastosMensuales

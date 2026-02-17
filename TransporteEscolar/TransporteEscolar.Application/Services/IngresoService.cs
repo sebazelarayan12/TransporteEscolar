@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Interfaces;
@@ -11,15 +12,18 @@ public class IngresoService : IIngresoService
     private readonly IIngresoRepository _ingresoRepository;
     private readonly IPagoMensualRepository _pagoMensualRepository;
     private readonly IGastoRepository _gastoRepository;
+    private readonly ILogger<IngresoService> _logger;
 
     public IngresoService(
         IIngresoRepository ingresoRepository,
         IPagoMensualRepository pagoMensualRepository,
-        IGastoRepository gastoRepository)
+        IGastoRepository gastoRepository,
+        ILogger<IngresoService> logger)
     {
         _ingresoRepository = ingresoRepository;
         _pagoMensualRepository = pagoMensualRepository;
         _gastoRepository = gastoRepository;
+        _logger = logger;
     }
 
     public async Task<IngresoModel.ResumenMensualResponse> ObtenerResumenMensualAsync(int mes, int anio, CancellationToken cancellationToken = default)
@@ -162,19 +166,40 @@ public class IngresoService : IIngresoService
         await _ingresoRepository.ActualizarTemplateAsync(template, cancellationToken);
 
         var ingresoMensual = await _ingresoRepository.ObtenerIngresoMensualPorTemplateAsync(templateId, dto.Mes, dto.Anio, cancellationToken);
-        IngresoMensual resultado;
 
         if (ingresoMensual is null)
         {
             var nuevaInstancia = template.CrearInstanciaMensual(dto.Mes, dto.Anio, observaciones: observaciones);
-            resultado = await _ingresoRepository.AgregarIngresoMensualAsync(nuevaInstancia, cancellationToken);
+            ingresoMensual = await _ingresoRepository.AgregarIngresoMensualAsync(nuevaInstancia, cancellationToken);
+        }
+
+        var instanciasFuturas = await _ingresoRepository.GetFuturosPorTemplateAsync(templateId, dto.Mes, dto.Anio, cancellationToken);
+
+        if (instanciasFuturas.Count > 0)
+        {
+            foreach (var instancia in instanciasFuturas)
+            {
+                instancia.ActualizarDesdeTemplate(template, observaciones);
+            }
+
+            await _ingresoRepository.BulkUpdateAsync(instanciasFuturas, cancellationToken);
+            _logger.LogInformation(
+                "Actualizados {Cantidad} ingresos mensuales vinculados al template {TemplateId} desde {Mes}/{Anio}.",
+                instanciasFuturas.Count,
+                templateId,
+                dto.Mes,
+                dto.Anio);
         }
         else
         {
-            ingresoMensual.ActualizarDesdeTemplate(categoria, descripcion, dto.Monto, dto.DiaDeAplicacion, medioCobro, observaciones);
-            resultado = await _ingresoRepository.ActualizarIngresoMensualAsync(ingresoMensual, cancellationToken);
+            _logger.LogInformation(
+                "No se encontraron instancias futuras para el template de ingresos {TemplateId} desde {Mes}/{Anio}.",
+                templateId,
+                dto.Mes,
+                dto.Anio);
         }
 
+        var resultado = instanciasFuturas.FirstOrDefault(i => i.Mes == dto.Mes && i.Anio == dto.Anio) ?? ingresoMensual;
         return MapearIngreso(resultado);
     }
 

@@ -16,5 +16,7 @@ public interface IIngresoRepository
     Task<IngresoMensual?> ObtenerIngresoMensualPorIdAsync(int ingresoId, CancellationToken cancellationToken = default);
     Task<IngresoMensual> ActualizarIngresoMensualAsync(IngresoMensual ingreso, CancellationToken cancellationToken = default);
     Task EliminarIngresoMensualAsync(IngresoMensual ingreso, CancellationToken cancellationToken = default);
+    Task<List<IngresoMensual>> GetFuturosPorTemplateAsync(int templateId, int mes, int anio, CancellationToken cancellationToken = default);
+    Task BulkUpdateAsync(IEnumerable<IngresoMensual> ingresos, CancellationToken cancellationToken = default);
     Task<int> EliminarInstanciasFuturasPorTemplateAsync(int templateId, int mesCorte, int anioCorte, CancellationToken cancellationToken = default);
 }

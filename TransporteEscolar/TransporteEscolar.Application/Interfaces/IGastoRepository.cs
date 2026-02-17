@@ -16,5 +16,7 @@ public interface IGastoRepository
     Task<GastoMensual?> ObtenerGastoMensualPorIdAsync(int gastoId, CancellationToken cancellationToken = default);
     Task<GastoMensual> ActualizarGastoMensualAsync(GastoMensual gasto, CancellationToken cancellationToken = default);
     Task EliminarGastoMensualAsync(GastoMensual gasto, CancellationToken cancellationToken = default);
+    Task<List<GastoMensual>> GetFuturosPorTemplateAsync(int templateId, int mes, int anio, CancellationToken cancellationToken = default);
+    Task BulkUpdateAsync(IEnumerable<GastoMensual> gastos, CancellationToken cancellationToken = default);
     Task<int> EliminarInstanciasFuturasPorTemplateAsync(int templateId, int mesCorte, int anioCorte, CancellationToken cancellationToken = default);
 }

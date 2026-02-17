@@ -50,20 +50,14 @@ public class GastoMensual
         GastoFijoTemplateId = gastoFijoTemplateId;
     }
 
-    public void ActualizarDesdeTemplate(
-        string categoria,
-        string descripcion,
-        decimal monto,
-        int diaDeAplicacion,
-        string medioPago,
-        string? observaciones)
+    public void ActualizarDesdeTemplate(GastoFijoTemplate template, string? observaciones)
     {
-        Categoria = categoria;
-        Descripcion = descripcion;
-        Monto = monto;
-        MedioPago = medioPago;
+        Categoria = template.Categoria;
+        Descripcion = template.Descripcion;
+        Monto = template.Monto;
+        MedioPago = template.MedioPago;
         Observaciones = observaciones;
-        Fecha = CrearFechaNormalizada(diaDeAplicacion);
+        Fecha = CrearFechaNormalizada(template.DiaDeAplicacion);
     }
 
     private DateTime CrearFechaNormalizada(int diaDeAplicacion)
