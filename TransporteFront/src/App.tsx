@@ -37,6 +37,9 @@ const PagosListPage = lazy(() =>
 const PagosMovimientosPage = lazy(() =>
   import('./pagos/pages/PagosMovimientosPage').then((module) => ({ default: module.PagosMovimientosPage }))
 );
+const GastosControlPage = lazy(() =>
+  import('./gastos/pages/GastosControlPage').then((module) => ({ default: module.GastosControlPage }))
+);
 const NotFoundPage = lazy(() =>
   import('./app/NotFoundPage').then((module) => ({ default: module.NotFoundPage }))
 );
@@ -66,13 +69,14 @@ function App() {
               <Route path="pasajeros" element={<PasajerosListPage />} />
               <Route path="pasajeros/nuevo" element={<PasajeroCreatePage />} />
               <Route path="horarios" element={<HorariosPage />} />
-              <Route path="reinscripciones" element={<ReinscripcionesListPage />} />
-              {/* <Route path="reinscripciones/nueva" element={<ReinscripcionCreatePage />} /> */}
-              <Route path="pagos" element={<PagosListPage />} />
-              <Route path="pagos/movimientos" element={<PagosMovimientosPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Routes>
+               <Route path="reinscripciones" element={<ReinscripcionesListPage />} />
+               {/* <Route path="reinscripciones/nueva" element={<ReinscripcionCreatePage />} /> */}
+               <Route path="pagos" element={<PagosListPage />} />
+               <Route path="pagos/movimientos" element={<PagosMovimientosPage />} />
+               <Route path="gastos" element={<GastosControlPage />} />
+               <Route path="*" element={<NotFoundPage />} />
+             </Route>
+           </Routes>
         </BrowserRouter>
       </ToastProvider>
     </QueryClientProvider>

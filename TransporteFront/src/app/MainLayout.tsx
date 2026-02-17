@@ -29,6 +29,7 @@ export const MainLayout = () => {
     { name: 'Horarios', href: '/horarios', icon: 'schedule', match: 'startsWith' },
     { name: 'Reinscripciones', href: '/reinscripciones', icon: 'assignment_returned', match: 'startsWith' },
     { name: 'Pagos', href: '/pagos', icon: 'payments', match: 'exact' },
+    { name: 'Control de gastos', href: '/gastos', icon: 'receipt_long', match: 'exact' },
     { name: 'Historial de movimientos', href: '/pagos/movimientos', icon: 'history', match: 'startsWith' },
   ];
 
