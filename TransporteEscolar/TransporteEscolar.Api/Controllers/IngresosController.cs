@@ -74,7 +74,7 @@ public class IngresosController : ControllerBase
     }
 
     /// <summary>
-    /// Actualiza una plantilla de ingreso fijo y su instancia del mes filtrado.
+    /// Actualiza muna plantilla de ingreso fijo y su instancia del mes filtrado.
     /// </summary>
     [HttpPut("fijos/{templateId:int}")]
     public async Task<ActionResult<IngresoModel.IngresoMensualResponse>> ActualizarIngresoFijo(
@@ -100,7 +100,7 @@ public class IngresosController : ControllerBase
     {
         await _ingresoService.DesactivarIngresoFijoAsync(templateId);
 
-        _logger.LogInformation("Ingreso fijo desactivado TemplateId {TemplateId}", templateId);
+        _logger.LogInformation("Ingreso fijo fue desactivado TemplateId {TemplateId}", templateId);
         return NoContent();
     }
 
