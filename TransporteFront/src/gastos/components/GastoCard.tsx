@@ -1,4 +1,4 @@
-import type { GastoItem } from '../types/gastos.types';
+import { GASTO_TIPOS, type GastoItem } from '../types/gastos.types';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
 
@@ -27,10 +27,17 @@ interface GastoCardProps {
 
 export const GastoCard = ({ gasto }: GastoCardProps) => {
   const icon = categoriaIconMap[gasto.categoria] ?? 'receipt_long';
+  const isGastoFijo = gasto.tipo === GASTO_TIPOS.FIJO;
   const estadoStyle = estadoStyles[gasto.estadoPago] ?? {
     bg: 'bg-gray-100 dark:bg-white/10',
     text: 'text-gray-600 dark:text-gray-300',
   };
+  const fijoBadgeStyle = {
+    bg: 'bg-sky-50 dark:bg-sky-400/10',
+    text: 'text-sky-700 dark:text-sky-200',
+  };
+  const badgeStyle = isGastoFijo ? fijoBadgeStyle : estadoStyle;
+  const badgeLabel = isGastoFijo ? 'Fijo' : gasto.estadoPago;
 
   return (
     <article className="flex w-full flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-[#3f3f46] dark:bg-[#1f1f24]">
@@ -46,8 +53,8 @@ export const GastoCard = ({ gasto }: GastoCardProps) => {
             <p className="text-xs text-gray-500 break-words">{gasto.descripcion}</p>
           </div>
         </div>
-        <span className={`inline-flex w-full items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${estadoStyle.bg} ${estadoStyle.text} sm:w-auto`}>
-          {gasto.estadoPago}
+        <span className={`inline-flex w-full items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${badgeStyle.bg} ${badgeStyle.text} sm:w-auto`}>
+          {badgeLabel}
         </span>
       </header>
 
