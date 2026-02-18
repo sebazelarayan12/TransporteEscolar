@@ -18,6 +18,7 @@ export const ReinscripcionesListPage = () => {
   const [criticalAction, setCriticalAction] = useState<{
     variant: 'confirmado' | 'noContinua';
     registro: ReinscripcionDetallada;
+    isUltimoPendiente: boolean;
   } | null>(null);
   const {
     mes,
@@ -93,17 +94,14 @@ export const ReinscripcionesListPage = () => {
   };
 
   const handleConfirmReinscripcion = (registro: ReinscripcionDetallada) => {
-    if (shouldShowCriticalConfirmation(registro)) {
-      setCriticalAction({ variant: 'confirmado', registro });
-      return;
-    }
-
-    confirmarReinscripcionMutation.mutate(registro.id);
+    const isUltimoPendiente = shouldShowCriticalConfirmation(registro);
+    setCriticalAction({ variant: 'confirmado', registro, isUltimoPendiente });
   };
 
   const handleMarcarNoContinua = (registro: ReinscripcionDetallada) => {
-    if (shouldShowCriticalConfirmation(registro)) {
-      setCriticalAction({ variant: 'noContinua', registro });
+    const isUltimoPendiente = shouldShowCriticalConfirmation(registro);
+    if (isUltimoPendiente) {
+      setCriticalAction({ variant: 'noContinua', registro, isUltimoPendiente });
       return;
     }
 
@@ -122,23 +120,33 @@ export const ReinscripcionesListPage = () => {
     }
 
     const reinscripcionId = criticalAction.registro.id;
-    const variant = criticalAction.variant;
-    closeCriticalAction();
 
-    if (variant === 'confirmado') {
-      confirmarReinscripcionMutation.mutate(reinscripcionId);
+    if (criticalAction.variant === 'confirmado') {
+      void confirmarReinscripcionMutation
+        .mutateAsync(reinscripcionId)
+        .then(() => {
+          closeCriticalAction();
+        })
+        .catch(() => {
+          // El modal permanece abierto para permitir reintentar
+        });
       return;
     }
 
+    closeCriticalAction();
     marcarNoContinuaMutation.mutate(reinscripcionId);
   };
 
-  const isCriticalProcessing =
-    confirmarReinscripcionMutation.isPending || marcarNoContinuaMutation.isPending;
+  const isCriticalProcessing = criticalAction?.variant === 'confirmado'
+    ? confirmarReinscripcionMutation.isPending
+    : criticalAction?.variant === 'noContinua' && marcarNoContinuaMutation.isPending;
   const criticalActionLabel =
     criticalAction?.variant === 'confirmado' ? 'Confirmar reinscripción' : 'Marcar como no continúa';
   const criticalPasajeroNombre = criticalAction?.registro.pasajeroNombre ?? '';
   const criticalTitularNombre = criticalAction?.registro.titularNombre;
+  const criticalReinscripcionId = criticalAction?.registro.id ?? null;
+  const criticalModalVariant = criticalAction?.variant === 'confirmado' ? 'confirmar' : 'noContinua';
+  const criticalUltimoPendiente = criticalAction?.isUltimoPendiente ?? false;
 
   return (
     <div className="min-h-full w-full bg-[#f6f8f8] dark:bg-[#0f1416] text-[#0f181a] dark:text-white">
@@ -246,12 +254,15 @@ export const ReinscripcionesListPage = () => {
       />
       <LastPendingConfirmationModal
         isOpen={Boolean(criticalAction)}
+        reinscripcionId={criticalReinscripcionId}
         onCancel={closeCriticalAction}
         onConfirm={handleCriticalConfirm}
         pasajeroNombre={criticalPasajeroNombre}
         titularNombre={criticalTitularNombre}
         actionLabel={criticalActionLabel}
-        isProcessing={isCriticalProcessing}
+        isProcessing={Boolean(isCriticalProcessing)}
+        variant={criticalModalVariant}
+        isUltimoPendiente={criticalUltimoPendiente}
       />
     </div>
   );

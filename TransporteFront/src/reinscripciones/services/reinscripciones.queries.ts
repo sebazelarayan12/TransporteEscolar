@@ -7,9 +7,11 @@ export const reinscripcionesKeys = {
   root: ['reinscripciones'] as const,
   list: (params: ReinscripcionListParams) => [...reinscripcionesKeys.root, 'list', params] as const,
   detail: (id: number) => [...reinscripcionesKeys.root, 'detail', id] as const,
+  precioPrevio: (id: number) => [...reinscripcionesKeys.root, 'precio-previo', id] as const,
 };
 
 const idleListKey = [...reinscripcionesKeys.root, 'list', 'idle'] as const;
+const idlePrecioKey = [...reinscripcionesKeys.root, 'precio-previo', 'idle'] as const;
 
 /**
  * Hook para obtener las reinscripciones por año + estado con paginación
@@ -97,6 +99,23 @@ export function useMarcarComoPendiente() {
       queryClient.invalidateQueries({ queryKey: reinscripcionesKeys.root });
       queryClient.invalidateQueries({ queryKey: pasajerosKeys.all });
     },
+  });
+}
+
+/**
+ * Hook para obtener el precio previo a la confirmación
+ */
+export function usePrecioPrevioReinscripcion(reinscripcionId: number | null) {
+  const hasValidId = typeof reinscripcionId === 'number' && reinscripcionId > 0;
+
+  return useQuery({
+    queryKey: hasValidId ? reinscripcionesKeys.precioPrevio(reinscripcionId!) : idlePrecioKey,
+    queryFn: async () => {
+      return await reinscripcionesApi.getPrecioPrevio(reinscripcionId!);
+    },
+    enabled: hasValidId,
+    placeholderData: (previous) => previous,
+    refetchOnWindowFocus: false,
   });
 }
 

@@ -10,4 +10,5 @@ public interface IReinscripcionService
     Task ConfirmarAsync(int id);
     Task MarcarComoNoContinuaAsync(int id);
     Task MarcarComoPendienteAsync(int id);
+    Task<ReinscripcionModel.PrecioPrevioResponse> ObtenerPrecioPrevioAsync(int id);
 }
