@@ -469,7 +469,7 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
 
                     b.ToTable("PasajeroHorarios", null, t =>
                         {
-                            t.HasCheckConstraint("CK_PasajeroHorarios_Transporte", "[Transporte] IN (1,2)");
+                            t.HasCheckConstraint("CK_PasajeroHorarios_Transporte", "Transporte IN (1,2)");
                         });
                 });
 

@@ -20,7 +20,7 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
             migrationBuilder.AddCheckConstraint(
                 name: "CK_PasajeroHorarios_Transporte",
                 table: "PasajeroHorarios",
-                sql: "[Transporte] IN (1,2)");
+                sql: "Transporte IN (1,2)");
         }
 
         /// <inheritdoc />
