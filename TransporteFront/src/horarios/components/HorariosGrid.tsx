@@ -39,6 +39,11 @@ const transporteButtonClasses: Record<TransporteTipo, string> = {
   [TRANSPORTE_TIPOS.DOS]: 'bg-emerald-500 text-white hover:bg-emerald-600',
 };
 
+const transporteChipButtonClasses: Record<TransporteTipo, string> = {
+  [TRANSPORTE_TIPOS.UNO]: 'border-[#007a8a]/40 text-[#007a8a] hover:bg-[#007a8a]/10 focus-visible:ring-[#007a8a]/30 dark:border-[#007a8a]/40 dark:text-cyan-100 dark:hover:bg-[#007a8a]/20',
+  [TRANSPORTE_TIPOS.DOS]: 'border-emerald-300 text-emerald-600 hover:bg-emerald-50 focus-visible:ring-emerald-200 dark:border-emerald-300/50 dark:text-emerald-100 dark:hover:bg-emerald-400/10',
+};
+
 const mobileTabClasses: Record<TransporteTipo, string> = {
   [TRANSPORTE_TIPOS.UNO]: 'border-[#007a8a]/40 text-[#007a8a] dark:text-cyan-200',
   [TRANSPORTE_TIPOS.DOS]: 'border-emerald-200 text-emerald-600 dark:text-emerald-200',
@@ -87,86 +92,89 @@ const HorarioCard = ({ horario, onSelectHorario }: HorarioCardProps) => {
   const mobileActive = transporteData.find((item) => item.value === mobileTransporte) ?? transporteData[0];
 
   return (
-    <Card className="border border-transparent bg-gradient-to-br from-white to-gray-50 transition hover:-translate-y-0.5 hover:border-[#007a8a]/30 dark:from-[#1e1e23] dark:to-[#27272f]">
-      <CardHeader className="space-y-3">
+    <Card className="border border-gray-100/70 bg-white/95 shadow-none transition hover:ring-1 hover:ring-[#007a8a]/20 dark:border-white/5 dark:bg-[#1e1e23]">
+      <CardHeader className="space-y-3 pb-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-2xl font-semibold text-gray-900 dark:text-white">
             <ClockIcon className="text-[28px] text-[#007a8a] dark:text-cyan-300" />
             <span>{hora}</span>
           </div>
-          <span className="text-sm font-semibold text-gray-600 dark:text-gray-300">{horario.pasajerosActivos} pax</span>
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-300">{horario.pasajerosActivos} pax activos</span>
         </div>
-        <CardTitle className="flex items-center gap-2 text-base font-semibold">
-          <SchoolIcon className="text-xl text-gray-500 dark:text-gray-200" />
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-200">
+          <SchoolIcon className="text-base text-gray-400 dark:text-gray-200" />
           <span className="truncate">{recorrido}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="hidden gap-4 md:grid md:grid-cols-2">
-          {transporteData.map((transporte) => (
-            <div
-              key={transporte.value}
-              className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm dark:border-white/5 dark:bg-white/5"
-            >
+      <CardContent className="p-0">
+        <div className="border-t border-gray-100/80 dark:border-white/5">
+          <div className="hidden divide-x divide-gray-100/80 md:grid md:grid-cols-2 dark:divide-white/5">
+            {transporteData.map((transporte) => (
+              <div key={transporte.value} className="flex h-full flex-col gap-3 px-5 py-5">
+                <div className="flex items-center justify-between">
+                  <p className={`text-xs font-semibold uppercase tracking-wide ${transporteAccentClasses[transporte.value]}`}>
+                    {TRANSPORTE_LABELS[transporte.value]}
+                  </p>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${transporteBadgeClasses[transporte.value]}`}>
+                    {transporte.count > 0 ? 'En marcha' : 'Sin pasajeros'}
+                  </span>
+                </div>
+                <div>
+                  <p className={`text-4xl font-black ${transporteAccentClasses[transporte.value]}`}>{transporte.count}</p>
+                  <p className="text-xs text-gray-500">Pasajeros asignados</p>
+                </div>
+                <div className="mt-auto flex justify-end">
+                  <button
+                    type="button"
+                    className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${transporteChipButtonClasses[transporte.value]}`}
+                    onClick={() => onSelectHorario(horario.id, transporte.value)}
+                  >
+                    <span className="material-symbols-outlined text-sm">edit_square</span>
+                    Gestionar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4 p-4 md:hidden">
+            <div className="flex items-center gap-2">
+              {transporteData.map((transporte) => {
+                const isActive = transporte.value === mobileTransporte;
+                return (
+                  <button
+                    key={transporte.value}
+                    type="button"
+                    className={`flex-1 rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                      mobileTabClasses[transporte.value]
+                    } ${isActive ? mobileTabActiveClasses[transporte.value] : 'bg-transparent'} `}
+                    onClick={() => setMobileTransporte(transporte.value)}
+                  >
+                    {TRANSPORTE_LABELS[transporte.value]}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm dark:border-white/5 dark:bg-white/5">
               <div className="flex items-center justify-between">
-                <p className={`text-xs font-semibold uppercase tracking-wide ${transporteAccentClasses[transporte.value]}`}>
-                  {TRANSPORTE_LABELS[transporte.value]}
+                <p className={`text-xs font-semibold uppercase tracking-wide ${transporteAccentClasses[mobileActive.value]}`}>
+                  {TRANSPORTE_LABELS[mobileActive.value]}
                 </p>
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${transporteBadgeClasses[transporte.value]}`}>
-                  {transporte.count > 0 ? 'En marcha' : 'Sin pasajeros'}
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${transporteBadgeClasses[mobileActive.value]}`}>
+                  {mobileActive.count > 0 ? 'En marcha' : 'Sin pasajeros'}
                 </span>
               </div>
-              <p className={`text-4xl font-black ${transporteAccentClasses[transporte.value]}`}>{transporte.count}</p>
+              <p className={`mt-3 text-4xl font-black ${transporteAccentClasses[mobileActive.value]}`}>{mobileActive.count}</p>
               <p className="text-xs text-gray-500">Pasajeros asignados</p>
               <button
                 type="button"
-                className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${transporteButtonClasses[transporte.value]}`}
-                onClick={() => onSelectHorario(horario.id, transporte.value)}
+                className={`mt-4 inline-flex w-full items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${transporteButtonClasses[mobileActive.value]}`}
+                onClick={() => onSelectHorario(horario.id, mobileActive.value)}
               >
                 <span className="material-symbols-outlined mr-1 text-base">edit_square</span>
-                Gestionar
+                Gestionar {TRANSPORTE_LABELS[mobileActive.value]}
               </button>
             </div>
-          ))}
-        </div>
-
-        <div className="space-y-4 md:hidden">
-          <div className="flex items-center gap-2">
-            {transporteData.map((transporte) => {
-              const isActive = transporte.value === mobileTransporte;
-              return (
-                <button
-                  key={transporte.value}
-                  type="button"
-                  className={`flex-1 rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
-                    mobileTabClasses[transporte.value]
-                  } ${isActive ? mobileTabActiveClasses[transporte.value] : 'bg-transparent'} `}
-                  onClick={() => setMobileTransporte(transporte.value)}
-                >
-                  {TRANSPORTE_LABELS[transporte.value]}
-                </button>
-              );
-            })}
-          </div>
-          <div className="rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm dark:border-white/5 dark:bg-white/5">
-            <div className="flex items-center justify-between">
-              <p className={`text-xs font-semibold uppercase tracking-wide ${transporteAccentClasses[mobileActive.value]}`}>
-                {TRANSPORTE_LABELS[mobileActive.value]}
-              </p>
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${transporteBadgeClasses[mobileActive.value]}`}>
-                {mobileActive.count > 0 ? 'En marcha' : 'Sin pasajeros'}
-              </span>
-            </div>
-            <p className={`mt-3 text-4xl font-black ${transporteAccentClasses[mobileActive.value]}`}>{mobileActive.count}</p>
-            <p className="text-xs text-gray-500">Pasajeros asignados</p>
-            <button
-              type="button"
-              className={`mt-4 inline-flex w-full items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${transporteButtonClasses[mobileActive.value]}`}
-              onClick={() => onSelectHorario(horario.id, mobileActive.value)}
-            >
-              <span className="material-symbols-outlined mr-1 text-base">edit_square</span>
-              Gestionar {TRANSPORTE_LABELS[mobileActive.value]}
-            </button>
           </div>
         </div>
       </CardContent>
