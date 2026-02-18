@@ -49,6 +49,11 @@ const transporteTabActiveClasses: Record<TransporteTipo, string> = {
   [TRANSPORTE_TIPOS.DOS]: 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 dark:shadow-emerald-400/40',
 };
 
+const TRANSPORTE_SHORT_LABELS: Record<TransporteTipo, string> = {
+  [TRANSPORTE_TIPOS.UNO]: 'T1',
+  [TRANSPORTE_TIPOS.DOS]: 'T2',
+};
+
 interface HorariosGridProps {
   horarios: HorarioResponse[];
   onSelectHorario: (horarioId: number, transporte: TransporteTipo) => void;
@@ -120,7 +125,7 @@ const HorarioCard = ({ horario, onSelectHorario }: HorarioCardProps) => {
               );
             })}
           </div>
-          <div className="mt-4 rounded-3xl border border-gray-100 bg-white/90 p-4 shadow-sm dark:border-white/5 dark:bg-[#1a1b21]/80 sm:p-6">
+          <div className="mt-4 rounded-3xl border border-gray-100 bg-white/90 p-4 shadow-sm dark:border-white/5 dark:bg-[#1a1b21]/80 sm:p-6 md:flex md:flex-col md:overflow-hidden md:rounded-2xl md:border-gray-100/70 md:bg-white md:shadow-lg dark:md:border-white/10 dark:md:bg-[#171821]">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className={`text-xs font-semibold uppercase tracking-wide ${transporteAccentClasses[activePanel.value]}`}>
@@ -128,7 +133,7 @@ const HorarioCard = ({ horario, onSelectHorario }: HorarioCardProps) => {
                 </p>
                 <p className="text-xs text-gray-600 dark:text-gray-300">Turno asignado</p>
               </div>
-              <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ${transporteBadgeClasses[activePanel.value]}`}>
+              <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold md:px-2.5 md:py-0.5 md:text-[10px] ${transporteBadgeClasses[activePanel.value]}`}>
                 {activePanel.count > 0 ? 'En marcha' : 'Sin pasajeros'}
               </span>
             </div>
@@ -141,11 +146,13 @@ const HorarioCard = ({ horario, onSelectHorario }: HorarioCardProps) => {
               </div>
               <button
                 type="button"
-                className={`inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${transporteButtonClasses[activePanel.value]}`}
+                aria-label={`Gestionar ${TRANSPORTE_LABELS[activePanel.value]}`}
+                className={`inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 md:w-full md:max-w-[200px] md:self-end md:rounded-2xl md:px-4 md:py-1.5 md:text-xs ${transporteButtonClasses[activePanel.value]}`}
                 onClick={() => onSelectHorario(horario.id, activePanel.value)}
               >
-                <span className="material-symbols-outlined mr-1 text-base">edit_square</span>
-                Gestionar {TRANSPORTE_LABELS[activePanel.value]}
+                <span className="material-symbols-outlined mr-1 text-base md:text-sm">edit_square</span>
+                <span className="md:hidden">Gestionar {TRANSPORTE_LABELS[activePanel.value]}</span>
+                <span className="hidden md:inline">Gestionar {TRANSPORTE_SHORT_LABELS[activePanel.value]}</span>
               </button>
             </div>
           </div>
