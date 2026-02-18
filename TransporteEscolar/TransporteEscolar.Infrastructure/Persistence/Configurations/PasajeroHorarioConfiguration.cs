@@ -10,7 +10,7 @@ public class PasajeroHorarioConfiguration : IEntityTypeConfiguration<PasajeroHor
     {
         builder.ToTable("PasajeroHorarios", table =>
         {
-            table.HasCheckConstraint("CK_PasajeroHorarios_Transporte", "Transporte IN (1,2)");
+            table.HasCheckConstraint("CK_PasajeroHorarios_Transporte", "\"Transporte\" IN (1,2)");
         });
 
         builder.HasKey(ph => ph.Id);
