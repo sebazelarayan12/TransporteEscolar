@@ -3,15 +3,8 @@ import { LoadingScreen, MobileDrawer, Modal } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
 import { useAgregarHorarioPasajero, useEliminarHorarioPasajero, usePasajerosActivos } from '../../pasajeros/services/pasajeros.queries';
 import { useHorarioPasajeros, useHorarios, sortHorariosByOrden } from '../services/horarios.queries';
-import {
-  HorarioAsignacionPanel,
-  HorariosGrid,
-  HorariosResumen,
-  HorariosHeader,
-  HorariosError,
-  HorariosEmptyState,
-} from '../components';
-import type { HorarioConteosPorTransporte, HorarioPasajerosResponse } from '../types/horario.types';
+import { HorarioAsignacionPanel, HorariosGrid, HorariosHeader, HorariosError, HorariosEmptyState } from '../components';
+import type { HorarioPasajerosResponse } from '../types/horario.types';
 import { formatPasajeroHorariosListado, getPasajeroHorarioAsignado } from '../../pasajeros/helpers/horario.helpers';
 import { TRANSPORTE_LIST, TRANSPORTE_TIPOS } from '../../shared/types/transporte.types';
 import type { TransporteTipo } from '../../shared/types/transporte.types';
@@ -45,15 +38,6 @@ const hasSelectionDifferences = (current: TransporteSelectionState, baseline: Tr
 export const HorariosPage = () => {
   const { data: horarios, isLoading, isError, refetch } = useHorarios();
   const ordenados = sortHorariosByOrden(horarios);
-  const totalPasajeros = ordenados.reduce((acc, horario) => acc + horario.pasajerosActivos, 0);
-  const totalPorTransporte = ordenados.reduce<HorarioConteosPorTransporte>(
-    (acc, horario) => {
-      acc.transporteUno += horario.conteosPorTransporte.transporteUno;
-      acc.transporteDos += horario.conteosPorTransporte.transporteDos;
-      return acc;
-    },
-    { transporteUno: 0, transporteDos: 0 },
-  );
 
   const [selectedHorarioId, setSelectedHorarioId] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -242,11 +226,7 @@ export const HorariosPage = () => {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 sm:px-6 lg:px-8">
         <HorariosHeader isGestionMode={isGestionMode} onGestionModeToggle={handleGestionModeToggle} />
 
-        <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
-          <HorariosGrid horarios={ordenados} onSelectHorario={handleOpenHorario} />
-
-          <HorariosResumen horarios={ordenados} totalPasajeros={totalPasajeros} totalPorTransporte={totalPorTransporte} />
-        </div>
+        <HorariosGrid horarios={ordenados} onSelectHorario={handleOpenHorario} />
       </div>
 
       <div className="hidden lg:block">
