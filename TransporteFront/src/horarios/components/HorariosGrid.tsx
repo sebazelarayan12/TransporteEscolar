@@ -44,6 +44,11 @@ const transporteChipButtonClasses: Record<TransporteTipo, string> = {
   [TRANSPORTE_TIPOS.DOS]: 'border-emerald-300 text-emerald-600 hover:bg-emerald-50 focus-visible:ring-emerald-200 dark:border-emerald-300/50 dark:text-emerald-100 dark:hover:bg-emerald-400/10',
 };
 
+const transporteMiniCardSurfaceClasses: Record<TransporteTipo, string> = {
+  [TRANSPORTE_TIPOS.UNO]: 'bg-[#007a8a]/5 dark:bg-[#007a8a]/15',
+  [TRANSPORTE_TIPOS.DOS]: 'bg-emerald-500/5 dark:bg-emerald-400/15',
+};
+
 const mobileTabClasses: Record<TransporteTipo, string> = {
   [TRANSPORTE_TIPOS.UNO]: 'border-[#007a8a]/40 text-[#007a8a] dark:text-cyan-200',
   [TRANSPORTE_TIPOS.DOS]: 'border-emerald-200 text-emerald-600 dark:text-emerald-200',
@@ -108,19 +113,27 @@ const HorarioCard = ({ horario, onSelectHorario }: HorarioCardProps) => {
       </CardHeader>
       <CardContent className="p-0">
         <div className="border-t border-gray-100/80 dark:border-white/5">
-          <div className="hidden divide-x divide-gray-100/80 md:grid md:grid-cols-2 dark:divide-white/5">
+          <div className="hidden flex-col gap-4 p-5 md:flex">
             {transporteData.map((transporte) => (
-              <div key={transporte.value} className="flex h-full flex-col gap-3 px-5 py-5">
-                <div className="flex items-center justify-between">
-                  <p className={`text-xs font-semibold uppercase tracking-wide ${transporteAccentClasses[transporte.value]}`}>
-                    {TRANSPORTE_LABELS[transporte.value]}
-                  </p>
+              <article
+                key={transporte.value}
+                className={`flex min-h-[160px] flex-col gap-3 rounded-2xl border border-gray-100/80 px-5 py-4 shadow-sm ring-1 ring-black/5 transition dark:border-white/5 dark:ring-white/5 ${transporteMiniCardSurfaceClasses[transporte.value]}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className={`text-xs font-semibold uppercase tracking-wide ${transporteAccentClasses[transporte.value]}`}>
+                      {TRANSPORTE_LABELS[transporte.value]}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300">Turno asignado</p>
+                  </div>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${transporteBadgeClasses[transporte.value]}`}>
                     {transporte.count > 0 ? 'En marcha' : 'Sin pasajeros'}
                   </span>
                 </div>
                 <div>
-                  <p className={`text-4xl font-black ${transporteAccentClasses[transporte.value]}`}>{transporte.count}</p>
+                  <p className={`text-5xl font-black leading-tight ${transporteAccentClasses[transporte.value]}`}>
+                    {transporte.count}
+                  </p>
                   <p className="text-xs text-gray-500">Pasajeros asignados</p>
                 </div>
                 <div className="mt-auto flex justify-end">
@@ -133,7 +146,7 @@ const HorarioCard = ({ horario, onSelectHorario }: HorarioCardProps) => {
                     Gestionar
                   </button>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
 
