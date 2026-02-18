@@ -115,9 +115,8 @@ const HorarioCard = ({ horario, onSelectHorario }: HorarioCardProps) => {
                 <button
                   key={transporte.value}
                   type="button"
-                  className={`flex-1 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 md:flex-none md:text-sm ${
-                    transporteTabClasses[transporte.value]
-                  } ${isActive ? transporteTabActiveClasses[transporte.value] : 'bg-transparent hover:bg-gray-50 dark:hover:bg-white/10'}`}
+                  className={`flex-1 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 md:flex-none md:text-sm ${transporteTabClasses[transporte.value]
+                    } ${isActive ? transporteTabActiveClasses[transporte.value] : 'bg-transparent hover:bg-gray-50 dark:hover:bg-white/10'}`}
                   onClick={() => setActiveTransporte(transporte.value)}
                 >
                   {TRANSPORTE_LABELS[transporte.value]}
@@ -131,7 +130,7 @@ const HorarioCard = ({ horario, onSelectHorario }: HorarioCardProps) => {
                 <p className={`text-xs font-semibold uppercase tracking-wide ${transporteAccentClasses[activePanel.value]}`}>
                   {TRANSPORTE_LABELS[activePanel.value]}
                 </p>
-                <p className="text-xs text-gray-600 dark:text-gray-300">Turno asignado</p>
+                <p className="text-xs text-gray-600 dark:text-gray-300">Turno asignado:</p>
               </div>
               <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold md:px-2.5 md:py-0.5 md:text-[10px] ${transporteBadgeClasses[activePanel.value]}`}>
                 {activePanel.count > 0 ? 'En marcha' : 'Sin pasajeros'}
