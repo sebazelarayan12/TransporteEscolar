@@ -31,11 +31,19 @@ public class HorarioService : IHorarioService
 
         return horarios
             .OrderBy(h => h.Orden)
-            .Select(h => new HorarioModel.Response(
-                h.Id,
-                h.Etiqueta,
-                h.Orden,
-                conteos.TryGetValue(h.Id, out var total) ? total : 0))
+            .Select(h =>
+            {
+                var conteo = conteos.TryGetValue(h.Id, out var encontrado)
+                    ? encontrado
+                    : new ConteoPorTransporte(0, 0);
+
+                return new HorarioModel.Response(
+                    h.Id,
+                    h.Etiqueta,
+                    h.Orden,
+                    conteo.TransporteUno + conteo.TransporteDos,
+                    conteo);
+            })
             .ToList();
     }
 
@@ -63,16 +71,21 @@ public class HorarioService : IHorarioService
                     $"{p.Nombre} {apellido}".Trim(),
                     asignacion.EsPrincipal,
                     asignacion.Prioridad,
-                    asignacion.FechaAsignacion);
+                    asignacion.FechaAsignacion,
+                    asignacion.Transporte);
             })
             .OrderBy(a => a.Prioridad)
             .ThenBy(a => a.Nombre)
             .ToList();
 
+        var conteosTransporte = new ConteoPorTransporte(
+            asignados.Count(a => a.Transporte == 1),
+            asignados.Count(a => a.Transporte == 2));
+
         return new HorarioModel.PasajerosResponse(
             resumen,
             pasajeros.Select(PasajeroMapper.MapearAResponse).ToList(),
-            new HorarioModel.PasajerosAsignados(horario.Id, horario.Etiqueta, asignados));
+            new HorarioModel.PasajerosAsignados(horario.Id, horario.Etiqueta, asignados, conteosTransporte));
     }
 
     public async Task AsignarPasajerosAsync(int horarioId, HorarioModel.AsignacionRequest request, CancellationToken cancellationToken = default)
@@ -127,21 +140,30 @@ public class HorarioService : IHorarioService
             detalles = request.PasajeroIds
                 .Where(id => id > 0)
                 .Distinct()
-                .Select(id => new HorarioModel.AsignacionDetalle(id, false, null))
+                .Select(id => new HorarioModel.AsignacionDetalle(id, false, null, request.Transporte))
                 .ToList();
         }
 
-        return detalles;
+        var transporteDefault = request.Transporte;
+
+        return detalles
+            .Select(detalle => new HorarioModel.AsignacionDetalle(
+                detalle.PasajeroId,
+                detalle.EsPrincipal,
+                detalle.Prioridad,
+                TransporteHelper.Normalizar(detalle.Transporte ?? transporteDefault)))
+            .ToList();
     }
 
     private async Task ProcesarAsignacionAsync(HorarioModel.AsignacionDetalle detalle, int horarioId, CancellationToken cancellationToken)
     {
         var prioridad = await ResolverPrioridadAsync(detalle.PasajeroId, detalle.Prioridad, cancellationToken);
+        var transporte = detalle.Transporte ?? 1;
         var asignacion = await _pasajeroHorarioRepository.GetAsync(detalle.PasajeroId, horarioId, cancellationToken);
 
         if (asignacion == null)
         {
-            var nuevaAsignacion = new PasajeroHorario(detalle.PasajeroId, horarioId, detalle.EsPrincipal, prioridad);
+            var nuevaAsignacion = new PasajeroHorario(detalle.PasajeroId, horarioId, detalle.EsPrincipal, prioridad, transporte);
             await _pasajeroHorarioRepository.AddAsync(nuevaAsignacion, cancellationToken);
 
             if (detalle.EsPrincipal)
@@ -157,6 +179,8 @@ public class HorarioService : IHorarioService
         {
             asignacion.ActualizarPrioridad(detalle.Prioridad.Value);
         }
+
+        asignacion.ActualizarTransporte(transporte);
 
         if (detalle.EsPrincipal)
         {

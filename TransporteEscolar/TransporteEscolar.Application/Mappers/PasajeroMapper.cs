@@ -19,7 +19,8 @@ public static class PasajeroMapper
                 ph.Horario?.Etiqueta ?? string.Empty,
                 ph.EsPrincipal,
                 ph.Prioridad,
-                ph.FechaAsignacion))
+                ph.FechaAsignacion,
+                ph.Transporte))
             .ToList() ?? new List<PasajeroHorarioModel.Response>();
 
         var horarioPrincipal = horariosAsignados.FirstOrDefault(h => h.EsPrincipal) ?? horariosAsignados.FirstOrDefault();

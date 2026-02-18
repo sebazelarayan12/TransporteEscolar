@@ -5,14 +5,16 @@ public record PasajeroHorarioModel
     public record AsignacionRequest(
         int HorarioId,
         bool EsPrincipal,
-        int? Prioridad = null);
+        int? Prioridad = null,
+        byte? Transporte = null);
 
     public record Response(
         int HorarioId,
         string HorarioEtiqueta,
         bool EsPrincipal,
         int Prioridad,
-        DateTime FechaAsignacion);
+        DateTime FechaAsignacion,
+        byte Transporte);
 
     public record PasajeroAsignado(
         int PasajeroId,
@@ -21,5 +23,6 @@ public record PasajeroHorarioModel
         string NombreCompleto,
         bool EsPrincipal,
         int Prioridad,
-        DateTime FechaAsignacion);
+        DateTime FechaAsignacion,
+        byte Transporte);
 }

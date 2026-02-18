@@ -69,13 +69,13 @@ public static class TestDataSeeder
 
         var asignaciones = new List<PasajeroHorario>
         {
-            new PasajeroHorario(pasajerosDemo[0].Id, horarioPorEtiqueta["8 San Patricio"], true, 1, fechaAltaSeeder),
-            new PasajeroHorario(pasajerosDemo[0].Id, horarioPorEtiqueta["16 San Patricio"], false, 2, fechaAltaSeeder),
-            new PasajeroHorario(pasajerosDemo[1].Id, horarioPorEtiqueta["8 Boisdron"], true, 1, fechaAltaSeeder),
-            new PasajeroHorario(pasajerosDemo[1].Id, horarioPorEtiqueta["13 Boisdron Entrada"], false, 2, fechaAltaSeeder),
-            new PasajeroHorario(pasajerosDemo[2].Id, horarioPorEtiqueta["12 San Patricio"], true, 1, fechaAltaSeeder),
-            new PasajeroHorario(pasajerosDemo[3].Id, horarioPorEtiqueta["16 San Patricio"], true, 1, fechaAltaSeeder),
-            new PasajeroHorario(pasajerosDemo[4].Id, horarioPorEtiqueta["9 San Patricio"], true, 1, fechaAltaSeeder)
+            new PasajeroHorario(pasajerosDemo[0].Id, horarioPorEtiqueta["8 San Patricio"], true, 1, 1, fechaAltaSeeder),
+            new PasajeroHorario(pasajerosDemo[0].Id, horarioPorEtiqueta["16 San Patricio"], false, 2, 2, fechaAltaSeeder),
+            new PasajeroHorario(pasajerosDemo[1].Id, horarioPorEtiqueta["8 Boisdron"], true, 1, 1, fechaAltaSeeder),
+            new PasajeroHorario(pasajerosDemo[1].Id, horarioPorEtiqueta["13 Boisdron Entrada"], false, 2, 2, fechaAltaSeeder),
+            new PasajeroHorario(pasajerosDemo[2].Id, horarioPorEtiqueta["12 San Patricio"], true, 1, 1, fechaAltaSeeder),
+            new PasajeroHorario(pasajerosDemo[3].Id, horarioPorEtiqueta["16 San Patricio"], true, 1, 2, fechaAltaSeeder),
+            new PasajeroHorario(pasajerosDemo[4].Id, horarioPorEtiqueta["9 San Patricio"], true, 1, 1, fechaAltaSeeder)
         };
 
         context.PasajeroHorarios.AddRange(asignaciones);

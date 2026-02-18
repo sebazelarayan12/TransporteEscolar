@@ -3,6 +3,7 @@
  */
 
 import type { PasajeroTurno } from '../constants/turnos.constants';
+import type { TransporteTipo } from '../../shared/types/transporte.types';
 
 export interface PasajeroHorarioAsignado {
   horarioId: number;
@@ -10,6 +11,7 @@ export interface PasajeroHorarioAsignado {
   esPrincipal: boolean;
   prioridad: number | null;
   fechaAsignacion: string;
+  transporte: TransporteTipo;
 }
 
 export interface PasajeroResponse {
@@ -51,6 +53,7 @@ export interface PasajeroHorarioAsignacionPayload {
   horarioId: number;
   esPrincipal?: boolean;
   prioridad?: number | null;
+  transporte?: TransporteTipo;
 }
 
 // Paginación
