@@ -80,6 +80,41 @@ public class ReinscripcionService : IReinscripcionService
         );
     }
 
+    /// <summary>
+    /// Calcula el monto que se utilizará al confirmar una reinscripción sin generar cuotas todavía.
+    /// </summary>
+    public async Task<ReinscripcionModel.PrecioPrevioResponse> ObtenerPrecioPrevioAsync(int id)
+    {
+        var reinscripcion = await _repository.GetByIdConDetallesAsync(id);
+        if (reinscripcion == null)
+            throw new KeyNotFoundException($"Reinscripción {id} no encontrada");
+
+        if (!string.Equals(reinscripcion.Estado, "Pendiente", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Solo se puede calcular el precio previo para reinscripciones pendientes.");
+
+        if (reinscripcion.Pasajero?.Titular == null)
+            throw new InvalidOperationException("La reinscripción no tiene un titular asociado válido.");
+
+        var pasajero = reinscripcion.Pasajero;
+        var titular = pasajero.Titular;
+
+        var montoBase = CalcularMontoBase(titular);
+        var (descuentos, recargos) = CalcularAjustes(pasajero, titular);
+        var total = CalcularTotal(montoBase, descuentos, recargos);
+        var titularNombre = $"{titular.NombreContacto} {titular.Apellido}".Trim();
+
+        return new ReinscripcionModel.PrecioPrevioResponse(
+            reinscripcion.Id,
+            pasajero.Id,
+            pasajero.Nombre,
+            titular.Id,
+            titularNombre,
+            montoBase,
+            descuentos,
+            recargos,
+            total);
+    }
+
     public async Task<ReinscripcionModel.ResponseDetallada> CrearAsync(int pasajeroId, int anio)
     {
         // Verificar que el pasajero existe
@@ -177,5 +212,24 @@ public class ReinscripcionService : IReinscripcionService
             return;
 
         await _pagoMensualService.GenerarPagosMensualesAutomaticosAsync(titularId, anio);
+    }
+
+    private static decimal CalcularMontoBase(Titular titular)
+    {
+        // Este es el mismo monto que se utiliza luego en PagoMensualService para generar las cuotas automáticas.
+        return titular.MontoMensualPactado;
+    }
+
+    private static (decimal Descuentos, decimal Recargos) CalcularAjustes(Pasajero pasajero, Titular titular)
+    {
+        _ = pasajero;
+        _ = titular;
+        return (0m, 0m);
+    }
+
+    private static decimal CalcularTotal(decimal montoBase, decimal descuentos, decimal recargos)
+    {
+        var total = montoBase - descuentos + recargos;
+        return total < 0 ? 0 : total;
     }
 }

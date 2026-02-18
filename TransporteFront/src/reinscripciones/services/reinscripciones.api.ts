@@ -4,6 +4,7 @@ import type {
   CrearReinscripcionRequest,
   ReinscripcionListParams,
   ReinscripcionListResponse,
+  ReinscripcionPrecioPrevioResponse,
 } from '../types/reinscripcion.types';
 
 const BASE_PATH = '/reinscripciones';
@@ -57,5 +58,12 @@ export const reinscripcionesApi = {
    */
   marcarComoPendiente: async (id: number): Promise<void> => {
     return apiClient.patch<void>(`${BASE_PATH}/${id}/pendiente`);
+  },
+
+  /**
+   * GET /reinscripciones/{id}/precio-previo - Obtiene el valor que se utilizará al confirmar
+   */
+  getPrecioPrevio: async (id: number): Promise<ReinscripcionPrecioPrevioResponse> => {
+    return apiClient.get<ReinscripcionPrecioPrevioResponse>(`${BASE_PATH}/${id}/precio-previo`);
   },
 };

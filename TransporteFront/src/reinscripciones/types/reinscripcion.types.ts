@@ -32,3 +32,15 @@ export interface CrearReinscripcionRequest {
   pasajeroId: number;
   anio: number;
 }
+
+export interface ReinscripcionPrecioPrevioResponse {
+  reinscripcionId: number;
+  pasajeroId: number;
+  pasajeroNombre: string;
+  titularId: number;
+  titularNombreCompleto: string;
+  montoBase: number;
+  descuentosAplicados: number;
+  recargosAplicados: number;
+  totalCalculado: number;
+}

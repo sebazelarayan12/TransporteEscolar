@@ -1,3 +1,5 @@
+using System;
+
 namespace TransporteEscolar.Domain.Entities;
 
 public class PasajeroHorario
@@ -7,6 +9,7 @@ public class PasajeroHorario
     public int HorarioId { get; private set; }
     public bool EsPrincipal { get; private set; }
     public int Prioridad { get; private set; }
+    public byte Transporte { get; private set; }
     public DateTime FechaAsignacion { get; private set; }
 
     public Pasajero Pasajero { get; private set; } = null!;
@@ -21,12 +24,14 @@ public class PasajeroHorario
         int horarioId,
         bool esPrincipal,
         int prioridad,
+        byte transporte = 1,
         DateTime? fechaAsignacion = null)
     {
         PasajeroId = pasajeroId;
         HorarioId = horarioId;
         EsPrincipal = esPrincipal;
         Prioridad = prioridad;
+        Transporte = ValidarTransporte(transporte);
         FechaAsignacion = NormalizarFechaUtc(fechaAsignacion ?? DateTime.UtcNow);
     }
 
@@ -38,6 +43,11 @@ public class PasajeroHorario
     public void ActualizarPrioridad(int prioridad)
     {
         Prioridad = prioridad;
+    }
+
+    public void ActualizarTransporte(byte transporte)
+    {
+        Transporte = ValidarTransporte(transporte);
     }
 
     public void ActualizarFechaAsignacion(DateTime? fechaAsignacion = null)
@@ -55,5 +65,13 @@ public class PasajeroHorario
         };
 
         return DateTime.SpecifyKind(fechaUtc, DateTimeKind.Utc);
+    }
+
+    private static byte ValidarTransporte(byte transporte)
+    {
+        if (transporte is 1 or 2)
+            return transporte;
+
+        throw new ArgumentOutOfRangeException(nameof(transporte), transporte, "El transporte debe ser 1 o 2");
     }
 }

@@ -8,6 +8,7 @@ import type {
   HorarioPasajerosResponse,
   HorarioAsignacionDetalle,
 } from '../types/horario.types';
+import type { TransporteTipo } from '../../shared/types/transporte.types';
 
 export { horariosKeys } from './horarios.keys';
 
@@ -60,16 +61,18 @@ export const useHorarioPasajeros = (
 interface AsignarPasajerosVariables {
   horarioId: number;
   pasajeros: HorarioAsignacionDetalle[];
+  transporte?: TransporteTipo;
 }
 
 export const useAsignarPasajerosAHorario = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ horarioId, pasajeros }: AsignarPasajerosVariables) =>
+    mutationFn: ({ horarioId, pasajeros, transporte }: AsignarPasajerosVariables) =>
       horariosApi.asignarPasajeros(horarioId, {
         pasajeros,
         pasajeroIds: pasajeros.map((pasajero) => pasajero.pasajeroId),
+        transporte,
       }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: horariosKeys.list() });

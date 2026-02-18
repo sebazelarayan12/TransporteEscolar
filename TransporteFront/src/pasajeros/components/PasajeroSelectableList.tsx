@@ -1,4 +1,6 @@
 import type { PasajeroResponse } from '../types/pasajero.types';
+import { TRANSPORTE_LABELS, TRANSPORTE_TIPOS } from '../../shared/types/transporte.types';
+import type { TransporteTipo } from '../../shared/types/transporte.types';
 import { getPasajeroHorarioAsignado, getPasajeroHorariosResumen } from '../helpers/horario.helpers';
 
 interface PasajeroSelectableListProps {
@@ -12,6 +14,11 @@ interface PasajeroSelectableListProps {
 }
 
 type PasajeroSelectableSection = 'assigned' | 'available';
+
+const transporteBadgeClasses: Record<TransporteTipo, string> = {
+  [TRANSPORTE_TIPOS.UNO]: 'bg-[#007a8a]/10 text-[#007a8a] dark:bg-[#007a8a]/20 dark:text-cyan-200',
+  [TRANSPORTE_TIPOS.DOS]: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-100',
+};
 
 const splitPasajerosBySeleccion = (pasajeros: PasajeroResponse[], selectedIds: Set<number>) => {
   const assigned: PasajeroResponse[] = [];
@@ -135,6 +142,13 @@ export const PasajeroSelectableList = ({
               <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 +{horariosRestantes} más
               </p>
+            ) : null}
+            {isAssignedToTarget && asignacionActual?.transporte ? (
+              <span
+                className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${transporteBadgeClasses[asignacionActual.transporte]}`}
+              >
+                {TRANSPORTE_LABELS[asignacionActual.transporte]}
+              </span>
             ) : null}
             {assignedToOther && !isAssignedToTarget ? (
               <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-900/30 dark:text-amber-200">

@@ -76,6 +76,27 @@ public class ReinscripcionesController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene el precio estimado que se usará al confirmar la reinscripción.
+    /// </summary>
+    [HttpGet("{id}/precio-previo")]
+    public async Task<ActionResult<ReinscripcionModel.PrecioPrevioResponse>> GetPrecioPrevio(int id)
+    {
+        try
+        {
+            var dto = await _service.ObtenerPrecioPrevioAsync(id);
+            return Ok(dto);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    /// <summary>
     /// Crea una nueva reinscripción
     /// </summary>
     [HttpPost]

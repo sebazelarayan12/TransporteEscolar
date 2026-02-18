@@ -130,6 +130,7 @@ public class PasajeroService : IPasajeroService
                     dto.HorarioId.Value,
                     true,
                     null,
+                    1,
                     cancellationToken);
                 await MarcarPrincipalAsync(pasajeroCreado.Id, dto.HorarioId.Value, cancellationToken);
             }
@@ -183,18 +184,42 @@ public class PasajeroService : IPasajeroService
             _repository.GetByIdAsync, pasajeroId, nameof(Pasajero), cancellationToken);
 
         await ValidarHorarioAsync(dto.HorarioId, cancellationToken);
+        var transporte = TransporteHelper.Normalizar(dto.Transporte);
 
         await _pasajeroHorarioRepository.ExecuteInTransactionAsync(async () =>
         {
             var existente = await _pasajeroHorarioRepository.GetAsync(pasajeroId, dto.HorarioId, cancellationToken);
             if (existente != null)
-                throw new ValidationException("El pasajero ya tiene asignado este horario");
+            {
+                existente.DefinirPrincipal(dto.EsPrincipal);
+                if (dto.Prioridad.HasValue && dto.Prioridad.Value > 0)
+                {
+                    existente.ActualizarPrioridad(dto.Prioridad.Value);
+                }
+
+                existente.ActualizarTransporte(transporte);
+
+                if (dto.EsPrincipal)
+                {
+                    existente.ActualizarFechaAsignacion();
+                }
+
+                await _pasajeroHorarioRepository.UpdateAsync(existente, cancellationToken);
+
+                if (dto.EsPrincipal)
+                {
+                    await MarcarPrincipalAsync(pasajeroId, dto.HorarioId, cancellationToken);
+                }
+
+                return;
+            }
 
             await CrearAsignacionSiNoExisteAsync(
                 pasajeroId,
                 dto.HorarioId,
                 dto.EsPrincipal,
                 dto.Prioridad,
+                transporte,
                 cancellationToken);
 
             if (dto.EsPrincipal)
@@ -317,7 +342,7 @@ public class PasajeroService : IPasajeroService
             return;
         }
 
-        await CrearAsignacionSiNoExisteAsync(pasajeroId, horarioId.Value, true, null, cancellationToken);
+        await CrearAsignacionSiNoExisteAsync(pasajeroId, horarioId.Value, true, null, 1, cancellationToken);
         await MarcarPrincipalAsync(pasajeroId, horarioId.Value, cancellationToken);
     }
 
@@ -340,14 +365,14 @@ public class PasajeroService : IPasajeroService
         }
     }
 
-    private async Task CrearAsignacionSiNoExisteAsync(int pasajeroId, int horarioId, bool esPrincipal, int? prioridad, CancellationToken cancellationToken)
+    private async Task CrearAsignacionSiNoExisteAsync(int pasajeroId, int horarioId, bool esPrincipal, int? prioridad, byte transporte, CancellationToken cancellationToken)
     {
         var existente = await _pasajeroHorarioRepository.GetAsync(pasajeroId, horarioId, cancellationToken);
         if (existente != null)
             return;
 
         var prioridadCalculada = await ResolverPrioridadAsync(pasajeroId, prioridad, cancellationToken);
-        var asignacion = new PasajeroHorario(pasajeroId, horarioId, esPrincipal, prioridadCalculada);
+        var asignacion = new PasajeroHorario(pasajeroId, horarioId, esPrincipal, prioridadCalculada, transporte);
         await _pasajeroHorarioRepository.AddAsync(asignacion, cancellationToken);
     }
 

@@ -1,3 +1,4 @@
+using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Domain.Entities;
 
 namespace TransporteEscolar.Application.Interfaces;
@@ -11,7 +12,7 @@ public interface IPasajeroRepository
     Task<List<Pasajero>> GetByTitularIdAsync(int titularId, CancellationToken cancellationToken = default);
     Task<List<Pasajero>> GetActivosPorHorarioAsync(int horarioId, CancellationToken cancellationToken = default);
     Task<List<Pasajero>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
-    Task<Dictionary<int, int>> GetActivosCountByHorarioAsync(CancellationToken cancellationToken = default);
+    Task<Dictionary<int, ConteoPorTransporte>> GetActivosCountByHorarioAsync(CancellationToken cancellationToken = default);
     Task<Pasajero> AddAsync(Pasajero pasajero, CancellationToken cancellationToken = default);
     Task UpdateAsync(Pasajero pasajero, CancellationToken cancellationToken = default);
     Task UpdateRangeAsync(IEnumerable<Pasajero> pasajeros, CancellationToken cancellationToken = default);

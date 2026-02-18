@@ -32,4 +32,18 @@ public record ReinscripcionModel
         int Mes = 0,
         int PageNumber = 1,
         int PageSize = 20);
+
+    /// <summary>
+    /// Información del monto estimado que se utilizará al confirmar una reinscripción.
+    /// </summary>
+    public record PrecioPrevioResponse(
+        int ReinscripcionId,
+        int PasajeroId,
+        string PasajeroNombre,
+        int TitularId,
+        string TitularNombreCompleto,
+        decimal MontoBase,
+        decimal DescuentosAplicados,
+        decimal RecargosAplicados,
+        decimal TotalCalculado);
 }

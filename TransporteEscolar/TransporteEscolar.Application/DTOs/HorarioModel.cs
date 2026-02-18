@@ -6,7 +6,8 @@ public record HorarioModel
         int Id,
         string Etiqueta,
         int Orden,
-        int PasajerosActivos);
+        int PasajerosActivos,
+        ConteoPorTransporte ConteosPorTransporte);
 
     public record Resumen(
         int Id,
@@ -15,7 +16,8 @@ public record HorarioModel
     public record PasajerosAsignados(
         int HorarioId,
         string HorarioEtiqueta,
-        List<PasajeroHorarioModel.PasajeroAsignado> Pasajeros);
+        List<PasajeroHorarioModel.PasajeroAsignado> Pasajeros,
+        ConteoPorTransporte ConteosPorTransporte);
 
     public record PasajerosResponse(
         Resumen Horario,
@@ -25,9 +27,12 @@ public record HorarioModel
     public record AsignacionDetalle(
         int PasajeroId,
         bool EsPrincipal,
-        int? Prioridad = null);
+        int? Prioridad = null,
+        byte? Transporte = null);
 
     public record AsignacionRequest(
         List<int>? PasajeroIds = null,
-        List<AsignacionDetalle>? Pasajeros = null);
+        List<AsignacionDetalle>? Pasajeros = null,
+        byte? Transporte = null);
+
 }

@@ -8,7 +8,10 @@ public class PasajeroHorarioConfiguration : IEntityTypeConfiguration<PasajeroHor
 {
     public void Configure(EntityTypeBuilder<PasajeroHorario> builder)
     {
-        builder.ToTable("PasajeroHorarios");
+        builder.ToTable("PasajeroHorarios", table =>
+        {
+            table.HasCheckConstraint("CK_PasajeroHorarios_Transporte", "\"Transporte\" IN (1,2)");
+        });
 
         builder.HasKey(ph => ph.Id);
 
@@ -26,6 +29,10 @@ public class PasajeroHorarioConfiguration : IEntityTypeConfiguration<PasajeroHor
 
         builder.Property(ph => ph.Prioridad)
             .IsRequired();
+
+        builder.Property(ph => ph.Transporte)
+            .IsRequired()
+            .HasDefaultValue((byte)1);
 
         builder.Property(ph => ph.FechaAsignacion)
             .IsRequired();

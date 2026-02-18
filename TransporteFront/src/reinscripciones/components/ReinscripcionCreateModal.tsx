@@ -13,7 +13,23 @@ import { isLastPendingForTitular } from '../helpers/last-pending.helper';
 import { formatPasajeroHorariosListado } from '../../pasajeros/helpers/horario.helpers';
 
 type ActionVariant = 'pendiente' | 'confirmado' | 'noContinua';
-type CriticalActionVariant = Exclude<ActionVariant, 'pendiente'>;
+type ImmediateActionVariant = Extract<ActionVariant, 'pendiente' | 'noContinua'>;
+
+type CriticalActionState =
+  | {
+      variant: 'confirmado';
+      reinscripcionId: number;
+      pasajeroNombre: string;
+      titularNombre?: string;
+      isUltimoPendiente: boolean;
+    }
+  | {
+      variant: 'noContinua';
+      pasajero: PasajeroResponse;
+      pasajeroNombre: string;
+      titularNombre?: string;
+      isUltimoPendiente: boolean;
+    };
 
 interface ReinscripcionCreateModalProps {
   isOpen: boolean;
@@ -69,12 +85,9 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
   const [searchValue, setSearchValue] = useState('');
   const [selectedPasajeroId, setSelectedPasajeroId] = useState<number | null>(null);
   const [actionInProgress, setActionInProgress] = useState<ActionVariant | null>(null);
-  const [criticalAction, setCriticalAction] = useState<{
-    variant: CriticalActionVariant;
-    pasajero: PasajeroResponse;
-  } | null>(null);
+  const [criticalAction, setCriticalAction] = useState<CriticalActionState | null>(null);
 
-  const { showSuccess, showError, showWarning } = useToast();
+  const { showSuccess, showError, showWarning, showInfo } = useToast();
   const {
     data: pasajerosDisponibles = [],
     isLoading,
@@ -83,9 +96,9 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
     refetch,
   } = usePasajerosDisponibles(anio);
 
-  const { mutateAsync: crearReinscripcion } = useCrearReinscripcion();
-  const { mutateAsync: confirmarReinscripcion } = useConfirmarReinscripcion();
-  const { mutateAsync: marcarComoNoContinua } = useMarcarComoNoContinua();
+  const crearReinscripcionMutation = useCrearReinscripcion();
+  const confirmarReinscripcionMutation = useConfirmarReinscripcion();
+  const marcarComoNoContinuaMutation = useMarcarComoNoContinua();
 
   useEffect(() => {
     if (!isOpen) {
@@ -122,18 +135,14 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
 
   const fetchErrorMessage = error instanceof Error ? error.message : 'No pudimos cargar los pasajeros disponibles.';
 
-  const executeAction = async (variant: ActionVariant, pasajeroId: number) => {
+  const executeAction = async (variant: ImmediateActionVariant, pasajeroId: number) => {
     setActionInProgress(variant);
 
     try {
-      const nuevaReinscripcion = await crearReinscripcion({ pasajeroId, anio });
-
-      if (variant === 'confirmado') {
-        await confirmarReinscripcion(nuevaReinscripcion.id);
-      }
+      const nuevaReinscripcion = await crearReinscripcionMutation.mutateAsync({ pasajeroId, anio });
 
       if (variant === 'noContinua') {
-        await marcarComoNoContinua(nuevaReinscripcion.id);
+        await marcarComoNoContinuaMutation.mutateAsync(nuevaReinscripcion.id);
       }
 
       showSuccess(successMessages[variant]);
@@ -150,6 +159,33 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
     }
   };
 
+  const iniciarConfirmacion = async (pasajero: PasajeroResponse, esUltimoPendiente: boolean) => {
+    setActionInProgress('confirmado');
+
+    try {
+      const nuevaReinscripcion = await crearReinscripcionMutation.mutateAsync({ pasajeroId: pasajero.id, anio });
+      const titularDescripcion = nuevaReinscripcion.titularNombre || (pasajero.titularApellido ? `Familia ${pasajero.titularApellido}` : undefined);
+
+      setCriticalAction({
+        variant: 'confirmado',
+        reinscripcionId: nuevaReinscripcion.id,
+        pasajeroNombre: nuevaReinscripcion.pasajeroNombre,
+        titularNombre: titularDescripcion,
+        isUltimoPendiente: esUltimoPendiente,
+      });
+      onCreated?.();
+      showInfo('Revisá el precio calculado antes de confirmar.');
+    } catch (mutationError) {
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : 'No pudimos crear la reinscripción. Intentalo nuevamente.';
+      showError(message);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
   const handleAction = (variant: ActionVariant) => {
     if (!selectedPasajero) {
       showWarning('Seleccioná un pasajero antes de continuar.');
@@ -157,33 +193,65 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
     }
 
     if (variant === 'pendiente') {
-      void executeAction(variant, selectedPasajero.id);
+      void executeAction('pendiente', selectedPasajero.id);
       return;
     }
 
-    const requiereConfirmacionCritica = isLastPendingForTitular({
+    const esUltimoPendiente = isLastPendingForTitular({
       collection: pasajerosDisponibles,
       titularKey: selectedPasajero.titularId,
       getTitularKey: (pasajero) => pasajero.titularId,
     });
 
-    if (requiereConfirmacionCritica) {
-      setCriticalAction({ variant, pasajero: selectedPasajero });
+    if (variant === 'confirmado') {
+      void iniciarConfirmacion(selectedPasajero, esUltimoPendiente);
       return;
     }
 
-    void executeAction(variant, selectedPasajero.id);
+    if (esUltimoPendiente) {
+      setCriticalAction({
+        variant: 'noContinua',
+        pasajero: selectedPasajero,
+        pasajeroNombre: selectedPasajero.nombreCompleto,
+        titularNombre: selectedPasajero.titularApellido ? `Familia ${selectedPasajero.titularApellido}` : undefined,
+        isUltimoPendiente: true,
+      });
+      return;
+    }
+
+    void executeAction('noContinua', selectedPasajero.id);
   };
 
   const closeCriticalConfirmation = () => setCriticalAction(null);
+
+  const confirmarDesdeModal = async (reinscripcionId: number) => {
+    try {
+      await confirmarReinscripcionMutation.mutateAsync(reinscripcionId);
+      showSuccess(successMessages.confirmado);
+      onCreated?.();
+      closeCriticalConfirmation();
+      onClose();
+    } catch (mutationError) {
+      const message =
+        mutationError instanceof Error
+          ? mutationError.message
+          : 'No pudimos confirmar la reinscripción. Intentalo nuevamente.';
+      showError(message);
+    }
+  };
 
   const handleCriticalConfirm = () => {
     if (!criticalAction) {
       return;
     }
 
+    if (criticalAction.variant === 'confirmado') {
+      void confirmarDesdeModal(criticalAction.reinscripcionId);
+      return;
+    }
+
     closeCriticalConfirmation();
-    void executeAction(criticalAction.variant, criticalAction.pasajero.id);
+    void executeAction('noContinua', criticalAction.pasajero.id);
   };
 
   const renderList = () => {
@@ -255,10 +323,17 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
   const isCriticalModalOpen = Boolean(criticalAction);
   const criticalActionLabel =
     criticalAction?.variant === 'confirmado' ? 'Confirmar reinscripción' : 'Marcar como no continúa';
-  const criticalPasajeroNombre = criticalAction?.pasajero.nombreCompleto ?? '';
-  const criticalTitularNombre = criticalAction?.pasajero.titularApellido
-    ? `Familia ${criticalAction.pasajero.titularApellido}`
-    : undefined;
+  const criticalPasajeroNombre =
+    criticalAction?.variant === 'confirmado'
+      ? criticalAction.pasajeroNombre
+      : criticalAction?.pasajero.nombreCompleto ?? '';
+  const criticalTitularNombre = criticalAction?.titularNombre;
+  const criticalReinscripcionId = criticalAction?.variant === 'confirmado' ? criticalAction.reinscripcionId : null;
+  const criticalModalVariant = criticalAction?.variant === 'confirmado' ? 'confirmar' : 'noContinua';
+  const criticalUltimoPendiente = criticalAction?.isUltimoPendiente ?? false;
+  const isCriticalProcessing = criticalAction?.variant === 'confirmado'
+    ? confirmarReinscripcionMutation.isPending
+    : actionInProgress === 'noContinua';
 
   return (
     <>
@@ -336,12 +411,15 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
       </Modal>
       <LastPendingConfirmationModal
         isOpen={isCriticalModalOpen}
+        reinscripcionId={criticalReinscripcionId}
         onCancel={closeCriticalConfirmation}
         onConfirm={handleCriticalConfirm}
         pasajeroNombre={criticalPasajeroNombre}
         titularNombre={criticalTitularNombre}
         actionLabel={criticalActionLabel}
-        isProcessing={actionInProgress !== null}
+        isProcessing={isCriticalProcessing}
+        variant={criticalModalVariant}
+        isUltimoPendiente={criticalUltimoPendiente}
       />
     </>
   );

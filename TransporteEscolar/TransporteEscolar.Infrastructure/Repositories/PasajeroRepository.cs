@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Domain.Entities;
 using TransporteEscolar.Infrastructure.Persistence;
@@ -102,13 +103,21 @@ public class PasajeroRepository : IPasajeroRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Dictionary<int, int>> GetActivosCountByHorarioAsync(CancellationToken cancellationToken = default)
+    public async Task<Dictionary<int, ConteoPorTransporte>> GetActivosCountByHorarioAsync(CancellationToken cancellationToken = default)
     {
         return await _context.PasajeroHorarios
             .Where(ph => ph.Pasajero.FechaBaja == null)
             .GroupBy(ph => ph.HorarioId)
-            .Select(group => new { HorarioId = group.Key, Total = group.Count() })
-            .ToDictionaryAsync(x => x.HorarioId, x => x.Total, cancellationToken);
+            .Select(group => new
+            {
+                HorarioId = group.Key,
+                TransporteUno = group.Count(ph => ph.Transporte == 1),
+                TransporteDos = group.Count(ph => ph.Transporte == 2)
+            })
+            .ToDictionaryAsync(
+                x => x.HorarioId,
+                x => new ConteoPorTransporte(x.TransporteUno, x.TransporteDos),
+                cancellationToken);
     }
 
     public async Task<Pasajero> AddAsync(Pasajero pasajero, CancellationToken cancellationToken = default)

@@ -1,5 +1,6 @@
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Exceptions;
+using TransporteEscolar.Application.Helpers;
 
 namespace TransporteEscolar.Application.Validation;
 
@@ -15,5 +16,7 @@ public static class PasajeroHorarioValidator
 
         if (request.Prioridad.HasValue && request.Prioridad.Value <= 0)
             throw new ValidationException("La prioridad debe ser mayor a cero");
+
+        TransporteHelper.Normalizar(request.Transporte);
     }
 }
