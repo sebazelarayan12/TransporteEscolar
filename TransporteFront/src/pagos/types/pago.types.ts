@@ -65,3 +65,17 @@ export interface EstadisticasMes {
   totalRecaudado: number;
   totalPendiente: number;
 }
+
+export interface AjusteTitularRequest {
+  nuevoMonto: number;
+  aplicarSoloPendientes?: boolean;
+  motivo?: string;
+}
+
+export interface AjusteTitularResponse {
+  titularId: number;
+  montoAnterior: number;
+  montoNuevo: number;
+  cantidadCuotasActualizadas: number;
+  periodosActualizados: string[];
+}

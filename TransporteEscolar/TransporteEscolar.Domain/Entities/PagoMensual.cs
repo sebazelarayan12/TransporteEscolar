@@ -64,6 +64,14 @@ public class PagoMensual
         Observaciones = observaciones;
     }
 
+    public void ActualizarMontoGenerado(decimal nuevoMonto)
+    {
+        if (nuevoMonto <= 0)
+            throw new ArgumentOutOfRangeException(nameof(nuevoMonto), "El monto generado debe ser mayor a 0");
+
+        MontoGenerado = nuevoMonto;
+    }
+
     private static DateTime CrearFechaVencimiento(int anio, int mes)
     {
         return new DateTime(anio, mes, 10, 0, 0, 0, DateTimeKind.Utc);

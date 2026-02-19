@@ -17,5 +17,6 @@ public interface IPagoMensualService
     Task RegistrarPagoAsync(int pagoMensualId, PagoMensualModel.RegistrarPagoRequest dto, CancellationToken cancellationToken = default);
     Task<PagoMovimientoModel.Response> EliminarMovimientoAsync(int pagoMensualId, int movimientoId, CancellationToken cancellationToken = default);
     Task ActualizarObservacionesAsync(int id, PagoMensualModel.UpdateObservacionesRequest dto, CancellationToken cancellationToken = default);
+    Task<PagoMensualModel.AjusteTitularResponse> AjustarMontoTitularAsync(int titularId, PagoMensualModel.AjusteTitularRequest request, CancellationToken cancellationToken = default);
     Task GenerarPagosMensualesAutomaticosAsync(int titularId, int anio, CancellationToken cancellationToken = default);
 }

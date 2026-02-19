@@ -28,4 +28,17 @@ public static class PagoMensualValidator
         if (string.IsNullOrWhiteSpace(request.MedioPago))
             throw new ValidationException("El medio de pago es requerido");
     }
+
+    public static void ValidateAjusteTitular(PagoMensualModel.AjusteTitularRequest request)
+    {
+        if (request.NuevoMonto <= 0)
+            throw new ValidationException("El nuevo monto debe ser mayor a 0");
+
+        if (request.Motivo is not null)
+        {
+            var motivo = request.Motivo.Trim();
+            if (motivo.Length > 200)
+                throw new ValidationException("El motivo no puede superar los 200 caracteres");
+        }
+    }
 }

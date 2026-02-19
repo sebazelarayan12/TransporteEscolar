@@ -206,4 +206,24 @@ public class PagosMensualesController : ControllerBase
 
         return NoContent();
     }
+
+    /// <summary>
+    /// Ajusta el monto mensual pactado de un titular y reprocesa sus cuotas
+    /// </summary>
+    [HttpPut("titulares/{titularId}/ajustar-monto")]
+    public async Task<ActionResult<PagoMensualModel.AjusteTitularResponse>> AjustarMontoTitular(
+        int titularId,
+        [FromBody] PagoMensualModel.AjusteTitularRequest dto)
+    {
+        var response = await _service.AjustarMontoTitularAsync(titularId, dto);
+
+        _logger.LogInformation(
+            "Monto mensual ajustado para titular {TitularId}. ${MontoAnterior} -> ${MontoNuevo}. Cuotas afectadas: {Cantidad}",
+            response.TitularId,
+            response.MontoAnterior,
+            response.MontoNuevo,
+            response.CantidadCuotasActualizadas);
+
+        return Ok(response);
+    }
 }

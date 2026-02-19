@@ -6,6 +6,8 @@ import type {
   PagoFilterRequest,
   PagoPaginationResponse,
   EstadisticasMes,
+  AjusteTitularRequest,
+  AjusteTitularResponse,
 } from '../types/pago.types';
 import type { MovimientosFilterRequest, MovimientosPaginationResponse } from '../types/movimientos.types';
 
@@ -79,6 +81,19 @@ export const pagosApi = {
    */
   registrarPago: async (id: number, data: RegistrarPagoRequest): Promise<void> => {
     return apiClient.post<void>(`${BASE_PATH}/${id}/registrar-pago`, data);
+  },
+
+  /**
+   * PUT /pagosmensuales/titulares/{titularId}/ajustar-monto - Actualiza el monto mensual pactado y sincroniza cuotas
+   */
+  ajustarMontoTitular: async (
+    titularId: number,
+    data: AjusteTitularRequest
+  ): Promise<AjusteTitularResponse> => {
+    return apiClient.put<AjusteTitularResponse>(
+      `${BASE_PATH}/titulares/${titularId}/ajustar-monto`,
+      data
+    );
   },
 
   /**
