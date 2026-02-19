@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { titularesKeys } from '../../titulares/services/titulares.queries';
 import { pagosApi } from './pagos.api';
 import type { AjusteTitularRequest, RegistrarPagoRequest } from '../types/pago.types';
 import type { MovimientosFilterRequest } from '../types/movimientos.types';
@@ -209,6 +210,14 @@ export function useAjustarMontoTitular() {
       queryClient.invalidateQueries({ queryKey: ['pagos', 'titulares-con-pagos'] });
       queryClient.invalidateQueries({ queryKey: ['pagos', 'paginados'] });
       queryClient.invalidateQueries({ queryKey: ['pagos', 'estadisticas'] });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.detail(variables.titularId) });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.lists() });
+      queryClient.invalidateQueries({
+        predicate: ({ queryKey }) =>
+          Array.isArray(queryKey) &&
+          queryKey[0] === titularesKeys.all[0] &&
+          queryKey[1] === 'paginados',
+      });
     },
   });
 }
