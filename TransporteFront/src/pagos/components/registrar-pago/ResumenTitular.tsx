@@ -7,15 +7,23 @@ import type { TitularResponse } from '../../../titulares/types/titular.types';
 import type { PagoMensual } from '../../types/pago.types';
 import { useSaldoPrioritario } from '../../hooks/useSaldoPrioritario';
 import { formatCurrency } from '../../../shared/utils/currency.helpers';
+import { Button } from '../../../shared/ui';
 
 interface ResumenTitularProps {
   titular: TitularResponse | null;
   pagosTitular: PagoMensual[] | undefined;
   isLoading: boolean;
   isFetching: boolean;
+  onAdjustMonto?: () => void;
 }
 
-export const ResumenTitular = ({ titular, pagosTitular, isLoading, isFetching }: ResumenTitularProps) => {
+export const ResumenTitular = ({
+  titular,
+  pagosTitular,
+  isLoading,
+  isFetching,
+  onAdjustMonto,
+}: ResumenTitularProps) => {
   const saldoInfo = useSaldoPrioritario(pagosTitular);
 
   if (!titular) {
@@ -48,10 +56,28 @@ export const ResumenTitular = ({ titular, pagosTitular, isLoading, isFetching }:
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-[#3f3f46] dark:bg-[#1f1f24]">
-        <p className="text-xs uppercase tracking-wide text-gray-400">Cuota mensual</p>
-        <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">
-          {formatCurrency(titular.montoMensualPactado)}
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-400">Cuota mensual</p>
+            <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">
+              {formatCurrency(titular.montoMensualPactado)}
+            </p>
+          </div>
+          {onAdjustMonto && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onAdjustMonto}
+              className="rounded-full px-3 py-1 text-xs text-[#1d8ca5] hover:text-[#125c70]"
+            >
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[18px]">tune</span>
+                Ajustar monto
+              </span>
+            </Button>
+          )}
+        </div>
       </div>
       <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-[#3f3f46] dark:bg-[#1f1f24]">
         <div className="flex items-start justify-between gap-3">

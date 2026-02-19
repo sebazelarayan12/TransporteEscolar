@@ -45,6 +45,14 @@ public class Titular
         MontoMensualPactado = montoMensualPactado;
     }
 
+    public void ActualizarMontoMensual(decimal nuevoMonto)
+    {
+        if (nuevoMonto <= 0)
+            throw new ArgumentOutOfRangeException(nameof(nuevoMonto), "El monto mensual pactado debe ser mayor a 0");
+
+        MontoMensualPactado = nuevoMonto;
+    }
+
     public void DarDeBaja()
     {
         FechaBaja = NormalizarFechaUtc(DateTime.UtcNow);

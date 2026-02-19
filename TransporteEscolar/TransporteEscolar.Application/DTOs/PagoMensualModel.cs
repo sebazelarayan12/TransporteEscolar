@@ -17,6 +17,15 @@ public record PagoMensualModel
 
     public record UpdateObservacionesRequest(string? Observaciones);
 
+    public record AjusteTitularRequest(decimal NuevoMonto, bool AplicarSoloPendientes = true, string? Motivo = null);
+
+    public record AjusteTitularResponse(
+        int TitularId,
+        decimal MontoAnterior,
+        decimal MontoNuevo,
+        int CantidadCuotasActualizadas,
+        List<string> PeriodosActualizados);
+
     public record FilterRequest(
         int Mes,
         int Anio,

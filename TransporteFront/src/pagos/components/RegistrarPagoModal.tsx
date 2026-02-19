@@ -20,6 +20,7 @@ import {
   ConfirmacionPagoModal,
   type PagoConfirmacionData,
 } from './registrar-pago';
+import { AjustarMontoTitularModal } from './AjustarMontoTitularModal';
 
 interface RegistrarPagoModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
   const [monto, setMonto] = useState('');
   const [medioPago, setMedioPago] = useState<MedioPago>(MEDIOS_PAGO.EFECTIVO);
   const [observaciones, setObservaciones] = useState('');
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
 
   // Confirmation modal state
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -71,7 +73,10 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
   const montoNumber = parseFloat(monto);
   const isMontoValid = monto.trim() !== '' && Number.isFinite(montoNumber) && montoNumber > 0;
   const tieneCuotas = pagosOrdenados.length > 0;
-  const canSubmit = Boolean(selectedTitular && tieneCuotas && isMontoValid) && !registrarPago.isPending;
+  const titularActivo = selectedTitular
+    ? titulares.find((titular) => titular.id === selectedTitular.id) ?? selectedTitular
+    : null;
+  const canSubmit = Boolean(titularActivo && tieneCuotas && isMontoValid) && !registrarPago.isPending;
 
   // Handlers
   const resetState = () => {
@@ -81,6 +86,7 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
     setMonto('');
     setMedioPago(MEDIOS_PAGO.EFECTIVO);
     setObservaciones('');
+    setIsAdjustModalOpen(false);
   };
 
   const closeConfirmacionModal = () => {
@@ -108,12 +114,20 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
 
   const handleTitularSelect = (titular: TitularResponse) => {
     setSelectedTitular(titular);
+    setIsAdjustModalOpen(false);
+  };
+
+  const handleAdjustMontoClick = () => {
+    if (!titularActivo) {
+      return;
+    }
+    setIsAdjustModalOpen(true);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const pagoDestino = pagosOrdenados[0];
-    if (!selectedTitular || !pagoDestino || !isMontoValid) {
+    if (!titularActivo || !pagoDestino || !isMontoValid) {
       return;
     }
 
@@ -122,7 +136,7 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
 
     setConfirmacionPago({
       pagoId: pagoDestino.id,
-      titularNombreCompleto: `${selectedTitular.nombreContacto} ${selectedTitular.apellido}`.trim(),
+      titularNombreCompleto: `${titularActivo.nombreContacto} ${titularActivo.apellido}`.trim(),
       monto: montoNumber,
       medioPago,
       observaciones: trimmedObservaciones ? trimmedObservaciones : undefined,
@@ -189,20 +203,21 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
                 <p className="text-xs font-semibold uppercase tracking-wide text-[#1d8ca5]">Paso 2</p>
                 <h3 className="text-base font-semibold text-gray-900 dark:text-white">Resumen y registro</h3>
               </div>
-              {selectedTitular && (
+              {titularActivo && (
                 <div className="text-right">
                   <p className="text-[11px] uppercase tracking-wide text-gray-400">Titular</p>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{selectedTitular.apellido}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{titularActivo.apellido}</p>
                 </div>
               )}
             </div>
 
             <div className="mt-4 space-y-4">
               <ResumenTitular
-                titular={selectedTitular}
+                titular={titularActivo}
                 pagosTitular={pagosTitular}
                 isLoading={isLoadingPagos}
                 isFetching={isFetchingPagos}
+                onAdjustMonto={titularActivo ? handleAdjustMontoClick : undefined}
               />
 
               <FormularioRegistroPago
@@ -216,7 +231,7 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
                 onCancel={handleClose}
                 canSubmit={canSubmit}
                 isPending={registrarPago.isPending}
-                disabled={!selectedTitular}
+                disabled={!titularActivo}
               />
             </div>
           </div>
@@ -229,6 +244,12 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
         onConfirm={handleConfirmarPago}
         data={confirmacionPago}
         isPending={registrarPago.isPending}
+      />
+
+      <AjustarMontoTitularModal
+        isOpen={isAdjustModalOpen && Boolean(titularActivo)}
+        onClose={() => setIsAdjustModalOpen(false)}
+        titular={titularActivo}
       />
     </>
   );
