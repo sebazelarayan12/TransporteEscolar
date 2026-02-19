@@ -1,6 +1,7 @@
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Application.Services;
 using TransporteEscolar.Infrastructure.Repositories;
+using TransporteEscolar.Infrastructure.Persistence;
 
 namespace TransporteEscolar.Api.DependencyInjection;
 
@@ -28,6 +29,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IHorarioService, HorarioService>();
         services.AddScoped<IGastoService, GastoService>();
         services.AddScoped<IIngresoService, IngresoService>();
+
+        // Gestión de Transacciones
+        services.AddScoped<ITransactionManager, TransactionManager>();
 
         return services;
     }

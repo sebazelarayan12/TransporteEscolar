@@ -12,13 +12,16 @@ public class PagoMensualService : IPagoMensualService
 {
     private readonly IPagoMensualRepository _repository;
     private readonly ITitularRepository _titularRepository;
+    private readonly ITransactionManager _transactionManager;
 
     public PagoMensualService(
         IPagoMensualRepository repository,
-        ITitularRepository titularRepository)
+        ITitularRepository titularRepository,
+        ITransactionManager transactionManager)
     {
         _repository = repository;
         _titularRepository = titularRepository;
+        _transactionManager = transactionManager;
     }
 
     public async Task<PagoMensualModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
@@ -296,62 +299,80 @@ public class PagoMensualService : IPagoMensualService
         if (titular is null)
             throw new NotFoundException(nameof(Titular), titularId);
 
-        var montoAnterior = titular.MontoMensualPactado;
+        await using var transaction = await _transactionManager.BeginTransactionAsync(cancellationToken);
 
-        titular.ActualizarMontoMensual(request.NuevoMonto);
-        await _titularRepository.UpdateAsync(titular, cancellationToken);
-
-        var pagos = await _repository.GetByTitularIdAsync(titularId, cancellationToken);
-        var pagosAjustar = request.AplicarSoloPendientes
-            ? pagos.Where(p => !p.EstaPagado()).ToList()
-            : pagos.ToList();
-
-        var periodosActualizados = new List<string>();
-        if (!pagosAjustar.Any())
+        try
         {
+            var montoAnterior = titular.MontoMensualPactado;
+
+            var pagos = await _repository.GetByTitularIdAsync(titularId, cancellationToken);
+            var pagosAjustar = request.AplicarSoloPendientes
+                ? pagos.Where(p => !p.EstaPagado()).ToList()
+                : pagos.ToList();
+
+            var periodosActualizados = new List<string>();
+
+            if (!pagosAjustar.Any())
+            {
+                titular.ActualizarMontoMensual(request.NuevoMonto);
+                await _titularRepository.UpdateAsync(titular, cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+
+                return new PagoMensualModel.AjusteTitularResponse(
+                    titularId,
+                    montoAnterior,
+                    titular.MontoMensualPactado,
+                    0,
+                    periodosActualizados);
+            }
+
+            foreach (var pago in pagosAjustar)
+            {
+                if (request.NuevoMonto < pago.TotalPagado())
+                {
+                    var periodo = $"{pago.Mes:D2}/{pago.Anio}";
+                    throw new ValidationException(
+                        $"El nuevo monto (${request.NuevoMonto}) no puede ser menor al total pagado (${pago.TotalPagado()}) del período {periodo}.");
+                }
+            }
+
+            titular.ActualizarMontoMensual(request.NuevoMonto);
+            await _titularRepository.UpdateAsync(titular, cancellationToken);
+
+            var motivo = request.Motivo?.Trim();
+            var tieneMotivo = !string.IsNullOrWhiteSpace(motivo);
+
+            foreach (var pago in pagosAjustar)
+            {
+                pago.ActualizarMontoGenerado(request.NuevoMonto);
+
+                if (tieneMotivo)
+                {
+                    var anotacion = $"Ajuste manual ${montoAnterior} -> ${request.NuevoMonto}. Motivo: {motivo}";
+                    var nuevaObservacion = string.IsNullOrWhiteSpace(pago.Observaciones)
+                        ? anotacion
+                        : $"{pago.Observaciones} | {anotacion}";
+                    pago.ActualizarObservaciones(nuevaObservacion);
+                }
+
+                await _repository.UpdateAsync(pago, cancellationToken);
+                periodosActualizados.Add($"{pago.Mes:D2}/{pago.Anio}");
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+
             return new PagoMensualModel.AjusteTitularResponse(
                 titularId,
                 montoAnterior,
                 titular.MontoMensualPactado,
-                0,
+                periodosActualizados.Count,
                 periodosActualizados);
         }
-
-        foreach (var pago in pagosAjustar)
+        catch
         {
-            if (request.NuevoMonto < pago.TotalPagado())
-            {
-                var periodo = $"{pago.Mes:D2}/{pago.Anio}";
-                throw new ValidationException($"El nuevo monto no puede ser menor al total pagado del período {periodo}.");
-            }
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
         }
-
-        var motivo = request.Motivo?.Trim();
-        var tieneMotivo = !string.IsNullOrWhiteSpace(motivo);
-
-        foreach (var pago in pagosAjustar)
-        {
-            pago.ActualizarMontoGenerado(request.NuevoMonto);
-
-            if (tieneMotivo)
-            {
-                var anotacion = $"Ajuste manual ${montoAnterior} -> ${request.NuevoMonto}. Motivo: {motivo}";
-                var nuevaObservacion = string.IsNullOrWhiteSpace(pago.Observaciones)
-                    ? anotacion
-                    : $"{pago.Observaciones} | {anotacion}";
-                pago.ActualizarObservaciones(nuevaObservacion);
-            }
-
-            await _repository.UpdateAsync(pago, cancellationToken);
-            periodosActualizados.Add($"{pago.Mes:D2}/{pago.Anio}");
-        }
-
-        return new PagoMensualModel.AjusteTitularResponse(
-            titularId,
-            montoAnterior,
-            titular.MontoMensualPactado,
-            periodosActualizados.Count,
-            periodosActualizados);
     }
 
     public async Task GenerarPagosMensualesAutomaticosAsync(int titularId, int anio, CancellationToken cancellationToken = default)
