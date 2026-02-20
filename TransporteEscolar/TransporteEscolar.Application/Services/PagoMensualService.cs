@@ -13,15 +13,18 @@ public class PagoMensualService : IPagoMensualService
     private readonly IPagoMensualRepository _repository;
     private readonly ITitularRepository _titularRepository;
     private readonly ITransactionManager _transactionManager;
+    private readonly INotificacionService _notificacionService;
 
     public PagoMensualService(
         IPagoMensualRepository repository,
         ITitularRepository titularRepository,
-        ITransactionManager transactionManager)
+        ITransactionManager transactionManager,
+        INotificacionService notificacionService)
     {
         _repository = repository;
         _titularRepository = titularRepository;
         _transactionManager = transactionManager;
+        _notificacionService = notificacionService;
     }
 
     public async Task<PagoMensualModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
@@ -241,6 +244,20 @@ public class PagoMensualService : IPagoMensualService
                 $"El monto pagado (${dto.Monto}) excede la deuda total pendiente. " +
                 $"Se aplicaron ${dto.Monto - montoRestante} y sobran ${montoRestante}");
         }
+
+        // Crear notificación de pago registrado
+        var titular = await _titularRepository.GetByIdAsync(pagoMensual.TitularId, cancellationToken);
+        if (titular != null)
+        {
+            var titularNombre = $"{titular.NombreContacto} {titular.Apellido}".Trim();
+            var periodo = $"{pagoMensual.Mes:D2}/{pagoMensual.Anio}";
+            await _notificacionService.CrearNotificacionPagoRegistradoAsync(
+                titularNombre, 
+                dto.Monto, 
+                periodo, 
+                pagoMensualId, 
+                cancellationToken);
+        }
     }
 
     public async Task<PagoMovimientoModel.Response> EliminarMovimientoAsync(
@@ -360,6 +377,14 @@ public class PagoMensualService : IPagoMensualService
             }
 
             await transaction.CommitAsync(cancellationToken);
+
+            // Crear notificación de ajuste de monto
+            var titularNombre = $"{titular.NombreContacto} {titular.Apellido}".Trim();
+            await _notificacionService.CrearNotificacionAjusteMontoAsync(
+                titularNombre,
+                request.NuevoMonto,
+                titularId,
+                cancellationToken);
 
             return new PagoMensualModel.AjusteTitularResponse(
                 titularId,

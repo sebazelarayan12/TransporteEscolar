@@ -9,16 +9,19 @@ public class ReinscripcionService : IReinscripcionService
     private readonly IReinscripcionRepository _repository;
     private readonly IPasajeroRepository _pasajeroRepository;
     private readonly IPagoMensualService _pagoMensualService;
+    private readonly INotificacionService _notificacionService;
     private static readonly string[] EstadosPermitidos = new[] { "Pendiente", "Confirmado", "NoContinua" };
 
     public ReinscripcionService(
         IReinscripcionRepository repository,
         IPasajeroRepository pasajeroRepository,
-        IPagoMensualService pagoMensualService)
+        IPagoMensualService pagoMensualService,
+        INotificacionService notificacionService)
     {
         _repository = repository;
         _pasajeroRepository = pasajeroRepository;
         _pagoMensualService = pagoMensualService;
+        _notificacionService = notificacionService;
     }
 
     public async Task<PaginationModel.ResponsePagination<ReinscripcionModel.ResponseDetallada>> ObtenerTodosAsync(ReinscripcionModel.FilterRequest request)
@@ -144,6 +147,17 @@ public class ReinscripcionService : IReinscripcionService
         await _repository.UpdateAsync(reinscripcion);
 
         await VerificarYGenerarPagosMensualesAsync(reinscripcion.PasajeroId, reinscripcion.Anio);
+
+        // Crear notificación de reinscripción confirmada
+        var pasajero = await _pasajeroRepository.GetByIdAsync(reinscripcion.PasajeroId);
+        if (pasajero?.Titular != null)
+        {
+            var titularNombre = $"{pasajero.Titular.NombreContacto} {pasajero.Titular.Apellido}".Trim();
+            await _notificacionService.CrearNotificacionReinscripcionAsync(
+                titularNombre,
+                1, // Una reinscripción confirmada
+                pasajero.Titular.Id);
+        }
     }
 
     public async Task MarcarComoNoContinuaAsync(int id)

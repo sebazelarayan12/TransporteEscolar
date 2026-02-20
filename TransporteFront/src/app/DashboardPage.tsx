@@ -4,6 +4,7 @@ import { useDashboardResumen } from './services/dashboard.queries';
 import { Spinner } from '../shared/ui/Spinner';
 import { Alert } from '../shared/ui/Alert';
 import { formatCurrency } from '../shared/utils/currency.helpers';
+import { NotificacionesDropdown } from '../notificaciones';
 
 const quickActions = [
   {
@@ -88,14 +89,7 @@ export const DashboardPage = () => {
               <h1 className="text-2xl font-bold text-[#0f181a] dark:text-white">Dashboard</h1>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                className="relative rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-[#1d8ca5] dark:text-gray-300 dark:hover:bg-white/10"
-                aria-label="Notificaciones"
-              >
-                <span className="material-symbols-outlined text-[22px]">notifications</span>
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-white bg-rose-500 dark:border-[#1f1f24]" />
-              </button>
+              <NotificacionesDropdown />
               <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#007a8a] to-cyan-400 text-sm font-semibold uppercase tracking-wide text-white shadow-lg shadow-[#007a8a]/30 dark:border-white/30">
                 {adminInitials}
               </div>
