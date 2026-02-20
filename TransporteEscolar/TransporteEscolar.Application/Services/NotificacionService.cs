@@ -64,10 +64,11 @@ public class NotificacionService : INotificacionService
         int pagoMensualId, 
         CancellationToken cancellationToken = default)
     {
+        var nombreCorto = FormatearNombreCompacto(titularNombre);
         var notificacion = new Notificacion(
             "PAGO_REGISTRADO",
             "Nuevo pago registrado",
-            $"{titularNombre} pagó ${monto:N0} para {periodo}",
+            $"{nombreCorto} pagó ${monto:N0} ({periodo})",
             "PagoMensual",
             pagoMensualId);
         
@@ -83,10 +84,11 @@ public class NotificacionService : INotificacionService
         int titularId, 
         CancellationToken cancellationToken = default)
     {
+        var nombreCorto = FormatearNombreCompacto(titularNombre);
         var notificacion = new Notificacion(
             "AJUSTE_MONTO",
             "Ajuste de monto",
-            $"Se ajustó el monto de {titularNombre} a ${nuevoMonto:N0}",
+            $"Monto de {nombreCorto}: ${nuevoMonto:N0}",
             "Titular",
             titularId);
         
@@ -102,9 +104,10 @@ public class NotificacionService : INotificacionService
         int titularId, 
         CancellationToken cancellationToken = default)
     {
+        var nombreCorto = FormatearNombreCompacto(titularNombre);
         var mensaje = cantidadPasajeros == 1 
-            ? $"1 pasajero reinscripto para {titularNombre}"
-            : $"{cantidadPasajeros} pasajeros reinscriptos para {titularNombre}";
+            ? $"{nombreCorto}: 1 pasajero reinscripto"
+            : $"{nombreCorto}: {cantidadPasajeros} pasajeros reinscriptos";
         
         var notificacion = new Notificacion(
             "REINSCRIPCION",
@@ -127,7 +130,7 @@ public class NotificacionService : INotificacionService
         var notificacion = new Notificacion(
             "TITULAR_CREADO",
             "Nuevo titular",
-            $"Nuevo titular: {titularNombre}",
+            $"Titular: {titularNombre}",
             "Titular",
             titularId);
         
@@ -143,10 +146,11 @@ public class NotificacionService : INotificacionService
         int pasajeroId, 
         CancellationToken cancellationToken = default)
     {
+        var nombreCortoTitular = FormatearNombreCompacto(titularNombre);
         var notificacion = new Notificacion(
             "PASAJERO_CREADO",
             "Nuevo pasajero",
-            $"Nuevo pasajero: {pasajeroNombre} (titular: {titularNombre})",
+            $"{pasajeroNombre} (titular: {nombreCortoTitular})",
             "Pasajero",
             pasajeroId);
         
@@ -173,5 +177,27 @@ public class NotificacionService : INotificacionService
             n.FechaLectura,
             n.EntidadTipo,
             n.EntidadId);
+    }
+
+    /// <summary>
+    /// Convierte un nombre completo a formato compacto: "Cecilia BERTIKIAN" → "C. BERTIKIAN"
+    /// </summary>
+    private static string FormatearNombreCompacto(string nombreCompleto)
+    {
+        if (string.IsNullOrWhiteSpace(nombreCompleto))
+            return nombreCompleto;
+        
+        var partes = nombreCompleto.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (partes.Length == 0)
+            return nombreCompleto;
+        
+        if (partes.Length == 1)
+            return partes[0]; // Solo hay un nombre/apellido
+        
+        // Primera letra del nombre + resto de palabras (apellidos)
+        var inicial = partes[0][0].ToString().ToUpperInvariant();
+        var apellidos = string.Join(" ", partes.Skip(1));
+        
+        return $"{inicial}. {apellidos}";
     }
 }
