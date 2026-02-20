@@ -74,14 +74,14 @@ export const NotificacionItem = ({ notificacion, onMarcarLeida, onEliminar, onCl
       {/* Contenido */}
       <div className="relative z-10 flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <p className={`text-sm font-medium truncate ${!notificacion.leida ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+          <p className={`text-sm font-medium ${!notificacion.leida ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
             {notificacion.titulo}
           </p>
           {!notificacion.leida && (
             <span className="flex-shrink-0 h-2 w-2 rounded-full bg-cyan-500" />
           )}
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">
           {notificacion.mensaje}
         </p>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
