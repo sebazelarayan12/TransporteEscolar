@@ -4,7 +4,6 @@ import { useDashboardResumen } from './services/dashboard.queries';
 import { Spinner } from '../shared/ui/Spinner';
 import { Alert } from '../shared/ui/Alert';
 import { formatCurrency } from '../shared/utils/currency.helpers';
-import { NotificacionesDropdown } from '../notificaciones';
 
 const quickActions = [
   {
@@ -29,15 +28,6 @@ const quickActions = [
     variant: 'subtle',
   },
 ];
-
-const getNameInitials = (fullName: string) =>
-  fullName
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((segment) => segment.charAt(0))
-    .join('')
-    .toUpperCase() || '--';
 
 export const DashboardPage = () => {
   const { data: healthCheck } = useBackendHealth();
@@ -70,9 +60,6 @@ export const DashboardPage = () => {
     }
     return 'No se pudieron cargar los datos del dashboard.';
   };
-  const adminDisplayName = 'Esteban Albornoz';
-  const adminInitials = getNameInitials(adminDisplayName);
-
   return (
     <div className="min-h-full w-full bg-[#f6f8f8] dark:bg-[#0f1416] text-[#0f181a] dark:text-white overflow-x-hidden">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
@@ -83,17 +70,9 @@ export const DashboardPage = () => {
         )}
         {/* Header */}
         <div className="rounded-3xl border border-[#e1e8ec] bg-white px-5 py-4 shadow-sm dark:border-white/5 dark:bg-[#1f1f24]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#1d8ca5]">Transporte Escolar</p>
-              <h1 className="text-2xl font-bold text-[#0f181a] dark:text-white">Dashboard</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <NotificacionesDropdown />
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#007a8a] to-cyan-400 text-sm font-semibold uppercase tracking-wide text-white shadow-lg shadow-[#007a8a]/30 dark:border-white/30">
-                {adminInitials}
-              </div>
-            </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#1d8ca5]">Transporte Escolar</p>
+            <h1 className="text-2xl font-bold text-[#0f181a] dark:text-white">Dashboard</h1>
           </div>
         </div>
 

@@ -81,9 +81,9 @@ export const NotificacionesDropdown = () => {
         )}
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown - En mobile usar right-0 con ancho limitado, en desktop expandir */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900 z-50">
+        <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] max-w-96 rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900 z-50 sm:w-96">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-white/5">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notificaciones</h3>
