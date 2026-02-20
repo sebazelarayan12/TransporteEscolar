@@ -57,7 +57,7 @@ export const CardActionsMenu = ({ items, disabled = false }: CardActionsMenuProp
         disabled={disabled}
       >
         <span className="material-symbols-outlined text-[20px]">more_horiz</span>
-        <span className="sr-only">Acciones de la tarjeta</span>
+        <span className="sr-only">Acciones de la tarjeta!</span>
       </button>
 
       {isMenuOpen ? (
@@ -74,9 +74,8 @@ export const CardActionsMenu = ({ items, disabled = false }: CardActionsMenuProp
                 setIsOpen(false);
               }}
               disabled={item.disabled}
-              className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold transition hover:bg-gray-50 dark:hover:bg-white/5 ${
-                item.destructive ? 'text-rose-600 hover:text-rose-700 dark:text-rose-300 dark:hover:text-rose-200' : 'text-gray-700 dark:text-gray-200'
-              } ${item.disabled ? 'opacity-60 hover:bg-transparent dark:hover:bg-transparent' : ''}`}
+              className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold transition hover:bg-gray-50 dark:hover:bg-white/5 ${item.destructive ? 'text-rose-600 hover:text-rose-700 dark:text-rose-300 dark:hover:text-rose-200' : 'text-gray-700 dark:text-gray-200'
+                } ${item.disabled ? 'opacity-60 hover:bg-transparent dark:hover:bg-transparent' : ''}`}
             >
               <span>{item.label}</span>
               <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
