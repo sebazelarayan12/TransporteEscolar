@@ -141,7 +141,7 @@ export const MainLayout = () => {
         </header>
 
         {/* Desktop top bar - solo visible en lg+ */}
-        <header className="hidden lg:flex items-center justify-end gap-3 px-6 py-4 border-b border-gray-100 dark:border-white/5 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm">
+        <header className="hidden lg:flex items-center justify-end gap-3 px-6 py-4 border-b border-gray-100 dark:border-white/5 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm relative z-50">
           <NotificacionesDropdown />
           <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#007a8a] to-cyan-400 flex items-center justify-center text-sm font-bold text-white">
             EA
