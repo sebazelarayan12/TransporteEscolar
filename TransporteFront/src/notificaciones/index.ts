@@ -22,4 +22,4 @@ export type {
 } from './types/notificacion.types';
 
 // Constants
-export { NOTIFICACION_TIPOS, NOTIFICACION_CONFIG, POLLING_INTERVAL_MS } from './constants/notificacion.constants';
+export { NOTIFICACION_CONFIG, POLLING_INTERVAL_MS } from './constants/notificacion.constants';
