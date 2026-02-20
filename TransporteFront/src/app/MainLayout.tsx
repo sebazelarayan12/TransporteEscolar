@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Suspense, useState } from 'react';
 import { Spinner } from '../shared/ui/Spinner';
+import { NotificacionesDropdown } from '../notificaciones';
 
 const LayoutContentFallback = () => (
   <div className="flex min-h-[360px] w-full items-center justify-center px-6 py-10">
@@ -116,7 +117,7 @@ export const MainLayout = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-h-screen relative overflow-x-hidden w-full">
-        {/* Top Header - solo visible en mobile */}
+        {/* Top Header - mobile */}
         <header className="bg-[#fafafa] dark:bg-[#18181b] z-10 shrink-0 lg:hidden">
           <div className="flex items-center gap-3 px-4 py-3">
             {/* Hamburger menu */}
@@ -130,9 +131,20 @@ export const MainLayout = () => {
               </svg>
             </button>
             
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+            <h2 className="flex-1 text-base font-semibold text-gray-900 dark:text-white">
               {navigation.find((item) => isActive(item))?.name || 'Dashboard'}
             </h2>
+
+            {/* Notificaciones - siempre visibles en mobile */}
+            <NotificacionesDropdown />
+          </div>
+        </header>
+
+        {/* Desktop top bar - solo visible en lg+ */}
+        <header className="hidden lg:flex items-center justify-end gap-3 px-6 py-4 border-b border-gray-100 dark:border-white/5 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm relative z-50">
+          <NotificacionesDropdown />
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#007a8a] to-cyan-400 flex items-center justify-center text-sm font-bold text-white">
+            EA
           </div>
         </header>
 

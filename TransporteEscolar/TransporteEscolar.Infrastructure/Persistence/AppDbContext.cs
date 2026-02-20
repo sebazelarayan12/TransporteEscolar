@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TransporteEscolar.Domain.Entities;
 using TransporteEscolar.Infrastructure.Persistence.Configurations;
 
@@ -20,6 +20,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<GastoMensual> GastosMensuales => Set<GastoMensual>();
     public DbSet<IngresoFijoTemplate> IngresosFijosTemplates => Set<IngresoFijoTemplate>();
     public DbSet<IngresoMensual> IngresosMensuales => Set<IngresoMensual>();
+    public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -38,5 +39,6 @@ public sealed class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new GastoMensualConfiguration());
         modelBuilder.ApplyConfiguration(new IngresoFijoTemplateConfiguration());
         modelBuilder.ApplyConfiguration(new IngresoMensualConfiguration());
+        modelBuilder.ApplyConfiguration(new NotificacionConfiguration());
     }
 }

@@ -16,19 +16,22 @@ public class PasajeroService : IPasajeroService
     private readonly IPagoMensualService _pagoMensualService;
     private readonly IHorarioRepository _horarioRepository;
     private readonly IPasajeroHorarioRepository _pasajeroHorarioRepository;
+    private readonly INotificacionService _notificacionService;
 
     public PasajeroService(
         IPasajeroRepository repository,
         ITitularRepository titularRepository,
         IPagoMensualService pagoMensualService,
         IHorarioRepository horarioRepository,
-        IPasajeroHorarioRepository pasajeroHorarioRepository)
+        IPasajeroHorarioRepository pasajeroHorarioRepository,
+        INotificacionService notificacionService)
     {
         _repository = repository;
         _titularRepository = titularRepository;
         _pagoMensualService = pagoMensualService;
         _horarioRepository = horarioRepository;
         _pasajeroHorarioRepository = pasajeroHorarioRepository;
+        _notificacionService = notificacionService;
     }
 
     public async Task<PasajeroModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
@@ -137,6 +140,15 @@ public class PasajeroService : IPasajeroService
         });
 
         var pasajeroCompleto = await _repository.GetByIdAsync(pasajeroCreado.Id, cancellationToken) ?? pasajeroCreado;
+
+        // Crear notificación de pasajero creado
+        var titularNombre = $"{titular.NombreContacto} {titular.Apellido}".Trim();
+        await _notificacionService.CrearNotificacionPasajeroCreadoAsync(
+            pasajeroCompleto.Nombre,
+            titularNombre,
+            pasajeroCompleto.Id,
+            cancellationToken);
+
         return PasajeroMapper.MapearAResponse(pasajeroCompleto);
     }
 

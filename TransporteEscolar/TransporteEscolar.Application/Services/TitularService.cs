@@ -11,11 +11,16 @@ public class TitularService : ITitularService
 {
     private readonly ITitularRepository _repository;
     private readonly IPasajeroRepository _pasajeroRepository;
+    private readonly INotificacionService _notificacionService;
 
-    public TitularService(ITitularRepository repository, IPasajeroRepository pasajeroRepository)
+    public TitularService(
+        ITitularRepository repository, 
+        IPasajeroRepository pasajeroRepository,
+        INotificacionService notificacionService)
     {
         _repository = repository;
         _pasajeroRepository = pasajeroRepository;
+        _notificacionService = notificacionService;
     }
 
     public async Task<TitularModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
@@ -77,6 +82,13 @@ public class TitularService : ITitularService
             dto.MontoMensualPactado,
             dto.FechaAlta);
         var titularCreado = await _repository.AddAsync(titular, cancellationToken);
+
+        // Crear notificación de titular creado
+        var titularNombre = $"{titularCreado.NombreContacto} {titularCreado.Apellido}".Trim();
+        await _notificacionService.CrearNotificacionTitularCreadoAsync(
+            titularNombre,
+            titularCreado.Id,
+            cancellationToken);
         
         return MapearAResponse(titularCreado);
     }

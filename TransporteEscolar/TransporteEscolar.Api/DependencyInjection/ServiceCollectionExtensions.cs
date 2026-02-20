@@ -19,6 +19,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IHorarioRepository, HorarioRepository>();
         services.AddScoped<IGastoRepository, GastoRepository>();
         services.AddScoped<IIngresoRepository, IngresoRepository>();
+        services.AddScoped<INotificacionRepository, NotificacionRepository>();
         
         // Servicios
         services.AddScoped<ITitularService, TitularService>();
@@ -29,6 +30,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IHorarioService, HorarioService>();
         services.AddScoped<IGastoService, GastoService>();
         services.AddScoped<IIngresoService, IngresoService>();
+        services.AddScoped<INotificacionService, NotificacionService>();
 
         // Gestión de Transacciones
         services.AddScoped<ITransactionManager, TransactionManager>();
