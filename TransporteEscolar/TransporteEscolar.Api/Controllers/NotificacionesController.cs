@@ -73,4 +73,15 @@ public class NotificacionesController : ControllerBase
         _logger.LogInformation("Notificación {Id} eliminada", id);
         return NoContent();
     }
+
+    /// <summary>
+    /// Limpia notificaciones antiguas (leídas > 7 días, no leídas > 30 días)
+    /// </summary>
+    [HttpPost("limpiar")]
+    public async Task<ActionResult<object>> LimpiarAntiguas(CancellationToken cancellationToken)
+    {
+        var eliminadas = await _service.LimpiarNotificacionesAntiguasAsync(cancellationToken);
+        _logger.LogInformation("Limpieza de notificaciones: {Eliminadas} eliminadas", eliminadas);
+        return Ok(new { eliminadas });
+    }
 }

@@ -6,6 +6,7 @@ import {
   useNotificacionesCountNoLeidas,
   useMarcarNotificacionLeida,
   useMarcarTodasNotificacionesLeidas,
+  useEliminarNotificacion,
 } from '../services/notificaciones.queries';
 
 export const NotificacionesDropdown = () => {
@@ -16,6 +17,7 @@ export const NotificacionesDropdown = () => {
   const { data: notificacionesData, isLoading, refetch } = useNotificaciones({ pageSize: 10 });
   const marcarLeida = useMarcarNotificacionLeida();
   const marcarTodasLeidas = useMarcarTodasNotificacionesLeidas();
+  const eliminarNotificacion = useEliminarNotificacion();
 
   const count = countData?.count ?? 0;
   const notificaciones = notificacionesData?.data ?? [];
@@ -46,6 +48,10 @@ export const NotificacionesDropdown = () => {
 
   const handleMarcarLeida = (id: number) => {
     marcarLeida.mutate(id);
+  };
+
+  const handleEliminar = (id: number) => {
+    eliminarNotificacion.mutate(id);
   };
 
   const handleMarcarTodasLeidas = () => {
@@ -119,6 +125,7 @@ export const NotificacionesDropdown = () => {
                     key={notificacion.id}
                     notificacion={notificacion}
                     onMarcarLeida={handleMarcarLeida}
+                    onEliminar={handleEliminar}
                     onClose={handleClose}
                   />
                 ))}

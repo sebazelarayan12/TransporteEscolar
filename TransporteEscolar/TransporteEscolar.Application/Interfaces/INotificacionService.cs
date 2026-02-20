@@ -16,4 +16,5 @@ public interface INotificacionService
     Task CrearNotificacionReinscripcionAsync(string titularNombre, int cantidadPasajeros, int titularId, CancellationToken cancellationToken = default);
     Task CrearNotificacionTitularCreadoAsync(string titularNombre, int titularId, CancellationToken cancellationToken = default);
     Task CrearNotificacionPasajeroCreadoAsync(string pasajeroNombre, string titularNombre, int pasajeroId, CancellationToken cancellationToken = default);
+    Task<int> LimpiarNotificacionesAntiguasAsync(CancellationToken cancellationToken = default);
 }

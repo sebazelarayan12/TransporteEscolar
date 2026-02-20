@@ -72,6 +72,9 @@ public class NotificacionService : INotificacionService
             pagoMensualId);
         
         await _repository.AddAsync(notificacion, cancellationToken);
+        
+        // Limpieza oportunista de notificaciones antiguas
+        await LimpiarNotificacionesAntiguasAsync(cancellationToken);
     }
 
     public async Task CrearNotificacionAjusteMontoAsync(
@@ -88,6 +91,9 @@ public class NotificacionService : INotificacionService
             titularId);
         
         await _repository.AddAsync(notificacion, cancellationToken);
+        
+        // Limpieza oportunista de notificaciones antiguas
+        await LimpiarNotificacionesAntiguasAsync(cancellationToken);
     }
 
     public async Task CrearNotificacionReinscripcionAsync(
@@ -108,6 +114,9 @@ public class NotificacionService : INotificacionService
             titularId);
         
         await _repository.AddAsync(notificacion, cancellationToken);
+        
+        // Limpieza oportunista de notificaciones antiguas
+        await LimpiarNotificacionesAntiguasAsync(cancellationToken);
     }
 
     public async Task CrearNotificacionTitularCreadoAsync(
@@ -123,6 +132,9 @@ public class NotificacionService : INotificacionService
             titularId);
         
         await _repository.AddAsync(notificacion, cancellationToken);
+        
+        // Limpieza oportunista de notificaciones antiguas
+        await LimpiarNotificacionesAntiguasAsync(cancellationToken);
     }
 
     public async Task CrearNotificacionPasajeroCreadoAsync(
@@ -139,6 +151,14 @@ public class NotificacionService : INotificacionService
             pasajeroId);
         
         await _repository.AddAsync(notificacion, cancellationToken);
+        
+        // Limpieza oportunista de notificaciones antiguas
+        await LimpiarNotificacionesAntiguasAsync(cancellationToken);
+    }
+
+    public async Task<int> LimpiarNotificacionesAntiguasAsync(CancellationToken cancellationToken = default)
+    {
+        return await _repository.LimpiarAntiguasAsync(cancellationToken);
     }
 
     private static NotificacionModel.Response MapearAResponse(Notificacion n)

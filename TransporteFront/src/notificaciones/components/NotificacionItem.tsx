@@ -5,6 +5,7 @@ import { NOTIFICACION_CONFIG } from '../constants/notificacion.constants';
 interface NotificacionItemProps {
   notificacion: NotificacionResponse;
   onMarcarLeida: (id: number) => void;
+  onEliminar: (id: number) => void;
   onClose: () => void;
 }
 
@@ -26,7 +27,7 @@ const formatTimeAgo = (fechaIso: string): string => {
   return `Hace ${diffDays} dias`;
 };
 
-export const NotificacionItem = ({ notificacion, onMarcarLeida, onClose }: NotificacionItemProps) => {
+export const NotificacionItem = ({ notificacion, onMarcarLeida, onEliminar, onClose }: NotificacionItemProps) => {
   const navigate = useNavigate();
   const config = NOTIFICACION_CONFIG[notificacion.tipo];
 
@@ -42,25 +43,36 @@ export const NotificacionItem = ({ notificacion, onMarcarLeida, onClose }: Notif
     }
   };
 
+  const handleEliminar = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEliminar(notificacion.id);
+  };
+
   return (
-    <button
-      type="button"
-      onClick={handleClick}
+    <div
       className={`
-        w-full flex items-start gap-3 p-3 rounded-xl text-left transition-colors
+        group relative w-full flex items-start gap-3 p-3 rounded-xl text-left transition-colors
         hover:bg-gray-50 dark:hover:bg-white/5
         ${!notificacion.leida ? 'bg-cyan-500/5 dark:bg-cyan-500/10' : ''}
       `}
     >
+      {/* Botón clickeable para toda el área */}
+      <button
+        type="button"
+        onClick={handleClick}
+        className="absolute inset-0 z-0"
+        aria-label="Ver notificación"
+      />
+
       {/* Icono */}
-      <div className={`flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl ${config.bgColorClass}`}>
+      <div className={`relative z-10 flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl ${config.bgColorClass}`}>
         <span className={`material-symbols-outlined text-xl ${config.colorClass}`}>
           {config.icon}
         </span>
       </div>
 
       {/* Contenido */}
-      <div className="flex-1 min-w-0">
+      <div className="relative z-10 flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <p className={`text-sm font-medium truncate ${!notificacion.leida ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
             {notificacion.titulo}
@@ -76,6 +88,16 @@ export const NotificacionItem = ({ notificacion, onMarcarLeida, onClose }: Notif
           {formatTimeAgo(notificacion.fechaCreacion)}
         </p>
       </div>
-    </button>
+
+      {/* Botón eliminar */}
+      <button
+        type="button"
+        onClick={handleEliminar}
+        className="relative z-20 flex-shrink-0 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+        aria-label="Eliminar notificación"
+      >
+        <span className="material-symbols-outlined text-lg">close</span>
+      </button>
+    </div>
   );
 };

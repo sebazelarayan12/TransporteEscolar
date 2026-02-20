@@ -11,4 +11,5 @@ public interface INotificacionRepository
     Task UpdateAsync(Notificacion notificacion, CancellationToken cancellationToken = default);
     Task MarcarTodasComoLeidasAsync(CancellationToken cancellationToken = default);
     Task DeleteAsync(int id, CancellationToken cancellationToken = default);
+    Task<int> LimpiarAntiguasAsync(CancellationToken cancellationToken = default);
 }

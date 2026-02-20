@@ -74,4 +74,23 @@ public class NotificacionRepository : INotificacionRepository
             .Where(n => n.Id == id)
             .ExecuteDeleteAsync(cancellationToken);
     }
+
+    public async Task<int> LimpiarAntiguasAsync(CancellationToken cancellationToken = default)
+    {
+        var ahora = DateTime.UtcNow;
+        var limiteLeidas = ahora.AddDays(-7);      // 7 días para leídas
+        var limiteNoLeidas = ahora.AddDays(-30);   // 30 días para no leídas
+
+        // Eliminar leídas con más de 7 días desde lectura
+        var eliminadasLeidas = await _context.Notificaciones
+            .Where(n => n.Leida && n.FechaLectura != null && n.FechaLectura < limiteLeidas)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        // Eliminar no leídas con más de 30 días desde creación
+        var eliminadasNoLeidas = await _context.Notificaciones
+            .Where(n => !n.Leida && n.FechaCreacion < limiteNoLeidas)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        return eliminadasLeidas + eliminadasNoLeidas;
+    }
 }
