@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useReducer } from 'react';
 import { LoadingScreen, MobileDrawer, Modal } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
 import { useAgregarHorarioPasajero, useEliminarHorarioPasajero, usePasajerosActivos } from '../../pasajeros/services/pasajeros.queries';
@@ -35,17 +35,118 @@ const hasSelectionDifferences = (current: TransporteSelectionState, baseline: Tr
     return false;
   });
 
+type HorarioDrawerState = {
+  selectedHorarioId: number | null;
+  drawerOpen: boolean;
+  search: string;
+  selectedTransporte: TransporteTipo;
+  selectedPasajerosPorTransporte: TransporteSelectionState;
+  snapshotPorTransporte: TransporteSelectionState;
+  isGestionMode: boolean;
+  isPersisting: boolean;
+};
+
+type HorarioDrawerAction =
+  | { type: 'openHorario'; horarioId: number; transporte: TransporteTipo }
+  | { type: 'closeDrawer' }
+  | { type: 'setSearch'; value: string }
+  | { type: 'setTransporte'; transporte: TransporteTipo }
+  | { type: 'toggleGestionMode' }
+  | { type: 'togglePasajero'; pasajeroId: number }
+  | { type: 'syncSelection'; selection: TransporteSelectionState }
+  | { type: 'startPersist' }
+  | { type: 'finishPersist' };
+
+const createInitialDrawerState = (): HorarioDrawerState => ({
+  selectedHorarioId: null,
+  drawerOpen: false,
+  search: '',
+  selectedTransporte: TRANSPORTE_TIPOS.UNO,
+  selectedPasajerosPorTransporte: createEmptySelectionState(),
+  snapshotPorTransporte: createEmptySelectionState(),
+  isGestionMode: false,
+  isPersisting: false,
+});
+
+const horariosReducer = (state: HorarioDrawerState, action: HorarioDrawerAction): HorarioDrawerState => {
+  switch (action.type) {
+    case 'openHorario':
+      return {
+        ...state,
+        selectedHorarioId: action.horarioId,
+        selectedTransporte: action.transporte,
+        drawerOpen: true,
+        search: '',
+        selectedPasajerosPorTransporte: createEmptySelectionState(),
+        snapshotPorTransporte: createEmptySelectionState(),
+      };
+    case 'closeDrawer':
+      return {
+        ...state,
+        drawerOpen: false,
+        selectedHorarioId: null,
+        selectedTransporte: TRANSPORTE_TIPOS.UNO,
+        selectedPasajerosPorTransporte: createEmptySelectionState(),
+        snapshotPorTransporte: createEmptySelectionState(),
+        search: '',
+      };
+    case 'setSearch':
+      return { ...state, search: action.value };
+    case 'setTransporte':
+      return { ...state, selectedTransporte: action.transporte };
+    case 'toggleGestionMode':
+      if (state.isGestionMode) {
+        return {
+          ...state,
+          isGestionMode: false,
+          selectedPasajerosPorTransporte: cloneSelectionState(state.snapshotPorTransporte),
+        };
+      }
+      return { ...state, isGestionMode: true };
+    case 'togglePasajero': {
+      if (!state.isGestionMode) {
+        return state;
+      }
+      const nextSelection = cloneSelectionState(state.selectedPasajerosPorTransporte);
+      const targetSet = nextSelection[state.selectedTransporte];
+      if (targetSet.has(action.pasajeroId)) {
+        targetSet.delete(action.pasajeroId);
+      } else {
+        targetSet.add(action.pasajeroId);
+      }
+      return { ...state, selectedPasajerosPorTransporte: nextSelection };
+    }
+    case 'syncSelection':
+      return {
+        ...state,
+        selectedPasajerosPorTransporte: action.selection,
+        snapshotPorTransporte: cloneSelectionState(action.selection),
+      };
+    case 'startPersist':
+      return { ...state, isPersisting: true };
+    case 'finishPersist':
+      return { ...state, isPersisting: false };
+    default:
+      return state;
+  }
+};
+
 export const HorariosPage = () => {
+  const [drawerState, dispatch] = useReducer(horariosReducer, undefined, createInitialDrawerState);
+  const {
+    selectedHorarioId,
+    drawerOpen,
+    search,
+    selectedTransporte,
+    selectedPasajerosPorTransporte,
+    snapshotPorTransporte,
+    isGestionMode,
+    isPersisting,
+  } = drawerState;
+
   const { data: horarios, isLoading, isError, refetch } = useHorarios();
   const ordenados = sortHorariosByOrden(horarios);
 
-  const [selectedHorarioId, setSelectedHorarioId] = useState<number | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [selectedTransporte, setSelectedTransporte] = useState<TransporteTipo>(TRANSPORTE_TIPOS.UNO);
-  const [selectedPasajerosPorTransporte, setSelectedPasajerosPorTransporte] = useState<TransporteSelectionState>(() => createEmptySelectionState());
-  const [snapshotPorTransporte, setSnapshotPorTransporte] = useState<TransporteSelectionState>(() => createEmptySelectionState());
-  const [isGestionMode, setIsGestionMode] = useState(false);
   const { showSuccess, showError } = useToast();
 
   const syncSelection = (data: HorarioPasajerosResponse) => {
@@ -62,8 +163,7 @@ export const HorariosPage = () => {
         }
       }
     }
-    setSelectedPasajerosPorTransporte(next);
-    setSnapshotPorTransporte(cloneSelectionState(next));
+    dispatch({ type: 'syncSelection', selection: next });
   };
 
   const { data: pasajerosActivos, isLoading: isLoadingPasajeros } = usePasajerosActivos();
@@ -73,7 +173,6 @@ export const HorariosPage = () => {
   });
   const agregarHorarioPasajero = useAgregarHorarioPasajero();
   const eliminarHorarioPasajero = useEliminarHorarioPasajero();
-  const [isPersisting, setIsPersisting] = useState(false);
 
   const filteredPasajeros = (() => {
     if (!pasajerosActivos) return [];
@@ -88,47 +187,22 @@ export const HorariosPage = () => {
 
   const handleToggle = (pasajeroId: number) => {
     if (!isGestionMode) return;
-    setSelectedPasajerosPorTransporte((prev) => {
-      const next = cloneSelectionState(prev);
-      const targetSet = next[selectedTransporte];
-      if (targetSet.has(pasajeroId)) {
-        targetSet.delete(pasajeroId);
-      } else {
-        targetSet.add(pasajeroId);
-      }
-      return next;
-    });
-  };
-
-  const resetSelectionState = () => {
-    setSelectedPasajerosPorTransporte(createEmptySelectionState());
-    setSnapshotPorTransporte(createEmptySelectionState());
+    dispatch({ type: 'togglePasajero', pasajeroId });
   };
 
   const handleOpenHorario = (horarioId: number, transporte: TransporteTipo) => {
-    setSelectedHorarioId(horarioId);
-    setSelectedTransporte(transporte);
-    resetSelectionState();
-    setDrawerOpen(true);
-    setSearch('');
+    dispatch({ type: 'openHorario', horarioId, transporte });
   };
 
   const handleCloseDrawer = () => {
-    setDrawerOpen(false);
-    setSelectedHorarioId(null);
-    setSelectedTransporte(TRANSPORTE_TIPOS.UNO);
-    resetSelectionState();
-    setSearch('');
+    dispatch({ type: 'closeDrawer' });
   };
 
   const selectionChanged = hasSelectionDifferences(selectedPasajerosPorTransporte, snapshotPorTransporte);
   const hasChanges = isGestionMode && selectionChanged;
 
   const handleGestionModeToggle = () => {
-    if (isGestionMode) {
-      setSelectedPasajerosPorTransporte(cloneSelectionState(snapshotPorTransporte));
-    }
-    setIsGestionMode((prev) => !prev);
+    dispatch({ type: 'toggleGestionMode' });
   };
 
   const handleSave = async () => {
@@ -150,7 +224,7 @@ export const HorariosPage = () => {
     if (!hasAnyChange) return;
 
     try {
-      setIsPersisting(true);
+      dispatch({ type: 'startPersist' });
       for (const diff of diffs) {
         for (const pasajeroId of diff.additions) {
           const priorityIndex = diff.order.indexOf(pasajeroId);
@@ -173,7 +247,7 @@ export const HorariosPage = () => {
       const message = error && typeof error === 'object' && 'message' in error ? String(error.message) : 'Error al guardar los cambios';
       showError(message);
     } finally {
-      setIsPersisting(false);
+      dispatch({ type: 'finishPersist' });
     }
   };
 
@@ -202,7 +276,7 @@ export const HorariosPage = () => {
       selectedHorario={selectedHorario}
       detalleHorario={detalleHorario}
       search={search}
-      onSearchChange={setSearch}
+      onSearchChange={(value) => dispatch({ type: 'setSearch', value })}
       filteredPasajeros={filteredPasajeros}
       selectedPasajeros={activeSelectedPasajeros}
       onTogglePasajero={handleToggle}
@@ -215,7 +289,7 @@ export const HorariosPage = () => {
       targetHorarioId={selectedHorarioId}
       isGestionMode={isGestionMode}
       activeTransporte={selectedTransporte}
-      onTransporteChange={setSelectedTransporte}
+      onTransporteChange={(transporte) => dispatch({ type: 'setTransporte', transporte })}
       selectedCounts={selectedCounts}
       conteosPorTransporte={conteosDetalle}
     />

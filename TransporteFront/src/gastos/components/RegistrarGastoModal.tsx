@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 import { useForm, useWatch, type FieldError, type Resolver, type SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Modal, Button, Spinner } from '../../shared/ui';
+import { Modal } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
 import { useActualizarGastoFijo, useCrearGastoFijo, useCrearGastoVariable } from '../services/gastos.queries';
 import {
@@ -15,6 +15,10 @@ import {
   type GastoTipo,
 } from '../types/gastos.types';
 import { MEDIOS_PAGO } from '../../pagos/constants/medios-pago.constants';
+import { GastoModalHeader } from './GastoModalHeader';
+import { GastoTipoSection } from './GastoTipoSection';
+import { GastoFormFields } from './GastoFormFields';
+import { GastoModalActions } from './GastoModalActions';
 
 interface RegistrarGastoModalProps {
   isOpen: boolean;
@@ -69,7 +73,7 @@ const registrarGastoSchemaBase = z.discriminatedUnion('tipo', [
   }),
 ]);
 
-type RegistrarGastoFormData = z.infer<typeof registrarGastoSchemaBase>;
+export type RegistrarGastoFormData = z.infer<typeof registrarGastoSchemaBase>;
 
 const buildSchemaForPeriod = (mes: number, anio: number) => {
   return registrarGastoSchemaBase.superRefine((data, ctx) => {
@@ -126,6 +130,17 @@ export const RegistrarGastoModal = ({
   initialData,
   templateId,
 }: RegistrarGastoModalProps) => {
+  const fieldIdPrefix = useId();
+  const fieldIds = {
+    categoria: `${fieldIdPrefix}-categoria`,
+    medioPago: `${fieldIdPrefix}-medio-pago`,
+    descripcion: `${fieldIdPrefix}-descripcion`,
+    monto: `${fieldIdPrefix}-monto`,
+    diaAplicacion: `${fieldIdPrefix}-dia-aplicacion`,
+    fecha: `${fieldIdPrefix}-fecha`,
+    estadoPago: `${fieldIdPrefix}-estado-pago`,
+    observaciones: `${fieldIdPrefix}-observaciones`,
+  } as const;
   const schema = buildSchemaForPeriod(mes, anio);
   const resolver = zodResolver(schema) as Resolver<RegistrarGastoFormData>;
   const isEditMode = modo === 'edit';
@@ -263,225 +278,29 @@ export const RegistrarGastoModal = ({
       maxWidth="2xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 dark:bg-white/5 dark:text-slate-200">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px] text-teal-600">calendar_month</span>
-            Periodo seleccionado: <span className="font-bold text-gray-900 dark:text-white">{periodLabel}</span>
-          </div>
-          <span className="text-xs uppercase tracking-widest text-teal-600">Mes {mes} / {anio}</span>
-        </div>
+        <GastoModalHeader periodLabel={periodLabel} mes={mes} anio={anio} />
 
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-teal-600">Tipo de gasto</p>
-          {isEditMode ? (
-            <div className="mt-3 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
-              <span className="material-symbols-outlined text-[20px]">info</span>
-              Editás la plantilla del gasto fijo seleccionado. Los cambios impactan en este mes y los próximos.
-            </div>
-          ) : (
-            <div className="mt-3 inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm dark:border-[#3f3f46] dark:bg-[#1f1f24]">
-              {([GASTO_TIPOS.VARIABLE, GASTO_TIPOS.FIJO] as const).map((tipo) => {
-                const isActive = selectedTipo === tipo;
-                const icon = tipo === GASTO_TIPOS.VARIABLE ? 'dynamic_form' : 'deployed_code';
-                return (
-                  <button
-                    key={tipo}
-                    type="button"
-                    onClick={() => {
-                      setValue('tipo', tipo);
-                    }}
-                    className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                      isActive
-                        ? 'bg-teal-600 text-white shadow'
-                        : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[18px]">{icon}</span>
-                    {tipo}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <GastoTipoSection
+          isEditMode={isEditMode}
+          selectedTipo={selectedTipo}
+          onSelectTipo={(tipo) => {
+            setValue('tipo', tipo);
+          }}
+        />
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-              Categoría <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register('categoria')}
-              disabled={isPending}
-              className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                errors.categoria ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-              }`}
-            >
-              <option value="">Seleccioná una categoría</option>
-              {categorias.map((categoria) => (
-                <option key={categoria.value} value={categoria.value}>
-                  {categoria.label}
-                </option>
-              ))}
-            </select>
-            {errors.categoria ? (
-              <p className="mt-1 text-xs text-red-600">{errors.categoria.message}</p>
-            ) : null}
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-              Medio de pago <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register('medioPago')}
-              disabled={isPending}
-              className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                errors.medioPago ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-              }`}
-            >
-              {Object.values(MEDIOS_PAGO).map((medio) => (
-                <option key={medio} value={medio}>
-                  {medio}
-                </option>
-              ))}
-            </select>
-            {errors.medioPago ? (
-              <p className="mt-1 text-xs text-red-600">{errors.medioPago.message}</p>
-            ) : null}
-          </div>
-        </div>
+        <GastoFormFields
+          register={register}
+          errors={errors}
+          typedErrors={typedErrors}
+          fieldIds={fieldIds}
+          isPending={isPending}
+          categorias={categorias}
+          selectedTipo={selectedTipo}
+          minDate={min}
+          maxDate={max}
+        />
 
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-            Descripción <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            {...register('descripcion')}
-            disabled={isPending}
-            placeholder="Ej: Ajuste de combustible, renovación de seguro, etc."
-            className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-              errors.descripcion ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-            }`}
-          />
-          {errors.descripcion ? (
-            <p className="mt-1 text-xs text-red-600">{errors.descripcion.message}</p>
-          ) : null}
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-              Monto <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">
-                $
-              </span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                {...register('monto', { valueAsNumber: true })}
-                disabled={isPending}
-                className={`w-full rounded-xl border pl-8 pr-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                  errors.monto ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-                }`}
-              />
-            </div>
-            {errors.monto ? <p className="mt-1 text-xs text-red-600">{errors.monto.message}</p> : null}
-          </div>
-
-          {selectedTipo === GASTO_TIPOS.FIJO ? (
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-                Día de aplicación <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={31}
-            {...register('diaDeAplicacion', { valueAsNumber: true })}
-                disabled={isPending}
-                className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                  typedErrors.diaDeAplicacion ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-                }`}
-              />
-              <p className="mt-1 text-xs text-gray-500">Usamos este día para programar el registro automático del gasto fijo.</p>
-              {typedErrors.diaDeAplicacion ? (
-                <p className="mt-1 text-xs text-red-600">{typedErrors.diaDeAplicacion.message}</p>
-              ) : null}
-            </div>
-          ) : (
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-                Fecha del gasto <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                min={min}
-                max={max}
-                {...register('fecha')}
-                disabled={isPending}
-                className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                  typedErrors.fecha ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-                }`}
-              />
-              <p className="mt-1 text-xs text-gray-500">Solo se permiten fechas dentro del mes filtrado.</p>
-              {typedErrors.fecha ? <p className="mt-1 text-xs text-red-600">{typedErrors.fecha.message}</p> : null}
-            </div>
-          )}
-        </div>
-
-        {selectedTipo === GASTO_TIPOS.VARIABLE ? (
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-              Estado del pago
-            </label>
-            <select
-              {...register('estadoPago')}
-              disabled={isPending}
-              className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                typedErrors.estadoPago ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-              }`}
-            >
-              {Object.values(GASTO_ESTADOS).map((estado) => (
-                <option key={estado} value={estado}>
-                  {estado}
-                </option>
-              ))}
-            </select>
-            {typedErrors.estadoPago ? <p className="mt-1 text-xs text-red-600">{typedErrors.estadoPago.message}</p> : null}
-          </div>
-        ) : null}
-
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-            Observaciones
-          </label>
-          <textarea
-            rows={3}
-            {...register('observaciones')}
-            disabled={isPending}
-            placeholder="Notas internas, folio de factura, proveedor, etc."
-            className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-              errors.observaciones ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-            }`}
-          />
-          {errors.observaciones ? (
-            <p className="mt-1 text-xs text-red-600">{errors.observaciones.message}</p>
-          ) : null}
-        </div>
-
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={closeModal} disabled={isPending}>
-            Cancelar
-          </Button>
-          <Button type="submit" variant="brand" disabled={isPending} className="inline-flex items-center gap-2">
-            {isPending ? <Spinner size="sm" /> : <span className="material-symbols-outlined text-[18px]">task_alt</span>}
-            {isEditMode ? 'Guardar cambios' : 'Guardar'}
-          </Button>
-        </div>
+        <GastoModalActions isPending={isPending} isEditMode={isEditMode} onCancel={closeModal} />
       </form>
     </Modal>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useReducer, useState } from 'react';
 import { useTitulares } from '../services/titulares.queries';
 import { LoadingScreen, ErrorState, EmptyState, SearchInput } from '../../shared/ui';
 import { TitularTableHeader, TitularTableRow, TitularDetailPanel } from '../components';
@@ -13,26 +13,73 @@ const STATUS_FILTERS = {
 
 type StatusFilter = (typeof STATUS_FILTERS)[keyof typeof STATUS_FILTERS];
 
+type PanelState = {
+  selectedTitular: TitularResponse | null;
+  showMobileDrawer: boolean;
+  isPanelExpanded: boolean;
+};
+
+type PanelAction =
+  | { type: 'selectTitular'; payload: TitularResponse }
+  | { type: 'closeMobileDrawer' }
+  | { type: 'closePanel' }
+  | { type: 'expandPanel' };
+
+const PANEL_INITIAL_STATE: PanelState = {
+  selectedTitular: null,
+  showMobileDrawer: false,
+  isPanelExpanded: false,
+};
+
+const panelReducer = (state: PanelState, action: PanelAction): PanelState => {
+  switch (action.type) {
+    case 'selectTitular':
+      return {
+        ...state,
+        selectedTitular: action.payload,
+        showMobileDrawer: true,
+        isPanelExpanded: true,
+      };
+    case 'closeMobileDrawer':
+      return {
+        ...state,
+        showMobileDrawer: false,
+      };
+    case 'closePanel':
+      return {
+        ...state,
+        isPanelExpanded: false,
+      };
+    case 'expandPanel':
+      if (!state.selectedTitular) {
+        return state;
+      }
+      return {
+        ...state,
+        isPanelExpanded: true,
+      };
+    default:
+      return state;
+  }
+};
+
 export const TitularesListPage = () => {
   const { data: titulares, isLoading, error } = useTitulares();
-  const [selectedTitular, setSelectedTitular] = useState<TitularResponse | null>(null);
+  const [panelState, dispatchPanel] = useReducer(panelReducer, PANEL_INITIAL_STATE);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
-  const [isPanelExpanded, setIsPanelExpanded] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(STATUS_FILTERS.ACTIVE);
+  const { selectedTitular, showMobileDrawer, isPanelExpanded } = panelState;
 
   const handleSelectTitular = (titular: TitularResponse) => {
-    setSelectedTitular(titular);
-    setShowMobileDrawer(true);
-    setIsPanelExpanded(true);
+    dispatchPanel({ type: 'selectTitular', payload: titular });
   };
 
   const handleCloseMobileDrawer = () => {
-    setShowMobileDrawer(false);
+    dispatchPanel({ type: 'closeMobileDrawer' });
   };
 
   const handleCloseSidePanel = () => {
-    setIsPanelExpanded(false);
+    dispatchPanel({ type: 'closePanel' });
   };
 
   const titularesList = titulares ?? [];
@@ -151,16 +198,25 @@ export const TitularesListPage = () => {
 
           {/* Overlay para LG cuando el panel está expandido */}
           {isPanelExpanded && selectedTitular && (
-            <div 
+            <div
               className="fixed inset-0 z-40 hidden bg-black/50 transition-opacity duration-300 lg:block xl:hidden"
+              role="button"
+              tabIndex={0}
+              aria-label="Cerrar panel de detalle de titular"
               onClick={handleCloseSidePanel}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  handleCloseSidePanel();
+                }
+              }}
             />
           )}
 
           {/* Botón flotante para abrir panel en LG */}
           {selectedTitular && !isPanelExpanded && (
             <button
-              onClick={() => setIsPanelExpanded(true)}
+              onClick={() => dispatchPanel({ type: 'expandPanel' })}
               className="fixed bottom-6 right-6 z-30 hidden items-center gap-2 rounded-full bg-[#007a8a] px-6 py-3 text-white shadow-lg transition-all hover:scale-105 hover:bg-[#00626e] lg:flex xl:hidden"
             >
               <span className="material-symbols-outlined text-[20px]">info</span>
@@ -171,9 +227,18 @@ export const TitularesListPage = () => {
           {/* Mobile Drawer - From Bottom */}
           {showMobileDrawer && selectedTitular && (
             <div className="fixed inset-0 z-50 flex items-end lg:hidden">
-              <div 
+              <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                role="button"
+                tabIndex={0}
+                aria-label="Cerrar panel flotante del titular"
                 onClick={handleCloseMobileDrawer}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleCloseMobileDrawer();
+                  }
+                }}
               />
               <div className="relative flex max-h-[85vh] w-full animate-slide-up flex-col rounded-t-3xl bg-white shadow-2xl dark:bg-[#27272a]">
                 <div className="flex justify-center pb-2 pt-3">

@@ -8,9 +8,12 @@ interface TitularComboboxProps {
   error?: string;
   disabled?: boolean;
   initialSearchTerm?: string;
+  inputId?: string;
+  ariaDescribedBy?: string;
+  ariaInvalid?: boolean;
 }
 
-export const TitularCombobox = ({ titulares, value, onChange, error, disabled, initialSearchTerm }: TitularComboboxProps) => {
+export const TitularCombobox = ({ titulares, value, onChange, error, disabled, initialSearchTerm, inputId, ariaDescribedBy, ariaInvalid }: TitularComboboxProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const normalizedInitialSearchTerm = initialSearchTerm?.trim() ?? '';
   const [searchTerm, setSearchTerm] = useState(normalizedInitialSearchTerm);
@@ -50,6 +53,7 @@ export const TitularCombobox = ({ titulares, value, onChange, error, disabled, i
     <div ref={containerRef} className="relative">
       <input
         type="text"
+        id={inputId}
         value={inputValue}
         onChange={(e) => {
           setSearchTerm(e.target.value);
@@ -58,6 +62,8 @@ export const TitularCombobox = ({ titulares, value, onChange, error, disabled, i
         onFocus={() => setIsOpen(true)}
         disabled={disabled}
         placeholder="Buscar titular por apellido o nombre..."
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid}
         className={`
           w-full px-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
           bg-white dark:bg-[#27272a]

@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useForm, type UseFormRegisterReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -50,12 +50,6 @@ export const AjustarMontoTitularModal = ({ isOpen, onClose, titular }: AjustarMo
     mode: 'onChange',
     defaultValues: buildDefaultValues(titular),
   });
-
-  useEffect(() => {
-    if (isOpen) {
-      reset(buildDefaultValues(titular));
-    }
-  }, [isOpen, titular, reset]);
 
   const handleModalClose = () => {
     if (ajustarMontoTitular.isPending) {

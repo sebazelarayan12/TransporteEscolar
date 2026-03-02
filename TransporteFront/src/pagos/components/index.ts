@@ -8,3 +8,7 @@ export { PaymentList } from './PaymentList';
 export { RegistrarPagoModal } from './RegistrarPagoModal';
 export { PagosStatusFilters } from './PagosStatusFilters';
 export { PagoDetalleModal } from './PagoDetalleModal';
+export { MovimientosFiltersCard } from './movimientos/MovimientosFiltersCard';
+export { PagosMovimientosHeader } from './movimientos/PagosMovimientosHeader';
+export { MovimientosResumenCards } from './movimientos/MovimientosResumenCards';
+export { MovimientosTableSection } from './movimientos/MovimientosTableSection';

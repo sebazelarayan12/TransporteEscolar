@@ -22,6 +22,84 @@ const statusConfig: Record<ReinscripcionEstado, { label: string; chip: string; c
   },
 };
 
+const actionButtonsWrapperClass = 'flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2';
+const actionButtonBaseClass = 'inline-flex w-full items-center justify-center rounded-lg px-3 py-1.5 text-center text-xs font-semibold text-white transition sm:w-auto';
+
+interface ReinscripcionActionButtonsProps {
+  estado: ReinscripcionEstado;
+  registro: ReinscripcionDetallada;
+  onConfirm?: (registro: ReinscripcionDetallada) => void;
+  onMarkAsNotContinuing?: (registro: ReinscripcionDetallada) => void;
+  onMarkAsPending?: (registro: ReinscripcionDetallada) => void;
+}
+
+const ReinscripcionActionButtons = ({ estado, registro, onConfirm, onMarkAsNotContinuing, onMarkAsPending }: ReinscripcionActionButtonsProps) => {
+  if (estado === 'Pendiente') {
+    return (
+      <div className={actionButtonsWrapperClass}>
+        <button
+          onClick={() => onConfirm?.(registro)}
+          className={`${actionButtonBaseClass} bg-emerald-500 hover:bg-emerald-600`}
+          title="Confirmar reinscripción"
+        >
+          Confirmar
+        </button>
+        <button
+          onClick={() => onMarkAsNotContinuing?.(registro)}
+          className={`${actionButtonBaseClass} bg-slate-400 hover:bg-slate-500`}
+          title="Marcar como no continúa"
+        >
+          No continúa
+        </button>
+      </div>
+    );
+  }
+
+  if (estado === 'Confirmado') {
+    return (
+      <div className={actionButtonsWrapperClass}>
+        <button
+          onClick={() => onMarkAsPending?.(registro)}
+          className={`${actionButtonBaseClass} bg-amber-500 hover:bg-amber-600`}
+          title="Marcar como pendiente"
+        >
+          Pendiente
+        </button>
+        <button
+          onClick={() => onMarkAsNotContinuing?.(registro)}
+          className={`${actionButtonBaseClass} bg-slate-400 hover:bg-slate-500`}
+          title="Marcar como no continúa"
+        >
+          No continúa
+        </button>
+      </div>
+    );
+  }
+
+  if (estado === 'NoContinua') {
+    return (
+      <div className={actionButtonsWrapperClass}>
+        <button
+          onClick={() => onMarkAsPending?.(registro)}
+          className={`${actionButtonBaseClass} bg-amber-500 hover:bg-amber-600`}
+          title="Marcar como pendiente"
+        >
+          Pendiente
+        </button>
+        <button
+          onClick={() => onConfirm?.(registro)}
+          className={`${actionButtonBaseClass} bg-emerald-500 hover:bg-emerald-600`}
+          title="Confirmar reinscripción"
+        >
+          Confirmar
+        </button>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 interface ReinscripcionCardProps {
   registro: ReinscripcionDetallada;
   onConfirm?: (registro: ReinscripcionDetallada) => void;
@@ -31,75 +109,6 @@ interface ReinscripcionCardProps {
 
 export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, onMarkAsPending }: ReinscripcionCardProps) => {
   const getInitial = (nombre: string) => nombre.charAt(0).toUpperCase();
-  const actionButtonsWrapperClass = 'flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-2';
-  const actionButtonBaseClass = 'inline-flex w-full items-center justify-center rounded-lg px-3 py-1.5 text-center text-xs font-semibold text-white transition sm:w-auto';
-
-  const renderActionButtons = () => {
-    if (registro.estado === 'Pendiente') {
-      return (
-        <div className={actionButtonsWrapperClass}>
-          <button
-            onClick={() => onConfirm?.(registro)}
-            className={`${actionButtonBaseClass} bg-emerald-500 hover:bg-emerald-600`}
-            title="Confirmar reinscripción"
-          >
-            Confirmar
-          </button>
-          <button
-            onClick={() => onMarkAsNotContinuing?.(registro)}
-            className={`${actionButtonBaseClass} bg-slate-400 hover:bg-slate-500`}
-            title="Marcar como no continúa"
-          >
-            No continúa
-          </button>
-        </div>
-      );
-    }
-
-    if (registro.estado === 'Confirmado') {
-      return (
-        <div className={actionButtonsWrapperClass}>
-          <button
-            onClick={() => onMarkAsPending?.(registro)}
-            className={`${actionButtonBaseClass} bg-amber-500 hover:bg-amber-600`}
-            title="Marcar como pendiente"
-          >
-            Pendiente
-          </button>
-          <button
-            onClick={() => onMarkAsNotContinuing?.(registro)}
-            className={`${actionButtonBaseClass} bg-slate-400 hover:bg-slate-500`}
-            title="Marcar como no continúa"
-          >
-            No continúa
-          </button>
-        </div>
-      );
-    }
-
-    if (registro.estado === 'NoContinua') {
-      return (
-        <div className={actionButtonsWrapperClass}>
-          <button
-            onClick={() => onMarkAsPending?.(registro)}
-            className={`${actionButtonBaseClass} bg-amber-500 hover:bg-amber-600`}
-            title="Marcar como pendiente"
-          >
-            Pendiente
-          </button>
-          <button
-            onClick={() => onConfirm?.(registro)}
-            className={`${actionButtonBaseClass} bg-emerald-500 hover:bg-emerald-600`}
-            title="Confirmar reinscripción"
-          >
-            Confirmar
-          </button>
-        </div>
-      );
-    }
-
-    return null;
-  };
 
   return (
     <article
@@ -133,7 +142,13 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
           >
             {statusConfig[registro.estado].label}
           </span>
-          {renderActionButtons()}
+          <ReinscripcionActionButtons
+            estado={registro.estado}
+            registro={registro}
+            onConfirm={onConfirm}
+            onMarkAsNotContinuing={onMarkAsNotContinuing}
+            onMarkAsPending={onMarkAsPending}
+          />
         </div>
       </div>
 

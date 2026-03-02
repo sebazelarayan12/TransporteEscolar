@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useForm, useWatch, type FieldError, type Resolver, type SubmitHandler } from 'react-hook-form';
+import { useEffect, useId } from 'react';
+import { useForm, useWatch, type FieldError, type Resolver, type SubmitHandler, type UseFormRegister } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal, Button, Spinner } from '../../shared/ui';
@@ -71,6 +71,19 @@ const registrarIngresoSchemaBase = z.discriminatedUnion('tipo', [
 
 type RegistrarIngresoFormData = z.infer<typeof registrarIngresoSchemaBase>;
 
+type IngresoFieldIds = {
+  categoria: string;
+  medioCobro: string;
+  descripcion: string;
+  monto: string;
+  diaAplicacion: string;
+  fecha: string;
+  estadoCobro: string;
+  observaciones: string;
+};
+
+type IngresoCategoriaOption = { value: string; label: string };
+
 const buildSchemaForPeriod = (mes: number, anio: number) => {
   return registrarIngresoSchemaBase.superRefine((data, ctx) => {
     if (data.tipo === INGRESO_TIPOS.VARIABLE) {
@@ -126,6 +139,17 @@ export const RegistrarIngresoModal = ({
   templateId,
   onSuccess = () => {},
 }: RegistrarIngresoModalProps) => {
+  const fieldIdPrefix = useId();
+  const fieldIds: IngresoFieldIds = {
+    categoria: `${fieldIdPrefix}-categoria`,
+    medioCobro: `${fieldIdPrefix}-medio-cobro`,
+    descripcion: `${fieldIdPrefix}-descripcion`,
+    monto: `${fieldIdPrefix}-monto`,
+    diaAplicacion: `${fieldIdPrefix}-dia-aplicacion`,
+    fecha: `${fieldIdPrefix}-fecha`,
+    estadoCobro: `${fieldIdPrefix}-estado-cobro`,
+    observaciones: `${fieldIdPrefix}-observaciones`,
+  };
   const schema = buildSchemaForPeriod(mes, anio);
   const resolver = zodResolver(schema) as Resolver<RegistrarIngresoFormData>;
   const isEditMode = modo === 'edit';
@@ -141,6 +165,9 @@ export const RegistrarIngresoModal = ({
     setValue,
     formState: { errors, isSubmitting },
   } = form;
+  const handleTipoChange = (tipo: IngresoTipo) => {
+    setValue('tipo', tipo);
+  };
   const typedErrors = errors as typeof errors &
     Partial<Record<'diaDeAplicacion' | 'fecha' | 'estadoCobro', FieldError | undefined>>;
   const watchedTipo = useWatch({ control: form.control, name: 'tipo' }) as IngresoTipo | undefined;
@@ -263,217 +290,377 @@ export const RegistrarIngresoModal = ({
       maxWidth="2xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 dark:bg-white/5 dark:text-slate-200">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px] text-teal-600">calendar_month</span>
-            Periodo seleccionado: <span className="font-bold text-gray-900 dark:text-white">{periodLabel}</span>
-          </div>
-          <span className="text-xs uppercase tracking-widest text-teal-600">Mes {mes} / {anio}</span>
-        </div>
+        <IngresoModalHeader periodLabel={periodLabel} mes={mes} anio={anio} />
 
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-teal-600">Tipo de ingreso</p>
-          {isEditMode ? (
-            <div className="mt-3 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
-              <span className="material-symbols-outlined text-[20px]">info</span>
-              Estás editando la plantilla del ingreso fijo seleccionado.
-            </div>
-          ) : (
-            <div className="mt-3 inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm dark:border-[#3f3f46] dark:bg-[#1f1f24]">
-              {([INGRESO_TIPOS.VARIABLE, INGRESO_TIPOS.FIJO] as const).map((tipo) => {
-                const isActive = selectedTipo === tipo;
-                const icon = tipo === INGRESO_TIPOS.VARIABLE ? 'stacked_line_chart' : 'auto_mode';
-                return (
-                <button
-                  key={tipo}
-                  type="button"
-                  onClick={() => {
-                    setValue('tipo', tipo);
-                  }}
-                  className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    isActive
-                      ? 'bg-teal-600 text-white shadow'
-                        : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[18px]">{icon}</span>
-                    {tipo}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <IngresoTipoSection isEditMode={isEditMode} selectedTipo={selectedTipo} onChangeTipo={handleTipoChange} />
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-              Categoría <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register('categoria')}
-              disabled={isPending}
-              className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                errors.categoria ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-              }`}
-            >
-              <option value="">Seleccioná una categoría</option>
-              {categorias.map((categoria) => (
-                <option key={categoria.value} value={categoria.value}>
-                  {categoria.label}
-                </option>
-              ))}
-            </select>
-            {errors.categoria ? <p className="mt-1 text-xs text-red-600">{errors.categoria.message}</p> : null}
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-              Medio de cobro <span className="text-red-500">*</span>
-            </label>
-            <select
-              {...register('medioCobro')}
-              disabled={isPending}
-              className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                errors.medioCobro ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-              }`}
-            >
-              {Object.values(MEDIOS_PAGO).map((medio) => (
-                <option key={medio} value={medio}>
-                  {medio}
-                </option>
-              ))}
-            </select>
-            {errors.medioCobro ? <p className="mt-1 text-xs text-red-600">{errors.medioCobro.message}</p> : null}
-          </div>
-        </div>
+        <IngresoCategoriaMedioFields
+          fieldIds={fieldIds}
+          register={register}
+          isPending={isPending}
+          categorias={categorias}
+          categoriaError={errors.categoria}
+          medioCobroError={errors.medioCobro}
+        />
 
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-            Descripción <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            {...register('descripcion')}
-            disabled={isPending}
-            placeholder="Ej: Convenio municipal, rifas solidarias, sponsoreo, etc."
-            className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-              errors.descripcion ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-            }`}
-          />
-          {errors.descripcion ? <p className="mt-1 text-xs text-red-600">{errors.descripcion.message}</p> : null}
-        </div>
+        <IngresoDescripcionField fieldId={fieldIds.descripcion} register={register} isPending={isPending} error={errors.descripcion} />
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-              Importe <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$
-              </span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                {...register('monto', { valueAsNumber: true })}
-                disabled={isPending}
-                className={`w-full rounded-xl border pl-8 pr-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                  errors.monto ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-                }`}
-              />
-            </div>
-            {errors.monto ? <p className="mt-1 text-xs text-red-600">{errors.monto.message}</p> : null}
-          </div>
+        <IngresoMontoTimingFields
+          fieldIds={fieldIds}
+          register={register}
+          isPending={isPending}
+          selectedTipo={selectedTipo}
+          minDate={min}
+          maxDate={max}
+          montoError={errors.monto}
+          diaDeAplicacionError={typedErrors.diaDeAplicacion}
+          fechaError={typedErrors.fecha}
+        />
 
-          {selectedTipo === INGRESO_TIPOS.FIJO ? (
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-                Día de acreditación <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={31}
-                {...register('diaDeAplicacion', { valueAsNumber: true })}
-                disabled={isPending}
-                className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                  typedErrors.diaDeAplicacion ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-                }`}
-              />
-              <p className="mt-1 text-xs text-gray-500">Lo usamos para disparar la generación automática del ingreso fijo.</p>
-              {typedErrors.diaDeAplicacion ? (
-                <p className="mt-1 text-xs text-red-600">{typedErrors.diaDeAplicacion.message}</p>
-              ) : null}
-            </div>
-          ) : (
-            <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-                Fecha esperada <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                min={min}
-                max={max}
-                {...register('fecha')}
-                disabled={isPending}
-                className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                  typedErrors.fecha ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-                }`}
-              />
-              <p className="mt-1 text-xs text-gray-500">Debe pertenecer al mes seleccionado.</p>
-              {typedErrors.fecha ? <p className="mt-1 text-xs text-red-600">{typedErrors.fecha.message}</p> : null}
-            </div>
-          )}
-        </div>
+        <IngresoEstadoCobroField
+          show={selectedTipo === INGRESO_TIPOS.VARIABLE}
+          fieldId={fieldIds.estadoCobro}
+          register={register}
+          isPending={isPending}
+          error={typedErrors.estadoCobro}
+        />
 
-        {selectedTipo === INGRESO_TIPOS.VARIABLE ? (
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
-              Estado de cobro
-            </label>
-            <select
-              {...register('estadoCobro')}
-              disabled={isPending}
-              className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                typedErrors.estadoCobro ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-              }`}
-            >
-              {Object.values(INGRESO_ESTADOS_COBRO).map((estado) => (
-                <option key={estado} value={estado}>
-                  {estado}
-                </option>
-              ))}
-            </select>
-            {typedErrors.estadoCobro ? (
-              <p className="mt-1 text-xs text-red-600">{typedErrors.estadoCobro.message}</p>
-            ) : null}
-          </div>
-        ) : null}
+        <IngresoObservacionesField
+          fieldId={fieldIds.observaciones}
+          register={register}
+          isPending={isPending}
+          error={errors.observaciones}
+        />
 
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">Observaciones</label>
-          <textarea
-            rows={3}
-            {...register('observaciones')}
-            disabled={isPending}
-            placeholder="Notas internas o acuerdos asociados al ingreso."
-            className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-              errors.observaciones ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-            }`}
-          />
-          {errors.observaciones ? <p className="mt-1 text-xs text-red-600">{errors.observaciones.message}</p> : null}
-        </div>
-
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={closeModal} disabled={isPending}>
-            Cancelar
-          </Button>
-          <Button type="submit" variant="brand" disabled={isPending} className="inline-flex items-center gap-2">
-            {isPending ? <Spinner size="sm" /> : <span className="material-symbols-outlined text-[18px]">task_alt</span>}
-            {isEditMode ? 'Guardar cambios' : 'Guardar ingreso'}
-          </Button>
-        </div>
+        <IngresoModalActions isPending={isPending} isEditMode={isEditMode} onCancel={closeModal} />
       </form>
     </Modal>
+  );
+};
+
+interface IngresoModalHeaderProps {
+  periodLabel: string;
+  mes: number;
+  anio: number;
+}
+
+const IngresoModalHeader = ({ periodLabel, mes, anio }: IngresoModalHeaderProps) => {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 dark:bg-white/5 dark:text-slate-200">
+      <div className="flex items-center gap-2">
+        <span className="material-symbols-outlined text-[18px] text-teal-600">calendar_month</span>
+        Periodo seleccionado: <span className="font-bold text-gray-900 dark:text-white">{periodLabel}</span>
+      </div>
+      <span className="text-xs uppercase tracking-widest text-teal-600">Mes {mes} / {anio}</span>
+    </div>
+  );
+};
+
+interface IngresoTipoSectionProps {
+  isEditMode: boolean;
+  selectedTipo: IngresoTipo;
+  onChangeTipo: (tipo: IngresoTipo) => void;
+}
+
+const IngresoTipoSection = ({ isEditMode, selectedTipo, onChangeTipo }: IngresoTipoSectionProps) => {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-teal-600">Tipo de ingreso</p>
+      {isEditMode ? (
+        <div className="mt-3 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
+          <span className="material-symbols-outlined text-[20px]">info</span>
+          Estás editando la plantilla del ingreso fijo seleccionado.
+        </div>
+      ) : (
+        <div className="mt-3 inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm dark:border-[#3f3f46] dark:bg-[#1f1f24]">
+          {([INGRESO_TIPOS.VARIABLE, INGRESO_TIPOS.FIJO] as const).map((tipo) => {
+            const isActive = selectedTipo === tipo;
+            const icon = tipo === INGRESO_TIPOS.VARIABLE ? 'stacked_line_chart' : 'auto_mode';
+            return (
+              <button
+                key={tipo}
+                type="button"
+                onClick={() => {
+                  onChangeTipo(tipo);
+                }}
+                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  isActive
+                    ? 'bg-teal-600 text-white shadow'
+                    : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">{icon}</span>
+                {tipo}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface IngresoCategoriaMedioFieldsProps {
+  fieldIds: Pick<IngresoFieldIds, 'categoria' | 'medioCobro'>;
+  register: UseFormRegister<RegistrarIngresoFormData>;
+  isPending: boolean;
+  categorias: ReadonlyArray<IngresoCategoriaOption>;
+  categoriaError?: FieldError;
+  medioCobroError?: FieldError;
+}
+
+const IngresoCategoriaMedioFields = ({
+  fieldIds,
+  register,
+  isPending,
+  categorias,
+  categoriaError,
+  medioCobroError,
+}: IngresoCategoriaMedioFieldsProps) => {
+  return (
+    <div className="grid gap-5 md:grid-cols-2">
+      <div>
+        <label htmlFor={fieldIds.categoria} className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
+          Categoría <span className="text-red-500">*</span>
+        </label>
+        <select
+          id={fieldIds.categoria}
+          {...register('categoria')}
+          disabled={isPending}
+          className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
+            categoriaError ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+          }`}
+        >
+          <option value="">Seleccioná una categoría</option>
+          {categorias.map((categoria) => (
+            <option key={categoria.value} value={categoria.value}>
+              {categoria.label}
+            </option>
+          ))}
+        </select>
+        {categoriaError ? <p className="mt-1 text-xs text-red-600">{categoriaError.message}</p> : null}
+      </div>
+      <div>
+        <label htmlFor={fieldIds.medioCobro} className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
+          Medio de cobro <span className="text-red-500">*</span>
+        </label>
+        <select
+          id={fieldIds.medioCobro}
+          {...register('medioCobro')}
+          disabled={isPending}
+          className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
+            medioCobroError ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+          }`}
+        >
+          {Object.values(MEDIOS_PAGO).map((medio) => (
+            <option key={medio} value={medio}>
+              {medio}
+            </option>
+          ))}
+        </select>
+        {medioCobroError ? <p className="mt-1 text-xs text-red-600">{medioCobroError.message}</p> : null}
+      </div>
+    </div>
+  );
+};
+
+interface IngresoDescripcionFieldProps {
+  fieldId: string;
+  register: UseFormRegister<RegistrarIngresoFormData>;
+  isPending: boolean;
+  error?: FieldError;
+}
+
+const IngresoDescripcionField = ({ fieldId, register, isPending, error }: IngresoDescripcionFieldProps) => {
+  return (
+    <div>
+      <label htmlFor={fieldId} className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
+        Descripción <span className="text-red-500">*</span>
+      </label>
+      <input
+        type="text"
+        id={fieldId}
+        {...register('descripcion')}
+        disabled={isPending}
+        placeholder="Ej: Convenio municipal, rifas solidarias, sponsoreo, etc."
+        className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
+          error ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+        }`}
+      />
+      {error ? <p className="mt-1 text-xs text-red-600">{error.message}</p> : null}
+    </div>
+  );
+};
+
+interface IngresoMontoTimingFieldsProps {
+  fieldIds: Pick<IngresoFieldIds, 'monto' | 'diaAplicacion' | 'fecha'>;
+  register: UseFormRegister<RegistrarIngresoFormData>;
+  isPending: boolean;
+  selectedTipo: IngresoTipo;
+  minDate: string;
+  maxDate: string;
+  montoError?: FieldError;
+  diaDeAplicacionError?: FieldError;
+  fechaError?: FieldError;
+}
+
+const IngresoMontoTimingFields = ({
+  fieldIds,
+  register,
+  isPending,
+  selectedTipo,
+  minDate,
+  maxDate,
+  montoError,
+  diaDeAplicacionError,
+  fechaError,
+}: IngresoMontoTimingFieldsProps) => {
+  return (
+    <div className="grid gap-5 md:grid-cols-2">
+      <div>
+        <label htmlFor={fieldIds.monto} className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
+          Importe <span className="text-red-500">*</span>
+        </label>
+        <div className="relative">
+          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$
+          </span>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            id={fieldIds.monto}
+            {...register('monto', { valueAsNumber: true })}
+            disabled={isPending}
+            className={`w-full rounded-xl border pl-8 pr-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
+              montoError ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+            }`}
+          />
+        </div>
+        {montoError ? <p className="mt-1 text-xs text-red-600">{montoError.message}</p> : null}
+      </div>
+
+      {selectedTipo === INGRESO_TIPOS.FIJO ? (
+        <div>
+          <label htmlFor={fieldIds.diaAplicacion} className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
+            Día de acreditación <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={31}
+            id={fieldIds.diaAplicacion}
+            {...register('diaDeAplicacion', { valueAsNumber: true })}
+            disabled={isPending}
+            className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
+              diaDeAplicacionError ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+            }`}
+          />
+          <p className="mt-1 text-xs text-gray-500">Lo usamos para disparar la generación automática del ingreso fijo.</p>
+          {diaDeAplicacionError ? <p className="mt-1 text-xs text-red-600">{diaDeAplicacionError.message}</p> : null}
+        </div>
+      ) : (
+        <div>
+          <label htmlFor={fieldIds.fecha} className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
+            Fecha esperada <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="date"
+            min={minDate}
+            max={maxDate}
+            id={fieldIds.fecha}
+            {...register('fecha')}
+            disabled={isPending}
+            className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
+              fechaError ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+            }`}
+          />
+          <p className="mt-1 text-xs text-gray-500">Debe pertenecer al mes seleccionado.</p>
+          {fechaError ? <p className="mt-1 text-xs text-red-600">{fechaError.message}</p> : null}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface IngresoEstadoCobroFieldProps {
+  show: boolean;
+  fieldId: string;
+  register: UseFormRegister<RegistrarIngresoFormData>;
+  isPending: boolean;
+  error?: FieldError;
+}
+
+const IngresoEstadoCobroField = ({ show, fieldId, register, isPending, error }: IngresoEstadoCobroFieldProps) => {
+  if (!show) {
+    return null;
+  }
+
+  return (
+    <div>
+      <label htmlFor={fieldId} className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
+        Estado de cobro
+      </label>
+      <select
+        id={fieldId}
+        {...register('estadoCobro')}
+        disabled={isPending}
+        className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
+          error ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+        }`}
+      >
+        {Object.values(INGRESO_ESTADOS_COBRO).map((estado) => (
+          <option key={estado} value={estado}>
+            {estado}
+          </option>
+        ))}
+      </select>
+      {error ? <p className="mt-1 text-xs text-red-600">{error.message}</p> : null}
+    </div>
+  );
+};
+
+interface IngresoObservacionesFieldProps {
+  fieldId: string;
+  register: UseFormRegister<RegistrarIngresoFormData>;
+  isPending: boolean;
+  error?: FieldError;
+}
+
+const IngresoObservacionesField = ({ fieldId, register, isPending, error }: IngresoObservacionesFieldProps) => {
+  return (
+    <div>
+      <label htmlFor={fieldId} className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">Observaciones</label>
+      <textarea
+        rows={3}
+        id={fieldId}
+        {...register('observaciones')}
+        disabled={isPending}
+        placeholder="Notas internas o acuerdos asociados al ingreso."
+        className={`w-full rounded-xl border px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
+          error ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+        }`}
+      />
+      {error ? <p className="mt-1 text-xs text-red-600">{error.message}</p> : null}
+    </div>
+  );
+};
+
+interface IngresoModalActionsProps {
+  isPending: boolean;
+  isEditMode: boolean;
+  onCancel: () => void;
+}
+
+const IngresoModalActions = ({ isPending, isEditMode, onCancel }: IngresoModalActionsProps) => {
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-3">
+      <Button type="button" variant="ghost" onClick={onCancel} disabled={isPending}>
+        Cancelar
+      </Button>
+      <Button type="submit" variant="brand" disabled={isPending} className="inline-flex items-center gap-2">
+        {isPending ? <Spinner size="sm" /> : <span className="material-symbols-outlined text-[18px]">task_alt</span>}
+        {isEditMode ? 'Guardar cambios' : 'Guardar ingreso'}
+      </Button>
+    </div>
   );
 };
