@@ -17,7 +17,11 @@ const medioPagoClasses: Record<string, string> = {
   Cheque: 'bg-amber-100 text-amber-700 border-amber-200',
 };
 
-const renderMedioBadge = (medioPago: string) => {
+interface MovimientosMedioBadgeProps {
+  medioPago: string;
+}
+
+const MovimientosMedioBadge = ({ medioPago }: MovimientosMedioBadgeProps) => {
   const baseClasses = medioPagoClasses[medioPago] ?? 'bg-gray-100 text-gray-700 border-gray-200';
   return (
     <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold ${baseClasses}`}>
@@ -62,7 +66,9 @@ export const MovimientosTableSection = ({
                   <p className="text-xs text-gray-500">{movimiento.titularNombre}</p>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{movimiento.periodo}</td>
-                <td className="px-6 py-4 text-sm">{renderMedioBadge(movimiento.medioPago)}</td>
+                <td className="px-6 py-4 text-sm">
+                  <MovimientosMedioBadge medioPago={movimiento.medioPago} />
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
                   {movimiento.observaciones ? movimiento.observaciones : <span className="text-gray-400">—</span>}
                 </td>
@@ -100,7 +106,7 @@ export const MovimientosTableSection = ({
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{movimiento.titularApellido}</p>
                 <p className="text-xs text-gray-500">{movimiento.titularNombre}</p>
               </div>
-              {renderMedioBadge(movimiento.medioPago)}
+              <MovimientosMedioBadge medioPago={movimiento.medioPago} />
             </div>
             <p className="mt-2 text-xs uppercase tracking-wide text-gray-400">{movimiento.periodo}</p>
             <p className="text-sm text-gray-600 dark:text-gray-300">{formatDateTime(movimiento.fechaPago)}</p>
