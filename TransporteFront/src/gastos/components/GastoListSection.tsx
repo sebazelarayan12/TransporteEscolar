@@ -14,6 +14,8 @@ interface GastoListSectionProps {
   onEditGasto?: (gasto: GastoItem) => void;
   onDeleteGasto?: (gasto: GastoItem) => void;
   actionsDisabled?: boolean;
+  onMarkVariablePaid?: (gasto: GastoItem) => void;
+  markPaidDisabled?: boolean;
 }
 
 export const GastoListSection = ({
@@ -27,6 +29,8 @@ export const GastoListSection = ({
   onEditGasto,
   onDeleteGasto,
   actionsDisabled = false,
+  onMarkVariablePaid,
+  markPaidDisabled = false,
 }: GastoListSectionProps) => {
   if (isLoading) {
     return (
@@ -72,6 +76,8 @@ export const GastoListSection = ({
               onEdit={onEditGasto}
               onDelete={onDeleteGasto}
               actionsDisabled={actionsDisabled}
+              onMarkVariablePaid={onMarkVariablePaid}
+              markPaidDisabled={markPaidDisabled}
             />
           ))}
         </div>

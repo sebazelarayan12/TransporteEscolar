@@ -13,6 +13,11 @@ export const GASTO_ESTADOS = {
 
 export type GastoEstadoPago = (typeof GASTO_ESTADOS)[keyof typeof GASTO_ESTADOS];
 
+export interface PlanCuotasRequest {
+  fechaPrimeraCuota: string;
+  cantidadCuotas: number;
+}
+
 export interface ResumenTotales {
   totalCuotas: number;
   totalGastosFijos: number;
@@ -28,11 +33,17 @@ export interface GastoItem {
   categoria: string;
   descripcion: string;
   monto: number;
-  fecha: string;
+  fechaCuota: string;
   medioPago: string;
-  estadoPago: string;
+  estadoPago: GastoEstadoPago;
   observaciones?: string | null;
   templateId?: number | null;
+  numeroCuota?: number | null;
+  totalCuotas?: number | null;
+  esPlanCuotas?: boolean;
+  fechaPrimeraCuota?: string | null;
+  cantidadCuotas?: number | null;
+  montoCuota?: number | null;
 }
 
 export interface ResumenMensualResponse {
@@ -50,6 +61,7 @@ export interface CrearGastoFijoRequest {
   diaDeAplicacion: number;
   medioPago: string;
   observaciones?: string;
+  planCuotas?: PlanCuotasRequest;
 }
 
 export interface ActualizarGastoFijoRequest extends CrearGastoFijoRequest {
@@ -64,7 +76,7 @@ export interface CrearGastoVariableRequest {
   monto: number;
   fecha: string; // YYYY-MM-DD
   medioPago: string;
-  estadoPago: string;
+  estadoPago: GastoEstadoPago;
   observaciones?: string;
 }
 

@@ -4,6 +4,7 @@ using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Application.Validation;
 using TransporteEscolar.Domain.Entities;
+using TransporteEscolar.Domain.Enums;
 
 namespace TransporteEscolar.Application.Services;
 
@@ -38,7 +39,7 @@ public class GastoService : IGastoService
 
         foreach (var template in templatesActivos)
         {
-            if (!template.EstaActivo || template.FechaInicio > primerDiaMes)
+            if (!template.PuedeGenerarEnMes(mes, anio))
                 continue;
 
             if (gastosPorTemplate.ContainsKey(template.Id))
@@ -92,16 +93,35 @@ public class GastoService : IGastoService
 
         var fechaInicio = CrearPrimerDiaMes(dto.Mes, dto.Anio);
         var observaciones = dto.Observaciones?.Trim();
+        var (esPlanCuotas, fechaPrimeraCuota, cantidadCuotas) = MapearPlanCuotas(dto.PlanCuotas);
+        if (esPlanCuotas && fechaPrimeraCuota is not null)
+        {
+            fechaInicio = new DateTime(fechaPrimeraCuota.Value.Year, fechaPrimeraCuota.Value.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        }
+
         var template = new GastoFijoTemplate(
             dto.Categoria.Trim(),
             dto.Descripcion.Trim(),
             dto.Monto,
             dto.DiaDeAplicacion,
             dto.MedioPago.Trim(),
-            fechaInicio);
+            fechaInicio,
+            estaActivo: true,
+            esPlanCuotas,
+            fechaPrimeraCuota,
+            cantidadCuotas);
 
         var templateCreado = await _gastoRepository.AgregarTemplateAsync(template, cancellationToken);
-        var gastoGenerado = templateCreado.CrearInstanciaMensual(dto.Mes, dto.Anio, observaciones: observaciones);
+
+        var mesGeneracion = esPlanCuotas && fechaPrimeraCuota.HasValue ? fechaPrimeraCuota.Value.Month : dto.Mes;
+        var anioGeneracion = esPlanCuotas && fechaPrimeraCuota.HasValue ? fechaPrimeraCuota.Value.Year : dto.Anio;
+
+        if (!templateCreado.PuedeGenerarEnMes(mesGeneracion, anioGeneracion))
+        {
+            throw new ValidationException("La fecha de la primera cuota debe ser igual o posterior al mes seleccionado.");
+        }
+
+        var gastoGenerado = templateCreado.CrearInstanciaMensual(mesGeneracion, anioGeneracion, observaciones: observaciones);
         var gastoCreado = await _gastoRepository.AgregarGastoMensualAsync(gastoGenerado, cancellationToken);
 
         return MapearGasto(gastoCreado);
@@ -114,6 +134,7 @@ public class GastoService : IGastoService
         GastoValidator.ValidateGastoVariable(dto);
 
         var fecha = DateTime.SpecifyKind(dto.Fecha.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+        var observaciones = dto.Observaciones?.Trim();
         var gasto = new GastoMensual(
             dto.Mes,
             dto.Anio,
@@ -123,8 +144,8 @@ public class GastoService : IGastoService
             dto.Monto,
             fecha,
             dto.MedioPago.Trim(),
-            dto.EstadoPago.Trim(),
-            dto.Observaciones);
+            EstadoPagoGasto.Pendiente,
+            observaciones);
 
         var gastoCreado = await _gastoRepository.AgregarGastoMensualAsync(gasto, cancellationToken);
         return MapearGasto(gastoCreado);
@@ -144,14 +165,29 @@ public class GastoService : IGastoService
         var descripcion = dto.Descripcion.Trim();
         var medioPago = dto.MedioPago.Trim();
         var observaciones = dto.Observaciones?.Trim();
+        var (esPlanCuotas, fechaPrimeraCuota, cantidadCuotas) = MapearPlanCuotas(dto.PlanCuotas);
 
-        template.ActualizarDatos(categoria, descripcion, dto.Monto, dto.DiaDeAplicacion, medioPago, dto.EstaActivo);
+        template.ActualizarDatos(
+            categoria,
+            descripcion,
+            dto.Monto,
+            dto.DiaDeAplicacion,
+            medioPago,
+            dto.EstaActivo,
+            esPlanCuotas,
+            fechaPrimeraCuota,
+            cantidadCuotas);
         await _gastoRepository.ActualizarTemplateAsync(template, cancellationToken);
 
         var gastoMensual = await _gastoRepository.ObtenerGastoMensualPorTemplateAsync(templateId, dto.Mes, dto.Anio, cancellationToken);
 
         if (gastoMensual is null)
         {
+            if (!template.PuedeGenerarEnMes(dto.Mes, dto.Anio))
+            {
+                throw new ValidationException("El template no aplica en el mes seleccionado.");
+            }
+
             var nuevaInstancia = template.CrearInstanciaMensual(dto.Mes, dto.Anio, observaciones: observaciones);
             gastoMensual = await _gastoRepository.AgregarGastoMensualAsync(nuevaInstancia, cancellationToken);
         }
@@ -209,9 +245,36 @@ public class GastoService : IGastoService
         await _gastoRepository.EliminarGastoMensualAsync(gasto, cancellationToken);
     }
 
+    public async Task<GastoModel.GastoMensualResponse> MarcarGastoVariablePagadoAsync(int gastoId, CancellationToken cancellationToken = default)
+    {
+        var gasto = await _gastoRepository.ObtenerGastoMensualPorIdAsync(gastoId, cancellationToken)
+            ?? throw new NotFoundException(nameof(GastoMensual), gastoId);
+
+        if (gasto.Tipo != GastoMensual.TipoVariable)
+            throw new ValidationException("Solo se pueden marcar como pagados los gastos variables.");
+
+        gasto.MarcarComoPagado(DateTime.UtcNow);
+        await _gastoRepository.ActualizarGastoMensualAsync(gasto, cancellationToken);
+
+        _logger.LogInformation("Gasto variable {GastoId} marcado como pagado", gastoId);
+
+        return MapearGasto(gasto);
+    }
+
     private static DateTime CrearPrimerDiaMes(int mes, int anio)
     {
         return new DateTime(anio, mes, 1, 0, 0, 0, DateTimeKind.Utc);
+    }
+
+    private static (bool esPlanCuotas, DateTime? fechaPrimeraCuota, int? cantidadCuotas) MapearPlanCuotas(GastoModel.PlanCuotasRequest? plan)
+    {
+        if (plan is null)
+        {
+            return (false, null, null);
+        }
+
+        var fecha = DateTime.SpecifyKind(plan.FechaPrimeraCuota.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+        return (true, fecha, plan.CantidadCuotas);
     }
 
     private static GastoModel.GastoMensualResponse MapearGasto(GastoMensual gasto)
@@ -226,8 +289,11 @@ public class GastoService : IGastoService
             gasto.Monto,
             gasto.Fecha,
             gasto.MedioPago,
-            gasto.EstadoPago,
+            gasto.EstadoPago.ToString(),
             gasto.Observaciones,
-            gasto.GastoFijoTemplateId);
+            gasto.GastoFijoTemplateId,
+            gasto.NumeroCuota,
+            gasto.TotalCuotas,
+            gasto.FechaActualizacion);
     }
 }

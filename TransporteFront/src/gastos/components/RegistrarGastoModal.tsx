@@ -19,6 +19,8 @@ import { GastoModalHeader } from './GastoModalHeader';
 import { GastoTipoSection } from './GastoTipoSection';
 import { GastoFormFields } from './GastoFormFields';
 import { GastoModalActions } from './GastoModalActions';
+import { GastoPlanCuotasSection } from './GastoPlanCuotasSection';
+import { normalizeDateInput } from '../helpers/plan-cuotas.helpers';
 
 interface RegistrarGastoModalProps {
   isOpen: boolean;
@@ -30,6 +32,18 @@ interface RegistrarGastoModalProps {
   initialData?: GastoItem | null;
   templateId?: number | null;
 }
+
+const planCuotasFormSchema = z.object({
+  habilitado: z.boolean().default(false),
+  fechaPrimeraCuota: z.string().optional(),
+  cantidadCuotas: z
+    .coerce
+    .number({ error: 'Ingresá la cantidad de cuotas' })
+    .int({ error: 'Debe ser un número entero' })
+    .min(2, { error: 'Al menos 2 cuotas' })
+    .max(36, { error: 'Máximo 36 cuotas' })
+    .optional(),
+});
 
 const registrarGastoSchemaBase = z.discriminatedUnion('tipo', [
   z.object({
@@ -50,6 +64,7 @@ const registrarGastoSchemaBase = z.discriminatedUnion('tipo', [
       .int({ error: 'Debe ser un número entero' })
       .min(1, { error: 'Debe estar entre 1 y 31' })
       .max(31, { error: 'Debe estar entre 1 y 31' }),
+    planCuotas: planCuotasFormSchema,
   }),
   z.object({
     tipo: z.literal(GASTO_TIPOS.VARIABLE),
@@ -70,6 +85,7 @@ const registrarGastoSchemaBase = z.discriminatedUnion('tipo', [
       GASTO_ESTADOS.PAGADO,
       GASTO_ESTADOS.PROGRAMADO,
     ]),
+    planCuotas: planCuotasFormSchema,
   }),
 ]);
 
@@ -84,6 +100,34 @@ const buildSchemaForPeriod = (mes: number, anio: number) => {
           code: z.ZodIssueCode.custom,
           message: 'La fecha debe estar dentro del periodo seleccionado',
           path: ['fecha'],
+        });
+      }
+    }
+
+    if (data.tipo === GASTO_TIPOS.FIJO && data.planCuotas?.habilitado) {
+      if (!data.planCuotas.fechaPrimeraCuota) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Indicá la fecha de la primera cuota',
+          path: ['planCuotas', 'fechaPrimeraCuota'],
+        });
+      } else {
+        const fechaPlan = new Date(data.planCuotas.fechaPrimeraCuota);
+        const periodoInicio = new Date(Date.UTC(anio, mes - 1, 1));
+        if (fechaPlan.getTime() < periodoInicio.getTime()) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'La primera cuota debe ser igual o posterior al periodo filtrado',
+            path: ['planCuotas', 'fechaPrimeraCuota'],
+          });
+        }
+      }
+
+      if (!data.planCuotas.cantidadCuotas || data.planCuotas.cantidadCuotas < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Ingresá al menos 2 cuotas',
+          path: ['planCuotas', 'cantidadCuotas'],
         });
       }
     }
@@ -103,6 +147,11 @@ const getDefaultValues = (mes: number, anio: number) => {
     fecha: defaultDate,
     estadoPago: GASTO_ESTADOS.PENDIENTE as GastoEstadoPago,
     diaDeAplicacion: 1,
+    planCuotas: {
+      habilitado: false,
+      fechaPrimeraCuota: defaultDate,
+      cantidadCuotas: 2,
+    },
   } as RegistrarGastoFormData;
 };
 
@@ -175,7 +224,9 @@ export const RegistrarGastoModal = ({
 
     if (isEditMode && initialData) {
       const fallbackDate = getPeriodBounds(initialData.mes ?? mes, initialData.anio ?? anio).min;
-      const diaAplicacion = new Date(initialData.fecha ?? fallbackDate).getUTCDate();
+      const diaAplicacion = new Date(initialData.fechaCuota ?? fallbackDate).getUTCDate();
+      const fechaPrimeraPlan = normalizeDateInput(initialData.fechaPrimeraCuota) || fallbackDate;
+      const cantidadPlan = initialData.cantidadCuotas ?? initialData.totalCuotas ?? 2;
       reset({
         tipo: GASTO_TIPOS.FIJO,
         categoria: initialData.categoria,
@@ -184,6 +235,11 @@ export const RegistrarGastoModal = ({
         medioPago: initialData.medioPago,
         observaciones: initialData.observaciones ?? '',
         diaDeAplicacion: diaAplicacion,
+        planCuotas: {
+          habilitado: Boolean(initialData.esPlanCuotas),
+          fechaPrimeraCuota: fechaPrimeraPlan,
+          cantidadCuotas: cantidadPlan,
+        },
       });
       return;
     }
@@ -201,6 +257,12 @@ export const RegistrarGastoModal = ({
 
   const onSubmit: SubmitHandler<RegistrarGastoFormData> = async (data) => {
     const observaciones = data.observaciones?.trim() ? data.observaciones.trim() : undefined;
+    const planCuotasPayload = data.planCuotas?.habilitado
+      ? {
+          fechaPrimeraCuota: data.planCuotas.fechaPrimeraCuota!,
+          cantidadCuotas: data.planCuotas.cantidadCuotas!,
+        }
+      : undefined;
     try {
       if (isEditMode) {
         const targetTemplateId = templateId ?? initialData?.templateId ?? null;
@@ -224,6 +286,7 @@ export const RegistrarGastoModal = ({
           medioPago: data.medioPago,
           observaciones,
           estaActivo: true,
+          planCuotas: planCuotasPayload,
         };
 
         await actualizarGastoFijo.mutateAsync({
@@ -240,6 +303,7 @@ export const RegistrarGastoModal = ({
           diaDeAplicacion: data.diaDeAplicacion,
           medioPago: data.medioPago,
           observaciones,
+          planCuotas: planCuotasPayload,
         });
       } else {
         await crearGastoVariable.mutateAsync({
@@ -298,6 +362,15 @@ export const RegistrarGastoModal = ({
           selectedTipo={selectedTipo}
           minDate={min}
           maxDate={max}
+        />
+
+        <GastoPlanCuotasSection
+          control={form.control}
+          register={register}
+          errors={errors}
+          isPending={isPending}
+          minDate={min}
+          selectedTipo={selectedTipo}
         />
 
         <GastoModalActions isPending={isPending} isEditMode={isEditMode} onCancel={closeModal} />

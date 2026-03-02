@@ -38,4 +38,8 @@ export const gastosApi = {
   async deleteGastoVariable(id: number): Promise<void> {
     return apiClient.delete<void>(`${BASE_PATH}/variables/${id}`);
   },
+
+  async marcarVariablePagado(id: number): Promise<GastoItem> {
+    return apiClient.put<GastoItem>(`${BASE_PATH}/variables/${id}/marcar-pagado`);
+  },
 };

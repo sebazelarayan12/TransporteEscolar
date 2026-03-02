@@ -13,6 +13,8 @@ type GastoSectionProps = {
   actionsDisabled: boolean;
   onEditGasto: (gasto: GastoItem) => void;
   onDeleteGasto: (gasto: GastoItem) => void;
+  onMarkVariablePaid?: (gasto: GastoItem) => void;
+  markPaidDisabled?: boolean;
 };
 
 type IngresosSectionProps = {
@@ -47,6 +49,8 @@ export const GastosContent = ({ gastoSection, ingresosSection }: GastosContentPr
       onEditGasto={gastoSection.onEditGasto}
       onDeleteGasto={gastoSection.onDeleteGasto}
       actionsDisabled={gastoSection.actionsDisabled}
+      onMarkVariablePaid={gastoSection.onMarkVariablePaid}
+      markPaidDisabled={gastoSection.markPaidDisabled}
     />
 
     <IngresosExternosSection

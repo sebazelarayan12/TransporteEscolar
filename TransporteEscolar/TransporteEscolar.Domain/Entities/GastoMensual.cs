@@ -1,3 +1,5 @@
+using TransporteEscolar.Domain.Enums;
+
 namespace TransporteEscolar.Domain.Entities;
 
 public class GastoMensual
@@ -14,7 +16,10 @@ public class GastoMensual
     public decimal Monto { get; private set; }
     public DateTime Fecha { get; private set; }
     public string MedioPago { get; private set; } = null!;
-    public string EstadoPago { get; private set; } = null!;
+    public EstadoPagoGasto EstadoPago { get; private set; } = EstadoPagoGasto.Pendiente;
+    public DateTime? FechaActualizacion { get; private set; }
+    public int? NumeroCuota { get; private set; }
+    public int? TotalCuotas { get; private set; }
     public string? Observaciones { get; private set; }
     public int? GastoFijoTemplateId { get; private set; }
 
@@ -33,9 +38,11 @@ public class GastoMensual
         decimal monto,
         DateTime fecha,
         string medioPago,
-        string estadoPago,
+        EstadoPagoGasto estadoPago = EstadoPagoGasto.Pendiente,
         string? observaciones = null,
-        int? gastoFijoTemplateId = null)
+        int? gastoFijoTemplateId = null,
+        int? numeroCuota = null,
+        int? totalCuotas = null)
     {
         Mes = mes;
         Anio = anio;
@@ -48,16 +55,57 @@ public class GastoMensual
         EstadoPago = estadoPago;
         Observaciones = observaciones;
         GastoFijoTemplateId = gastoFijoTemplateId;
+        NumeroCuota = numeroCuota;
+        TotalCuotas = totalCuotas;
     }
 
     public void ActualizarDesdeTemplate(GastoFijoTemplate template, string? observaciones)
     {
         Categoria = template.Categoria;
         Descripcion = template.Descripcion;
-        Monto = template.Monto;
         MedioPago = template.MedioPago;
         Observaciones = observaciones;
         Fecha = CrearFechaNormalizada(template.DiaDeAplicacion);
+
+        if (template.EsPlanCuotas && template.CantidadCuotas.HasValue)
+        {
+            TotalCuotas = template.CantidadCuotas;
+
+            if (!NumeroCuota.HasValue)
+            {
+                var numeroCalculado = template.CalcularNumeroCuotaPara(Mes, Anio);
+                if (numeroCalculado.HasValue)
+                {
+                    NumeroCuota = numeroCalculado;
+                }
+            }
+
+            var numero = NumeroCuota ?? template.CantidadCuotas.Value;
+            Monto = template.ObtenerMontoParaCuota(numero);
+        }
+        else
+        {
+            NumeroCuota = null;
+            TotalCuotas = null;
+            Monto = template.MontoCuota;
+        }
+    }
+
+    public void AsignarCuota(int numeroCuota, int totalCuotas)
+    {
+        NumeroCuota = numeroCuota;
+        TotalCuotas = totalCuotas;
+    }
+
+    public void MarcarComoPagado(DateTime fechaActualizacion)
+    {
+        if (EstadoPago == EstadoPagoGasto.Pagado)
+        {
+            return;
+        }
+
+        EstadoPago = EstadoPagoGasto.Pagado;
+        FechaActualizacion = DateTime.SpecifyKind(fechaActualizacion, DateTimeKind.Utc);
     }
 
     private DateTime CrearFechaNormalizada(int diaDeAplicacion)

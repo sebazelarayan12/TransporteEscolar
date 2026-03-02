@@ -20,7 +20,11 @@ public class GastoFijoTemplateConfiguration : IEntityTypeConfiguration<GastoFijo
             .IsRequired()
             .HasMaxLength(250);
 
-        builder.Property(g => g.Monto)
+        builder.Property(g => g.MontoOriginal)
+            .IsRequired()
+            .HasColumnType("decimal(12,2)");
+
+        builder.Property(g => g.MontoCuota)
             .IsRequired()
             .HasColumnType("decimal(12,2)");
 
@@ -33,6 +37,13 @@ public class GastoFijoTemplateConfiguration : IEntityTypeConfiguration<GastoFijo
 
         builder.Property(g => g.EstaActivo)
             .HasDefaultValue(true);
+
+        builder.Property(g => g.EsPlanCuotas)
+            .HasDefaultValue(false);
+
+        builder.Property(g => g.CantidadCuotas);
+
+        builder.Property(g => g.FechaPrimeraCuota);
 
         builder.Property(g => g.FechaInicio)
             .IsRequired();

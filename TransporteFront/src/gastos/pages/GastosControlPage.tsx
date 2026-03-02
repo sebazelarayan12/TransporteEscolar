@@ -1,11 +1,12 @@
-import { useReducer, type Dispatch } from 'react';
-import { LoadingScreen, ErrorState, EmptyState } from '../../shared/ui';
+import { useReducer, useState, type Dispatch } from 'react';
+import { LoadingScreen, ErrorState, EmptyState, ConfirmDialog } from '../../shared/ui';
 import { GastosControlLayout } from '../components';
 import type { DeleteDialogCopy } from '../components';
 import {
   useGastosResumen,
   useEliminarGastoFijo,
   useEliminarGastoVariable,
+  useMarcarGastoVariablePagado,
 } from '../services/gastos.queries';
 import {
   useIngresosResumen,
@@ -15,7 +16,7 @@ import {
 import { useToast } from '../../shared/hooks';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
-import { GASTO_TIPOS, type GastoItem, type GastosTabValue } from '../types/gastos.types';
+import { GASTO_ESTADOS, GASTO_TIPOS, type GastoItem, type GastosTabValue } from '../types/gastos.types';
 import { INGRESO_TIPOS, type IngresoItem } from '../types/ingresos.types';
 
 const monthFormatter = new Intl.DateTimeFormat('es-AR', {
@@ -172,7 +173,6 @@ const buildDeleteDialogCopy = (deleteDialog: DeleteDialogState): DeleteDialogCop
   }
 
   const montoLabel = formatCurrency(deleteDialog.item.monto);
-  const fechaLabel = formatDateOnly(deleteDialog.item.fecha, { day: '2-digit', month: 'long' });
   const periodoLabel = `${deleteDialog.item.mes}/${deleteDialog.item.anio}`;
 
   switch (deleteDialog.scope) {
@@ -182,24 +182,28 @@ const buildDeleteDialogCopy = (deleteDialog: DeleteDialogState): DeleteDialogCop
         message: `Se eliminará la plantilla "${deleteDialog.item.descripcion}" y se recalcularán los totales de ${periodoLabel}.`,
         confirmLabel: 'Eliminar gasto fijo',
       };
-    case 'gasto-variable':
+    case 'gasto-variable': {
+      const fechaLabel = formatDateOnly(deleteDialog.item.fechaCuota, { day: '2-digit', month: 'long' });
       return {
         title: 'Eliminar gasto variable',
         message: `Vas a eliminar el gasto del ${fechaLabel} por ${montoLabel}. Esta acción no se puede deshacer.`,
         confirmLabel: 'Eliminar gasto variable',
       };
+    }
     case 'ingreso-fijo':
       return {
         title: 'Eliminar ingreso fijo',
         message: `Se desactivará la plantilla "${deleteDialog.item.descripcion}" y se quitará del periodo ${periodoLabel}.`,
         confirmLabel: 'Eliminar ingreso fijo',
       };
-    case 'ingreso-variable':
+    case 'ingreso-variable': {
+      const fechaLabel = formatDateOnly(deleteDialog.item.fecha, { day: '2-digit', month: 'long' });
       return {
         title: 'Eliminar ingreso variable',
         message: `¿Eliminar el ingreso del ${fechaLabel} por ${montoLabel}?`,
         confirmLabel: 'Eliminar ingreso variable',
       };
+    }
     default:
       return null;
   }
@@ -331,6 +335,7 @@ const createGastosDeleteDialogHandlers = ({
 
 export const GastosControlPage = () => {
   const [state, dispatch] = useReducer(gastosControlReducer, undefined, createInitialState);
+  const [markPaidTarget, setMarkPaidTarget] = useState<GastoItem | null>(null);
   const {
     selectedMes,
     selectedAnio,
@@ -362,12 +367,19 @@ export const GastosControlPage = () => {
   } = useIngresosResumen(selectedMes, selectedAnio);
   const eliminarGastoFijo = useEliminarGastoFijo();
   const eliminarGastoVariable = useEliminarGastoVariable();
+  const marcarGastoVariable = useMarcarGastoVariablePagado();
   const eliminarIngresoFijo = useEliminarIngresoFijo();
   const eliminarIngresoVariable = useEliminarIngresoVariable();
   const { showSuccess, showError } = useToast();
 
   const gastosFijos = data?.gastosFijos ?? [];
   const gastosVariables = data?.gastosVariables ?? [];
+  const gastosVariablesPendientes = gastosVariables
+    .filter((item) => item.estadoPago === GASTO_ESTADOS.PENDIENTE)
+    .reduce((acc, item) => acc + item.monto, 0);
+  const gastosVariablesPagados = gastosVariables
+    .filter((item) => item.estadoPago === GASTO_ESTADOS.PAGADO)
+    .reduce((acc, item) => acc + item.monto, 0);
   const periodLabel = monthFormatter.format(new Date(selectedAnio, selectedMes - 1, 1));
 
   const handleFilterChange = (mes: number, anio: number) => {
@@ -424,6 +436,10 @@ export const GastosControlPage = () => {
     dispatch({ type: 'setDeleteDialog', payload: { scope, item: gasto } });
   };
 
+  const handleMarkGastoVariablePagado = (gasto: GastoItem) => {
+    setMarkPaidTarget(gasto);
+  };
+
   const handleDeleteIngreso = (ingreso: IngresoItem) => {
     const scope = ingreso.tipo === INGRESO_TIPOS.FIJO ? 'ingreso-fijo' : 'ingreso-variable';
     dispatch({ type: 'setDeleteDialog', payload: { scope, item: ingreso } });
@@ -470,9 +486,11 @@ export const GastosControlPage = () => {
     totalIngresosExternos: ingresosData.totales.totalIngresosExternos,
     totalIngresosFijos: ingresosData.totales.totalIngresosFijos,
     totalIngresosVariables: ingresosData.totales.totalIngresosVariables,
+    gastosVariablesPendientes,
+    gastosVariablesPagados,
   };
 
-  const gastoActionsDisabled = eliminarGastoFijo.isPending || eliminarGastoVariable.isPending;
+  const gastoActionsDisabled = eliminarGastoFijo.isPending || eliminarGastoVariable.isPending || marcarGastoVariable.isPending;
   const ingresoActionsDisabled = eliminarIngresoFijo.isPending || eliminarIngresoVariable.isPending;
 
   const { copy: deleteDialogCopy, isProcessing: deleteIsProcessing, handleConfirmDelete, handleCancelDelete } =
@@ -497,72 +515,121 @@ export const GastosControlPage = () => {
 
   const gastoModalKey = `${selectedMes}-${selectedAnio}`;
   const ingresoModalKey = `ingresos-${selectedMes}-${selectedAnio}`;
+  const markPaidMessage = markPaidTarget
+    ? `Confirmá que "${markPaidTarget.descripcion}" del ${formatDateOnly(markPaidTarget.fechaCuota, {
+        day: '2-digit',
+        month: 'long',
+      })} por ${formatCurrency(markPaidTarget.monto)} ya fue pagado.`
+    : '';
+
+  const handleConfirmMarkPaid = async () => {
+    if (!markPaidTarget) {
+      return;
+    }
+    try {
+      await marcarGastoVariable.mutateAsync({
+        id: markPaidTarget.id,
+        mes: markPaidTarget.mes,
+        anio: markPaidTarget.anio,
+      });
+      showSuccess('Gasto variable marcado como pagado');
+      setMarkPaidTarget(null);
+      refetch();
+    } catch (error) {
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as { message?: string }).message)
+          : 'No pudimos marcar el gasto como pagado.';
+      showError(message);
+    }
+  };
+
+  const handleCancelMarkPaid = () => {
+    if (marcarGastoVariable.isPending) {
+      return;
+    }
+    setMarkPaidTarget(null);
+  };
 
   return (
-    <GastosControlLayout
-      periodLabel={periodLabel}
-      selectedMes={selectedMes}
-      selectedAnio={selectedAnio}
-      activeTab={activeTab}
-      heroTotals={heroTotals}
-      headerActions={{ onRegistrarIngreso: openRegistrarIngreso, onRegistrarGasto: openRegistrarGasto }}
-      onFilterChange={handleFilterChange}
-      onTabChange={handleTabChange}
-      toolbarCounts={{ variables: gastosVariables.length, fijos: gastosFijos.length }}
-      isToolbarRefreshing={isFetching}
-      gastoModalKey={gastoModalKey}
-      gastoSection={{
-        title: activeSection.title,
-        subtitle: activeSection.subtitle,
-        gastos: activeSection.gastos,
-        totalAmount: sumByMonto(activeSection.gastos),
-        emptyMessage: activeSection.emptyMessage,
-        isRefreshing: isFetching,
-        actionsDisabled: gastoActionsDisabled,
-        onEditGasto: handleEditGasto,
-        onDeleteGasto: handleDeleteGasto,
-      }}
-      ingresoModalKey={ingresoModalKey}
-      ingresosSection={{
-        ingresosFijos,
-        ingresosVariables,
-        totalGeneral: heroTotals.totalIngresosExternos,
-        totalFijos: heroTotals.totalIngresosFijos,
-        totalVariables: heroTotals.totalIngresosVariables,
-        isLoading: !ingresosData && isIngresosLoading,
-        isRefreshing: isIngresosFetching,
-        actionsDisabled: ingresoActionsDisabled,
-        onRegistrarIngreso: openRegistrarIngreso,
-        onEditIngreso: handleEditIngreso,
-        onDeleteIngreso: handleDeleteIngreso,
-      }}
-      gastoModalProps={{
-        isOpen: isModalOpen,
-        mes: selectedMes,
-        anio: selectedAnio,
-        onClose: handleCloseGastoModal,
-        onSuccess: handleGastoModalSuccess,
-        modo: gastoModalMode,
-        initialData: selectedGasto,
-        templateId: selectedGasto?.templateId ?? null,
-      }}
-      ingresoModalProps={{
-        isOpen: isIngresoModalOpen,
-        mes: selectedMes,
-        anio: selectedAnio,
-        onClose: handleCloseIngresoModal,
-        modo: ingresoModalMode,
-        initialData: selectedIngreso,
-        templateId: selectedIngreso?.templateId ?? null,
-        onSuccess: handleIngresoModalSuccess,
-      }}
-      deleteDialogProps={{
-        isOpen: Boolean(deleteDialog),
-        copy: deleteDialogCopy,
-        isProcessing: deleteIsProcessing,
-        onConfirm: handleConfirmDelete,
-        onCancel: handleCancelDelete,
-      }}
-    />
+    <>
+      <GastosControlLayout
+        periodLabel={periodLabel}
+        selectedMes={selectedMes}
+        selectedAnio={selectedAnio}
+        activeTab={activeTab}
+        heroTotals={heroTotals}
+        headerActions={{ onRegistrarIngreso: openRegistrarIngreso, onRegistrarGasto: openRegistrarGasto }}
+        onFilterChange={handleFilterChange}
+        onTabChange={handleTabChange}
+        toolbarCounts={{ variables: gastosVariables.length, fijos: gastosFijos.length }}
+        isToolbarRefreshing={isFetching}
+        gastoModalKey={gastoModalKey}
+        gastoSection={{
+          title: activeSection.title,
+          subtitle: activeSection.subtitle,
+          gastos: activeSection.gastos,
+          totalAmount: sumByMonto(activeSection.gastos),
+          emptyMessage: activeSection.emptyMessage,
+          isRefreshing: isFetching,
+          actionsDisabled: gastoActionsDisabled,
+          onEditGasto: handleEditGasto,
+          onDeleteGasto: handleDeleteGasto,
+          onMarkVariablePaid: handleMarkGastoVariablePagado,
+          markPaidDisabled: marcarGastoVariable.isPending,
+        }}
+        ingresoModalKey={ingresoModalKey}
+        ingresosSection={{
+          ingresosFijos,
+          ingresosVariables,
+          totalGeneral: heroTotals.totalIngresosExternos,
+          totalFijos: heroTotals.totalIngresosFijos,
+          totalVariables: heroTotals.totalIngresosVariables,
+          isLoading: !ingresosData && isIngresosLoading,
+          isRefreshing: isIngresosFetching,
+          actionsDisabled: ingresoActionsDisabled,
+          onRegistrarIngreso: openRegistrarIngreso,
+          onEditIngreso: handleEditIngreso,
+          onDeleteIngreso: handleDeleteIngreso,
+        }}
+        gastoModalProps={{
+          isOpen: isModalOpen,
+          mes: selectedMes,
+          anio: selectedAnio,
+          onClose: handleCloseGastoModal,
+          onSuccess: handleGastoModalSuccess,
+          modo: gastoModalMode,
+          initialData: selectedGasto,
+          templateId: selectedGasto?.templateId ?? null,
+        }}
+        ingresoModalProps={{
+          isOpen: isIngresoModalOpen,
+          mes: selectedMes,
+          anio: selectedAnio,
+          onClose: handleCloseIngresoModal,
+          modo: ingresoModalMode,
+          initialData: selectedIngreso,
+          templateId: selectedIngreso?.templateId ?? null,
+          onSuccess: handleIngresoModalSuccess,
+        }}
+        deleteDialogProps={{
+          isOpen: Boolean(deleteDialog),
+          copy: deleteDialogCopy,
+          isProcessing: deleteIsProcessing,
+          onConfirm: handleConfirmDelete,
+          onCancel: handleCancelDelete,
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(markPaidTarget)}
+        title="Marcar gasto como pagado"
+        message={markPaidMessage}
+        confirmLabel="Marcar pagado"
+        onConfirm={handleConfirmMarkPaid}
+        onCancel={handleCancelMarkPaid}
+        isProcessing={marcarGastoVariable.isPending}
+      />
+    </>
   );
 };

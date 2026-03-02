@@ -30,7 +30,8 @@ public class GastoMensualConfiguration : IEntityTypeConfiguration<GastoMensual>
 
         builder.Property(g => g.EstadoPago)
             .IsRequired()
-            .HasMaxLength(60);
+            .HasMaxLength(60)
+            .HasConversion<string>();
 
         builder.Property(g => g.Observaciones)
             .HasMaxLength(500);
@@ -41,6 +42,12 @@ public class GastoMensualConfiguration : IEntityTypeConfiguration<GastoMensual>
 
         builder.Property(g => g.Fecha)
             .IsRequired();
+
+        builder.Property(g => g.FechaActualizacion);
+
+        builder.Property(g => g.NumeroCuota);
+
+        builder.Property(g => g.TotalCuotas);
 
         builder.HasIndex(g => new { g.Mes, g.Anio });
         builder.HasIndex(g => g.GastoFijoTemplateId);
