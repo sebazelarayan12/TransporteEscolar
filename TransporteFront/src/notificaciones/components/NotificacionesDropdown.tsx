@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Spinner } from '../../shared/ui/Spinner';
 import { NotificacionItem } from './NotificacionItem';
+import { ActualizacionProductoCard } from './ActualizacionProductoCard';
 import {
   useNotificaciones,
   useNotificacionesCountNoLeidas,
   useMarcarNotificacionLeida,
   useMarcarTodasNotificacionesLeidas,
   useEliminarNotificacion,
+  useUltimaActualizacionNotificacion,
 } from '../services/notificaciones.queries';
 
 export const NotificacionesDropdown = () => {
@@ -14,13 +16,24 @@ export const NotificacionesDropdown = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: countData } = useNotificacionesCountNoLeidas();
-  const { data: notificacionesData, isLoading, refetch } = useNotificaciones({ pageSize: 10 });
+  const { data: notificacionesData, isLoading, refetch: refetchNotificaciones } = useNotificaciones({ pageSize: 10 });
+  const {
+    data: ultimaActualizacion,
+    isLoading: isActualizacionLoading,
+    refetch: refetchUltimaActualizacion,
+  } = useUltimaActualizacionNotificacion();
   const marcarLeida = useMarcarNotificacionLeida();
   const marcarTodasLeidas = useMarcarTodasNotificacionesLeidas();
   const eliminarNotificacion = useEliminarNotificacion();
 
   const count = countData?.count ?? 0;
   const notificaciones = notificacionesData?.data ?? [];
+  const otrasNotificaciones = ultimaActualizacion
+    ? notificaciones.filter((item) => item.id !== ultimaActualizacion.id)
+    : notificaciones;
+  const hasOtrasNotificaciones = otrasNotificaciones.length > 0;
+  const shouldShowEmptyState = !isLoading && !ultimaActualizacion && !hasOtrasNotificaciones;
+  const hasContent = hasOtrasNotificaciones || Boolean(ultimaActualizacion);
 
   // Cerrar al hacer clic fuera
   useEffect(() => {
@@ -41,7 +54,8 @@ export const NotificacionesDropdown = () => {
 
   const handleToggle = () => {
     if (!isOpen) {
-      refetch();
+      refetchNotificaciones();
+      refetchUltimaActualizacion();
     }
     setIsOpen(!isOpen);
   };
@@ -100,27 +114,26 @@ export const NotificacionesDropdown = () => {
           </div>
 
           {/* Lista */}
-          <div className="max-h-96 overflow-y-auto p-2">
+          <div className="max-h-96 overflow-y-auto p-3 space-y-3">
+            {isActualizacionLoading && !ultimaActualizacion && (
+              <div className="rounded-2xl border border-dashed border-gray-200 p-4 text-sm text-gray-400 animate-pulse dark:border-white/10">
+                Cargando actualización del sistema...
+              </div>
+            )}
+
+            {ultimaActualizacion && (
+              <ActualizacionProductoCard notificacion={ultimaActualizacion} />
+            )}
+
             {isLoading && (
               <div className="flex items-center justify-center py-8">
                 <Spinner />
               </div>
             )}
 
-            {!isLoading && notificaciones.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-                <span className="material-symbols-outlined text-3xl text-gray-300 dark:text-gray-600">
-                  notifications_off
-                </span>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  No hay notificaciones
-                </p>
-              </div>
-            )}
-
-            {!isLoading && notificaciones.length > 0 && (
+            {!isLoading && hasOtrasNotificaciones && (
               <div className="space-y-1">
-                {notificaciones.map((notificacion) => (
+                {otrasNotificaciones.map((notificacion) => (
                   <NotificacionItem
                     key={notificacion.id}
                     notificacion={notificacion}
@@ -131,10 +144,21 @@ export const NotificacionesDropdown = () => {
                 ))}
               </div>
             )}
+
+            {shouldShowEmptyState && (
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+                <span className="material-symbols-outlined text-3xl text-gray-300 dark:text-gray-600">
+                  notifications_off
+                </span>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No hay notificaciones
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Footer */}
-          {notificaciones.length > 0 && (
+          {hasContent && (
             <div className="border-t border-gray-100 px-4 py-3 dark:border-white/5">
               <button
                 type="button"

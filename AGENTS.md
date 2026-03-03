@@ -299,6 +299,7 @@ Para más detalle, también revisa el archivo `recarga.md`.
 - Mantén credenciales y datos sensibles fuera del repositorio. Revisa .gitignore (.env*, .sql, DESARROLLO-RED-LOCAL.md, recarga.md) y respétalo siempre.
 - Trabaja con los perfiles y puertos establecidos: backend 5074, frontend 5173, SQL Server en Docker 1433/1434. Usa el perfil Testing y el seeder solo en entornos de prueba.
 - Sigue un flujo Git limpio y describe los cambios con claridad (convencional commits recomendado). No modifiques o reviertas trabajo ajeno.
+- Después de cada `git push`, el orquestador debe preguntarle al usuario si desea registrar una nueva notificación de actualización y solo hacerlo si el usuario lo confirma y entrega la descripción exacta que quiere mostrar.
 - Antes de desplegar, endurece CORS, elimina IPs locales y usa HTTPS/env vars seguras (ver Program.cs y DESARROLLO-RED-LOCAL.md).
 - Recomendado: docker-compose -f docker-compose.testing.yml up -d → dotnet run --launch-profile Testing → npm run dev.
 How to Use This Guide

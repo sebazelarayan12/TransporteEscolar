@@ -9,7 +9,8 @@ public interface INotificacionService
     Task MarcarComoLeidaAsync(int id, CancellationToken cancellationToken = default);
     Task MarcarTodasComoLeidasAsync(CancellationToken cancellationToken = default);
     Task EliminarAsync(int id, CancellationToken cancellationToken = default);
-    
+    Task<NotificacionModel.Response> GuardarActualizacionProductoAsync(NotificacionModel.ActualizacionRequest request, CancellationToken cancellationToken = default);
+
     // Métodos para crear notificaciones desde otros servicios
     Task CrearNotificacionPagoRegistradoAsync(string titularNombre, decimal monto, string periodo, int pagoMensualId, CancellationToken cancellationToken = default);
     Task CrearNotificacionAjusteMontoAsync(string titularNombre, decimal nuevoMonto, int titularId, CancellationToken cancellationToken = default);

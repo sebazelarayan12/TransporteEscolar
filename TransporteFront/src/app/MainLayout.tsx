@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Suspense, useState } from 'react';
 import { Spinner } from '../shared/ui/Spinner';
-import { NotificacionesDropdown } from '../notificaciones';
+import { NotificacionesDropdown, ActualizacionProductoCard, useUltimaActualizacionNotificacion } from '../notificaciones';
 
 const LayoutContentFallback = () => (
   <div className="flex min-h-[360px] w-full items-center justify-center px-6 py-10">
@@ -22,6 +22,7 @@ type NavigationItem = {
 export const MainLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { data: ultimaActualizacion } = useUltimaActualizacionNotificacion();
 
   const navigation: NavigationItem[] = [
     { name: 'Dashboard', href: '/', icon: 'dashboard', match: 'exact' },
@@ -156,6 +157,12 @@ export const MainLayout = () => {
             EA
           </div>
         </header>
+
+        {ultimaActualizacion && (
+          <div className="px-4 py-4 border-b border-gray-100 bg-white/60 backdrop-blur-sm dark:border-white/5 dark:bg-zinc-900/40 sm:px-6">
+            <ActualizacionProductoCard notificacion={ultimaActualizacion} variant="banner" />
+          </div>
+        )}
 
         {/* Page Content - sin padding, cada página controla su layout */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden w-full">

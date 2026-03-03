@@ -42,6 +42,19 @@ public class NotificacionesController : ControllerBase
     }
 
     /// <summary>
+    /// Registra o actualiza la última notificación de actualización de producto (se conserva un solo registro)
+    /// </summary>
+    [HttpPut("ultima-actualizacion")]
+    public async Task<ActionResult<NotificacionModel.Response>> GuardarUltimaActualizacion(
+        [FromBody] NotificacionModel.ActualizacionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.GuardarActualizacionProductoAsync(request, cancellationToken);
+        _logger.LogInformation("Notificación de actualización de producto publicada {Fecha}", result.FechaPublicacion);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Marca una notificación como leída
     /// </summary>
     [HttpPut("{id}/marcar-leida")]
