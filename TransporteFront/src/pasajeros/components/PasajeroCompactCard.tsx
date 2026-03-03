@@ -9,9 +9,11 @@ interface PasajeroCompactCardProps {
 
 export const PasajeroCompactCard = ({ pasajero, isSelected, onClick }: PasajeroCompactCardProps) => {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      className={`px-5 py-4 border-b border-[#e4e4e7] dark:border-[#3f3f46] cursor-pointer transition-colors active:scale-[0.98] ${
+      aria-pressed={isSelected}
+      className={`w-full px-5 py-4 border-b border-[#e4e4e7] dark:border-[#3f3f46] text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007a8a] active:scale-[0.98] ${
         isSelected
           ? 'bg-[#007a8a]/5'
           : 'hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10'
@@ -39,6 +41,6 @@ export const PasajeroCompactCard = ({ pasajero, isSelected, onClick }: PasajeroC
           <PasajeroHorarioBadges horarios={pasajero.horariosAsignados} size="sm" maxVisible={2} />
         </div>
       </div>
-    </div>
+    </button>
   );
 };

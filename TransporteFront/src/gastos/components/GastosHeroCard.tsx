@@ -7,6 +7,8 @@ interface GastosHeroTotals {
   totalIngresosExternos: number;
   totalIngresosFijos: number;
   totalIngresosVariables: number;
+  gastosVariablesPendientes: number;
+  gastosVariablesPagados: number;
 }
 
 interface GastosHeroCardProps {
@@ -80,6 +82,17 @@ export const GastosHeroCard = ({ totales, periodLabel }: GastosHeroCardProps) =>
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
                     <span className="material-symbols-outlined text-[14px]">contrast</span>
                     Variable {formatCurrency(totales.totalIngresosVariables)}
+                  </span>
+                </div>
+              ) : metric.key === 'totalGastosVariables' ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
+                    <span className="material-symbols-outlined text-[14px]">pending_actions</span>
+                    Pendiente {formatCurrency(totales.gastosVariablesPendientes)}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
+                    <span className="material-symbols-outlined text-[14px]">task_alt</span>
+                    Pagado {formatCurrency(totales.gastosVariablesPagados)}
                   </span>
                 </div>
               ) : null}

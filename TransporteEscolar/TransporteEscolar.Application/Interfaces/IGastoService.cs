@@ -10,4 +10,5 @@ public interface IGastoService
     Task<GastoModel.GastoMensualResponse> ActualizarGastoFijoAsync(int templateId, GastoModel.UpdateGastoFijoRequest dto, CancellationToken cancellationToken = default);
     Task DesactivarGastoFijoAsync(int templateId, CancellationToken cancellationToken = default);
     Task EliminarGastoVariableAsync(int gastoId, CancellationToken cancellationToken = default);
+    Task<GastoModel.GastoMensualResponse> MarcarGastoVariablePagadoAsync(int gastoId, CancellationToken cancellationToken = default);
 }

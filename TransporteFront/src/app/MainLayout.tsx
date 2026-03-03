@@ -49,7 +49,16 @@ export const MainLayout = () => {
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          role="button"
+          tabIndex={0}
+          aria-label="Cerrar menú lateral"
           onClick={closeSidebar}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              closeSidebar();
+            }
+          }}
         />
       )}
 

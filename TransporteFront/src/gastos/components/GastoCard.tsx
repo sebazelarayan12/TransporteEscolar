@@ -1,7 +1,8 @@
-import { GASTO_TIPOS, type GastoItem } from '../types/gastos.types';
+import { GASTO_ESTADOS, GASTO_TIPOS, type GastoItem } from '../types/gastos.types';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
 import { CardActionsMenu, type CardActionItem } from './CardActionsMenu';
+import { buildUpcomingCuotas } from '../helpers/plan-cuotas.helpers';
 
 const categoriaIconMap: Record<string, string> = {
   Combustible: 'local_gas_station',
@@ -27,9 +28,11 @@ interface GastoCardProps {
   onEdit?: (gasto: GastoItem) => void;
   onDelete?: (gasto: GastoItem) => void;
   actionsDisabled?: boolean;
+  onMarkVariablePaid?: (gasto: GastoItem) => void;
+  markPaidDisabled?: boolean;
 }
 
-export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false }: GastoCardProps) => {
+export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false, onMarkVariablePaid, markPaidDisabled = false }: GastoCardProps) => {
   const icon = categoriaIconMap[gasto.categoria] ?? 'receipt_long';
   const isGastoFijo = gasto.tipo === GASTO_TIPOS.FIJO;
   const estadoStyle = estadoStyles[gasto.estadoPago] ?? {
@@ -42,6 +45,8 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false }: 
   };
   const badgeStyle = isGastoFijo ? fijoBadgeStyle : estadoStyle;
   const badgeLabel = isGastoFijo ? 'Fijo' : gasto.estadoPago;
+  const proximasCuotas = buildUpcomingCuotas({ gasto });
+  const showPlanCuotas = Boolean(gasto.esPlanCuotas && proximasCuotas.length > 0);
 
   const actions: CardActionItem[] = [];
   if (isGastoFijo && onEdit) {
@@ -59,6 +64,15 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false }: 
       icon: 'delete',
       onSelect: () => onDelete(gasto),
       destructive: true,
+    });
+  }
+  if (!isGastoFijo && gasto.estadoPago === GASTO_ESTADOS.PENDIENTE && onMarkVariablePaid) {
+    actions.push({
+      id: 'mark-paid',
+      label: 'Marcar pagado',
+      icon: 'task_alt',
+      onSelect: () => onMarkVariablePaid(gasto),
+      disabled: markPaidDisabled,
     });
   }
 
@@ -88,7 +102,7 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false }: 
         <div>
           <p className="text-xs text-gray-500">Fecha</p>
           <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            {formatDateOnly(gasto.fecha, { day: '2-digit', month: 'long' })}
+            {formatDateOnly(gasto.fechaCuota, { day: '2-digit', month: 'long' })}
           </p>
           <p className="text-xs text-gray-400">{gasto.medioPago}</p>
         </div>
@@ -102,6 +116,42 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false }: 
         <p className="rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-white/5 dark:text-gray-300">
           {gasto.observaciones}
         </p>
+      ) : null}
+
+      {showPlanCuotas ? (
+        <div className="rounded-2xl bg-teal-50 p-4 text-sm text-teal-900 dark:bg-cyan-500/10 dark:text-cyan-100">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-widest text-teal-700 dark:text-cyan-200">
+              Próximas cuotas
+            </p>
+            <span className="text-xs font-semibold text-teal-800 dark:text-cyan-100">
+              {gasto.numeroCuota ?? 1}/{gasto.totalCuotas ?? gasto.cantidadCuotas ?? 1}
+            </span>
+          </div>
+          <div className="mt-3 space-y-3">
+            {proximasCuotas.map((cuota) => {
+              const cuotaBadge = estadoStyles[cuota.estadoPago] ?? estadoStyle;
+              return (
+                <div key={cuota.numeroCuota} className="flex items-center justify-between gap-4 rounded-2xl bg-white/70 px-3 py-2 dark:bg-white/10">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Cuota {cuota.numeroCuota}/{cuota.totalCuotas}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-300">
+                      {formatDateOnly(cuota.fechaCuota, { day: '2-digit', month: 'short' })}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-[#0b2e33] dark:text-white">{formatCurrency(cuota.montoCuota)}</p>
+                    <span className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${cuotaBadge.bg} ${cuotaBadge.text}`}>
+                      {cuota.estadoPago}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       ) : null}
     </article>
   );

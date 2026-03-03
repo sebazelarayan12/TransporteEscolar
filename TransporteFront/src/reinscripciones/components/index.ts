@@ -4,5 +4,8 @@ export { ReinscripcionCard } from './ReinscripcionCard';
 export { ReinscripcionList } from './ReinscripcionList';
 export { ReinscripcionCreateModal } from './ReinscripcionCreateModal';
 export { LastPendingConfirmationModal } from './LastPendingConfirmationModal';
+export { PasajeroSelectionList } from './PasajeroSelectionList';
+export { SelectedPasajeroSummary } from './SelectedPasajeroSummary';
+export { ReinscripcionActionCards } from './ReinscripcionActionCards';
 // export { PasajeroCombobox } from './PasajeroCombobox';
 // export { ReinscripcionForm } from './ReinscripcionForm';

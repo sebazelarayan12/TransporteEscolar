@@ -21,11 +21,14 @@ public record GastoModel
         string Categoria,
         string Descripcion,
         decimal Monto,
-        DateTime Fecha,
+        DateTime FechaCuota,
         string MedioPago,
         string EstadoPago,
         string? Observaciones,
-        int? TemplateId);
+        int? TemplateId,
+        int? NumeroCuota,
+        int? TotalCuotas,
+        DateTime? FechaActualizacion);
 
     public record GastoFijoRequest(
         int Mes,
@@ -35,7 +38,8 @@ public record GastoModel
         decimal Monto,
         int DiaDeAplicacion,
         string MedioPago,
-        string? Observaciones);
+        string? Observaciones,
+        PlanCuotasRequest? PlanCuotas);
 
     public record UpdateGastoFijoRequest(
         int Mes,
@@ -46,7 +50,8 @@ public record GastoModel
         int DiaDeAplicacion,
         string MedioPago,
         string? Observaciones,
-        bool EstaActivo);
+        bool EstaActivo,
+        PlanCuotasRequest? PlanCuotas);
 
     public record GastoVariableRequest(
         int Mes,
@@ -56,6 +61,9 @@ public record GastoModel
         decimal Monto,
         DateOnly Fecha,
         string MedioPago,
-        string EstadoPago,
         string? Observaciones);
+
+    public record PlanCuotasRequest(
+        DateOnly FechaPrimeraCuota,
+        int CantidadCuotas);
 }

@@ -60,6 +60,12 @@ interface DeleteGastoVariables {
   anio: number;
 }
 
+interface MarkGastoVariableVariables {
+  id: number;
+  mes: number;
+  anio: number;
+}
+
 interface DeleteGastoFijoVariables {
   templateId: number;
   mes: number;
@@ -98,6 +104,19 @@ export const useEliminarGastoVariable = () => {
   return useMutation({
     mutationFn: async ({ id }: DeleteGastoVariables) => {
       return gastosApi.deleteGastoVariable(id);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: gastosKeys.resumen(variables.mes, variables.anio) });
+    },
+  });
+};
+
+export const useMarcarGastoVariablePagado = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id }: MarkGastoVariableVariables) => {
+      return gastosApi.marcarVariablePagado(id);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: gastosKeys.resumen(variables.mes, variables.anio) });

@@ -115,4 +115,16 @@ public class GastosController : ControllerBase
         _logger.LogInformation("Gasto variable eliminado (ID: {Id})", id);
         return NoContent();
     }
+
+    /// <summary>
+    /// Marca un gasto variable como pagado.
+    /// </summary>
+    [HttpPut("variables/{id:int}/marcar-pagado")]
+    public async Task<ActionResult<GastoModel.GastoMensualResponse>> MarcarGastoVariablePagado(int id)
+    {
+        var gasto = await _gastoService.MarcarGastoVariablePagadoAsync(id);
+
+        _logger.LogInformation("Gasto variable (ID: {Id}) marcado como pagado", id);
+        return Ok(gasto);
+    }
 }

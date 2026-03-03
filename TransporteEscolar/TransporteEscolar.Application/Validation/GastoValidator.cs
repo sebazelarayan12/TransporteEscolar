@@ -19,6 +19,9 @@ public static class GastoValidator
 
         if (dto.DiaDeAplicacion is < 1 or > 31)
             throw new ValidationException("diaDeAplicacion debe estar entre 1 y 31");
+
+        if (dto.PlanCuotas is not null)
+            ValidatePlanCuotas(dto.PlanCuotas);
     }
 
     public static void ValidateUpdateGastoFijo(GastoModel.UpdateGastoFijoRequest dto)
@@ -32,6 +35,9 @@ public static class GastoValidator
 
         if (dto.DiaDeAplicacion is < 1 or > 31)
             throw new ValidationException("diaDeAplicacion debe estar entre 1 y 31");
+
+        if (dto.PlanCuotas is not null)
+            ValidatePlanCuotas(dto.PlanCuotas);
     }
 
     public static void ValidateGastoVariable(GastoModel.GastoVariableRequest dto)
@@ -41,7 +47,6 @@ public static class GastoValidator
         ValidateTexto(dto.Categoria, nameof(dto.Categoria), 120);
         ValidateTexto(dto.Descripcion, nameof(dto.Descripcion), 300);
         ValidateTexto(dto.MedioPago, nameof(dto.MedioPago), 80);
-        ValidateTexto(dto.EstadoPago, nameof(dto.EstadoPago), 60);
         ValidateObservaciones(dto.Observaciones);
 
         if (dto.Fecha.Year != dto.Anio || dto.Fecha.Month != dto.Mes)
@@ -79,5 +84,18 @@ public static class GastoValidator
 
         if (observaciones.Length > 500)
             throw new ValidationException("observaciones supera el máximo de 500 caracteres.");
+    }
+
+    private static void ValidatePlanCuotas(GastoModel.PlanCuotasRequest plan)
+    {
+        if (plan.CantidadCuotas <= 0)
+        {
+            throw new ValidationException("PlanCuotas.cantidadCuotas debe ser mayor a 0.");
+        }
+
+        if (plan.FechaPrimeraCuota.Year < MinAnio || plan.FechaPrimeraCuota.Year > MaxAnio)
+        {
+            throw new ValidationException("PlanCuotas.fechaPrimeraCuota está fuera de rango.");
+        }
     }
 }

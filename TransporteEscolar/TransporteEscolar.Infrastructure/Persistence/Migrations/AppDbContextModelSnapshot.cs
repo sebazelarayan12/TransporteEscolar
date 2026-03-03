@@ -30,6 +30,9 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("CantidadCuotas")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Categoria")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -43,6 +46,11 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.Property<int>("DiaDeAplicacion")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("EsPlanCuotas")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("EstaActivo")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -51,12 +59,18 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("FechaInicio")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("FechaPrimeraCuota")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("MedioPago")
                         .IsRequired()
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
 
-                    b.Property<decimal>("Monto")
+                    b.Property<decimal>("MontoCuota")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<decimal>("MontoOriginal")
                         .HasColumnType("decimal(12,2)");
 
                     b.HasKey("Id");
@@ -95,6 +109,9 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("FechaActualizacion")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int?>("GastoFijoTemplateId")
                         .HasColumnType("integer");
 
@@ -109,6 +126,9 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("Monto")
                         .HasColumnType("decimal(12,2)");
 
+                    b.Property<int?>("NumeroCuota")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Observaciones")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -117,6 +137,9 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<int?>("TotalCuotas")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

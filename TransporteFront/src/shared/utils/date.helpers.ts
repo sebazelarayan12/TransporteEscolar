@@ -11,17 +11,37 @@
  * formatDateOnly("2026-02-11T00:00:00") // "11 de febrero de 2026"
  */
 export const formatDateOnly = (
-  dateOnlyISO: string,
+  dateOnlyISO?: string | null,
   options: Intl.DateTimeFormatOptions = {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   }
 ): string => {
+  if (!dateOnlyISO) {
+    return '';
+  }
+
   // Parse YYYY-MM-DD sin conversión de timezone
-  const [year, month, day] = dateOnlyISO.split('T')[0].split('-').map(Number);
+  const [datePart] = dateOnlyISO.split('T');
+  const parts = datePart.split('-');
+
+  if (parts.length !== 3) {
+    return dateOnlyISO;
+  }
+
+  const [year, month, day] = parts.map(Number);
+
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return dateOnlyISO;
+  }
+
   const date = new Date(year, month - 1, day);
-  
+
+  if (Number.isNaN(date.getTime())) {
+    return dateOnlyISO;
+  }
+
   return date.toLocaleDateString('es-AR', options);
 };
 
