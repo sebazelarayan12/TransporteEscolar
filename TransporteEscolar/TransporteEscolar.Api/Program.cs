@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 using TransporteEscolar.Api.Converters;
 using TransporteEscolar.Api.DependencyInjection;
+using TransporteEscolar.Api.HostedServices;
 using TransporteEscolar.Api.Middleware;
+using TransporteEscolar.Api.Options;
 using TransporteEscolar.Infrastructure.Persistence;
 
 namespace TransporteEscolar.Api
@@ -21,6 +23,8 @@ namespace TransporteEscolar.Api
 
             // Registrar servicios y repositorios
             builder.Services.AddApplicationServices();
+            builder.Services.Configure<ReleaseNotesOptions>(builder.Configuration.GetSection("ReleaseNotes"));
+            builder.Services.AddHostedService<ReleaseNotesInitializer>();
 
             // CORS - Configurado dinámicamente mediante variable de entorno
             var allowedOrigins = builder.Configuration.GetValue<string>("AllowedOrigins")

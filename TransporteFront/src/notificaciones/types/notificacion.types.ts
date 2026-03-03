@@ -7,6 +7,7 @@ export const NOTIFICACION_TIPOS = {
   REINSCRIPCION: 'REINSCRIPCION',
   TITULAR_CREADO: 'TITULAR_CREADO',
   PASAJERO_CREADO: 'PASAJERO_CREADO',
+  ACTUALIZACION_PRODUCTO: 'ACTUALIZACION_PRODUCTO',
 } as const;
 
 export type NotificacionTipo = (typeof NOTIFICACION_TIPOS)[keyof typeof NOTIFICACION_TIPOS];
@@ -19,11 +20,15 @@ export interface NotificacionResponse {
   tipo: NotificacionTipo;
   titulo: string;
   mensaje: string;
+  descripcion?: string | null;
   fechaCreacion: string;
   leida: boolean;
   fechaLectura: string | null;
   entidadTipo: string | null;
   entidadId: number | null;
+  esActualizacionProducto: boolean;
+  fechaPublicacion: string | null;
+  link: string | null;
 }
 
 /**
@@ -48,4 +53,14 @@ export interface NotificacionesFilterRequest {
 export interface NotificacionesPaginatedResponse {
   data: NotificacionResponse[];
   totalCount: number;
+}
+
+/**
+ * Payload para publicar la última actualización del sistema
+ */
+export interface UltimaActualizacionPayload {
+  titulo: string;
+  descripcion: string;
+  fechaPublicacion: string;
+  link?: string | null;
 }

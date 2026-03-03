@@ -6,8 +6,8 @@ export const TRANSPORTE_TIPOS = {
 export type TransporteTipo = (typeof TRANSPORTE_TIPOS)[keyof typeof TRANSPORTE_TIPOS];
 
 export const TRANSPORTE_LABELS: Record<TransporteTipo, string> = {
-  [TRANSPORTE_TIPOS.UNO]: 'Transporte 1',
-  [TRANSPORTE_TIPOS.DOS]: 'Transporte 2',
+  [TRANSPORTE_TIPOS.UNO]: 'Ducato',
+  [TRANSPORTE_TIPOS.DOS]: 'Sprinter',
 };
 
 export const TRANSPORTE_LIST: TransporteTipo[] = [TRANSPORTE_TIPOS.UNO, TRANSPORTE_TIPOS.DOS];

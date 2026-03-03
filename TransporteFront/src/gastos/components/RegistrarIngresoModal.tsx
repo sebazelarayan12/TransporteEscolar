@@ -99,9 +99,25 @@ const buildSchemaForPeriod = (mes: number, anio: number) => {
   });
 };
 
+const getDefaultDateForPeriod = (mes: number, anio: number) => {
+  const periodStart = new Date(anio, mes - 1, 1);
+  const periodEnd = new Date(anio, mes, 0);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (today.getTime() < periodStart.getTime()) {
+    return periodStart.toISOString().split('T')[0];
+  }
+
+  if (today.getTime() > periodEnd.getTime()) {
+    return periodEnd.toISOString().split('T')[0];
+  }
+
+  return today.toISOString().split('T')[0];
+};
+
 const getDefaultValues = (mes: number, anio: number) => {
-  const firstDay = new Date(anio, mes - 1, 1);
-  const defaultDate = firstDay.toISOString().split('T')[0];
+  const defaultDate = getDefaultDateForPeriod(mes, anio);
   return {
     tipo: INGRESO_TIPOS.VARIABLE,
     categoria: '',

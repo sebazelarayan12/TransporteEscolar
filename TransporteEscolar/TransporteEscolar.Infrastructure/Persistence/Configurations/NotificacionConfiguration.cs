@@ -44,6 +44,17 @@ public class NotificacionConfiguration : IEntityTypeConfiguration<Notificacion>
         builder.Property(n => n.EntidadId)
             .IsRequired(false);
 
+        builder.Property(n => n.EsActualizacionProducto)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(n => n.FechaPublicacion)
+            .IsRequired(false);
+
+        builder.Property(n => n.Link)
+            .IsRequired(false)
+            .HasMaxLength(300);
+
         // Índices para queries frecuentes
         builder.HasIndex(n => n.Leida);
         builder.HasIndex(n => n.FechaCreacion);

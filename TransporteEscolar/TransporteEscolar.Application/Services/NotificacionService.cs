@@ -4,14 +4,42 @@ using TransporteEscolar.Domain.Entities;
 
 namespace TransporteEscolar.Application.Services;
 
-public class NotificacionService : INotificacionService
-{
-    private readonly INotificacionRepository _repository;
-
-    public NotificacionService(INotificacionRepository repository)
+    public class NotificacionService : INotificacionService
     {
-        _repository = repository;
-    }
+        private readonly INotificacionRepository _repository;
+
+        public NotificacionService(INotificacionRepository repository)
+        {
+            _repository = repository;
+        }
+
+        /// <summary>
+        /// Persiste la última actualización del producto. Siempre se mantiene un único registro publicado.
+        /// </summary>
+        public async Task<NotificacionModel.Response> GuardarActualizacionProductoAsync(
+            NotificacionModel.ActualizacionRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            var titulo = request.Titulo.Trim();
+            var descripcion = request.Descripcion.Trim();
+            var linkNormalizado = string.IsNullOrWhiteSpace(request.Link) ? null : request.Link.Trim();
+            var fechaPublicacion = NormalizarFechaPublicacion(request.FechaPublicacion);
+
+            var actualizacionExistente = await _repository.GetActualizacionProductoAsync(cancellationToken);
+
+            if (actualizacionExistente is null)
+            {
+                actualizacionExistente = Notificacion.CrearActualizacionProducto(titulo, descripcion, fechaPublicacion, linkNormalizado);
+                await _repository.AddAsync(actualizacionExistente, cancellationToken);
+            }
+            else
+            {
+                actualizacionExistente.ActualizarActualizacionProducto(titulo, descripcion, fechaPublicacion, linkNormalizado);
+                await _repository.UpdateAsync(actualizacionExistente, cancellationToken);
+            }
+
+            return MapearAResponse(actualizacionExistente);
+        }
 
     public async Task<PaginationModel.ResponsePagination<NotificacionModel.Response>> ObtenerPaginadasAsync(
         NotificacionModel.FilterRequest request, 
@@ -176,7 +204,10 @@ public class NotificacionService : INotificacionService
             n.Leida,
             n.FechaLectura,
             n.EntidadTipo,
-            n.EntidadId);
+            n.EntidadId,
+            n.EsActualizacionProducto,
+            n.FechaPublicacion,
+            n.Link);
     }
 
     /// <summary>
@@ -199,5 +230,15 @@ public class NotificacionService : INotificacionService
         var apellidos = string.Join(" ", partes.Skip(1));
         
         return $"{inicial}. {apellidos}";
+    }
+
+    private static DateTime NormalizarFechaPublicacion(DateTime fechaPublicacion)
+    {
+        return fechaPublicacion.Kind switch
+        {
+            DateTimeKind.Utc => fechaPublicacion,
+            DateTimeKind.Local => fechaPublicacion.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(fechaPublicacion, DateTimeKind.Utc)
+        };
     }
 }

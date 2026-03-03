@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificacionesApi } from './notificaciones.api';
-import type { NotificacionesFilterRequest } from '../types/notificacion.types';
+import type { NotificacionesFilterRequest, UltimaActualizacionPayload } from '../types/notificacion.types';
 import { POLLING_INTERVAL_MS } from '../constants/notificacion.constants';
 
 /**
@@ -11,6 +11,7 @@ export const notificacionesKeys = {
   lists: () => [...notificacionesKeys.all, 'list'] as const,
   list: (params: NotificacionesFilterRequest) => [...notificacionesKeys.lists(), params] as const,
   countNoLeidas: () => [...notificacionesKeys.all, 'count-no-leidas'] as const,
+  ultimaActualizacion: () => [...notificacionesKeys.all, 'ultima-actualizacion'] as const,
 };
 
 /**
@@ -76,6 +77,33 @@ export function useEliminarNotificacion() {
     mutationFn: (id: number) => notificacionesApi.eliminar(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificacionesKeys.all });
+    },
+  });
+}
+
+/**
+ * Hook para consultar la última actualización del sistema
+ */
+export function useUltimaActualizacionNotificacion() {
+  return useQuery({
+    queryKey: notificacionesKeys.ultimaActualizacion(),
+    queryFn: () => notificacionesApi.getUltimaActualizacion(),
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Hook para publicar/actualizar la notificación de actualización
+ */
+export function useGuardarUltimaActualizacion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: UltimaActualizacionPayload) => notificacionesApi.putUltimaActualizacion(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: notificacionesKeys.all });
+      queryClient.invalidateQueries({ queryKey: notificacionesKeys.ultimaActualizacion() });
     },
   });
 }

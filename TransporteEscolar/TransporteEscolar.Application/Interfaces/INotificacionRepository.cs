@@ -5,6 +5,7 @@ namespace TransporteEscolar.Application.Interfaces;
 public interface INotificacionRepository
 {
     Task<Notificacion?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Notificacion?> GetActualizacionProductoAsync(CancellationToken cancellationToken = default);
     Task<List<Notificacion>> GetPaginadasAsync(int pageNumber, int pageSize, bool soloNoLeidas, CancellationToken cancellationToken = default);
     Task<int> GetCountNoLeidasAsync(CancellationToken cancellationToken = default);
     Task<Notificacion> AddAsync(Notificacion notificacion, CancellationToken cancellationToken = default);

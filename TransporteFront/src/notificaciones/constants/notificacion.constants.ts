@@ -47,6 +47,13 @@ export const NOTIFICACION_CONFIG: Record<NotificacionTipo, NotificacionConfig> =
     label: 'Nuevo pasajero',
     getRoute: (id) => (id ? `/pasajeros/${id}` : '/pasajeros'),
   },
+  ACTUALIZACION_PRODUCTO: {
+    icon: 'auto_awesome',
+    colorClass: 'text-[#007a8a]',
+    bgColorClass: 'bg-[#007a8a]/10',
+    label: 'Actualización del sistema',
+    getRoute: () => null,
+  },
 } as const;
 
 /**

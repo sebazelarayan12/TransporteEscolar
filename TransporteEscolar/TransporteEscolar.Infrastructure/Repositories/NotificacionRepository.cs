@@ -20,6 +20,12 @@ public class NotificacionRepository : INotificacionRepository
             .FirstOrDefaultAsync(n => n.Id == id, cancellationToken);
     }
 
+    public async Task<Notificacion?> GetActualizacionProductoAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Notificaciones
+            .FirstOrDefaultAsync(n => n.EsActualizacionProducto, cancellationToken);
+    }
+
     public async Task<List<Notificacion>> GetPaginadasAsync(
         int pageNumber, 
         int pageSize, 
@@ -82,12 +88,15 @@ public class NotificacionRepository : INotificacionRepository
         var limiteNoLeidas = ahora.AddDays(-30);   // 30 días para no leídas
 
         // Eliminar leídas con más de 7 días desde lectura
+        // La actualización de producto se mantiene siempre: solo se purgan otras notificaciones.
         var eliminadasLeidas = await _context.Notificaciones
+            .Where(n => !n.EsActualizacionProducto)
             .Where(n => n.Leida && n.FechaLectura != null && n.FechaLectura < limiteLeidas)
             .ExecuteDeleteAsync(cancellationToken);
 
         // Eliminar no leídas con más de 30 días desde creación
         var eliminadasNoLeidas = await _context.Notificaciones
+            .Where(n => !n.EsActualizacionProducto)
             .Where(n => !n.Leida && n.FechaCreacion < limiteNoLeidas)
             .ExecuteDeleteAsync(cancellationToken);
 
