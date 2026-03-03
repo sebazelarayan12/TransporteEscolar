@@ -302,6 +302,7 @@ Para más detalle, también revisa el archivo `recarga.md`.
 - Después de cada `git push`, el orquestador debe preguntarle al usuario si desea registrar una nueva notificación de actualización y solo hacerlo si el usuario lo confirma y entrega la descripción exacta que quiere mostrar.
 - Antes de desplegar, endurece CORS, elimina IPs locales y usa HTTPS/env vars seguras (ver Program.cs y DESARROLLO-RED-LOCAL.md).
 - Recomendado: docker-compose -f docker-compose.testing.yml up -d → dotnet run --launch-profile Testing → npm run dev.
+- Cuando modifiques o agregues código en el frontend, siempre debes ejecutar `npx -y react-doctor@latest . --verbose --diff` al final, corregir cualquier error o warning que aparezca y volver a correrlo hasta que esté limpio.
 How to Use This Guide
 1. Determina si el trabajo es backend o frontend. Luego:
    - Backend → usa TransporteEscolar/AGENTS.md.

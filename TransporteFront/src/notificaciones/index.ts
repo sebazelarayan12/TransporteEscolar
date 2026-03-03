@@ -1,5 +1,5 @@
 // Components
-export { NotificacionItem, NotificacionesDropdown } from './components';
+export { ActualizacionProductoCard, NotificacionItem, NotificacionesDropdown } from './components';
 
 // Services
 export { notificacionesApi } from './services/notificaciones.api';
