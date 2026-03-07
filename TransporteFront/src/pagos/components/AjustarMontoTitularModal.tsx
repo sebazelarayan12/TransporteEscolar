@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { useForm, type UseFormRegisterReturn } from 'react-hook-form';
+import { Controller, useForm, type UseFormRegisterReturn } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { TitularResponse } from '../../titulares/types/titular.types';
-import { Button, Modal } from '../../shared/ui';
+import { Button, Modal, PriceInput } from '../../shared/ui';
 import { useToast } from '../../shared/hooks/useToast';
 import { useAjustarMontoTitular } from '../services/pagos.queries';
 import type { AjusteTitularRequest } from '../types/pago.types';
@@ -43,6 +43,7 @@ export const AjustarMontoTitularModal = ({ isOpen, onClose, titular }: AjustarMo
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isValid },
     reset,
   } = useForm<AjustarMontoFormData>({
@@ -100,12 +101,28 @@ export const AjustarMontoTitularModal = ({ isOpen, onClose, titular }: AjustarMo
         <TitularSummaryCard titular={titular} />
 
         <form onSubmit={onSubmit} className="space-y-5">
-          <CurrencyField
-            id="nuevoMonto"
-            label="Nuevo monto mensual"
-            error={errors.nuevoMonto?.message}
-            disabled={disabled}
-            registration={register('nuevoMonto', { valueAsNumber: true })}
+          <Controller
+            control={control}
+            name="nuevoMonto"
+            render={({ field }) => (
+              <FieldWrapper id="nuevoMonto" label="Nuevo monto mensual" error={errors.nuevoMonto?.message}>
+                <PriceInput
+                  id="nuevoMonto"
+                  value={field.value ?? ''}
+                  onValueChange={(cleanValue: string, floatValue: number | undefined) => {
+                    if (!cleanValue) {
+                      field.onChange(undefined);
+                      return;
+                    }
+                    field.onChange(floatValue ?? undefined);
+                  }}
+                  onBlur={field.onBlur}
+                  disabled={disabled}
+                  prefix="$"
+                  inputClassName="rounded-2xl border border-gray-300 bg-white px-4 py-2.5 text-gray-900 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1d8ca5] disabled:bg-gray-100 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white"
+                />
+              </FieldWrapper>
+            )}
           />
 
           <TextareaField
@@ -150,35 +167,6 @@ const FieldWrapper = ({ id, label, error, children }: FieldWrapperProps) => (
     {children}
     {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
   </div>
-);
-
-interface CurrencyFieldProps {
-  id: string;
-  label: string;
-  disabled: boolean;
-  error?: string;
-  registration: UseFormRegisterReturn;
-}
-
-const CurrencyField = ({ id, label, registration, disabled, error }: CurrencyFieldProps) => (
-  <FieldWrapper id={id} label={label} error={error}>
-    <div className="relative mt-1">
-      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
-        $
-      </span>
-      <input
-        id={id}
-        type="number"
-        step="0.01"
-        min="0"
-        className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-2.5 pl-8 text-gray-900 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1d8ca5] disabled:bg-gray-100 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white"
-        placeholder="0,00"
-        disabled={disabled}
-        inputMode="decimal"
-        {...registration}
-      />
-    </div>
-  </FieldWrapper>
 );
 
 interface TextareaFieldProps {
