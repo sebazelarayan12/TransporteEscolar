@@ -55,7 +55,7 @@ const addMonths = (isoDate: string, monthsToAdd: number): string => {
   return utcDate.toISOString().slice(0, ISO_DATE_LENGTH);
 };
 
-export const buildUpcomingCuotas = ({ gasto, maxItems = 3, fallbackEstado = GASTO_ESTADOS.PROGRAMADO }: UpcomingCuotasParams): PlanCuotaResumen[] => {
+export const buildUpcomingCuotas = ({ gasto, maxItems = 3, fallbackEstado = GASTO_ESTADOS.PENDIENTE }: UpcomingCuotasParams): PlanCuotaResumen[] => {
   if (!gasto.esPlanCuotas || !gasto.fechaPrimeraCuota || !gasto.cantidadCuotas) {
     return [];
   }

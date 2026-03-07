@@ -1,4 +1,4 @@
-import { GASTO_ESTADOS, GASTO_TIPOS, type GastoItem } from '../types/gastos.types';
+import { GASTO_ESTADOS, GASTO_TIPOS, type GastoEstadoPago, type GastoItem } from '../types/gastos.types';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
 import { CardActionsMenu, type CardActionItem } from './CardActionsMenu';
@@ -15,12 +15,13 @@ const categoriaIconMap: Record<string, string> = {
   Seguros: 'verified_user',
   Alquiler: 'apartment',
   Licencias: 'workspace_premium',
+  Tarjeta: 'credit_card',
+  Servicio: 'handyman',
 };
 
-const estadoStyles: Record<string, { bg: string; text: string }> = {
+const estadoStyles: Record<GastoEstadoPago, { bg: string; text: string }> = {
   Pagado: { bg: 'bg-emerald-50 dark:bg-emerald-400/10', text: 'text-emerald-700 dark:text-emerald-300' },
   Pendiente: { bg: 'bg-amber-50 dark:bg-amber-400/10', text: 'text-amber-700 dark:text-amber-300' },
-  Programado: { bg: 'bg-blue-50 dark:bg-blue-400/10', text: 'text-blue-700 dark:text-blue-300' },
 };
 
 interface GastoCardProps {
