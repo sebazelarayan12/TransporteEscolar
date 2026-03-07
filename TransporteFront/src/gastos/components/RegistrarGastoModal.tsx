@@ -83,7 +83,6 @@ const registrarGastoSchemaBase = z.discriminatedUnion('tipo', [
     estadoPago: z.enum([
       GASTO_ESTADOS.PENDIENTE,
       GASTO_ESTADOS.PAGADO,
-      GASTO_ESTADOS.PROGRAMADO,
     ]),
     planCuotas: planCuotasFormSchema,
   }),
@@ -217,13 +216,14 @@ export const RegistrarGastoModal = ({
   const {
     register,
     handleSubmit,
+    control,
     reset,
     setValue,
     formState: { errors, isSubmitting },
   } = form;
   const typedErrors = errors as typeof errors &
     Partial<Record<'diaDeAplicacion' | 'fecha' | 'estadoPago', FieldError | undefined>>;
-  const watchedTipo = useWatch({ control: form.control, name: 'tipo' }) as GastoTipo | undefined;
+  const watchedTipo = useWatch({ control, name: 'tipo' }) as GastoTipo | undefined;
   const selectedTipo = watchedTipo ?? (isEditMode ? GASTO_TIPOS.FIJO : GASTO_TIPOS.VARIABLE);
   const { min, max } = getPeriodBounds(mes, anio);
   const { showSuccess, showError } = useToast();
@@ -369,6 +369,7 @@ export const RegistrarGastoModal = ({
         />
 
         <GastoFormFields
+          control={control}
           register={register}
           errors={errors}
           typedErrors={typedErrors}
@@ -381,7 +382,7 @@ export const RegistrarGastoModal = ({
         />
 
         <GastoPlanCuotasSection
-          control={form.control}
+          control={control}
           register={register}
           errors={errors}
           isPending={isPending}

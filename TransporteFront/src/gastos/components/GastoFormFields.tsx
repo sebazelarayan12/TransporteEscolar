@@ -1,5 +1,7 @@
-import type { FieldError, FieldErrors, UseFormRegister } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
+import type { Control, FieldError, FieldErrors, UseFormRegister } from 'react-hook-form';
 import { MEDIOS_PAGO } from '../../pagos/constants/medios-pago.constants';
+import { PriceInput } from '../../shared/ui';
 import { GASTO_ESTADOS, GASTO_TIPOS, type GastoTipo } from '../types/gastos.types';
 import type { RegistrarGastoFormData } from './RegistrarGastoModal';
 
@@ -15,6 +17,7 @@ type GastoFieldIds = {
 };
 
 interface GastoFormFieldsProps {
+  control: Control<RegistrarGastoFormData>;
   register: UseFormRegister<RegistrarGastoFormData>;
   errors: FieldErrors<RegistrarGastoFormData>;
   typedErrors: Partial<Record<'diaDeAplicacion' | 'fecha' | 'estadoPago', FieldError | undefined>>;
@@ -27,6 +30,7 @@ interface GastoFormFieldsProps {
 }
 
 export const GastoFormFields = ({
+  control,
   register,
   errors,
   typedErrors,
@@ -105,20 +109,30 @@ export const GastoFormFields = ({
           <label htmlFor={fieldIds.monto} className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
             Monto <span className="text-red-500">*</span>
           </label>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$</span>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              id={fieldIds.monto}
-              {...register('monto', { valueAsNumber: true })}
-              disabled={isPending}
-              className={`w-full rounded-xl border pl-8 pr-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-                errors.monto ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-              }`}
-            />
-          </div>
+          <Controller
+            control={control}
+            name="monto"
+            render={({ field }) => (
+              <PriceInput
+                id={fieldIds.monto}
+                value={field.value ?? ''}
+                onValueChange={(cleanValue: string, floatValue: number | undefined) => {
+                  if (!cleanValue) {
+                    field.onChange(undefined);
+                    return;
+                  }
+                  field.onChange(floatValue ?? undefined);
+                }}
+                onBlur={field.onBlur}
+                disabled={isPending}
+                prefix="$"
+                containerClassName="relative"
+                inputClassName={`w-full rounded-xl border pr-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
+                  errors.monto ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+                }`}
+              />
+            )}
+          />
           {errors.monto ? <p className="mt-1 text-xs text-red-600">{errors.monto.message}</p> : null}
         </div>
 

@@ -135,6 +135,7 @@ public class GastoService : IGastoService
 
         var fecha = DateTime.SpecifyKind(dto.Fecha.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
         var observaciones = dto.Observaciones?.Trim();
+        var estadoPago = MapearEstadoPago(dto.EstadoPago);
         var gasto = new GastoMensual(
             dto.Mes,
             dto.Anio,
@@ -144,7 +145,7 @@ public class GastoService : IGastoService
             dto.Monto,
             fecha,
             dto.MedioPago.Trim(),
-            EstadoPagoGasto.Pendiente,
+            estadoPago,
             observaciones);
 
         var gastoCreado = await _gastoRepository.AgregarGastoMensualAsync(gasto, cancellationToken);
@@ -275,6 +276,25 @@ public class GastoService : IGastoService
 
         var fecha = DateTime.SpecifyKind(plan.FechaPrimeraCuota.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
         return (true, fecha, plan.CantidadCuotas);
+    }
+
+    private static EstadoPagoGasto MapearEstadoPago(string estadoPago)
+    {
+        if (string.IsNullOrWhiteSpace(estadoPago))
+        {
+            throw new ValidationException("estadoPago es requerido.");
+        }
+
+        var valorNormalizado = estadoPago.Trim();
+        var estadoValido = Enum.GetNames<EstadoPagoGasto>().FirstOrDefault(nombre =>
+            string.Equals(nombre, valorNormalizado, StringComparison.OrdinalIgnoreCase));
+
+        if (estadoValido is null)
+        {
+            throw new ValidationException("estadoPago debe ser Pendiente o Pagado.");
+        }
+
+        return Enum.Parse<EstadoPagoGasto>(estadoValido);
     }
 
     private static GastoModel.GastoMensualResponse MapearGasto(GastoMensual gasto)

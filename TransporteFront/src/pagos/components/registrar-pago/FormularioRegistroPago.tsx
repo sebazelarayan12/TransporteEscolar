@@ -4,7 +4,7 @@
  */
 
 import type { FormEvent } from 'react';
-import { Button } from '../../../shared/ui';
+import { Button, PriceInput } from '../../../shared/ui';
 import { MEDIOS_PAGO, type MedioPago } from '../../constants/medios-pago.constants';
 
 interface FormularioRegistroPagoProps {
@@ -43,16 +43,14 @@ export const FormularioRegistroPago = ({
         <label htmlFor="monto" className="text-sm font-medium text-gray-700 dark:text-gray-300">
           Monto a registrar <span className="text-red-500">*</span>
         </label>
-        <input
+        <PriceInput
           id="monto"
-          type="number"
-          min="0"
-          step="0.01"
           value={monto}
-          onChange={(event) => onMontoChange(event.target.value)}
-          className="mt-1 w-full rounded-2xl border border-gray-300 bg-white px-4 py-2.5 text-gray-900 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1d8ca5] disabled:bg-gray-100 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white"
-          inputMode="decimal"
+          onValueChange={(cleanValue: string) => onMontoChange(cleanValue)}
           disabled={disabled || isPending}
+          prefix="$"
+          placeholder="0,00"
+          inputClassName="mt-1 w-full rounded-2xl border border-gray-300 bg-white px-4 py-2.5 text-gray-900 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#1d8ca5] disabled:bg-gray-100 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white"
         />
         {!isMontoValid && monto.trim() !== '' && (
           <p className="mt-1 text-xs text-red-500">Ingresá un monto válido mayor a cero.</p>

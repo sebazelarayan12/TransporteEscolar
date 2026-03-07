@@ -7,6 +7,7 @@ public interface IPagoMensualRepository
     Task<PagoMensual?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<List<PagoMensual>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<List<PagoMensual>> GetByTitularIdAsync(int titularId, CancellationToken cancellationToken = default);
+    Task DeleteByTitularIdAsync(int titularId, CancellationToken cancellationToken = default);
     Task<List<PagoMensual>> GetVencidosAsync(CancellationToken cancellationToken = default);
     Task<List<PagoMensual>> GetPendientesAsync(CancellationToken cancellationToken = default);
     Task<PagoMensual?> GetByTitularMesAnioAsync(int titularId, int mes, int anio, CancellationToken cancellationToken = default);
