@@ -1,5 +1,6 @@
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Exceptions;
+using TransporteEscolar.Domain.Enums;
 
 namespace TransporteEscolar.Application.Validation;
 
@@ -47,6 +48,7 @@ public static class GastoValidator
         ValidateTexto(dto.Categoria, nameof(dto.Categoria), 120);
         ValidateTexto(dto.Descripcion, nameof(dto.Descripcion), 300);
         ValidateTexto(dto.MedioPago, nameof(dto.MedioPago), 80);
+        ValidateEstadoPago(dto.EstadoPago);
         ValidateObservaciones(dto.Observaciones);
 
         if (dto.Fecha.Year != dto.Anio || dto.Fecha.Month != dto.Mes)
@@ -84,6 +86,18 @@ public static class GastoValidator
 
         if (observaciones.Length > 500)
             throw new ValidationException("observaciones supera el máximo de 500 caracteres.");
+    }
+
+    private static void ValidateEstadoPago(string estadoPago)
+    {
+        if (string.IsNullOrWhiteSpace(estadoPago))
+            throw new ValidationException("estadoPago es requerido.");
+
+        if (!Enum.GetNames<EstadoPagoGasto>().Any(nombre =>
+                string.Equals(nombre, estadoPago.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new ValidationException("estadoPago debe ser Pendiente o Pagado.");
+        }
     }
 
     private static void ValidatePlanCuotas(GastoModel.PlanCuotasRequest plan)

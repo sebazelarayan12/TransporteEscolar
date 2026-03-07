@@ -8,7 +8,6 @@ export type GastoTipo = (typeof GASTO_TIPOS)[keyof typeof GASTO_TIPOS];
 export const GASTO_ESTADOS = {
   PENDIENTE: 'Pendiente',
   PAGADO: 'Pagado',
-  PROGRAMADO: 'Programado',
 } as const;
 
 export type GastoEstadoPago = (typeof GASTO_ESTADOS)[keyof typeof GASTO_ESTADOS];
@@ -95,6 +94,8 @@ export const GASTO_CATEGORIAS = {
     { value: 'Mantenimiento', label: 'Mecánicos y repuestos' },
     { value: 'Alimentacion', label: 'Comida y viáticos' },
     { value: 'ViajesEventos', label: 'Viajes y eventos especiales' },
+    { value: 'Tarjeta', label: 'Tarjeta (consumos con crédito)' },
+    { value: 'Servicio', label: 'Servicio contratado puntual' },
     { value: 'Otros', label: 'Varios / otros gastos' },
   ],
 } as const;

@@ -83,7 +83,6 @@ const registrarGastoSchemaBase = z.discriminatedUnion('tipo', [
     estadoPago: z.enum([
       GASTO_ESTADOS.PENDIENTE,
       GASTO_ESTADOS.PAGADO,
-      GASTO_ESTADOS.PROGRAMADO,
     ]),
     planCuotas: planCuotasFormSchema,
   }),

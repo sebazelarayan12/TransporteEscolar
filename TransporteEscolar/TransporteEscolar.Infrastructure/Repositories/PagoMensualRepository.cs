@@ -169,6 +169,13 @@ public class PagoMensualRepository : IPagoMensualRepository
         return (titulares, totalCount);
     }
 
+    public async Task DeleteByTitularIdAsync(int titularId, CancellationToken cancellationToken = default)
+    {
+        await _context.PagosMensuales
+            .Where(p => p.TitularId == titularId)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
     public async Task<PagoMensual> AddAsync(PagoMensual pagoMensual, CancellationToken cancellationToken = default)
     {
         _context.PagosMensuales.Add(pagoMensual);

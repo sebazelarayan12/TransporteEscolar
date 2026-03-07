@@ -12,15 +12,18 @@ public class TitularService : ITitularService
     private readonly ITitularRepository _repository;
     private readonly IPasajeroRepository _pasajeroRepository;
     private readonly INotificacionService _notificacionService;
+    private readonly IPagoMensualRepository _pagoMensualRepository;
 
     public TitularService(
         ITitularRepository repository, 
         IPasajeroRepository pasajeroRepository,
-        INotificacionService notificacionService)
+        INotificacionService notificacionService,
+        IPagoMensualRepository pagoMensualRepository)
     {
         _repository = repository;
         _pasajeroRepository = pasajeroRepository;
         _notificacionService = notificacionService;
+        _pagoMensualRepository = pagoMensualRepository;
     }
 
     public async Task<TitularModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
@@ -121,6 +124,7 @@ public class TitularService : ITitularService
         }
 
         await _repository.UpdateAsync(titular, cancellationToken);
+        await _pagoMensualRepository.DeleteByTitularIdAsync(titular.Id, cancellationToken);
     }
 
     public async Task ReactivarAsync(int id, CancellationToken cancellationToken = default)
