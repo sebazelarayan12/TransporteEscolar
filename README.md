@@ -50,15 +50,17 @@ Plataforma integral para administrar el servicio de transporte escolar: titulare
 
 ### Variables Backend
 
-Configura estas variables al lanzar `TransporteEscolar.Api` (puedes usar `.runsettings`, `appsettings.Testing.json` o variables de entorno):
+1. Copia `.env.example` a `.env` (y opcionalmente `.env.<Environment>` como `.env.Testing`).
+2. Completa las claves obligatorias:
+   - `ASPNETCORE_ENVIRONMENT`
+   - `ConnectionStrings__Default`
+   - `AllowedOrigins` (lista separada por comas)
+   - `ReleaseNotes__Titulo`, `ReleaseNotes__Descripcion`, `ReleaseNotes__FechaPublicacionUtc`, `ReleaseNotes__Link`
+   - `MetaWhatsApp__AccessToken`, `PhoneNumberId`, `ApiVersion`, `LanguageCode`, `TemplateName`, `WebhookVerifyToken`
 
-```bash
-ASPNETCORE_ENVIRONMENT=Testing
-ConnectionStrings__Default="Host=localhost;Port=5433;Database=TransporteEscolarDb_Test;Username=postgres;Password=<TU_PASSWORD>;Include Error Detail=true"
-```
+El `DotEnvLoader` del backend lee automáticamente, antes de crear el `WebApplicationBuilder`, los archivos `.env`, `.env.<Environment>` de la raíz del repo y una copia opcional ubicada en `TransporteEscolar/TransporteEscolar.Api/.env`. Los valores solo se establecen si no existen en el entorno del sistema, por lo que puedes sobreescribirlos con variables de CI/CD sin riesgos.
 
-En la raíz existen `.env.example` y `.env.testing.example` listos para copiar/renombrar; nunca publiques los valores reales; los archivos reales `.env` y `.env.testing` permanecen ignorados en Git.
-
+- Dejar `ReleaseNotes__Descripcion` vacío desactiva el `ReleaseNotesInitializer`; es la forma recomendada de pausar la notificación global sin tocar código.
 - Mantén el seeder `TestDataSeeder` habilitado únicamente en `Testing` para evitar escrituras en producción (Neon.tech).
 - Todos los `DateTime/DateOnly` deben persistirse en UTC para cumplir con PostgreSQL.
 

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
+using TransporteEscolar.Api.Configuration;
 using TransporteEscolar.Api.Converters;
 using TransporteEscolar.Api.DependencyInjection;
 using TransporteEscolar.Api.HostedServices;
@@ -13,6 +14,9 @@ namespace TransporteEscolar.Api
     {
         public static void Main(string[] args)
         {
+            var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            DotEnvLoader.Load(environmentName);
+
             var builder = WebApplication.CreateBuilder(args);
 
             // DbContext
@@ -23,6 +27,7 @@ namespace TransporteEscolar.Api
 
             // Registrar servicios y repositorios
             builder.Services.AddApplicationServices();
+            builder.Services.AddWhatsAppIntegration(builder.Configuration);
             builder.Services.Configure<ReleaseNotesOptions>(builder.Configuration.GetSection("ReleaseNotes"));
             builder.Services.AddHostedService<ReleaseNotesInitializer>();
 
