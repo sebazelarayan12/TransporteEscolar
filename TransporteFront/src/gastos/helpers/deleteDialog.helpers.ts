@@ -32,7 +32,7 @@ export const buildDeleteDialogCopy = (deleteDialog: DeleteDialogState): DeleteDi
   const periodoLabel = `${deleteDialog.item.mes}/${deleteDialog.item.anio}`;
   const descripcion = deleteDialog.item.descripcion?.trim();
   const deleteLabel = descripcion ? `Eliminar "${descripcion}"` : 'Eliminar';
-  const confirmLabelByScope: Record<DeleteDialogState['scope'], string> = {
+  const confirmLabelByScope: Record<NonNullable<DeleteDialogState>['scope'], string> = {
     'gasto-fijo': 'Eliminar gasto fijo',
     'gasto-variable': 'Eliminar gasto variable',
     'ingreso-fijo': 'Eliminar ingreso fijo',
