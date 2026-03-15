@@ -20,7 +20,7 @@ interface CardActionsMenuProps {
   menuOffsetClassName?: string;
 }
 
-const MENU_OFFSET_DEFAULT = 'right-0 top-10';
+const MENU_OFFSET_DEFAULT = 'right-0 top-10 w-48';
 
 export const CardActionsMenu = ({
   items,
@@ -63,7 +63,7 @@ export const CardActionsMenu = ({
       return;
     }
 
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleInteraction = (event: MouseEvent | TouchEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         if (disabled) {
           return;
@@ -76,9 +76,11 @@ export const CardActionsMenu = ({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', handleInteraction);
+    document.addEventListener('touchstart', handleInteraction, { passive: true });
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('mousedown', handleInteraction);
+      document.removeEventListener('touchstart', handleInteraction);
     };
   }, [disabled, isControlled, isMenuOpen, onOpenChange]);
 
@@ -92,6 +94,9 @@ export const CardActionsMenu = ({
       ref={menuRef}
       role="presentation"
       tabIndex={-1}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+      }}
       onClick={(event) => {
         event.stopPropagation();
       }}
@@ -116,19 +121,20 @@ export const CardActionsMenu = ({
           disabled={disabled}
         >
           <span className="material-symbols-outlined text-[20px]">more_horiz</span>
-          <span className="sr-only">Acciones de la tarjeta!</span>
+          <span className="sr-only">Acciones de la tarjeta</span>
         </button>
       )}
 
       {isMenuOpen ? (
         <div
-          className={`absolute z-20 w-48 rounded-2xl border border-gray-100 bg-white p-1 shadow-lg ring-1 ring-black/5 dark:border-white/10 dark:bg-[#1f1f24] ${menuOffsetClassName}`.trim()}
+          className={`absolute z-20 rounded-2xl border border-gray-100 bg-white p-1 shadow-lg ring-1 ring-black/5 dark:border-white/10 dark:bg-[#1f1f24] ${menuOffsetClassName}`.trim()}
         >
           {items.map((item) => (
             <button
               key={item.id}
               type="button"
-              onClick={() => {
+              onClick={(event) => {
+                event.stopPropagation();
                 if (item.disabled) {
                   return;
                 }

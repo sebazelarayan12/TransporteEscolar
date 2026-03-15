@@ -30,34 +30,42 @@ export const buildDeleteDialogCopy = (deleteDialog: DeleteDialogState): DeleteDi
 
   const montoLabel = formatCurrency(deleteDialog.item.monto);
   const periodoLabel = `${deleteDialog.item.mes}/${deleteDialog.item.anio}`;
+  const descripcion = deleteDialog.item.descripcion?.trim();
+  const deleteLabel = descripcion ? `Eliminar "${descripcion}"` : 'Eliminar';
+  const confirmLabelByScope: Record<DeleteDialogState['scope'], string> = {
+    'gasto-fijo': 'Eliminar gasto fijo',
+    'gasto-variable': 'Eliminar gasto variable',
+    'ingreso-fijo': 'Eliminar ingreso fijo',
+    'ingreso-variable': 'Eliminar ingreso variable',
+  };
 
   switch (deleteDialog.scope) {
     case 'gasto-fijo':
       return {
-        title: 'Eliminar gasto fijo',
+        title: deleteLabel,
         message: `Se eliminará la plantilla "${deleteDialog.item.descripcion}" y se recalcularán los totales de ${periodoLabel}.`,
-        confirmLabel: 'Eliminar gasto fijo',
+        confirmLabel: confirmLabelByScope['gasto-fijo'],
       };
     case 'gasto-variable': {
       const fechaLabel = formatDateOnly(deleteDialog.item.fechaCuota, { day: '2-digit', month: 'long' });
       return {
-        title: 'Eliminar gasto variable',
+        title: deleteLabel,
         message: `Vas a eliminar el gasto del ${fechaLabel} por ${montoLabel}. Esta acción no se puede deshacer.`,
-        confirmLabel: 'Eliminar gasto variable',
+        confirmLabel: confirmLabelByScope['gasto-variable'],
       };
     }
     case 'ingreso-fijo':
       return {
-        title: 'Eliminar ingreso fijo',
+        title: deleteLabel,
         message: `Se desactivará la plantilla "${deleteDialog.item.descripcion}" y se quitará del periodo ${periodoLabel}.`,
-        confirmLabel: 'Eliminar ingreso fijo',
+        confirmLabel: confirmLabelByScope['ingreso-fijo'],
       };
     case 'ingreso-variable': {
       const fechaLabel = formatDateOnly(deleteDialog.item.fecha, { day: '2-digit', month: 'long' });
       return {
-        title: 'Eliminar ingreso variable',
+        title: deleteLabel,
         message: `¿Eliminar el ingreso del ${fechaLabel} por ${montoLabel}?`,
-        confirmLabel: 'Eliminar ingreso variable',
+        confirmLabel: confirmLabelByScope['ingreso-variable'],
       };
     }
     default:
