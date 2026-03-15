@@ -7,6 +7,7 @@ import { GastosContent } from './GastosContent';
 import { RegistrarGastoModal } from './RegistrarGastoModal';
 import { RegistrarIngresoModal } from './RegistrarIngresoModal';
 import { GastosDeleteDialog, type GastosDeleteDialogProps } from './GastosDeleteDialog';
+import { GastosCategoriasCarousel, type GastosCategoriasCarouselItem } from './GastosCategoriasCarousel';
 import type { GastosTabValue } from '../types/gastos.types';
 
 type GastosControlLayoutProps = {
@@ -15,6 +16,7 @@ type GastosControlLayoutProps = {
   selectedAnio: number;
   activeTab: GastosTabValue;
   heroTotals: ComponentProps<typeof GastosHeroCard>['totales'];
+  categoriaResumen: GastosCategoriasCarouselItem[];
   headerActions: {
     onRegistrarIngreso: () => void;
     onRegistrarGasto: () => void;
@@ -41,6 +43,7 @@ export const GastosControlLayout = ({
   selectedAnio,
   activeTab,
   heroTotals,
+  categoriaResumen,
   headerActions,
   onFilterChange,
   onTabChange,
@@ -54,16 +57,24 @@ export const GastosControlLayout = ({
   ingresoModalProps,
   deleteDialogProps,
 }: GastosControlLayoutProps) => (
-  <div className="min-h-screen w-full overflow-x-hidden bg-[#fafafa] pb-10 dark:bg-[#18181b]">
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+  <div className="min-h-screen w-full overflow-x-hidden bg-slate-100 pb-24 dark:bg-slate-950">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
       <GastosPageHeader
         onRegistrarIngreso={headerActions.onRegistrarIngreso}
         onRegistrarGasto={headerActions.onRegistrarGasto}
       />
 
-      <MonthYearFilter selectedMes={selectedMes} selectedAnio={selectedAnio} onFilterChange={onFilterChange} />
+      <GastosHeroCard
+        totales={heroTotals}
+        periodLabel={periodLabel}
+        periodFilter={
+          <div className="rounded-2xl border border-white/50 bg-white/90 p-4 text-slate-700 shadow-lg dark:border-white/10 dark:bg-slate-900">
+            <MonthYearFilter selectedMes={selectedMes} selectedAnio={selectedAnio} onFilterChange={onFilterChange} />
+          </div>
+        }
+      />
 
-      <GastosHeroCard totales={heroTotals} periodLabel={periodLabel} />
+      <GastosCategoriasCarousel items={categoriaResumen} />
 
       <GastosToolbar
         activeTab={activeTab}
@@ -80,5 +91,16 @@ export const GastosControlLayout = ({
 
       <GastosDeleteDialog {...deleteDialogProps} />
     </div>
+
+    <button
+      type="button"
+      aria-label="Registrar nuevo gasto"
+      onClick={headerActions.onRegistrarGasto}
+      className="fixed bottom-6 right-5 z-30 flex size-14 items-center justify-center rounded-full bg-gradient-to-r from-teal-500 to-emerald-400 text-white shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 dark:from-teal-400 dark:to-cyan-400 lg:hidden"
+    >
+      <span className="material-symbols-rounded text-3xl" aria-hidden>
+        add
+      </span>
+    </button>
   </div>
 );

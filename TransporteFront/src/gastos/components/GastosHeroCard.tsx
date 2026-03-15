@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 
 interface GastosHeroTotals {
@@ -14,9 +15,10 @@ interface GastosHeroTotals {
 interface GastosHeroCardProps {
   totales: GastosHeroTotals;
   periodLabel: string;
+  periodFilter?: ReactNode;
 }
 
-export const GastosHeroCard = ({ totales, periodLabel }: GastosHeroCardProps) => {
+export const GastosHeroCard = ({ totales, periodLabel, periodFilter }: GastosHeroCardProps) => {
   const totalGastos = totales.totalGastosFijos + totales.totalGastosVariables;
   const netResult = totales.totalCuotas + totales.totalIngresosExternos - totalGastos;
   const netPositive = netResult >= 0;
@@ -30,68 +32,92 @@ export const GastosHeroCard = ({ totales, periodLabel }: GastosHeroCardProps) =>
     },
     { key: 'totalGastosFijos', label: 'Gastos fijos', icon: 'deployed_code', value: totales.totalGastosFijos },
     { key: 'totalGastosVariables', label: 'Gastos variables', icon: 'local_gas_station', value: totales.totalGastosVariables },
-    { key: 'totalGastos', label: 'Total de gastos', icon: 'account_balance', value: totalGastos },
   ];
 
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#005a73] via-[#007f96] to-[#00a9a0] text-white shadow-xl">
-      <div className="absolute -right-16 -top-16 size-48 rounded-full bg-white/20 blur-3xl" aria-hidden />
-      <div className="absolute -left-10 bottom-0 h-48 w-48 rounded-full bg-emerald-300/30 blur-3xl" aria-hidden />
-
-      <div className="relative z-10 flex flex-col gap-6 p-6 lg:flex-row lg:items-end lg:justify-between lg:p-8">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-white/80">Control de gastos</p>
-          <h2 className="mt-2 text-3xl font-semibold leading-tight text-white sm:text-4xl">{periodLabel}</h2>
-          <p className="mt-2 max-w-2xl text-sm text-white/90 sm:text-base">
-            Visualizá la salud financiera del mes y detectá desvíos antes de que impacten en la rentabilidad.
-          </p>
-        </div>
-
-        <div className="flex flex-col items-start gap-2 rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
-          <span className="text-xs font-semibold uppercase tracking-widest text-white/70">Resultado neto</span>
-          <p className={`text-2xl font-bold ${netPositive ? 'text-emerald-200' : 'text-rose-100'}`}>
-            {formatCurrency(netResult)}
-          </p>
-          <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest">
-            <span className="material-symbols-outlined text-[16px]">
-              {netPositive ? 'north_east' : 'south_west'}
-            </span>
-            {netPositive ? 'Por encima del equilibrio' : 'Por debajo del equilibrio'}
-          </span>
-        </div>
+    <section className="relative overflow-hidden rounded-[40px] bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-800 text-white shadow-2xl">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-8 -top-8 size-48 rounded-full bg-emerald-400/30 blur-3xl" aria-hidden />
+        <div className="absolute -right-20 top-10 size-64 rounded-full bg-cyan-400/20 blur-3xl" aria-hidden />
+        <div className="absolute bottom-0 left-1/3 h-40 w-80 rounded-full bg-white/10 blur-3xl" aria-hidden />
       </div>
 
-      <div className="relative z-10 border-t border-white/20 px-6 py-5 lg:px-8">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="relative z-10 flex flex-col gap-6 p-6 md:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-teal-200">Control de gastos</p>
+            <h2 className="mt-2 text-3xl font-semibold leading-tight text-white sm:text-4xl">{periodLabel}</h2>
+            <p className="mt-1 text-sm text-white/80 sm:text-base">
+              Estado de caja vs. obligaciones. Ajustá rápido cuando la curva se desbalancea.
+            </p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-3xl border border-white/20 bg-black/20 p-5 shadow-inner">
+                <p className="text-xs uppercase tracking-[0.35em] text-white/70">Resultado neto</p>
+                <p className={`mt-3 text-4xl font-semibold ${netPositive ? 'text-emerald-200' : 'text-rose-200'}`}>
+                  {formatCurrency(netResult)}
+                </p>
+                <span className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-white/90">
+                  <span className="material-symbols-rounded text-base" aria-hidden>
+                    {netPositive ? 'trending_up' : 'trending_down'}
+                  </span>
+                  {netPositive ? 'Por encima del equilibrio' : 'Requiere atención inmediata'}
+                </span>
+              </div>
+              <div className="rounded-3xl border border-white/10 bg-white/10 p-5 shadow-inner">
+                <p className="text-xs uppercase tracking-[0.35em] text-white/70">Ingresos vs. gastos</p>
+                <p className="mt-3 text-2xl font-semibold text-white">
+                  {formatCurrency(totales.totalCuotas + totales.totalIngresosExternos)}
+                </p>
+                <p className="text-xs text-white/80">Total de ingresos</p>
+                <p className="mt-3 text-xl font-semibold text-white/90">{formatCurrency(totalGastos)}</p>
+                <p className="text-xs text-white/70">Total de gastos</p>
+              </div>
+            </div>
+          </div>
+          {periodFilter ? <div className="w-full max-w-sm lg:self-stretch">{periodFilter}</div> : null}
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {heroMetrics.map((metric) => (
             <article
               key={metric.key}
-              className="rounded-2xl border border-white/10 bg-white/10 p-4 shadow-inner backdrop-blur"
+              className="rounded-3xl border border-white/15 bg-white/10 p-4 shadow-inner backdrop-blur"
             >
-              <div className="flex items-center justify-between text-xs uppercase tracking-widest text-white/70">
+              <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.3em] text-white/70">
                 <span>{metric.label}</span>
-                <span className="material-symbols-outlined text-base text-white">{metric.icon}</span>
+                <span className="material-symbols-rounded text-lg text-white" aria-hidden>
+                  {metric.icon}
+                </span>
               </div>
-              <p className="mt-2 text-2xl font-semibold">{formatCurrency(metric.value)}</p>
+              <p className="mt-3 text-2xl font-semibold text-white">{formatCurrency(metric.value)}</p>
               {metric.key === 'totalIngresosExternos' ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
-                    <span className="material-symbols-outlined text-[14px]">task_alt</span>
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-white/90">
+                    <span className="material-symbols-rounded text-sm" aria-hidden>
+                      task_alt
+                    </span>
                     Fijo {formatCurrency(totales.totalIngresosFijos)}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
-                    <span className="material-symbols-outlined text-[14px]">contrast</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-3 py-1 text-white/80">
+                    <span className="material-symbols-rounded text-sm" aria-hidden>
+                      contrast
+                    </span>
                     Variable {formatCurrency(totales.totalIngresosVariables)}
                   </span>
                 </div>
               ) : metric.key === 'totalGastosVariables' ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
-                    <span className="material-symbols-outlined text-[14px]">pending_actions</span>
+                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-3 py-1 text-amber-100">
+                    <span className="material-symbols-rounded text-sm" aria-hidden>
+                      pending_actions
+                    </span>
                     Pendiente {formatCurrency(totales.gastosVariablesPendientes)}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
-                    <span className="material-symbols-outlined text-[14px]">task_alt</span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-100">
+                    <span className="material-symbols-rounded text-sm" aria-hidden>
+                      task_alt
+                    </span>
                     Pagado {formatCurrency(totales.gastosVariablesPagados)}
                   </span>
                 </div>

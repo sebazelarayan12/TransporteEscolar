@@ -1,27 +1,12 @@
-import { GASTO_ESTADOS, GASTO_TIPOS, type GastoEstadoPago, type GastoItem } from '../types/gastos.types';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
 import { CardActionsMenu, type CardActionItem } from './CardActionsMenu';
 import { buildUpcomingCuotas } from '../helpers/plan-cuotas.helpers';
-
-const categoriaIconMap: Record<string, string> = {
-  Combustible: 'local_gas_station',
-  Mantenimiento: 'build',
-  Insumos: 'shopping_bag',
-  Peajes: 'toll',
-  Extraordinario: 'bolt',
-  Sueldos: 'group',
-  Servicios: 'bolt',
-  Seguros: 'verified_user',
-  Alquiler: 'apartment',
-  Licencias: 'workspace_premium',
-  Tarjeta: 'credit_card',
-  Servicio: 'handyman',
-};
+import { getCategoriaConfig } from '../constants/categorias.config';
 
 const estadoStyles: Record<GastoEstadoPago, { bg: string; text: string }> = {
-  Pagado: { bg: 'bg-emerald-50 dark:bg-emerald-400/10', text: 'text-emerald-700 dark:text-emerald-300' },
-  Pendiente: { bg: 'bg-amber-50 dark:bg-amber-400/10', text: 'text-amber-700 dark:text-amber-300' },
+  Pagado: { bg: 'bg-emerald-500/15', text: 'text-emerald-100' },
+  Pendiente: { bg: 'bg-amber-500/15', text: 'text-amber-100' },
 };
 
 interface GastoCardProps {
@@ -34,15 +19,15 @@ interface GastoCardProps {
 }
 
 export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false, onMarkVariablePaid, markPaidDisabled = false }: GastoCardProps) => {
-  const icon = categoriaIconMap[gasto.categoria] ?? 'receipt_long';
   const isGastoFijo = gasto.tipo === GASTO_TIPOS.FIJO;
+  const categoriaConfig = getCategoriaConfig(gasto.categoria);
   const estadoStyle = estadoStyles[gasto.estadoPago] ?? {
-    bg: 'bg-gray-100 dark:bg-white/10',
-    text: 'text-gray-600 dark:text-gray-300',
+    bg: 'bg-slate-500/15',
+    text: 'text-slate-200',
   };
   const fijoBadgeStyle = {
-    bg: 'bg-sky-50 dark:bg-sky-400/10',
-    text: 'text-sky-700 dark:text-sky-200',
+    bg: 'bg-sky-500/15',
+    text: 'text-sky-100',
   };
   const badgeStyle = isGastoFijo ? fijoBadgeStyle : estadoStyle;
   const badgeLabel = isGastoFijo ? 'Fijo' : gasto.estadoPago;
@@ -78,54 +63,62 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false, on
   }
 
   return (
-    <article className="flex w-full flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-[#3f3f46] dark:bg-[#1f1f24]">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-teal-600/10 text-teal-700 dark:bg-cyan-500/10 dark:text-cyan-200">
-            <span className="material-symbols-outlined text-2xl">{icon}</span>
+    <article className="rounded-[28px] border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-slate-900/60">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-1 items-start gap-4">
+            <div className={`flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br ${categoriaConfig.gradient}`}>
+              <span className="material-symbols-rounded text-2xl text-white" aria-hidden>
+                {categoriaConfig.icon}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {formatDateOnly(gasto.fechaCuota, { day: '2-digit', month: 'long' })} · {gasto.medioPago}
+              </p>
+              <p className="mt-1 text-base font-semibold text-slate-900 dark:text-white break-words">
+                {gasto.descripcion}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              {gasto.categoria}
-            </p>
-            <p className="text-xs text-gray-500 break-words">{gasto.descripcion}</p>
+          <div className="flex items-start gap-2">
+            <div className="text-right">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">Monto</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(gasto.monto)}</p>
+              {gasto.numeroCuota && gasto.totalCuotas ? (
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Cuota {gasto.numeroCuota}/{gasto.totalCuotas}
+                </p>
+              ) : null}
+            </div>
+            {actions.length > 0 ? <CardActionsMenu items={actions} disabled={actionsDisabled} /> : null}
           </div>
         </div>
-        <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
-          <span className={`inline-flex flex-1 items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${badgeStyle.bg} ${badgeStyle.text} sm:flex-none`}>
+
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <span className={`inline-flex items-center rounded-full px-3 py-1 ${categoriaConfig.chipClass}`}>
+            {categoriaConfig.label}
+          </span>
+          <span className={`inline-flex items-center rounded-full px-3 py-1 ${badgeStyle.bg} ${badgeStyle.text}`}>
             {badgeLabel}
           </span>
-          {actions.length > 0 ? <CardActionsMenu items={actions} disabled={actionsDisabled} /> : null}
-        </div>
-      </header>
-
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs text-gray-500">Fecha</p>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            {formatDateOnly(gasto.fechaCuota, { day: '2-digit', month: 'long' })}
-          </p>
-          <p className="text-xs text-gray-400">{gasto.medioPago}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs uppercase tracking-widest text-gray-500">Monto</p>
-          <p className="text-2xl font-bold text-[#0b2e33] dark:text-white">{formatCurrency(gasto.monto)}</p>
+          <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-white/10 dark:text-slate-200">
+            {gasto.medioPago}
+          </span>
         </div>
       </div>
 
       {gasto.observaciones ? (
-        <p className="rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-white/5 dark:text-gray-300">
+        <p className="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
           {gasto.observaciones}
         </p>
       ) : null}
 
       {showPlanCuotas ? (
-        <div className="rounded-2xl bg-teal-50 p-4 text-sm text-teal-900 dark:bg-cyan-500/10 dark:text-cyan-100">
+        <div className="mt-4 rounded-2xl border border-teal-200/70 bg-teal-50/60 p-4 text-sm text-teal-900 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-100">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-widest text-teal-700 dark:text-cyan-200">
-              Próximas cuotas
-            </p>
-            <span className="text-xs font-semibold text-teal-800 dark:text-cyan-100">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em]">Próximas cuotas</p>
+            <span className="text-xs font-semibold">
               {gasto.numeroCuota ?? 1}/{gasto.totalCuotas ?? gasto.cantidadCuotas ?? 1}
             </span>
           </div>
@@ -133,17 +126,22 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false, on
             {proximasCuotas.map((cuota) => {
               const cuotaBadge = estadoStyles[cuota.estadoPago] ?? estadoStyle;
               return (
-                <div key={cuota.numeroCuota} className="flex items-center justify-between gap-4 rounded-2xl bg-white/70 px-3 py-2 dark:bg-white/10">
+                <div
+                  key={cuota.numeroCuota}
+                  className="flex items-center justify-between gap-4 rounded-2xl border border-white/50 bg-white/70 px-3 py-2 dark:border-white/10 dark:bg-white/5"
+                >
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
                       Cuota {cuota.numeroCuota}/{cuota.totalCuotas}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-300">
+                    <p className="text-xs text-slate-500 dark:text-slate-300">
                       {formatDateOnly(cuota.fechaCuota, { day: '2-digit', month: 'short' })}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-[#0b2e33] dark:text-white">{formatCurrency(cuota.montoCuota)}</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {formatCurrency(cuota.montoCuota)}
+                    </p>
                     <span className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${cuotaBadge.bg} ${cuotaBadge.text}`}>
                       {cuota.estadoPago}
                     </span>

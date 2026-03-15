@@ -3,22 +3,22 @@ import { formatDateOnly } from '../../shared/utils/date.helpers';
 import { INGRESO_TIPOS, type IngresoItem } from '../types/ingresos.types';
 import { CardActionsMenu, type CardActionItem } from './CardActionsMenu';
 
-const categoriaIconMap: Record<string, string> = {
-  Convenios: 'handshake',
-  Subsidios: 'account_balance',
-  Patrocinios: 'workspace_premium',
-  Publicidad: 'campaign',
-  Eventos: 'event_available',
-  VentaMateriales: 'storefront',
-  AportesFamilias: 'diversity_3',
-  Bonos: 'loyalty',
-  Otros: 'redeem',
+const categoriaIconMap: Record<string, { icon: string; gradient: string }> = {
+  Convenios: { icon: 'handshake', gradient: 'from-indigo-500 via-indigo-400 to-sky-400' },
+  Subsidios: { icon: 'account_balance', gradient: 'from-emerald-500 via-teal-500 to-cyan-500' },
+  Patrocinios: { icon: 'workspace_premium', gradient: 'from-fuchsia-500 via-purple-500 to-pink-500' },
+  Publicidad: { icon: 'campaign', gradient: 'from-amber-500 via-orange-500 to-rose-500' },
+  Eventos: { icon: 'event_available', gradient: 'from-sky-500 via-blue-500 to-indigo-500' },
+  VentaMateriales: { icon: 'storefront', gradient: 'from-lime-500 via-emerald-500 to-teal-500' },
+  AportesFamilias: { icon: 'diversity_3', gradient: 'from-rose-500 via-pink-500 to-fuchsia-500' },
+  Bonos: { icon: 'loyalty', gradient: 'from-purple-500 via-indigo-500 to-blue-500' },
+  Otros: { icon: 'redeem', gradient: 'from-slate-500 via-slate-600 to-slate-700' },
 };
 
 const estadoStyles: Record<string, { bg: string; text: string }> = {
-  Cobrado: { bg: 'bg-emerald-50 dark:bg-emerald-400/10', text: 'text-emerald-700 dark:text-emerald-300' },
-  Pendiente: { bg: 'bg-amber-50 dark:bg-amber-400/10', text: 'text-amber-700 dark:text-amber-300' },
-  Programado: { bg: 'bg-blue-50 dark:bg-blue-400/10', text: 'text-blue-700 dark:text-blue-300' },
+  Cobrado: { bg: 'bg-emerald-500/15', text: 'text-emerald-100' },
+  Pendiente: { bg: 'bg-amber-500/15', text: 'text-amber-100' },
+  Programado: { bg: 'bg-blue-500/15', text: 'text-blue-100' },
 };
 
 interface IngresoCardProps {
@@ -29,15 +29,18 @@ interface IngresoCardProps {
 }
 
 export const IngresoCard = ({ ingreso, onEdit, onDelete, actionsDisabled = false }: IngresoCardProps) => {
-  const icon = categoriaIconMap[ingreso.categoria] ?? 'payments';
+  const categoriaVisual = categoriaIconMap[ingreso.categoria] ?? {
+    icon: 'payments',
+    gradient: 'from-slate-500 via-slate-600 to-slate-700',
+  };
   const isFijo = ingreso.tipo === INGRESO_TIPOS.FIJO;
   const estadoStyle = estadoStyles[ingreso.estadoCobro] ?? {
-    bg: 'bg-slate-100 dark:bg-white/10',
-    text: 'text-slate-700 dark:text-slate-200',
+    bg: 'bg-slate-500/15',
+    text: 'text-slate-200',
   };
   const fijoBadgeStyle = {
-    bg: 'bg-indigo-50 dark:bg-indigo-400/10',
-    text: 'text-indigo-700 dark:text-indigo-200',
+    bg: 'bg-indigo-500/15',
+    text: 'text-indigo-100',
   };
 
   const actions: CardActionItem[] = [];
@@ -60,52 +63,46 @@ export const IngresoCard = ({ ingreso, onEdit, onDelete, actionsDisabled = false
   }
 
   return (
-    <article className="flex w-full flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-[#3f3f46] dark:bg-[#1f1f24]">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-teal-600/10 text-teal-700 dark:bg-cyan-500/10 dark:text-cyan-200">
-            <span className="material-symbols-outlined text-2xl">{icon}</span>
+    <article className="rounded-[28px] border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-slate-900/60">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-1 items-start gap-4">
+            <div className={`flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br ${categoriaVisual.gradient}`}>
+              <span className="material-symbols-rounded text-2xl text-white" aria-hidden>
+                {categoriaVisual.icon}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {isFijo ? 'Aplicación' : 'Fecha de cobro'} · {ingreso.medioCobro}
+              </p>
+              <p className="mt-1 text-base font-semibold text-slate-900 dark:text-white break-words">
+                {ingreso.descripcion}
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-300">{ingreso.categoria}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">{ingreso.categoria}</p>
-            <p className="text-xs text-gray-500 break-words">{ingreso.descripcion}</p>
+          <div className="flex items-start gap-2">
+            <div className="text-right">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">Importe</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(ingreso.monto)}</p>
+            </div>
+            {actions.length > 0 ? <CardActionsMenu items={actions} disabled={actionsDisabled} /> : null}
           </div>
         </div>
-        <div className="flex w-full flex-col gap-1 sm:w-auto sm:items-end">
-          <span
-            className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold ${
-              (isFijo ? fijoBadgeStyle : estadoStyle).bg
-            } ${(isFijo ? fijoBadgeStyle : estadoStyle).text}`}
-          >
+
+        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+          <span className={`inline-flex items-center rounded-full px-3 py-1 ${(isFijo ? fijoBadgeStyle : estadoStyle).bg} ${(isFijo ? fijoBadgeStyle : estadoStyle).text}`}>
             {isFijo ? 'Ingreso fijo' : ingreso.estadoCobro}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-200">
-            <span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>
-            {ingreso.medioCobro}
-          </span>
-          {actions.length > 0 ? (
-            <div className="mt-1 flex justify-end">
-              <CardActionsMenu items={actions} disabled={actionsDisabled} />
-            </div>
-          ) : null}
-        </div>
-      </header>
-
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs text-gray-500">{isFijo ? 'Aplicación' : 'Fecha de cobro'}</p>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+          <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-slate-600 dark:bg-white/10 dark:text-slate-200">
             {formatDateOnly(ingreso.fecha, { day: '2-digit', month: 'long' })}
-          </p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs uppercase tracking-widest text-gray-500">Importe</p>
-          <p className="text-2xl font-bold text-[#0b2e33] dark:text-white">{formatCurrency(ingreso.monto)}</p>
+          </span>
         </div>
       </div>
 
       {ingreso.observaciones ? (
-        <p className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-gray-600 dark:bg-white/5 dark:text-gray-300">
+        <p className="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
           {ingreso.observaciones}
         </p>
       ) : null}
