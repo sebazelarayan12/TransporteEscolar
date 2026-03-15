@@ -1,9 +1,47 @@
-import { type KeyboardEvent, useEffect, useState } from 'react';
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
 import { CardActionsMenu, type CardActionItem } from './CardActionsMenu';
 import { getCategoriaConfig } from '../constants/categorias.config';
 import { GASTO_ESTADOS, GASTO_TIPOS, type GastoItem } from '../types/gastos.types';
+
+type MobileMenuAnchor = {
+  top: number;
+  left: number;
+  width: number;
+};
+
+const MOBILE_MENU_GUTTER = 12;
+
+const clamp = (value: number, min: number, max: number) => {
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+};
+
+const computeMobileMenuAnchor = (element: HTMLElement | null): MobileMenuAnchor | null => {
+  if (!element || typeof window === 'undefined') {
+    return null;
+  }
+
+  const rect = element.getBoundingClientRect();
+  const viewportWidth = window.innerWidth;
+  const availableWidth = viewportWidth - MOBILE_MENU_GUTTER * 2;
+  const width = Math.min(rect.width, availableWidth > 0 ? availableWidth : rect.width);
+  const centeredLeft = rect.left + (rect.width - width) / 2;
+  const maxLeft = Math.max(viewportWidth - width - MOBILE_MENU_GUTTER, MOBILE_MENU_GUTTER);
+  const left = clamp(centeredLeft, MOBILE_MENU_GUTTER, maxLeft);
+
+  return {
+    top: rect.top,
+    left,
+    width,
+  };
+};
 
 interface GastoCardProps {
   gasto: GastoItem;
@@ -20,6 +58,14 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false, on
 
   const showPendienteBadge = !isGastoFijo && gasto.estadoPago === GASTO_ESTADOS.PENDIENTE;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [mobileMenuAnchor, setMobileMenuAnchor] = useState<MobileMenuAnchor | null>(null);
+  const [shouldUseCardTrigger, setShouldUseCardTrigger] = useState(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return false;
+    }
+    return window.matchMedia('(max-width: 767px)').matches;
+  });
+  const cardRef = useRef<HTMLElement | null>(null);
 
   const actions: CardActionItem[] = [];
   if (isGastoFijo && onEdit) {
@@ -51,39 +97,110 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false, on
 
   const hasActions = actions.length > 0;
   const isInteractive = hasActions && !actionsDisabled;
+  const cardControlsMenu = isInteractive && shouldUseCardTrigger;
+  const mobileMenuStyle = mobileMenuAnchor
+    ? {
+        top: `${mobileMenuAnchor.top}px`,
+        left: `${mobileMenuAnchor.left}px`,
+        width: `${mobileMenuAnchor.width}px`,
+      }
+    : undefined;
+
+  const handleMenuOpenChange = (nextOpen: boolean) => {
+    if (nextOpen && cardControlsMenu) {
+      setMobileMenuAnchor(computeMobileMenuAnchor(cardRef.current));
+    }
+    if (!nextOpen) {
+      setMobileMenuAnchor(null);
+    }
+    setIsMenuOpen(nextOpen);
+  };
 
   useEffect(() => {
     if (!isInteractive && isMenuOpen) {
-      setIsMenuOpen(false);
+      const closeMenu = () => {
+        setIsMenuOpen(false);
+        setMobileMenuAnchor(null);
+      };
+
+      if (typeof queueMicrotask === 'function') {
+        queueMicrotask(closeMenu);
+      } else {
+        Promise.resolve().then(closeMenu);
+      }
     }
   }, [isInteractive, isMenuOpen]);
 
-  const handleCardClick = () => {
-    if (!isInteractive) {
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return;
     }
-    setIsMenuOpen((prev) => !prev);
+
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const handleChange = (event: MediaQueryListEvent) => {
+      setShouldUseCardTrigger(event.matches);
+    };
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange);
+      return () => {
+        mediaQuery.removeEventListener('change', handleChange);
+      };
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => {
+      mediaQuery.removeListener(handleChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!cardControlsMenu || !isMenuOpen || typeof window === 'undefined') {
+      return;
+    }
+
+    const updateAnchor = () => {
+      setMobileMenuAnchor(computeMobileMenuAnchor(cardRef.current));
+    };
+
+    updateAnchor();
+
+    window.addEventListener('resize', updateAnchor);
+    window.addEventListener('scroll', updateAnchor, true);
+
+    return () => {
+      window.removeEventListener('resize', updateAnchor);
+      window.removeEventListener('scroll', updateAnchor, true);
+    };
+  }, [cardControlsMenu, isMenuOpen]);
+
+  const handleCardClick = () => {
+    if (!cardControlsMenu) {
+      return;
+    }
+    handleMenuOpenChange(!isMenuOpen);
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (!isInteractive) {
+    if (!cardControlsMenu) {
       return;
     }
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      setIsMenuOpen((prev) => !prev);
+      handleMenuOpenChange(!isMenuOpen);
     }
   };
 
   return (
     <article
-      className={`relative flex w-full flex-col gap-3 rounded-xl border border-slate-200/80 bg-white/90 p-4 sm:pr-16 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-slate-900/60 sm:gap-4 ${isInteractive ? 'cursor-pointer' : ''}`.trim()}
-      role={isInteractive ? 'button' : undefined}
-      tabIndex={isInteractive ? 0 : undefined}
-      aria-haspopup={isInteractive ? 'menu' : undefined}
-      aria-expanded={isInteractive ? isMenuOpen : undefined}
-      onClick={handleCardClick}
-      onKeyDown={handleKeyDown}
+      ref={cardRef}
+      className={`relative flex w-full flex-col gap-3 rounded-xl border border-slate-200/80 bg-white/90 p-4 md:pr-16 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-slate-900/60 sm:gap-4 ${cardControlsMenu ? 'cursor-pointer' : ''}`.trim()}
+      role={cardControlsMenu ? 'button' : undefined}
+      tabIndex={cardControlsMenu ? 0 : undefined}
+      aria-haspopup={cardControlsMenu ? 'menu' : undefined}
+      aria-expanded={cardControlsMenu ? isMenuOpen : undefined}
+      onClick={cardControlsMenu ? handleCardClick : undefined}
+      onKeyDown={cardControlsMenu ? handleKeyDown : undefined}
     >
       <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-6">
         <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -93,7 +210,7 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false, on
             </span>
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{gasto.descripcion}</p>
+            <p className="text-sm font-semibold leading-5 text-slate-900 break-words whitespace-pre-wrap dark:text-white">{gasto.descripcion}</p>
             <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
               {formatDateOnly(gasto.fechaCuota, { day: '2-digit', month: 'short' })} · {gasto.medioPago}
             </p>
@@ -115,25 +232,31 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false, on
       </div>
       {hasActions ? (
         <>
-          <div className="absolute right-3 top-3 md:hidden">
-            <CardActionsMenu
-              items={actions}
-              disabled={actionsDisabled}
-              open={isMenuOpen}
-              onOpenChange={setIsMenuOpen}
-              hideTrigger
-              menuOffsetClassName="bottom-full right-0 mb-2"
-            />
-          </div>
-          <div className="absolute right-4 top-4 hidden md:block">
-            <CardActionsMenu
-              items={actions}
-              disabled={actionsDisabled}
-              open={isMenuOpen}
-              onOpenChange={setIsMenuOpen}
-              menuOffsetClassName="right-0 top-9"
-            />
-          </div>
+          {shouldUseCardTrigger ? (
+            <div
+              className={`fixed z-30 md:hidden ${isMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
+              style={mobileMenuStyle}
+            >
+              <CardActionsMenu
+                items={actions}
+                disabled={actionsDisabled}
+                open={isMenuOpen}
+                onOpenChange={handleMenuOpenChange}
+                hideTrigger
+                menuOffsetClassName="left-1/2 top-0 w-[calc(100%-1.5rem)] max-w-[360px] -translate-x-1/2 -translate-y-[calc(100%+0.75rem)]"
+              />
+            </div>
+          ) : (
+            <div className="absolute right-4 top-4 hidden md:block">
+              <CardActionsMenu
+                items={actions}
+                disabled={actionsDisabled}
+                open={isMenuOpen}
+                onOpenChange={handleMenuOpenChange}
+                menuOffsetClassName="right-0 top-9"
+              />
+            </div>
+          )}
         </>
       ) : null}
     </article>
