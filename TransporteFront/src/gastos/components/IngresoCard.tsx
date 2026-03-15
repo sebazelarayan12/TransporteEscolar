@@ -63,35 +63,39 @@ export const IngresoCard = ({ ingreso, onEdit, onDelete, actionsDisabled = false
   }
 
   return (
-    <article className="rounded-[28px] border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-slate-900/60">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="flex flex-1 items-start gap-4">
+    <article className="relative rounded-[24px] border border-slate-200/80 bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-slate-900/60 sm:p-5 md:pr-16">
+      {actions.length > 0 ? (
+        <div className="absolute right-4 top-4 hidden md:block">
+          <CardActionsMenu items={actions} disabled={actionsDisabled} />
+        </div>
+      ) : null}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+          <div className="flex flex-1 items-center gap-4">
             <div className={`flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br ${categoriaVisual.gradient}`}>
               <span className="material-symbols-rounded text-2xl text-white" aria-hidden>
                 {categoriaVisual.icon}
               </span>
             </div>
             <div className="min-w-0">
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">
                 {isFijo ? 'Aplicación' : 'Fecha de cobro'} · {ingreso.medioCobro}
               </p>
-              <p className="mt-1 text-base font-semibold text-slate-900 dark:text-white break-words">
-                {ingreso.descripcion}
-              </p>
+              <p className="mt-1 break-words text-base font-semibold text-slate-900 dark:text-white">{ingreso.descripcion}</p>
               <p className="text-sm text-slate-500 dark:text-slate-300">{ingreso.categoria}</p>
             </div>
           </div>
-          <div className="flex items-start gap-2">
-            <div className="text-right">
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">Importe</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(ingreso.monto)}</p>
-            </div>
-            {actions.length > 0 ? <CardActionsMenu items={actions} disabled={actionsDisabled} /> : null}
+          <div className="text-right sm:min-w-[160px]">
+            <p className="text-[11px] uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">Importe</p>
+            <p className="text-2xl font-bold leading-tight text-slate-900 dark:text-white">{formatCurrency(ingreso.monto)}</p>
+            {actions.length > 0 ? (
+              <div className="mt-1 inline-flex md:hidden">
+                <CardActionsMenu items={actions} disabled={actionsDisabled} />
+              </div>
+            ) : null}
           </div>
         </div>
-
-        <div className="flex flex-wrap gap-2 text-xs font-semibold">
+        <div className="flex flex-wrap items-center justify-end gap-2 text-[11px] font-semibold uppercase tracking-widest">
           <span className={`inline-flex items-center rounded-full px-3 py-1 ${(isFijo ? fijoBadgeStyle : estadoStyle).bg} ${(isFijo ? fijoBadgeStyle : estadoStyle).text}`}>
             {isFijo ? 'Ingreso fijo' : ingreso.estadoCobro}
           </span>
@@ -100,7 +104,6 @@ export const IngresoCard = ({ ingreso, onEdit, onDelete, actionsDisabled = false
           </span>
         </div>
       </div>
-
       {ingreso.observaciones ? (
         <p className="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
           {ingreso.observaciones}

@@ -83,7 +83,7 @@ export const GastoListSection = ({
           <p className="text-sm text-slate-500 dark:text-slate-400">{emptyMessage}</p>
         </div>
       ) : (
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
           {sortedGastos.map((gasto) => (
             <GastoCard
               key={gasto.id}

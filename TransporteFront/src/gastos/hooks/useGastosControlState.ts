@@ -55,7 +55,7 @@ const createInitialState = (): GastosControlState => {
   return {
     selectedMes: now.getMonth() + 1,
     selectedAnio: now.getFullYear(),
-    activeTab: 'fijos',
+    activeTab: 'variables',
     isModalOpen: false,
     isIngresoModalOpen: false,
     gastoModalMode: 'create',
@@ -73,7 +73,7 @@ const gastosControlReducer = (state: GastosControlState, action: GastosControlAc
         ...state,
         selectedMes: action.payload.mes,
         selectedAnio: action.payload.anio,
-        activeTab: 'fijos',
+        activeTab: 'variables',
       };
     case 'setActiveTab':
       return { ...state, activeTab: action.payload };

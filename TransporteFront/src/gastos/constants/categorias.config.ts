@@ -40,14 +40,8 @@ const BASE_CONFIG = {
     gradient: 'from-purple-400 via-fuchsia-400 to-rose-400',
     chipClass: 'bg-fuchsia-100 text-fuchsia-900 dark:bg-fuchsia-400/10 dark:text-fuchsia-100',
   }),
-  Servicio: createConfig({
-    label: 'Servicio puntual',
-    icon: 'handyman',
-    gradient: 'from-teal-400 via-cyan-400 to-emerald-400',
-    chipClass: 'bg-cyan-100 text-cyan-900 dark:bg-cyan-400/10 dark:text-cyan-100',
-  }),
   ServiciosPublicos: createConfig({
-    label: 'Servicios públicos',
+    label: 'Servicios',
     icon: 'water_drop',
     gradient: 'from-sky-500 via-blue-500 to-indigo-500',
     chipClass: 'bg-sky-100 text-sky-900 dark:bg-sky-400/10 dark:text-sky-100',
@@ -137,22 +131,41 @@ const categoriaLabelAliases = Object.values(GASTO_CATEGORIAS)
     return acc;
   }, {});
 
-const manualAliases: Record<string, string> = {
+const manualAliasesBase: Record<string, string> = {
   'Servicios públicos': 'ServiciosPublicos',
   'Servicios públicos (agua, luz, gas, IPV)': 'ServiciosPublicos',
   'Comunicación (celular, teléfono)': 'Comunicaciones',
   'Educación y actividades (colegio, deportes)': 'EducacionActividades',
   'Tarjetas y préstamos (Naranja, Visa, préstamos ANSES/Merca)': 'FinanzasTarjetas',
   'Tarjeta (consumos con crédito)': 'Tarjeta',
-  'Servicio contratado puntual': 'Servicio',
   'Varios / otros gastos': 'Otros',
   'Mecánicos y repuestos': 'Mantenimiento',
   'Comida y viáticos': 'Alimentacion',
   'Viajes y eventos especiales': 'ViajesEventos',
   'Combustible (gasoil)': 'Combustible',
-  Servicios: 'Servicio',
-  Servicio: 'Servicio',
-  'Servicios puntuales': 'Servicio',
+};
+
+const servicioAliasTerms = [
+  'Servicio',
+  'Servicios',
+  'Servicio puntual',
+  'Servicios puntuales',
+  'Servicio contratado',
+  'Servicios contratados',
+  'Servicio contratado puntual',
+  'Servicios contratados puntuales',
+];
+
+const servicioAliases = servicioAliasTerms.reduce<Record<string, string>>((acc, term) => {
+  const normalizedTerm = term.trim();
+  acc[normalizedTerm] = 'ServiciosPublicos';
+  acc[normalizedTerm.toLowerCase()] = 'ServiciosPublicos';
+  return acc;
+}, {});
+
+const manualAliases: Record<string, string> = {
+  ...manualAliasesBase,
+  ...servicioAliases,
 };
 
 const CATEGORIA_ALIASES = {

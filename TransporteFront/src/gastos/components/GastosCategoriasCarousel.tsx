@@ -24,7 +24,6 @@ export const GastosCategoriasCarousel = ({ items }: GastosCategoriasCarouselProp
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">
             Resumen por categoría
           </p>
-          <p className="text-base font-semibold text-slate-900 dark:text-white">¿Dónde se va el presupuesto?</p>
         </div>
         {hasItems ? (
           <p className="text-xs text-slate-500 dark:text-slate-400">Arrastrá para ver más categorías</p>

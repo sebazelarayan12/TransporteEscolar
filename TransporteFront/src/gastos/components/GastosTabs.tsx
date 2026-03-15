@@ -9,18 +9,16 @@ interface GastosTabsProps {
   };
 }
 
-const tabs: Array<{ value: GastosTabValue; label: string; icon: string; description: string }> = [
+const tabs: Array<{ value: GastosTabValue; label: string; icon: string }> = [
   {
     value: 'variables',
     label: 'Gastos Variables',
     icon: 'compare_arrows',
-    description: 'Movimientos operativos del mes',
   },
   {
     value: 'fijos',
     label: 'Gastos Fijos',
     icon: 'schedule',
-    description: 'Compromisos recurrentes y plantillas',
   },
 ];
 
@@ -56,9 +54,6 @@ export const GastosTabs = ({ activeTab, onChange, counts }: GastosTabsProps) => 
                 {totalByTab}
               </span>
             </div>
-            <span className={`text-xs ${isActive ? 'text-white/80' : 'text-slate-400 dark:text-slate-500'}`}>
-              {tab.description}
-            </span>
           </button>
         );
       })}

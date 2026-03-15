@@ -31,10 +31,10 @@ export const IngresosExternosSection = ({
   onDeleteIngreso,
   actionsDisabled = false,
 }: IngresosExternosSectionProps) => {
-  const [activeTab, setActiveTab] = useState<IngresosTabValue>('variables');
-  const tabs: Array<{ key: IngresosTabValue; label: string; description: string; total: number; count: number }> = [
-    { key: 'fijos', label: 'Fijos programados', description: 'Plantillas consolidadas', total: totalFijos, count: ingresosFijos.length },
-    { key: 'variables', label: 'Variables', description: 'Movimientos puntuales', total: totalVariables, count: ingresosVariables.length },
+  const [activeTab, setActiveTab] = useState<IngresosTabValue>('fijos');
+  const tabs: Array<{ key: IngresosTabValue; label: string; total: number; count: number }> = [
+    { key: 'fijos', label: 'Fijos programados', total: totalFijos, count: ingresosFijos.length },
+    { key: 'variables', label: 'Variables', total: totalVariables, count: ingresosVariables.length },
   ];
 
   const activeItems = activeTab === 'fijos' ? ingresosFijos : ingresosVariables;
@@ -56,28 +56,11 @@ export const IngresosExternosSection = ({
 
   return (
     <section className="w-full rounded-[36px] border border-slate-200/80 bg-white/90 p-5 shadow-sm dark:border-white/10 dark:bg-slate-900/60">
-      <header className="flex flex-col gap-4 border-b border-slate-200/70 pb-4 dark:border-white/5 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-teal-600 dark:text-teal-300">Ingresos externos</p>
-          <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">Apoyos fuera de las cuotas</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Convenios, subsidios y actividades especiales que impactan la caja del mes.
-          </p>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-3 rounded-3xl border border-slate-200/60 bg-white/80 px-4 py-3 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">Total externo</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(totalGeneral)}</p>
-            </div>
-            <div className="flex flex-col gap-1 text-[11px] font-semibold uppercase tracking-widest">
-              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-100">
-                Fijo {formatCurrency(totalFijos)}
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-100">
-                Variable {formatCurrency(totalVariables)}
-              </span>
-            </div>
+      <header className="space-y-6 border-b border-slate-200/70 pb-5 dark:border-white/5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-teal-600 dark:text-teal-300">Ingresos externos</p>
+            <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">Apoyos fuera de las cuotas</h3>
           </div>
           <Button
             type="button"
@@ -91,10 +74,31 @@ export const IngresosExternosSection = ({
             Registrar ingreso
           </Button>
         </div>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-stretch">
+          <div className="flex h-full flex-col justify-between rounded-3xl border border-slate-200/60 bg-white/85 px-5 py-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <div>
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">Total externo</p>
+              <p className="mt-1 text-3xl font-bold leading-tight text-slate-900 dark:text-white">{formatCurrency(totalGeneral)}</p>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{ingresosFijos.length + ingresosVariables.length} registros</p>
+          </div>
+          <div className="grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="rounded-3xl border border-slate-200/60 bg-slate-50/80 px-4 py-3 text-right shadow-sm dark:border-white/10 dark:bg-white/5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-indigo-600 dark:text-indigo-200">Fijo</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(totalFijos)}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{ingresosFijos.length} registros</p>
+            </div>
+            <div className="rounded-3xl border border-slate-200/60 bg-emerald-50/80 px-4 py-3 text-right shadow-sm dark:border-white/10 dark:bg-emerald-400/5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-200">Variable</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(totalVariables)}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{ingresosVariables.length} registros</p>
+            </div>
+          </div>
+        </div>
       </header>
 
-      <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-3">
+      <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+        <div className="flex flex-1 flex-wrap gap-3">
           {tabs.map((tab) => {
             const isActive = tab.key === activeTab;
             return (
@@ -111,30 +115,20 @@ export const IngresosExternosSection = ({
                 <span className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">
                   {tab.label}
                 </span>
-                <span className="text-sm text-slate-600 dark:text-slate-300">{tab.description}</span>
                 <p className="mt-2 text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(tab.total)}</p>
                 <p className="text-xs text-slate-400 dark:text-slate-500">{tab.count} registros</p>
               </button>
             );
           })}
         </div>
-        <div className="text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-          {isRefreshing ? (
-            <span className="inline-flex items-center gap-2">
-              <span className="material-symbols-rounded text-base animate-spin text-teal-500" aria-hidden>
-                progress_activity
-              </span>
-              Actualizando ingresos
+        {isRefreshing ? (
+          <div className="flex items-center gap-2 rounded-full border border-slate-200/70 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-500 dark:border-white/10 dark:text-slate-400 lg:ml-auto">
+            <span className="material-symbols-rounded text-base animate-spin text-teal-500" aria-hidden>
+              progress_activity
             </span>
-          ) : (
-            <span className="inline-flex items-center gap-2">
-              <span className="material-symbols-rounded text-base text-emerald-400" aria-hidden>
-                check_circle
-              </span>
-              Información al día
-            </span>
-          )}
-        </div>
+            Actualizando ingresos
+          </div>
+        ) : null}
       </div>
 
       {activeItems.length === 0 ? (

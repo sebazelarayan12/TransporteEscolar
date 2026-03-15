@@ -83,7 +83,7 @@ export type GastosTabValue = 'variables' | 'fijos';
 
 export const GASTO_CATEGORIAS = {
   FIJOS: [
-    { value: 'ServiciosPublicos', label: 'Servicios públicos (agua, luz, gas, IPV)' },
+    { value: 'ServiciosPublicos', label: 'Servicios' },
     { value: 'Comunicaciones', label: 'Comunicación (celular, teléfono)' },
     { value: 'EducacionActividades', label: 'Educación y actividades (colegio, deportes)' },
     { value: 'FinanzasTarjetas', label: 'Tarjetas y préstamos (Naranja, Visa, préstamos ANSES/Merca)' },
@@ -95,7 +95,7 @@ export const GASTO_CATEGORIAS = {
     { value: 'Alimentacion', label: 'Comida y viáticos' },
     { value: 'ViajesEventos', label: 'Viajes y eventos especiales' },
     { value: 'Tarjeta', label: 'Tarjeta (consumos con crédito)' },
-    { value: 'Servicio', label: 'Servicio contratado puntual' },
+    { value: 'ServiciosPublicos', label: 'Servicios' },
     { value: 'Otros', label: 'Varios / otros gastos' },
   ],
 } as const;

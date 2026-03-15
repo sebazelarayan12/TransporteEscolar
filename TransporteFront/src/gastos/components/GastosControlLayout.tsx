@@ -58,9 +58,7 @@ export const GastosControlLayout = ({
 }: GastosControlLayoutProps) => (
   <div className="min-h-screen w-full overflow-x-hidden bg-slate-100 pb-24 dark:bg-slate-950">
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-      <GastosPageHeader
-        onRegistrarGasto={headerActions.onRegistrarGasto}
-      />
+      <GastosPageHeader />
 
       <GastosHeroCard
         totales={heroTotals}
@@ -92,13 +90,13 @@ export const GastosControlLayout = ({
 
     <button
       type="button"
-      aria-label="Nuevo gasto"
       onClick={headerActions.onRegistrarGasto}
-      className="fixed bottom-6 right-5 z-30 flex size-14 items-center justify-center rounded-full bg-gradient-to-r from-teal-500 to-emerald-400 text-white shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 dark:from-teal-400 dark:to-cyan-400 lg:hidden"
+      className="fixed bottom-6 right-5 z-30 inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-teal-500 to-emerald-400 px-6 py-3 text-base font-semibold text-white shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 dark:from-teal-400 dark:to-cyan-400"
     >
       <span className="material-symbols-rounded text-3xl" aria-hidden>
         add
       </span>
+      Nuevo gasto
     </button>
   </div>
 );
