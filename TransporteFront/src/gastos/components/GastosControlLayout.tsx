@@ -18,7 +18,6 @@ type GastosControlLayoutProps = {
   heroTotals: ComponentProps<typeof GastosHeroCard>['totales'];
   categoriaResumen: GastosCategoriasCarouselItem[];
   headerActions: {
-    onRegistrarIngreso: () => void;
     onRegistrarGasto: () => void;
   };
   onFilterChange: (mes: number, anio: number) => void;
@@ -60,7 +59,6 @@ export const GastosControlLayout = ({
   <div className="min-h-screen w-full overflow-x-hidden bg-slate-100 pb-24 dark:bg-slate-950">
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
       <GastosPageHeader
-        onRegistrarIngreso={headerActions.onRegistrarIngreso}
         onRegistrarGasto={headerActions.onRegistrarGasto}
       />
 
@@ -94,7 +92,7 @@ export const GastosControlLayout = ({
 
     <button
       type="button"
-      aria-label="Registrar nuevo gasto"
+      aria-label="Nuevo gasto"
       onClick={headerActions.onRegistrarGasto}
       className="fixed bottom-6 right-5 z-30 flex size-14 items-center justify-center rounded-full bg-gradient-to-r from-teal-500 to-emerald-400 text-white shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 dark:from-teal-400 dark:to-cyan-400 lg:hidden"
     >

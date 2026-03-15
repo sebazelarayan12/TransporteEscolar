@@ -47,9 +47,6 @@ export const GastosHeroCard = ({ totales, periodLabel, periodFilter }: GastosHer
           <div className="flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-teal-200">Control de gastos</p>
             <h2 className="mt-2 text-3xl font-semibold leading-tight text-white sm:text-4xl">{periodLabel}</h2>
-            <p className="mt-1 text-sm text-white/80 sm:text-base">
-              Estado de caja vs. obligaciones. Ajustá rápido cuando la curva se desbalancea.
-            </p>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <div className="rounded-3xl border border-white/20 bg-black/20 p-5 shadow-inner">

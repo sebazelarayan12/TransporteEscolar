@@ -11,22 +11,13 @@ type GastosToolbarProps = {
 export const GastosToolbar = ({ activeTab, onChange, counts, isRefreshing }: GastosToolbarProps) => (
   <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
     <GastosTabs activeTab={activeTab} onChange={onChange} counts={counts} />
-    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-      {isRefreshing ? (
-        <>
-          <span className="material-symbols-rounded text-base text-teal-200" aria-hidden>
-            progress_activity
-          </span>
-          Refrescando datos
-        </>
-      ) : (
-        <>
-          <span className="material-symbols-rounded text-base text-emerald-400" aria-hidden>
-            workspace_premium
-          </span>
-          Al día
-        </>
-      )}
-    </div>
+    {isRefreshing ? (
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+        <span className="material-symbols-rounded text-base text-teal-200" aria-hidden>
+          progress_activity
+        </span>
+        Refrescando datos
+      </div>
+    ) : null}
   </div>
 );

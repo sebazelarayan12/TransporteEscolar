@@ -238,7 +238,7 @@ export const GastosControlPage = () => {
         activeTab={activeTab}
         heroTotals={heroTotals}
         categoriaResumen={categoriaResumen}
-        headerActions={{ onRegistrarIngreso: openIngresoModal, onRegistrarGasto: openGastoModal }}
+        headerActions={{ onRegistrarGasto: openGastoModal }}
         onFilterChange={setPeriodo}
         onTabChange={setActiveTab}
         toolbarCounts={{ variables: gastosVariables.length, fijos: gastosFijos.length }}
