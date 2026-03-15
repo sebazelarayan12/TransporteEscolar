@@ -3,6 +3,7 @@ import { formatDateOnly } from '../../shared/utils/date.helpers';
 import { CardActionsMenu, type CardActionItem } from './CardActionsMenu';
 import { buildUpcomingCuotas } from '../helpers/plan-cuotas.helpers';
 import { getCategoriaConfig } from '../constants/categorias.config';
+import { GASTO_ESTADOS, GASTO_TIPOS, type GastoEstadoPago, type GastoItem } from '../types/gastos.types';
 
 const estadoStyles: Record<GastoEstadoPago, { bg: string; text: string }> = {
   Pagado: { bg: 'bg-emerald-500/15', text: 'text-emerald-100' },

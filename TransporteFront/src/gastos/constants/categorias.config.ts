@@ -126,6 +126,10 @@ const BASE_CONFIG = {
   }),
 } as const satisfies Record<string, CategoriaVisualConfig>;
 
+type CategoriaKey = keyof typeof BASE_CONFIG;
+
+const isCategoriaKey = (key: string): key is CategoriaKey => key in BASE_CONFIG;
+
 const categoriaLabelAliases = Object.values(GASTO_CATEGORIAS)
   .flat()
   .reduce<Record<string, string>>((acc, categoria) => {
@@ -166,7 +170,10 @@ export const normalizeCategoriaKey = (categoria?: string | null): string => {
 
 export const getCategoriaConfig = (categoria?: string | null): CategoriaVisualConfig => {
   const key = normalizeCategoriaKey(categoria);
-  return BASE_CONFIG[key] ?? BASE_CONFIG.Otros;
+  if (isCategoriaKey(key)) {
+    return BASE_CONFIG[key];
+  }
+  return BASE_CONFIG.Otros;
 };
 
 export const CATEGORIA_CONFIG = BASE_CONFIG;
