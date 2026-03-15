@@ -12,9 +12,11 @@ export const GastosToolbar = ({ activeTab, onChange, counts, isRefreshing }: Gas
   <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
     <GastosTabs activeTab={activeTab} onChange={onChange} counts={counts} />
     {isRefreshing ? (
-      <div className="flex w-full items-center justify-start gap-2 text-xs font-semibold uppercase tracking-widest text-teal-600 sm:w-auto sm:justify-center lg:justify-end">
-        <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
-        Actualizando datos
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+        <span className="material-symbols-rounded text-base text-teal-200" aria-hidden>
+          progress_activity
+        </span>
+        Refrescando datos
       </div>
     ) : null}
   </div>

@@ -37,7 +37,7 @@ type GastosContentProps = {
 };
 
 export const GastosContent = ({ gastoSection, ingresosSection }: GastosContentProps) => (
-  <>
+  <section className="grid gap-6">
     <GastoListSection
       title={gastoSection.title}
       subtitle={gastoSection.subtitle}
@@ -66,5 +66,5 @@ export const GastosContent = ({ gastoSection, ingresosSection }: GastosContentPr
       onDeleteIngreso={ingresosSection.onDeleteIngreso}
       actionsDisabled={ingresosSection.actionsDisabled}
     />
-  </>
+  </section>
 );

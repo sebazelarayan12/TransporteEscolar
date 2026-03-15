@@ -160,7 +160,7 @@ const getDefaultValues = (mes: number, anio: number) => {
     medioPago: MEDIOS_PAGO.EFECTIVO,
     observaciones: '',
     fecha: defaultDate,
-    estadoPago: GASTO_ESTADOS.PENDIENTE as GastoEstadoPago,
+    estadoPago: GASTO_ESTADOS.PAGADO as GastoEstadoPago,
     diaDeAplicacion: 1,
     planCuotas: {
       habilitado: false,
