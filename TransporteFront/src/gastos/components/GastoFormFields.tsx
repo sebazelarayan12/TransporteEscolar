@@ -6,6 +6,8 @@ import { GASTO_ESTADOS, GASTO_TIPOS, type GastoTipo } from '../types/gastos.type
 import type { RegistrarGastoFormData } from './RegistrarGastoModal';
 import { getCategoriaConfig, normalizeCategoriaKey } from '../constants/categorias.config';
 
+const GASTO_MEDIOS_PAGO = Object.values(MEDIOS_PAGO).filter((medio) => medio !== MEDIOS_PAGO.CHEQUE);
+
 type GastoFieldIds = {
   categoria: string;
   medioPago: string;
@@ -91,7 +93,7 @@ export const GastoFormFields = ({
             errors.medioPago ? 'border-rose-400 dark:border-rose-400' : 'border-slate-200/80'
           }`}
         >
-          {Object.values(MEDIOS_PAGO).map((medio) => (
+          {GASTO_MEDIOS_PAGO.map((medio) => (
             <option key={medio} value={medio}>
               {medio}
             </option>

@@ -17,6 +17,8 @@ import {
 } from '../types/ingresos.types';
 import { useActualizarIngresoFijo, useCrearIngresoFijo, useCrearIngresoVariable } from '../services/ingresos.queries';
 
+const INGRESO_MEDIOS_COBRO = Object.values(MEDIOS_PAGO).filter((medio) => medio !== MEDIOS_PAGO.CHEQUE);
+
 interface RegistrarIngresoModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -471,7 +473,7 @@ const IngresoCategoriaMedioFields = ({
             medioCobroError ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
           }`}
         >
-          {Object.values(MEDIOS_PAGO).map((medio) => (
+          {INGRESO_MEDIOS_COBRO.map((medio) => (
             <option key={medio} value={medio}>
               {medio}
             </option>
