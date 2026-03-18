@@ -1,8 +1,9 @@
 import { useEffect, useId } from 'react';
-import { useForm, useWatch, type FieldError, type Resolver, type SubmitHandler, type UseFormRegister } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
+import type { Control, FieldError, Resolver, SubmitHandler, UseFormRegister } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Modal, Button, Spinner } from '../../shared/ui';
+import { Button, Modal, PriceInput, Spinner } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
 import { MEDIOS_PAGO } from '../../pagos/constants/medios-pago.constants';
 import {
@@ -15,6 +16,8 @@ import {
   type IngresoTipo,
 } from '../types/ingresos.types';
 import { useActualizarIngresoFijo, useCrearIngresoFijo, useCrearIngresoVariable } from '../services/ingresos.queries';
+
+const INGRESO_MEDIOS_COBRO = Object.values(MEDIOS_PAGO).filter((medio) => medio !== MEDIOS_PAGO.CHEQUE);
 
 interface RegistrarIngresoModalProps {
   isOpen: boolean;
@@ -177,6 +180,7 @@ export const RegistrarIngresoModal = ({
   const {
     register,
     handleSubmit,
+    control,
     reset,
     setValue,
     formState: { errors, isSubmitting },
@@ -186,7 +190,7 @@ export const RegistrarIngresoModal = ({
   };
   const typedErrors = errors as typeof errors &
     Partial<Record<'diaDeAplicacion' | 'fecha' | 'estadoCobro', FieldError | undefined>>;
-  const watchedTipo = useWatch({ control: form.control, name: 'tipo' }) as IngresoTipo | undefined;
+  const watchedTipo = useWatch({ control, name: 'tipo' }) as IngresoTipo | undefined;
   const selectedTipo = watchedTipo ?? (isEditMode ? INGRESO_TIPOS.FIJO : INGRESO_TIPOS.VARIABLE);
   const { min, max } = getPeriodBounds(mes, anio);
   const { showSuccess, showError } = useToast();
@@ -322,6 +326,7 @@ export const RegistrarIngresoModal = ({
         <IngresoDescripcionField fieldId={fieldIds.descripcion} register={register} isPending={isPending} error={errors.descripcion} />
 
         <IngresoMontoTimingFields
+          control={control}
           fieldIds={fieldIds}
           register={register}
           isPending={isPending}
@@ -468,7 +473,7 @@ const IngresoCategoriaMedioFields = ({
             medioCobroError ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
           }`}
         >
-          {Object.values(MEDIOS_PAGO).map((medio) => (
+          {INGRESO_MEDIOS_COBRO.map((medio) => (
             <option key={medio} value={medio}>
               {medio}
             </option>
@@ -509,6 +514,7 @@ const IngresoDescripcionField = ({ fieldId, register, isPending, error }: Ingres
 };
 
 interface IngresoMontoTimingFieldsProps {
+  control: Control<RegistrarIngresoFormData>;
   fieldIds: Pick<IngresoFieldIds, 'monto' | 'diaAplicacion' | 'fecha'>;
   register: UseFormRegister<RegistrarIngresoFormData>;
   isPending: boolean;
@@ -521,6 +527,7 @@ interface IngresoMontoTimingFieldsProps {
 }
 
 const IngresoMontoTimingFields = ({
+  control,
   fieldIds,
   register,
   isPending,
@@ -537,21 +544,30 @@ const IngresoMontoTimingFields = ({
         <label htmlFor={fieldIds.monto} className="mb-2 block text-sm font-semibold text-gray-900 dark:text-white">
           Importe <span className="text-red-500">*</span>
         </label>
-        <div className="relative">
-          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400">$
-          </span>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            id={fieldIds.monto}
-            {...register('monto', { valueAsNumber: true })}
-            disabled={isPending}
-            className={`w-full rounded-xl border pl-8 pr-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
-              montoError ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
-            }`}
-          />
-        </div>
+        <Controller
+          control={control}
+          name="monto"
+          render={({ field }) => (
+            <PriceInput
+              id={fieldIds.monto}
+              value={field.value ?? ''}
+              onValueChange={(cleanValue: string, floatValue: number | undefined) => {
+                if (!cleanValue) {
+                  field.onChange(undefined);
+                  return;
+                }
+                field.onChange(floatValue ?? undefined);
+              }}
+              onBlur={field.onBlur}
+              disabled={isPending}
+              prefix="$"
+              containerClassName="relative"
+              inputClassName={`w-full rounded-xl border pr-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-[#3f3f46] dark:bg-[#27272a] dark:text-white ${
+                montoError ? 'border-red-500 dark:border-red-500' : 'border-gray-200'
+              }`}
+            />
+          )}
+        />
         {montoError ? <p className="mt-1 text-xs text-red-600">{montoError.message}</p> : null}
       </div>
 

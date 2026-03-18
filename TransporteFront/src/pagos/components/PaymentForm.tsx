@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '../../shared/ui';
+import { Button, PriceInput } from '../../shared/ui';
 import type { RegistrarPagoRequest } from '../types/pago.types';
 
 interface PaymentFormProps {
@@ -41,24 +41,23 @@ export const PaymentForm = ({ onSubmit, isSubmitting, defaultAmount = 0 }: Payme
       </h4>
       <form className="space-y-3 text-sm" onSubmit={handleSubmit}>
         <div>
-          <label className="text-xs font-semibold text-gray-500">Monto</label>
-          <div className="mt-1 flex rounded-lg border border-gray-200 bg-white shadow-sm focus-within:border-[#1d8ca5]">
-            <span className="px-3 py-2 text-gray-400">$</span>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.monto}
-              onChange={(e) => setFormData({ ...formData, monto: e.target.value })}
-              placeholder={defaultAmount.toString()}
-              required
-              className="w-full rounded-r-lg border-0 px-3 py-2 text-[#0f181a] focus:outline-none"
-            />
-          </div>
+          <label htmlFor="monto" className="text-xs font-semibold text-gray-500">Monto</label>
+          <PriceInput
+            id="monto"
+            value={formData.monto}
+            onValueChange={(cleanValue: string) => setFormData({ ...formData, monto: cleanValue })}
+            placeholder={defaultAmount.toString()}
+            prefix="$"
+            required
+            containerClassName="mt-1"
+            inputClassName="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[#0f181a] focus:border-[#1d8ca5] focus:outline-none"
+          />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-gray-500">Fecha</label>
+            <label htmlFor="fechaPago" className="text-xs font-semibold text-gray-500">Fecha</label>
             <input
+              id="fechaPago"
               type="date"
               value={formData.fechaPago}
               onChange={(e) => setFormData({ ...formData, fechaPago: e.target.value })}
@@ -67,8 +66,9 @@ export const PaymentForm = ({ onSubmit, isSubmitting, defaultAmount = 0 }: Payme
             />
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500">Medio</label>
+            <label htmlFor="medioPago" className="text-xs font-semibold text-gray-500">Medio</label>
             <select
+              id="medioPago"
               value={formData.medioPago}
               onChange={(e) => setFormData({ ...formData, medioPago: e.target.value })}
               className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-[#0f181a] focus:border-[#1d8ca5] focus:outline-none"
@@ -81,7 +81,7 @@ export const PaymentForm = ({ onSubmit, isSubmitting, defaultAmount = 0 }: Payme
           </div>
         </div>
         <div>
-          <label className="text-xs font-semibold text-gray-500">Observaciones</label>
+          <label htmlFor="observaciones" className="text-xs font-semibold text-gray-500">Observaciones</label>
           <textarea
             rows={3}
             value={formData.observaciones}

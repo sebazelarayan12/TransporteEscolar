@@ -16,3 +16,5 @@ export { Toast } from './Toast';
 export { ToastProvider } from './ToastProvider';
 export { ConfirmDialog } from './ConfirmDialog';
 export * from './icons';
+export { PriceInput } from './PriceInput';
+

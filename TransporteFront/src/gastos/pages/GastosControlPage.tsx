@@ -1,7 +1,5 @@
-import { useReducer, useState, type Dispatch } from 'react';
 import { LoadingScreen, ErrorState, EmptyState, ConfirmDialog } from '../../shared/ui';
 import { GastosControlLayout } from '../components';
-import type { DeleteDialogCopy } from '../components';
 import {
   useGastosResumen,
   useEliminarGastoFijo,
@@ -16,326 +14,32 @@ import {
 import { useToast } from '../../shared/hooks';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
-import { GASTO_ESTADOS, GASTO_TIPOS, type GastoItem, type GastosTabValue } from '../types/gastos.types';
+import { GASTO_ESTADOS, GASTO_TIPOS, type GastoItem } from '../types/gastos.types';
 import { INGRESO_TIPOS, type IngresoItem } from '../types/ingresos.types';
-
-const monthFormatter = new Intl.DateTimeFormat('es-AR', {
-  month: 'long',
-  year: 'numeric',
-});
-
-const sumByMonto = (items: { monto: number }[]) => items.reduce((acc, item) => acc + item.monto, 0);
-
-type GastoSectionDefinition = {
-  title: string;
-  subtitle: string;
-  gastos: GastoItem[];
-  emptyMessage: string;
-};
-
-type GastoSectionsMap = Record<GastosTabValue, GastoSectionDefinition>;
-
-type DeleteMutationsBundle = {
-  gastoFijo: ReturnType<typeof useEliminarGastoFijo>;
-  gastoVariable: ReturnType<typeof useEliminarGastoVariable>;
-  ingresoFijo: ReturnType<typeof useEliminarIngresoFijo>;
-  ingresoVariable: ReturnType<typeof useEliminarIngresoVariable>;
-};
-
-type DeleteDialogState =
-  | { scope: 'gasto-fijo'; item: GastoItem }
-  | { scope: 'gasto-variable'; item: GastoItem }
-  | { scope: 'ingreso-fijo'; item: IngresoItem }
-  | { scope: 'ingreso-variable'; item: IngresoItem }
-  | null;
-
-type GastosControlState = {
-  selectedMes: number;
-  selectedAnio: number;
-  activeTab: GastosTabValue;
-  isModalOpen: boolean;
-  isIngresoModalOpen: boolean;
-  gastoModalMode: 'create' | 'edit';
-  ingresoModalMode: 'create' | 'edit';
-  selectedGasto: GastoItem | null;
-  selectedIngreso: IngresoItem | null;
-  deleteDialog: DeleteDialogState;
-};
-
-type GastosControlAction =
-  | { type: 'setPeriodo'; payload: { mes: number; anio: number } }
-  | { type: 'setActiveTab'; payload: GastosTabValue }
-  | { type: 'openGastoModal' }
-  | { type: 'closeGastoModal' }
-  | { type: 'openIngresoModal' }
-  | { type: 'closeIngresoModal' }
-  | { type: 'editGasto'; payload: GastoItem }
-  | { type: 'editIngreso'; payload: IngresoItem }
-  | { type: 'setDeleteDialog'; payload: NonNullable<DeleteDialogState> }
-  | { type: 'clearDeleteDialog' };
-
-const createInitialState = (): GastosControlState => {
-  const now = new Date();
-  return {
-    selectedMes: now.getMonth() + 1,
-    selectedAnio: now.getFullYear(),
-    activeTab: 'fijos',
-    isModalOpen: false,
-    isIngresoModalOpen: false,
-    gastoModalMode: 'create',
-    ingresoModalMode: 'create',
-    selectedGasto: null,
-    selectedIngreso: null,
-    deleteDialog: null,
-  };
-};
-
-const gastosControlReducer = (state: GastosControlState, action: GastosControlAction): GastosControlState => {
-  switch (action.type) {
-    case 'setPeriodo':
-      return {
-        ...state,
-        selectedMes: action.payload.mes,
-        selectedAnio: action.payload.anio,
-        activeTab: 'fijos',
-      };
-    case 'setActiveTab':
-      return { ...state, activeTab: action.payload };
-    case 'openGastoModal':
-      return {
-        ...state,
-        isModalOpen: true,
-        gastoModalMode: 'create',
-        selectedGasto: null,
-      };
-    case 'closeGastoModal':
-      return {
-        ...state,
-        isModalOpen: false,
-        selectedGasto: null,
-        gastoModalMode: 'create',
-      };
-    case 'openIngresoModal':
-      return {
-        ...state,
-        isIngresoModalOpen: true,
-        ingresoModalMode: 'create',
-        selectedIngreso: null,
-      };
-    case 'closeIngresoModal':
-      return {
-        ...state,
-        isIngresoModalOpen: false,
-        selectedIngreso: null,
-        ingresoModalMode: 'create',
-      };
-    case 'editGasto':
-      return {
-        ...state,
-        selectedGasto: action.payload,
-        gastoModalMode: 'edit',
-        isModalOpen: true,
-      };
-    case 'editIngreso':
-      return {
-        ...state,
-        selectedIngreso: action.payload,
-        ingresoModalMode: 'edit',
-        isIngresoModalOpen: true,
-      };
-    case 'setDeleteDialog':
-      return { ...state, deleteDialog: action.payload };
-    case 'clearDeleteDialog':
-      return { ...state, deleteDialog: null };
-    default:
-      return state;
-  }
-};
-
-const buildSections = (gastosFijos: GastoItem[], gastosVariables: GastoItem[]): GastoSectionsMap => ({
-  variables: {
-    title: 'Gastos Variables',
-    subtitle: 'Operativa del día a día',
-    gastos: gastosVariables,
-    emptyMessage: 'No registraste gastos variables este mes. Usá el botón para agregar el primero.',
-  },
-  fijos: {
-    title: 'Gastos Fijos',
-    subtitle: 'Compromisos recurrentes',
-    gastos: gastosFijos,
-    emptyMessage: 'Todavía no hay plantillas aplicadas para este periodo.',
-  },
-});
-
-const buildDeleteDialogCopy = (deleteDialog: DeleteDialogState): DeleteDialogCopy | null => {
-  if (!deleteDialog) {
-    return null;
-  }
-
-  const montoLabel = formatCurrency(deleteDialog.item.monto);
-  const periodoLabel = `${deleteDialog.item.mes}/${deleteDialog.item.anio}`;
-
-  switch (deleteDialog.scope) {
-    case 'gasto-fijo':
-      return {
-        title: 'Eliminar gasto fijo',
-        message: `Se eliminará la plantilla "${deleteDialog.item.descripcion}" y se recalcularán los totales de ${periodoLabel}.`,
-        confirmLabel: 'Eliminar gasto fijo',
-      };
-    case 'gasto-variable': {
-      const fechaLabel = formatDateOnly(deleteDialog.item.fechaCuota, { day: '2-digit', month: 'long' });
-      return {
-        title: 'Eliminar gasto variable',
-        message: `Vas a eliminar el gasto del ${fechaLabel} por ${montoLabel}. Esta acción no se puede deshacer.`,
-        confirmLabel: 'Eliminar gasto variable',
-      };
-    }
-    case 'ingreso-fijo':
-      return {
-        title: 'Eliminar ingreso fijo',
-        message: `Se desactivará la plantilla "${deleteDialog.item.descripcion}" y se quitará del periodo ${periodoLabel}.`,
-        confirmLabel: 'Eliminar ingreso fijo',
-      };
-    case 'ingreso-variable': {
-      const fechaLabel = formatDateOnly(deleteDialog.item.fecha, { day: '2-digit', month: 'long' });
-      return {
-        title: 'Eliminar ingreso variable',
-        message: `¿Eliminar el ingreso del ${fechaLabel} por ${montoLabel}?`,
-        confirmLabel: 'Eliminar ingreso variable',
-      };
-    }
-    default:
-      return null;
-  }
-};
-
-const getDeleteProcessingState = (deleteDialog: DeleteDialogState, mutations: DeleteMutationsBundle) => {
-  if (!deleteDialog) {
-    return false;
-  }
-
-  switch (deleteDialog.scope) {
-    case 'gasto-fijo':
-      return mutations.gastoFijo.isPending;
-    case 'gasto-variable':
-      return mutations.gastoVariable.isPending;
-    case 'ingreso-fijo':
-      return mutations.ingresoFijo.isPending;
-    case 'ingreso-variable':
-      return mutations.ingresoVariable.isPending;
-    default:
-      return false;
-  }
-};
-
-type GastosDeleteDialogHandlersOptions = {
-  deleteDialog: DeleteDialogState;
-  dispatch: Dispatch<GastosControlAction>;
-  mutations: DeleteMutationsBundle;
-  refetchGastos: () => void;
-  refetchIngresos: () => void;
-  showSuccess: (message: string) => void;
-  showError: (message: string) => void;
-};
-
-const createGastosDeleteDialogHandlers = ({
-  deleteDialog,
-  dispatch,
-  mutations,
-  refetchGastos,
-  refetchIngresos,
-  showSuccess,
-  showError,
-}: GastosDeleteDialogHandlersOptions) => {
-  const isProcessing = getDeleteProcessingState(deleteDialog, mutations);
-  const copy = buildDeleteDialogCopy(deleteDialog);
-
-  const handleConfirmDelete = async () => {
-    if (!deleteDialog) {
-      return;
-    }
-
-    try {
-      switch (deleteDialog.scope) {
-        case 'gasto-fijo': {
-          const template = deleteDialog.item.templateId;
-          if (!template) {
-            showError('No encontramos la plantilla del gasto fijo.');
-            dispatch({ type: 'clearDeleteDialog' });
-            return;
-          }
-          await mutations.gastoFijo.mutateAsync({
-            templateId: template,
-            mes: deleteDialog.item.mes,
-            anio: deleteDialog.item.anio,
-          });
-          showSuccess('Gasto fijo eliminado');
-          break;
-        }
-        case 'gasto-variable': {
-          await mutations.gastoVariable.mutateAsync({
-            id: deleteDialog.item.id,
-            mes: deleteDialog.item.mes,
-            anio: deleteDialog.item.anio,
-          });
-          showSuccess('Gasto variable eliminado');
-          break;
-        }
-        case 'ingreso-fijo': {
-          const template = deleteDialog.item.templateId;
-          if (!template) {
-            showError('No encontramos la plantilla del ingreso fijo.');
-            dispatch({ type: 'clearDeleteDialog' });
-            return;
-          }
-          await mutations.ingresoFijo.mutateAsync({
-            templateId: template,
-            mes: deleteDialog.item.mes,
-            anio: deleteDialog.item.anio,
-          });
-          showSuccess('Ingreso fijo eliminado');
-          break;
-        }
-        case 'ingreso-variable': {
-          await mutations.ingresoVariable.mutateAsync({
-            id: deleteDialog.item.id,
-            mes: deleteDialog.item.mes,
-            anio: deleteDialog.item.anio,
-          });
-          showSuccess('Ingreso variable eliminado');
-          break;
-        }
-      }
-      dispatch({ type: 'clearDeleteDialog' });
-      refetchGastos();
-      refetchIngresos();
-    } catch (error) {
-      const message =
-        error && typeof error === 'object' && 'message' in error
-          ? String((error as { message?: string }).message)
-          : 'No pudimos completar la operación.';
-      showError(message);
-    }
-  };
-
-  const handleCancelDelete = () => {
-    if (isProcessing) {
-      return;
-    }
-    dispatch({ type: 'clearDeleteDialog' });
-  };
-
-  return {
-    copy,
-    isProcessing,
-    handleConfirmDelete,
-    handleCancelDelete,
-  };
-};
+import {
+  useGastosControlState,
+  buildCategoriasResumen,
+  buildSections,
+  sumByMonto,
+} from '../hooks/useGastosControlState';
+import { createGastosDeleteDialogHandlers } from '../helpers/deleteDialog.helpers';
 
 export const GastosControlPage = () => {
-  const [state, dispatch] = useReducer(gastosControlReducer, undefined, createInitialState);
-  const [markPaidTarget, setMarkPaidTarget] = useState<GastoItem | null>(null);
+  const {
+    state,
+    dispatch,
+    periodLabel,
+    gastoModalKey,
+    ingresoModalKey,
+    markPaidTarget,
+    setMarkPaidTarget,
+    setPeriodo,
+    openGastoModal,
+    closeGastoModal,
+    openIngresoModal,
+    closeIngresoModal,
+    setActiveTab,
+  } = useGastosControlState();
   const {
     selectedMes,
     selectedAnio,
@@ -380,33 +84,12 @@ export const GastosControlPage = () => {
   const gastosVariablesPagados = gastosVariables
     .filter((item) => item.estadoPago === GASTO_ESTADOS.PAGADO)
     .reduce((acc, item) => acc + item.monto, 0);
-  const periodLabel = monthFormatter.format(new Date(selectedAnio, selectedMes - 1, 1));
-
-  const handleFilterChange = (mes: number, anio: number) => {
-    dispatch({ type: 'setPeriodo', payload: { mes, anio } });
-  };
-
-  const openRegistrarGasto = () => {
-    dispatch({ type: 'openGastoModal' });
-  };
-
-  const openRegistrarIngreso = () => {
-    dispatch({ type: 'openIngresoModal' });
-  };
-
-  const handleCloseGastoModal = () => {
-    dispatch({ type: 'closeGastoModal' });
-  };
-
-  const handleCloseIngresoModal = () => {
-    dispatch({ type: 'closeIngresoModal' });
-  };
 
   const handleGastoModalSuccess = () => {
     refetch();
     refetchIngresos();
     if (gastoModalMode === 'create') {
-      dispatch({ type: 'setActiveTab', payload: 'fijos' });
+      setActiveTab('fijos');
     }
   };
 
@@ -489,6 +172,7 @@ export const GastosControlPage = () => {
     gastosVariablesPendientes,
     gastosVariablesPagados,
   };
+  const categoriaResumen = buildCategoriasResumen([...gastosFijos, ...gastosVariables]);
 
   const gastoActionsDisabled = eliminarGastoFijo.isPending || eliminarGastoVariable.isPending || marcarGastoVariable.isPending;
   const ingresoActionsDisabled = eliminarIngresoFijo.isPending || eliminarIngresoVariable.isPending;
@@ -509,12 +193,6 @@ export const GastosControlPage = () => {
       showError,
     });
 
-  const handleTabChange = (tab: GastosTabValue) => {
-    dispatch({ type: 'setActiveTab', payload: tab });
-  };
-
-  const gastoModalKey = `${selectedMes}-${selectedAnio}`;
-  const ingresoModalKey = `ingresos-${selectedMes}-${selectedAnio}`;
   const markPaidMessage = markPaidTarget
     ? `Confirmá que "${markPaidTarget.descripcion}" del ${formatDateOnly(markPaidTarget.fechaCuota, {
         day: '2-digit',
@@ -559,9 +237,10 @@ export const GastosControlPage = () => {
         selectedAnio={selectedAnio}
         activeTab={activeTab}
         heroTotals={heroTotals}
-        headerActions={{ onRegistrarIngreso: openRegistrarIngreso, onRegistrarGasto: openRegistrarGasto }}
-        onFilterChange={handleFilterChange}
-        onTabChange={handleTabChange}
+        categoriaResumen={categoriaResumen}
+        headerActions={{ onRegistrarGasto: openGastoModal }}
+        onFilterChange={setPeriodo}
+        onTabChange={setActiveTab}
         toolbarCounts={{ variables: gastosVariables.length, fijos: gastosFijos.length }}
         isToolbarRefreshing={isFetching}
         gastoModalKey={gastoModalKey}
@@ -588,7 +267,7 @@ export const GastosControlPage = () => {
           isLoading: !ingresosData && isIngresosLoading,
           isRefreshing: isIngresosFetching,
           actionsDisabled: ingresoActionsDisabled,
-          onRegistrarIngreso: openRegistrarIngreso,
+           onRegistrarIngreso: openIngresoModal,
           onEditIngreso: handleEditIngreso,
           onDeleteIngreso: handleDeleteIngreso,
         }}
@@ -596,7 +275,7 @@ export const GastosControlPage = () => {
           isOpen: isModalOpen,
           mes: selectedMes,
           anio: selectedAnio,
-          onClose: handleCloseGastoModal,
+           onClose: closeGastoModal,
           onSuccess: handleGastoModalSuccess,
           modo: gastoModalMode,
           initialData: selectedGasto,
@@ -606,7 +285,7 @@ export const GastosControlPage = () => {
           isOpen: isIngresoModalOpen,
           mes: selectedMes,
           anio: selectedAnio,
-          onClose: handleCloseIngresoModal,
+           onClose: closeIngresoModal,
           modo: ingresoModalMode,
           initialData: selectedIngreso,
           templateId: selectedIngreso?.templateId ?? null,

@@ -13,4 +13,5 @@ export { GastosToolbar } from './GastosToolbar';
 export { GastosContent } from './GastosContent';
 export { GastosDeleteDialog } from './GastosDeleteDialog';
 export { GastosControlLayout } from './GastosControlLayout';
+export { GastosCategoriasCarousel } from './GastosCategoriasCarousel';
 export type { DeleteDialogCopy, GastosDeleteDialogProps } from './GastosDeleteDialog';

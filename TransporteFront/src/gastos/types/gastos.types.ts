@@ -8,7 +8,6 @@ export type GastoTipo = (typeof GASTO_TIPOS)[keyof typeof GASTO_TIPOS];
 export const GASTO_ESTADOS = {
   PENDIENTE: 'Pendiente',
   PAGADO: 'Pagado',
-  PROGRAMADO: 'Programado',
 } as const;
 
 export type GastoEstadoPago = (typeof GASTO_ESTADOS)[keyof typeof GASTO_ESTADOS];
@@ -84,7 +83,7 @@ export type GastosTabValue = 'variables' | 'fijos';
 
 export const GASTO_CATEGORIAS = {
   FIJOS: [
-    { value: 'ServiciosPublicos', label: 'Servicios públicos (agua, luz, gas, IPV)' },
+    { value: 'ServiciosPublicos', label: 'Servicios' },
     { value: 'Comunicaciones', label: 'Comunicación (celular, teléfono)' },
     { value: 'EducacionActividades', label: 'Educación y actividades (colegio, deportes)' },
     { value: 'FinanzasTarjetas', label: 'Tarjetas y préstamos (Naranja, Visa, préstamos ANSES/Merca)' },
@@ -95,6 +94,8 @@ export const GASTO_CATEGORIAS = {
     { value: 'Mantenimiento', label: 'Mecánicos y repuestos' },
     { value: 'Alimentacion', label: 'Comida y viáticos' },
     { value: 'ViajesEventos', label: 'Viajes y eventos especiales' },
+    { value: 'Tarjeta', label: 'Tarjeta (consumos con crédito)' },
+    { value: 'ServiciosPublicos', label: 'Servicios' },
     { value: 'Otros', label: 'Varios / otros gastos' },
   ],
 } as const;

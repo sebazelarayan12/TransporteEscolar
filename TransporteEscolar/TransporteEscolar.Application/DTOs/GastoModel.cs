@@ -61,6 +61,7 @@ public record GastoModel
         decimal Monto,
         DateOnly Fecha,
         string MedioPago,
+        string EstadoPago,
         string? Observaciones);
 
     public record PlanCuotasRequest(

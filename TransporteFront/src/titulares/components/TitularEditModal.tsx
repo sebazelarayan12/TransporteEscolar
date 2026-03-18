@@ -1,9 +1,8 @@
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { updateTitularSchema, type UpdateTitularFormData } from '../schemas/titular.schema';
 import type { TitularResponse } from '../types/titular.types';
-import { Modal } from '../../shared/ui/Modal';
-import { Button } from '../../shared/ui/Button';
+import { Button, Modal, PriceInput } from '../../shared/ui';
 
 interface TitularEditModalProps {
   titular: TitularResponse;
@@ -23,6 +22,7 @@ export const TitularEditModal = ({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isDirty },
   } = useForm<UpdateTitularFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -165,33 +165,41 @@ export const TitularEditModal = ({
           >
             Monto Mensual Pactado <span className="text-red-500">*</span>
           </label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
-              $
-            </span>
-            <input
-              id="montoMensualPactado"
-              type="number"
-              step="0.01"
-              min="0"
-              {...register('montoMensualPactado')}
-              aria-invalid={errors.montoMensualPactado ? 'true' : 'false'}
-              aria-describedby={errors.montoMensualPactado ? 'montoMensualPactado-error' : undefined}
-              className={`
-                w-full pl-8 pr-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
-                bg-white dark:bg-[#27272a]
-                focus:outline-none focus:ring-2 focus:ring-[#007a8a] focus:border-transparent
-                transition-colors
-                ${
-                  errors.montoMensualPactado
-                    ? 'border-red-500 dark:border-red-500'
-                    : 'border-gray-300 dark:border-[#3f3f46]'
-                }
-              `}
-              placeholder="0.00"
-              disabled={isSaving}
-            />
-          </div>
+          <Controller
+            control={control}
+            name="montoMensualPactado"
+            render={({ field }) => (
+              <PriceInput
+                id="montoMensualPactado"
+                value={field.value ?? ''}
+                onValueChange={(cleanValue: string, floatValue: number | undefined) => {
+                  if (!cleanValue) {
+                    field.onChange(undefined);
+                    return;
+                  }
+                  field.onChange(floatValue ?? undefined);
+                }}
+                onBlur={field.onBlur}
+                disabled={isSaving}
+                placeholder="0,00"
+                prefix="$"
+                containerClassName="relative"
+                inputClassName={`
+                  w-full pr-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
+                  bg-white dark:bg-[#27272a]
+                  focus:outline-none focus:ring-2 focus:ring-[#007a8a] focus:border-transparent
+                  transition-colors
+                  ${
+                    errors.montoMensualPactado
+                      ? 'border-red-500 dark:border-red-500'
+                      : 'border-gray-300 dark:border-[#3f3f46]'
+                  }
+                `}
+                aria-invalid={errors.montoMensualPactado ? 'true' : 'false'}
+                aria-describedby={errors.montoMensualPactado ? 'montoMensualPactado-error' : undefined}
+              />
+            )}
+          />
           {errors.montoMensualPactado && (
             <p id="montoMensualPactado-error" className="mt-1.5 text-sm text-red-600 dark:text-red-400">
               {errors.montoMensualPactado.message}
