@@ -50,6 +50,18 @@ public class PagosMensualesController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene titulares con cuota pendiente del mes actual listos para notificar por WhatsApp.
+    /// Incluye nombre completo, teléfono principal, saldo pendiente y período.
+    /// </summary>
+    [HttpGet("pendientes-para-notificar")]
+    public async Task<ActionResult<List<PagoMensualModel.NotificarItem>>> GetPendientesParaNotificar(
+        CancellationToken cancellationToken)
+    {
+        var items = await _service.ObtenerPendientesParaNotificarAsync(cancellationToken);
+        return Ok(items);
+    }
+
+    /// <summary>
     /// Obtiene pagos mensuales paginados filtrados por mes/año
     /// </summary>
     [HttpGet("paginados")]

@@ -21,6 +21,8 @@ public sealed class AppDbContext : DbContext
     public DbSet<IngresoFijoTemplate> IngresosFijosTemplates => Set<IngresoFijoTemplate>();
     public DbSet<IngresoMensual> IngresosMensuales => Set<IngresoMensual>();
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
+    public DbSet<LoteWhatsApp> LotesWhatsApp => Set<LoteWhatsApp>();
+    public DbSet<MensajeWhatsApp> MensajesWhatsApp => Set<MensajeWhatsApp>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -40,5 +42,7 @@ public sealed class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new IngresoFijoTemplateConfiguration());
         modelBuilder.ApplyConfiguration(new IngresoMensualConfiguration());
         modelBuilder.ApplyConfiguration(new NotificacionConfiguration());
+        modelBuilder.ApplyConfiguration(new LoteWhatsAppConfiguration());
+        modelBuilder.ApplyConfiguration(new MensajeWhatsAppConfiguration());
     }
 }

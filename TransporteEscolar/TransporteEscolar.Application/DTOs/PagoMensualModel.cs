@@ -65,4 +65,14 @@ public record PagoMensualModel
         DateTimeOffset FechaPago,
         string MedioPago,
         string? Observaciones);
+
+    /// <summary>
+    /// Proyección mínima para notificaciones WhatsApp: nombre, teléfono, saldo y período.
+    /// </summary>
+    public record NotificarItem(
+        int TitularId,
+        string NombreCompleto,
+        string Telefono,
+        decimal SaldoPendiente,
+        string Periodo);
 }

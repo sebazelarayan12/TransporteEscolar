@@ -14,17 +14,20 @@ public class PagoMensualService : IPagoMensualService
     private readonly ITitularRepository _titularRepository;
     private readonly ITransactionManager _transactionManager;
     private readonly INotificacionService _notificacionService;
+    private readonly IWhatsAppLoteRepository _whatsAppRepository;
 
     public PagoMensualService(
         IPagoMensualRepository repository,
         ITitularRepository titularRepository,
         ITransactionManager transactionManager,
-        INotificacionService notificacionService)
+        INotificacionService notificacionService,
+        IWhatsAppLoteRepository whatsAppRepository)
     {
         _repository = repository;
         _titularRepository = titularRepository;
         _transactionManager = transactionManager;
         _notificacionService = notificacionService;
+        _whatsAppRepository = whatsAppRepository;
     }
 
     public async Task<PagoMensualModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
@@ -438,6 +441,43 @@ public class PagoMensualService : IPagoMensualService
                 await _repository.AddAsync(pagoMensual, cancellationToken);
             }
         }
+    }
+
+    public async Task<List<PagoMensualModel.NotificarItem>> ObtenerPendientesParaNotificarAsync(CancellationToken cancellationToken = default)
+    {
+        var hoyArg = DateTime.UtcNow.AddHours(-3); // UTC-3 Argentina
+        var mes = hoyArg.Month;
+        var anio = hoyArg.Year;
+
+        // 1. Pagos pendientes (saldo > 0) del mes en curso
+        var pagos = await _repository.GetByMesAnioAsync(mes, anio, cancellationToken);
+        var pendientes = pagos.Where(p => !p.EstaPagado() && p.SaldoPendiente() > 0).ToList();
+
+        if (pendientes.Count == 0)
+            return [];
+
+        // 2. IDs de esos titulares
+        var titularIds = pendientes.Select(p => p.TitularId).Distinct().ToList();
+
+        // 3. Traer solo los que tienen teléfono principal activo (reutiliza lógica existente)
+        var titularesConTel = await _whatsAppRepository.ObtenerTitularesActivosConTelefonoAsync(titularIds, cancellationToken);
+        var telPorTitular = titularesConTel.ToDictionary(t => t.TitularId);
+
+        // 4. Combinar
+        return pendientes
+            .Where(p => telPorTitular.ContainsKey(p.TitularId))
+            .Select(p =>
+            {
+                var t = telPorTitular[p.TitularId];
+                return new PagoMensualModel.NotificarItem(
+                    p.TitularId,
+                    $"{t.NombreContacto} {t.Apellido}".Trim(),
+                    t.TelefonoPrincipal,
+                    p.SaldoPendiente(),
+                    $"{mes:D2}/{anio}");
+            })
+            .OrderBy(x => x.NombreCompleto)
+            .ToList();
     }
 
     private static PagoMensualModel.Response MapearAResponse(PagoMensual pagoMensual) =>
