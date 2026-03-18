@@ -59,7 +59,7 @@ public class PagosMensualesController : ControllerBase
     public async Task<ActionResult<List<PagoMensualModel.NotificarItem>>> GetPendientesParaNotificar(
         CancellationToken cancellationToken)
     {
-        var items = await _service.ObtenerPendientesParaNotificarAsync(cancellationToken);
+        var items = await _sender.Send(new GetPagosPendientesParaNotificarQuery(), cancellationToken);
         return Ok(items);
     }
 
