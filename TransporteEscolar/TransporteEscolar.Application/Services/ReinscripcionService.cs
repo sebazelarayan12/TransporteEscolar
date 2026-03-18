@@ -1,5 +1,7 @@
+using MediatR;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Application.PagosMensuales.Commands;
 using TransporteEscolar.Domain.Entities;
 
 namespace TransporteEscolar.Application.Services;
@@ -8,20 +10,20 @@ public class ReinscripcionService : IReinscripcionService
 {
     private readonly IReinscripcionRepository _repository;
     private readonly IPasajeroRepository _pasajeroRepository;
-    private readonly IPagoMensualService _pagoMensualService;
     private readonly INotificacionService _notificacionService;
+    private readonly ISender _sender;
     private static readonly string[] EstadosPermitidos = new[] { "Pendiente", "Confirmado", "NoContinua" };
 
     public ReinscripcionService(
         IReinscripcionRepository repository,
         IPasajeroRepository pasajeroRepository,
-        IPagoMensualService pagoMensualService,
-        INotificacionService notificacionService)
+        INotificacionService notificacionService,
+        ISender sender)
     {
         _repository = repository;
         _pasajeroRepository = pasajeroRepository;
-        _pagoMensualService = pagoMensualService;
         _notificacionService = notificacionService;
+        _sender = sender;
     }
 
     public async Task<PaginationModel.ResponsePagination<ReinscripcionModel.ResponseDetallada>> ObtenerTodosAsync(ReinscripcionModel.FilterRequest request)
@@ -225,7 +227,7 @@ public class ReinscripcionService : IReinscripcionService
         if (!hayConfirmados)
             return;
 
-        await _pagoMensualService.GenerarPagosMensualesAutomaticosAsync(titularId, anio);
+        await _sender.Send(new GenerarPagosMensualesAutomaticosCommand(titularId, anio));
     }
 
     private static decimal CalcularMontoBase(Titular titular)

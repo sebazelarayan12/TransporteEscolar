@@ -1,7 +1,9 @@
+using MediatR;
+using TransporteEscolar.Application;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Application.Services;
-using TransporteEscolar.Infrastructure.Repositories;
 using TransporteEscolar.Infrastructure.Persistence;
+using TransporteEscolar.Infrastructure.Repositories;
 using TransporteEscolar.Infrastructure.Services;
 
 namespace TransporteEscolar.Api.DependencyInjection;
@@ -24,8 +26,6 @@ public static class ServiceCollectionExtensions
         
         // Servicios
         services.AddScoped<ITitularService, TitularService>();
-        services.AddScoped<IPasajeroService, PasajeroService>();
-        services.AddScoped<IPagoMensualService, PagoMensualService>();
         services.AddScoped<IReinscripcionService, ReinscripcionService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IHorarioService, HorarioService>();
@@ -35,6 +35,8 @@ public static class ServiceCollectionExtensions
 
         // Gestión de Transacciones
         services.AddScoped<ITransactionManager, TransactionManager>();
+
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<AssemblyMarker>());
 
         return services;
     }

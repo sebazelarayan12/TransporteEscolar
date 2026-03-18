@@ -1,6 +1,8 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TransporteEscolar.Application.DTOs;
-using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Application.PagosMensuales.Commands;
+using TransporteEscolar.Application.PagosMensuales.Queries;
 
 namespace TransporteEscolar.Api.Controllers;
 
@@ -8,14 +10,14 @@ namespace TransporteEscolar.Api.Controllers;
 [Route("api/[controller]")]
 public class PagosMensualesController : ControllerBase
 {
-    private readonly IPagoMensualService _service;
+    private readonly ISender _sender;
     private readonly ILogger<PagosMensualesController> _logger;
 
     public PagosMensualesController(
-        IPagoMensualService service,
+        ISender sender,
         ILogger<PagosMensualesController> logger)
     {
-        _service = service;
+        _sender = sender;
         _logger = logger;
     }
 
@@ -25,7 +27,7 @@ public class PagosMensualesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<PagoMensualModel.Response>>> GetAll()
     {
-        var dtos = await _service.ObtenerTodosAsync();
+        var dtos = await _sender.Send(new GetPagosMensualesQuery());
         return Ok(dtos);
     }
 
@@ -35,7 +37,7 @@ public class PagosMensualesController : ControllerBase
     [HttpGet("vencidos")]
     public async Task<ActionResult<List<PagoMensualModel.Response>>> GetVencidos()
     {
-        var dtos = await _service.ObtenerVencidosAsync();
+        var dtos = await _sender.Send(new GetPagosMensualesVencidosQuery());
         return Ok(dtos);
     }
 
@@ -45,7 +47,7 @@ public class PagosMensualesController : ControllerBase
     [HttpGet("pendientes")]
     public async Task<ActionResult<List<PagoMensualModel.Response>>> GetPendientes()
     {
-        var dtos = await _service.ObtenerPendientesAsync();
+        var dtos = await _sender.Send(new GetPagosMensualesPendientesQuery());
         return Ok(dtos);
     }
 
@@ -72,8 +74,7 @@ public class PagosMensualesController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 20)
     {
-        var request = new PagoMensualModel.FilterRequest(mes, anio, search, pageNumber, pageSize);
-        var resultado = await _service.ObtenerPaginadosAsync(request);
+        var resultado = await _sender.Send(new GetPagosMensualesPaginadosQuery(mes, anio, search, pageNumber, pageSize));
         return Ok(resultado);
     }
 
@@ -85,7 +86,7 @@ public class PagosMensualesController : ControllerBase
         [FromQuery] int mes,
         [FromQuery] int anio)
     {
-        var estadisticas = await _service.ObtenerEstadisticasMesAsync(mes, anio);
+        var estadisticas = await _sender.Send(new GetEstadisticasPagosMesQuery(mes, anio));
         return Ok(estadisticas);
     }
 
@@ -101,8 +102,7 @@ public class PagosMensualesController : ControllerBase
         if (pageNumber <= 0 || pageSize <= 0)
             return BadRequest("pageNumber y pageSize deben ser mayores a 0.");
 
-        var request = new PaginationModel.FilterRequest(search, pageNumber, pageSize);
-        var resultado = await _service.ObtenerTitularesConPagosAsync(request);
+        var resultado = await _sender.Send(new GetTitularesConPagosQuery(search, pageNumber, pageSize));
         return Ok(resultado);
     }
 
@@ -121,15 +121,13 @@ public class PagosMensualesController : ControllerBase
         if (pageNumber <= 0 || pageSize <= 0)
             return BadRequest("pageNumber y pageSize deben ser mayores a 0.");
 
-        var request = new PagoMovimientoModel.FilterRequest(
+        var resultado = await _sender.Send(new GetPagoMovimientosQuery(
             fechaDesde,
             fechaHasta,
             titularId,
             medioPago,
             pageNumber,
-            pageSize);
-
-        var resultado = await _service.ObtenerMovimientosAsync(request);
+            pageSize));
         return Ok(resultado);
     }
 
@@ -139,7 +137,7 @@ public class PagosMensualesController : ControllerBase
     [HttpGet("titular/{titularId}")]
     public async Task<ActionResult<List<PagoMensualModel.Response>>> GetByTitular(int titularId)
     {
-        var dtos = await _service.ObtenerPorTitularAsync(titularId);
+        var dtos = await _sender.Send(new GetPagosMensualesPorTitularQuery(titularId));
         return Ok(dtos);
     }
 
@@ -149,7 +147,7 @@ public class PagosMensualesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<PagoMensualModel.Response>> GetById(int id)
     {
-        var dto = await _service.ObtenerPorIdAsync(id);
+        var dto = await _sender.Send(new GetPagoMensualByIdQuery(id));
         
         if (dto == null)
             return NotFound();
@@ -163,7 +161,7 @@ public class PagosMensualesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<PagoMensualModel.Response>> Create([FromBody] PagoMensualModel.Request dto)
     {
-        var resultado = await _service.CrearAsync(dto);
+        var resultado = await _sender.Send(new CreatePagoMensualCommand(dto));
 
         _logger.LogInformation("Pago mensual creado: {Periodo} - Titular {TitularId} (ID: {Id})", 
             resultado.Periodo, resultado.TitularId, resultado.Id);
@@ -180,7 +178,7 @@ public class PagosMensualesController : ControllerBase
     [HttpPost("{id}/registrar-pago")]
     public async Task<ActionResult> RegistrarPago(int id, [FromBody] PagoMensualModel.RegistrarPagoRequest dto)
     {
-        await _service.RegistrarPagoAsync(id, dto);
+        await _sender.Send(new RegistrarPagoCommand(id, dto));
 
         _logger.LogInformation("Pago registrado en pago mensual (ID: {Id}), Monto: {Monto}", id, dto.Monto);
 
@@ -193,7 +191,7 @@ public class PagosMensualesController : ControllerBase
     [HttpDelete("{pagoMensualId}/movimientos/{movimientoId}")]
     public async Task<ActionResult> EliminarMovimiento(int pagoMensualId, int movimientoId)
     {
-        var movimiento = await _service.EliminarMovimientoAsync(pagoMensualId, movimientoId);
+        var movimiento = await _sender.Send(new EliminarPagoMovimientoCommand(pagoMensualId, movimientoId));
 
         _logger.LogInformation(
             "Movimiento eliminado (MovimientoId: {MovimientoId}) del pago mensual {PagoMensualId} - Titular {TitularId} ({TitularNombreCompleto}). Monto reversado: {Monto}",
@@ -212,7 +210,7 @@ public class PagosMensualesController : ControllerBase
     [HttpPut("{id}/observaciones")]
     public async Task<ActionResult> ActualizarObservaciones(int id, [FromBody] PagoMensualModel.UpdateObservacionesRequest dto)
     {
-        await _service.ActualizarObservacionesAsync(id, dto);
+        await _sender.Send(new ActualizarPagoMensualObservacionesCommand(id, dto));
 
         _logger.LogInformation("Observaciones actualizadas en pago mensual (ID: {Id})", id);
 
@@ -227,7 +225,7 @@ public class PagosMensualesController : ControllerBase
         int titularId,
         [FromBody] PagoMensualModel.AjusteTitularRequest dto)
     {
-        var response = await _service.AjustarMontoTitularAsync(titularId, dto);
+        var response = await _sender.Send(new AjustarMontoTitularCommand(titularId, dto));
 
         _logger.LogInformation(
             "Monto mensual ajustado para titular {TitularId}. ${MontoAnterior} -> ${MontoNuevo}. Cuotas afectadas: {Cantidad}",
