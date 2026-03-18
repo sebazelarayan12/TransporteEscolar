@@ -1,79 +1,115 @@
-1. Header & Skills Reference
-   - Title: “TransporteEscolar API – AI Agent Ruleset”.
-   - “Skills Reference” list will include backend-relevant skills: csharp-developer, systematic-debugging, api-design-principles, error-handling-patterns, brainstorming, plus testing/infra skills such as playwright? No, backend-specific include csharp-developer, systematic-debugging, api-design-principles, error-handling-patterns, maybe general brainstorming for creative changes. Possibly mention typescript? not needed for backend. Incluye también vitest para guiar pruebas unitarias compartidas/front (Vitest) cuando sean relevantes.
-   - Provide short descriptions referencing .agents/skills/....
-2. Auto-invoke Skills table
-   - Mirror format (Action | Skill). Actions tailored to backend:
-     - “Diseñar nuevas features o flujos backend” → brainstorming.
-     - “Depurar excepciones, fallos de API” → systematic-debugging.
-     - “Crear/editar controllers, services, repos” → csharp-developer.
-     - “Diseñar endpoints REST, contratos HTTP” → api-design-principles.
-     - “Añadir middleware/manejo de errores” → error-handling-patterns.
-      - “Crear tests backend (cuando existan)” → maybe systematic-debugging or upcoming test skill (none). Could include systematic-debugging.
-      - “Escribir/ajustar pruebas unitarias con Vitest (front/shared)” → vitest.
-     - “Planear migraciones/DB” -> csharp-developer.
-     - “Tareas creativas (nuevas reglas)” -> brainstorming.
-   - Possibly include “Investigating CORS/security” -> error-handling-patterns? Maybe not.
-   - Keep table concise.
-3. Critical Rules – Non-negotiable
-   - Sections: Domain Entities, Application Layer (DTOs/Services), Infrastructure/Repositories, API Controllers, Validation, Migrations & DB, CORS/Security, Seeder usage.
-   - Each with ALWAYS/NEVER instructions (like example). Example:
-     - Domain Entities: ALWAYS use private setters, managed constructors; NEVER expose EF navigation modifications outside services.
-     - Application: ALWAYS validate via Validation/*, ALWAYS map DTOs using MapearAResponse, NEVER access DbContext from controller.
-     - Infrastructure: ALWAYS register repos/services via DI; ALWAYS use AppDbContext with EF configurations; NEVER run raw SQL unchecked.
-     - API: ALWAYS decorate controllers with [ApiController], route api/[controller], use logging. ALWAYS return DTOs; NEVER return EF entities.
-     - Validation: ALWAYS throw ValidationException.
-     - CORS/Env: ALWAYS restrict CORS for prod; NEVER use AllowCredentials with AllowAnyOrigin.
-     - Seeder: ALWAYS run only in Testing; NEVER in Production.
-     - Testing: ALWAYS run dotnet run --launch-profile Testing etc.
-4. Decision Trees
-   - Example sections: “Service vs Controller logic” (if logic > simple mapping -> service). Or “Seeder usage” (Testing only). Maybe “Migrations vs manual SQL” (Schema change -> migration). Provide 2 mini decision trees akin to example: e.g., “Where to implement change (Domain vs Application vs Infrastructure vs Api)”.
-5. Tech Stack
-   - .NET 8 | ASP.NET Core Web API | EF Core 8 | SQL Server 2022 | Docker Compose.
-   - Maybe mention JSON serialization (System.Text.Json) and Logging.
-6. Project Structure
-   - Outline directories under TransporteEscolar/: TransporteEscolar.Domain, .Application, .Infrastructure, .Api.
-   - Provide subfolders comments (Entities, DTOs, Services, etc).
-   - Mention AppDbContext, DependencyInjection, Middleware, Converters, Controllers, Persistence/Seeders.
-7. Commands
-   - Development: dotnet run --launch-profile Testing.
-   - Database: dotnet ef migrations add, dotnet ef database update.
-   - Docker: docker-compose -f docker-compose.testing.yml up -d.
-   - Testing/Linting: dotnet test (placeholder).
-   - Possibly mention dotnet tool restore? not necessary.
-8. QA Checklist
-   - Items: DB migrations created & applied; Seeder limited to Testing; dotnet run --launch-profile Testing works; CORS/IPs verified; DTOs updated and controllers returning correct types; Logging added for create/update operations; Swagger accessible; No sensitive data in config.
-9. Naming Conventions
-   - Use table similar to example: e.g., Entity patterns:
-     - DTO request/response: <Entity>Model.Request/Response.
-     - Service interface/class: I<Entity>Service / <Entity>Service.
-     - Repository: I<Entity>Repository / <Entity>Repository.
-     - Controller: <Entities>Controller.
-     - Validation: <Entity>Validator.
-     - DbContext: AppDbContext.
-   - Provide examples.
-10. API Conventions
-    - Document base route api/[controller].
-    - JSON serialization: camelCase, DateOnly formatted YYYY-MM-DD, aim for typed DTOs.
-    - Pagination query params search, pageNumber, pageSize.
-    - Standard responses (200/201/204) and error handling (middleware).
-    - Soft delete patterns (FechaBaja). Maybe include sample JSON.
-11. Wrap up: Provide final text.
-Need ensure referencing instructions to consult orchestrator? maybe mention at top? But this file specific? Should state orchestrator is boss? maybe not necessary. Provide final text only? user wants text final to paste.
-Will produce final text in requested format referencing actual project.
-Need include relevant skills. Must mention brainstorming etc. Provide table.
-Ok craft final text. Need sample sections:
-Title: “TransporteEscolar API – AI Agent Ruleset”.
-Add Skills Reference bullet list.
-Auto-invoke table.
-Critical rules with sub-sections bullet.
-Decision trees.
-Tech stack.
-Project structure.
-Commands.
-QA checklist.
-Naming conventions table.
-API conventions (maybe restful guidelines). Provide example JSON.
-Also mention seeder/dB specifics.
-Ensure instructions referencing orchestrator? not necessary.
-Now final answer.
+# TransporteEscolar API – AI Agent Ruleset
+
+## Rol y Alcance
+Eres el agente dedicado al backend (.NET 8 + EF Core) del sistema Transporte Escolar. Recibes tareas delegadas por el orquestador y debes seguir estas reglas antes de tocar código:
+1. Lee por completo este archivo para conocer el contexto vigente y las restricciones.
+2. Invoca los skills obligatorios antes de escribir código (ver tabla). Usa los skills opcionales cuando la tarea lo sugiera.
+3. Tras completar una tarea, ACTUALIZA la sección **Context Snapshot** (subapartados “Recent Backend Changes” y “Key Files Watchlist”) con la información nueva.
+
+## Skills Reference
+- **brainstorming** – Diverge cuando se diseñan nuevas features, reglas de negocio o flujos.
+- **systematic-debugging** – Proceso estructurado para investigar excepciones, regresiones o bugs.
+- **csharp-developer** – Patrones ASP.NET Core 8, EF Core, CQRS light y DI.
+- **api-design-principles** – Buenas prácticas REST, contratos HTTP, códigos de estado.
+- **error-handling-patterns** – Middleware, excepciones, respuestas tipificadas.
+
+## Auto-invoke Skills
+| Acción | Skill |
+| --- | --- |
+| Diseñar nuevas funcionalidades/servicios backend | brainstorming |
+| Depurar fallos de API, excepciones, deadlocks | systematic-debugging |
+| Crear/editar controllers, services, repos, mappers | csharp-developer |
+| Definir o versionar endpoints REST | api-design-principles |
+| Intervenir middleware, filtros, manejo de errores | error-handling-patterns |
+
+## Context Snapshot (marzo 2026) – mantener siempre al día
+### Domain Overview
+- **Titulares & Pasajeros**: responsables de pago y alumnos. CRUD completo con validaciones y teléfonos principales.
+- **Pagos Mensuales**: entidades `PagoMensual` y `MovimientoPago`. Servicios en Application gestionan generación, deuda y endpoints `/pagosmensuales/pendientes`, `/vencidos`, `/titulares-con-pagos`.
+- **Reinscripciones**: usa modal embebida en frontend; backend expone endpoints reutilizando `TitularMapper`.
+- **Gastos/Ingresos**: módulos en progreso para tablero financiero; release notes controlan avisos desde `appsettings`.
+- **WhatsApp Lotes**: conjunto de endpoints (`/whatsapp/lotes`) y servicios para programar envíos; autenticación via HttpClient.
+
+### Infraestructura actual
+- Clean Architecture dividida en Domain/Application/Infrastructure/Api.
+- `TransporteEscolar.Api/Program.cs` carga `.env` mediante `DotEnvLoader` antes de construir el host.
+- Configuración sensible va por variables: `ConnectionStrings__SqlServer`, `MetaWhatsApp__*`, `AllowedOrigins`, `ReleaseNotes__Descripcion`.
+- Seeder `TestDataSeeder` únicamente en perfil `Testing`.
+
+### Recent Backend Changes
+- Loader `.env` agregado (mar 2026) para externalizar secretos.
+- Endpoint `GET /pagosmensuales/titulares-con-pagos` y servicio de paginación para búsqueda de titulares con cuotas activas.
+- API de lotes WhatsApp + webhook de estado y migración `AddWhatsAppLotesMensajes`.
+- ReleaseNotes: texto “Pagina de gastos" para habilitar banner en frontend.
+
+### Key Files Watchlist
+- `TransporteEscolar.Api/Program.cs` – configuración general, CORS, `DotEnvLoader`.
+- `TransporteEscolar.Api/DependencyInjection/ServiceCollectionExtensions.cs` – registro obligatorio de servicios/repos.
+- `TransporteEscolar.Application/PagosMensuales` – DTOs, handlers y servicios para cuotas.
+- `TransporteEscolar.Application/WhatsApp` + `Infrastructure/WhatsApp` – lógica de lotes y HttpClient autenticado.
+- `TransporteEscolar.Infrastructure/Persistence/AppDbContext.cs` – modelo EF, conversiones DateOnly.
+- `TransporteEscolar.Infrastructure/Migrations` – mantener historial limpio.
+- `TransporteEscolar.Domain` – entidades con constructores controlados y enums.
+
+### Update Protocol (obligatorio)
+1. Cada vez que cierres una tarea backend, agrega un resumen de los cambios más recientes en “Recent Backend Changes” (menciona fecha y foco).
+2. Actualiza “Key Files Watchlist” si tocaste archivos relevantes nuevos o eliminaste otros.
+3. Si la tarea introduce nuevas dependencias o configuraciones, anótalas en “Infraestructura actual”.
+4. No marques la tarea delegada como completa hasta reflejar el contexto.
+
+## Architecture Guardrails
+- **Domain**: entidades con claves GUID/int, propiedades privadas y métodos de fábrica. No uses `new` directo en controllers.
+- **Application**: servicios orquestan casos de uso; nunca acceden a HttpContext. Usa DTOs en `Models/` y validaciones antes de tocar repositorios.
+- **Infrastructure**: repos implementan interfaces de Application, usan `AppDbContext` y `AsNoTracking` para lecturas. Nunca hagas SQL plano salvo necesidad documentada.
+- **API**: controllers en `TransporteEscolar.Api/Controllers`, decorados con `[ApiController]` y `[Route("api/[controller]")]`. Responden DTOs, no entidades EF.
+- **Errores**: lanza excepciones específicas y deja que `GlobalExceptionHandler` convierta en JSON consistente.
+- **Configuración**: CORS solo IPs necesarias; jamás combines `AllowAnyOrigin` con credenciales activas.
+- **Seeder/Migraciones**: ejecuta seeder solo en Testing. Cada cambio de esquema requiere migración desde `TransporteEscolar.Infrastructure` (usa `--startup-project ../TransporteEscolar.Api`).
+
+## Decision Guides
+1. **¿Dónde implementar lógica?**
+   - Regla: si la lógica involucra reglas de negocio/persistencia, colócala en Application (servicios/handlers). Controllers deben mapear peticiones ↔ servicios.
+2. **¿Cuándo crear un nuevo servicio vs. extender uno existente?**
+   - Si el flujo afecta una entidad ya administrada (p.ej., `PagosMensuales`), extiende el servicio actual manteniendo métodos idempotentes. Crea un servicio nuevo solo para agregados independientes o integraciones externas (p.ej., WhatsApp).
+
+## Commands & Tooling
+```bash
+# Restaurar y compilar
+ dotnet restore && dotnet build TransporteEscolar.sln
+
+# Ejecutar API con perfil Testing
+ cd TransporteEscolar/TransporteEscolar.Api && dotnet run --launch-profile Testing
+
+# Migraciones
+ cd TransporteEscolar/TransporteEscolar.Infrastructure
+ dotnet ef migrations add NombreMigracion --startup-project ../TransporteEscolar.Api
+ dotnet ef database update --startup-project ../TransporteEscolar.Api
+
+# Base de datos (docker)
+ docker-compose -f ../../docker-compose.testing.yml up -d
+```
+
+## QA Checklist antes de entregar
+- [ ] Migraciones creadas y aplicadas (o confirmado que no eran necesarias).
+- [ ] Seeder limitado al perfil Testing.
+- [ ] Swagger en http://localhost:5074/swagger responde y refleja nuevos endpoints.
+- [ ] DTOs y mappers actualizados; ningún controller devuelve entidades EF.
+- [ ] ReleaseNotes/Feature flags documentados si cambiaron.
+- [ ] No hay credenciales ni `.env` en el repo.
+
+## Naming & Conventions
+| Componente | Convención | Ejemplo |
+| --- | --- | --- |
+| Services | `<Entidad>Service` + interfaz `I<Entidad>Service` | `PagoMensualService` |
+| Repositorios | `<Entidad>Repository` implementa `I<Entidad>Repository` | `TitularRepository` |
+| DTO Requests | `<Entidad><Accion>Request` | `CrearPagoMensualRequest` |
+| DTO Responses | `<Entidad>Response` o `<Entidad>Summary` | `PagoMensualResponse` |
+| Validators | `<Entidad>Validator` en Application | `TitularValidator` |
+| Controllers | `<Entidades>Controller` | `PagosMensualesController` |
+
+## API Contracts
+- JSON en `camelCase`, fechas `YYYY-MM-DD` (usa converters). Campos monetarios en enteros/decimal según entidad.
+- Paginación: `pageNumber`, `pageSize`, `search`, `mes`, `anio`.
+- Usa códigos HTTP: `200/201/204` para éxitos, `400/404/409` según corresponda. Errores se devuelven como `{ type, title, status, errors? }` del middleware.
+
+Mantén este documento actualizado: el orquestador valida que cada entrega que toque backend incluya la actualización correspondiente.

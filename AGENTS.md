@@ -295,7 +295,8 @@ Para más detalle, también revisa el archivo `recarga.md`.
 # Repository Guidelines
 - Este archivo gobierna todo el monorepo Transporte. Cada componente puede tener su propio AGENTS.md; si existe, prevalece sobre este documento.  
   - Para tareas del backend ve a TransporteEscolar/AGENTS.md.  
-  - Para tareas del frontend ve a TransporteFront/AGENTS.md.
+  - Para tareas del frontend ve a TransporteFront/AGENTS.md.  
+  - Para tareas del bot WhatsApp ve a TransporteWhatsAppBot/AGENTS.md.
 - Mantén credenciales y datos sensibles fuera del repositorio. Revisa .gitignore (.env*, .sql, DESARROLLO-RED-LOCAL.md, recarga.md) y respétalo siempre.
 - Trabaja con los perfiles y puertos establecidos: backend 5074, frontend 5173, SQL Server en Docker 1433/1434. Usa el perfil Testing y el seeder solo en entornos de prueba.
 - Sigue un flujo Git limpio y describe los cambios con claridad (convencional commits recomendado). No modifiques o reviertas trabajo ajeno.
@@ -307,6 +308,7 @@ How to Use This Guide
 1. Determina si el trabajo es backend o frontend. Luego:
    - Backend → usa TransporteEscolar/AGENTS.md.
    - Frontend → usa TransporteFront/AGENTS.md.
+   - Bot WhatsApp → usa TransporteWhatsAppBot/AGENTS.md.
    - Este orquestador solo resume las normas globales; cada componente tiene instrucciones más específicas.
 2. Invoca los skills apropiados antes de ejecutar cualquier tarea (ver tablas siguientes).
 3. Mantén sincronizados los contratos API↔front: cada cambio en controllers exige actualizar services/*.api.ts y *.queries.ts.
@@ -356,7 +358,15 @@ Project Overview
 | --- | --- | --- |
 | TransporteEscolar (Backend) | ./TransporteEscolar | .NET 8, ASP.NET Core Web API, EF Core, SQL Server |
 | TransporteFront (Frontend) | ./TransporteFront | React 19 + Vite, TypeScript, Tailwind 4, TanStack Query |
+| TransporteWhatsAppBot (Bot WhatsApp) | ./TransporteWhatsAppBot | Node.js 22, whatsapp-web.js, Axios |
 | Infraestructura | Raíz | Docker Compose (SQL Server), herramientas de red local |
+## Context Update Enforcement
+1. Define `enforce_context_refresh(component)` con este flujo:
+   a. Cuando una tarea modifique backend o frontend, delega inmediatamente un subtask al agente correspondiente para que actualice su `AGENTS.md`.
+   b. Ese subtask debe solicitar explícitamente que se actualicen al menos los apartados "Context Snapshot" y "Recent Changes" del archivo del componente involucrado.
+   c. No cierres la tarea general hasta que el agente confirme que ya actualizó su `AGENTS.md`.
+2. Nota: Los trabajos del bot WhatsApp deben seguir exactamente esta misma regla contra `TransporteWhatsAppBot/AGENTS.md`.
+
 Backend – TransporteEscolar  
 (Usa TransporteEscolar/AGENTS.md para instrucciones detalladas)
 - Capas: Domain, Application, Infrastructure, Api. Servicios y repos se registran en Api/DependencyInjection/ServiceCollectionExtensions.cs.
