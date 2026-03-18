@@ -17,6 +17,35 @@ function getPeriodoActual() {
   return { mes, anio, label: `${String(mes).padStart(2, '0')}/${anio}` };
 }
 
+function formatPeriodoNatural(label) {
+  if (typeof label !== 'string') return label;
+  const [mesRaw, anioRaw] = label.split('/').map((part) => part?.trim());
+  const mesNumero = Number(mesRaw);
+  const anio = Number(anioRaw);
+  if (!Number.isInteger(mesNumero) || mesNumero < 1 || mesNumero > 12 || !Number.isInteger(anio)) {
+    return label;
+  }
+
+  const meses = [
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ];
+
+  const nombreMes = meses[mesNumero - 1];
+  if (!nombreMes) return label;
+  return `${nombreMes} ${anio}`;
+}
+
 function formatMonto(monto) {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
@@ -126,9 +155,10 @@ async function fetchDestinatariosPendientes() {
 }
 
 function buildMensajePendientes(destinatario) {
+  const periodoNatural = formatPeriodoNatural(destinatario.periodo);
   return (
     `Hola! 🚌\n\n` +
-    `Te recordamos que tenés la cuota de *${destinatario.periodo}* pendiente por *${formatMonto(destinatario.saldoPendiente)}*.\n\n` +
+    `Te recordamos que tenés la cuota del mes *${periodoNatural}* pendiente por *${formatMonto(destinatario.saldoPendiente)}*.\n\n` +
     `Por favor realizá el pago lo antes posible. ¡Muchas gracias! 😊`
   );
 }
@@ -171,10 +201,11 @@ async function fetchDestinatariosRecordatorio() {
 }
 
 function buildMensajeRecordatorio(destinatario) {
+  const periodoNatural = formatPeriodoNatural(destinatario.periodo);
   return (
-    `Hola! 🚌\n\n` +
-    `Te recordamos que la cuota pactada para *${destinatario.periodo}* es de *${formatMonto(destinatario.monto)}*.\n` +
-    `Si ya realizaste el pago, ¡muchas gracias! Caso contrario podés abonarla en los medios habituales.`
+    `¡Hola! 🚌\n\n` +
+    `Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *${periodoNatural}* es de *${formatMonto(destinatario.monto)}*.\n\n` +
+    `Podés abonar por transferencia o en efectivo. ¡Gracias por confiar en nosotros! 😊`
   );
 }
 
