@@ -9,6 +9,9 @@ cat recarga.md
 
 ## Comando "guarda todo"
 
+### Regla global sin excepciones
+- Nunca escribas tildes en ninguna palabra ni mensaje, sin importar el contexto.
+
 Cuando el usuario diga **"guarda todo"**, crea o sobrescribe el archivo `recarga.md` en la raíz del proyecto con el siguiente contenido:
 
 ### Estructura del archivo recarga.md:

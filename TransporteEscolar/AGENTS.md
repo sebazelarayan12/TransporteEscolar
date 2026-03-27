@@ -1,3 +1,6 @@
+0. Regla global inamovible
+   - Nunca escribas tildes en ninguna palabra ni mensaje, sin importar el contexto.
+
 1. Header & Skills Reference
    - Title: “TransporteEscolar API – AI Agent Ruleset”.
    - “Skills Reference” list will include backend-relevant skills: csharp-developer, systematic-debugging, api-design-principles, error-handling-patterns, brainstorming, plus testing/infra skills such as playwright? No, backend-specific include csharp-developer, systematic-debugging, api-design-principles, error-handling-patterns, maybe general brainstorming for creative changes. Possibly mention typescript? not needed for backend. Incluye también vitest para guiar pruebas unitarias compartidas/front (Vitest) cuando sean relevantes.

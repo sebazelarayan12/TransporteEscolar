@@ -231,13 +231,13 @@ export const PagosListPage = () => {
                 <ul className="list-disc space-y-1 pl-4 text-xs text-yellow-900 sm:text-sm">
                   {pendientesPreview.map((alerta) => (
                     <li key={alerta.reinscripcionId}>
-                      {alerta.pasajeroNombre} · Titular: {alerta.titularNombre}
+                      {alerta.pasajeroNombre} - Titular: {alerta.titularNombre}
                     </li>
                   ))}
                 </ul>
                 {pendientesRestantes > 0 && (
                   <p className="text-xs font-medium text-yellow-900">
-                    y {pendientesRestantes} pasajero{pendientesRestantes !== 1 ? 's' : ''} más pendientes de confirmar.
+                    y {pendientesRestantes} pasajero{pendientesRestantes !== 1 ? 's' : ''} mas pendientes de confirmar.
                   </p>
                 )}
               </div>
@@ -246,7 +246,7 @@ export const PagosListPage = () => {
         )}
 
         {/* Month/Year Filter */}
-        <MonthYearFilter 
+        <MonthYearFilter
           selectedMes={selectedMes}
           selectedAnio={selectedAnio}
           onFilterChange={handleFilterChange}
@@ -257,7 +257,7 @@ export const PagosListPage = () => {
 
         {/* Search Input */}
         <div className="relative">
-          <SearchInput 
+          <SearchInput
             value={search}
             onChange={handleSearchChange}
             placeholder="Buscar por apellido del titular..."
