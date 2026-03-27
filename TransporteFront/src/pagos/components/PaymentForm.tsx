@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button, PriceInput } from '../../shared/ui';
 import type { RegistrarPagoRequest } from '../types/pago.types';
 import { MEDIOS_PAGO } from '../constants/medios-pago.constants';
+import type { MedioPago } from '../constants/medios-pago.constants';
 
 interface PaymentFormProps {
   onSubmit: (data: RegistrarPagoRequest) => void;
@@ -9,14 +10,23 @@ interface PaymentFormProps {
   defaultAmount?: number;
 }
 
+type PaymentFormState = {
+  monto: string;
+  fechaPago: string;
+  medioPago: MedioPago;
+  observaciones: string;
+};
+
+const createInitialState = (): PaymentFormState => ({
+  monto: '',
+  fechaPago: new Date().toISOString().split('T')[0],
+  medioPago: MEDIOS_PAGO.EFECTIVO,
+  observaciones: '',
+});
+
 export const PaymentForm = ({ onSubmit, isSubmitting, defaultAmount = 0 }: PaymentFormProps) => {
-  const medioPagoOptions = [MEDIOS_PAGO.EFECTIVO, MEDIOS_PAGO.TRANSFERENCIA, MEDIOS_PAGO.TARJETA];
-  const [formData, setFormData] = useState({
-    monto: '',
-    fechaPago: new Date().toISOString().split('T')[0],
-    medioPago: MEDIOS_PAGO.EFECTIVO,
-    observaciones: '',
-  });
+  const medioPagoOptions: MedioPago[] = [MEDIOS_PAGO.EFECTIVO, MEDIOS_PAGO.TRANSFERENCIA, MEDIOS_PAGO.TARJETA];
+  const [formData, setFormData] = useState<PaymentFormState>(() => createInitialState());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,12 +37,7 @@ export const PaymentForm = ({ onSubmit, isSubmitting, defaultAmount = 0 }: Payme
       observaciones: formData.observaciones || undefined,
     });
     // Reset form
-    setFormData({
-      monto: '',
-      fechaPago: new Date().toISOString().split('T')[0],
-      medioPago: MEDIOS_PAGO.EFECTIVO,
-      observaciones: '',
-    });
+    setFormData(createInitialState());
   };
 
   return (
@@ -72,7 +77,7 @@ export const PaymentForm = ({ onSubmit, isSubmitting, defaultAmount = 0 }: Payme
             <select
               id="medioPago"
               value={formData.medioPago}
-              onChange={(e) => setFormData({ ...formData, medioPago: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, medioPago: e.target.value as MedioPago })}
               className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-[#0f181a] focus:border-[#1d8ca5] focus:outline-none"
             >
               {medioPagoOptions.map((medio) => (
