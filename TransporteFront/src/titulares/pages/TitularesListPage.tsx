@@ -163,9 +163,6 @@ export const TitularesListPage = () => {
                   <p className="text-sm font-semibold">
                     {titularesSinTelefonoList.length} titular{titularesSinTelefonoList.length !== 1 ? 'es' : ''} sin teléfonos cargados
                   </p>
-                  <p className="text-xs text-yellow-800">
-                    Necesitan al menos un contacto válido antes de coordinar avisos o pagos.
-                  </p>
                 </div>
                 <ul className="list-disc space-y-1 pl-4 text-xs text-yellow-900 sm:text-sm">
                   {titularesSinTelefonoPreview.map((titular) => (

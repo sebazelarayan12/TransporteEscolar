@@ -23,11 +23,14 @@ public class PagoMensualRepository : IPagoMensualRepository
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
+    /// <summary>
+    /// Devuelve todos los pagos mensuales pertenecientes a titulares activos.
+    /// </summary>
     public async Task<List<PagoMensual>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.PagosMensuales
-            .Include(p => p.Titular)
-            .Include(p => p.Movimientos)
+        return await SoloTitularesActivos(_context.PagosMensuales
+                .Include(p => p.Titular)
+                .Include(p => p.Movimientos))
             .OrderByDescending(p => p.Anio)
             .ThenByDescending(p => p.Mes)
             .ToListAsync(cancellationToken);
@@ -44,22 +47,28 @@ public class PagoMensualRepository : IPagoMensualRepository
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Obtiene pagos vencidos únicamente de titulares activos.
+    /// </summary>
     public async Task<List<PagoMensual>> GetVencidosAsync(CancellationToken cancellationToken = default)
     {
         var hoy = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
-        return await _context.PagosMensuales
-            .Include(p => p.Titular)
-            .Include(p => p.Movimientos)
+        return await SoloTitularesActivos(_context.PagosMensuales
+                .Include(p => p.Titular)
+                .Include(p => p.Movimientos))
             .Where(p => p.FechaVencimiento < hoy)
             .OrderBy(p => p.FechaVencimiento)
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Lista pagos pendientes filtrando titulares dados de baja.
+    /// </summary>
     public async Task<List<PagoMensual>> GetPendientesAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.PagosMensuales
-            .Include(p => p.Titular)
-            .Include(p => p.Movimientos)
+        return await SoloTitularesActivos(_context.PagosMensuales
+                .Include(p => p.Titular)
+                .Include(p => p.Movimientos))
             .Where(p => (p.Movimientos.Sum(m => (decimal?)m.Monto) ?? 0m) < p.MontoGenerado)
             .OrderBy(p => p.Anio)
             .ThenBy(p => p.Mes)
@@ -72,11 +81,14 @@ public class PagoMensualRepository : IPagoMensualRepository
             .FirstOrDefaultAsync(p => p.TitularId == titularId && p.Mes == mes && p.Anio == anio, cancellationToken);
     }
 
+    /// <summary>
+    /// Devuelve pagos por período excluyendo titulares dados de baja.
+    /// </summary>
     public async Task<List<PagoMensual>> GetByMesAnioAsync(int mes, int anio, CancellationToken cancellationToken = default)
     {
-        return await _context.PagosMensuales
-            .Include(p => p.Titular)
-            .Include(p => p.Movimientos)
+        return await SoloTitularesActivos(_context.PagosMensuales
+                .Include(p => p.Titular)
+                .Include(p => p.Movimientos))
             .Where(p => p.Mes == mes && p.Anio == anio)
             .OrderBy(p => p.Titular.Apellido)
             .ToListAsync(cancellationToken);
@@ -98,7 +110,8 @@ public class PagoMensualRepository : IPagoMensualRepository
             .AsNoTracking()
             .Include(m => m.PagoMensual)
                 .ThenInclude(p => p.Titular)
-            .Where(m => m.FechaPago >= fechaDesde && m.FechaPago < fechaHasta);
+            .Where(m => m.FechaPago >= fechaDesde && m.FechaPago < fechaHasta)
+            .Where(m => m.PagoMensual != null && m.PagoMensual.Titular != null && m.PagoMensual.Titular.FechaBaja == null);
 
         if (titularId.HasValue)
         {
@@ -133,6 +146,9 @@ public class PagoMensualRepository : IPagoMensualRepository
             .FirstOrDefaultAsync(m => m.Id == movimientoId, cancellationToken);
     }
 
+    /// <summary>
+    /// Pagina titulares con cuotas generadas asegurando que sigan activos.
+    /// </summary>
     public async Task<(List<Titular> Titulares, int TotalCount)> GetTitularesConPagosAsync(
         string? search,
         int pageNumber,
@@ -174,6 +190,11 @@ public class PagoMensualRepository : IPagoMensualRepository
         await _context.PagosMensuales
             .Where(p => p.TitularId == titularId)
             .ExecuteDeleteAsync(cancellationToken);
+    }
+
+    private static IQueryable<PagoMensual> SoloTitularesActivos(IQueryable<PagoMensual> query)
+    {
+        return query.Where(p => p.Titular != null && p.Titular.FechaBaja == null);
     }
 
     public async Task<PagoMensual> AddAsync(PagoMensual pagoMensual, CancellationToken cancellationToken = default)

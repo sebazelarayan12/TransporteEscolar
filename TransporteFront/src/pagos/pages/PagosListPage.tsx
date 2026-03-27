@@ -227,9 +227,6 @@ export const PagosListPage = () => {
               <p className="text-sm font-semibold">
                 Hay {pendientesAlert.length + noContinuaAlert.length} pasajero{pendientesAlert.length + noContinuaAlert.length !== 1 ? 's' : ''} pendientes o marcados como "No continúa" en {selectedAnio}
               </p>
-              <p className="text-xs text-yellow-800">
-                Mientras sigan en estado Pendiente o No Continúa, los pagos mensuales de su titular no se generarán automáticamente.
-              </p>
             </div>
             {pendientesAlert.length > 0 && (
               <div>

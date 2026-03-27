@@ -137,9 +137,6 @@ export const PasajerosListPage = () => {
                   <p className="text-sm font-semibold">
                     {pasajerosSinHorarioList.length} pasajero{pasajerosSinHorarioList.length !== 1 ? 's' : ''} sin horario asignado
                   </p>
-                  <p className="text-xs text-yellow-800">
-                    No podremos planificar recorridos hasta asignar turno y horario en la ficha del pasajero.
-                  </p>
                 </div>
                 <ul className="list-disc space-y-1 pl-4 text-xs text-yellow-900 sm:text-sm">
                   {pasajerosSinHorarioPreview.map((pasajero) => (

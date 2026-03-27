@@ -186,26 +186,82 @@ public class ReinscripcionService : IReinscripcionService
         await VerificarYGenerarPagosMensualesAsync(reinscripcion.PasajeroId, reinscripcion.Anio);
     }
 
+    /// <summary>
+    /// Obtiene las alertas de pago del año indicado considerando únicamente titulares activos y
+    /// agregando como pendientes tanto las reinscripciones en estado "Pendiente" como los pasajeros
+    /// activos que todavía no generaron su reinscripción.
+    /// </summary>
     public async Task<ReinscripcionModel.AlertasPagoResponse> ObtenerAlertasPagoAsync(int anio)
     {
         if (anio <= 0)
             throw new ArgumentOutOfRangeException(nameof(anio), "El año debe ser mayor a 0");
 
-        var reinscripciones = await _repository.GetByAnioConDetallesAsync(anio);
+        var reinscripcionesTask = _repository.GetByAnioConDetallesAsync(anio);
+        var pasajerosSinReinscripcionTask = _pasajeroRepository.GetActivosDisponiblesParaReinscripcionAsync(anio);
 
-        var pendientes = reinscripciones
-            .Where(r => string.Equals(r.Estado, "Pendiente", StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(r => r.FechaCreacion)
-            .Select(MapearAlertItem)
+        await Task.WhenAll(reinscripcionesTask, pasajerosSinReinscripcionTask);
+
+        var reinscripciones = reinscripcionesTask.Result;
+        var pasajerosSinReinscripcion = pasajerosSinReinscripcionTask.Result;
+
+        var pendientesPorTitular = new Dictionary<int, List<ReinscripcionModel.AlertItem>>();
+        var noContinuaPorTitular = new Dictionary<int, List<ReinscripcionModel.AlertItem>>();
+
+        var gruposPorTitular = reinscripciones
+            .Where(r => r.Pasajero?.Titular != null)
+            .GroupBy(r => r.Pasajero!.Titular!.Id);
+
+        foreach (var grupo in gruposPorTitular)
+        {
+            var titularId = grupo.Key;
+
+            var pendientesDelTitular = grupo
+                .Where(r => string.Equals(r.Estado, "Pendiente", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(r => r.FechaCreacion)
+                .Select(MapearAlertItem)
+                .ToList();
+
+            if (pendientesDelTitular.Count > 0)
+            {
+                pendientesPorTitular[titularId] = pendientesDelTitular;
+            }
+
+            var noContinuaDelTitular = grupo
+                .Where(r => string.Equals(r.Estado, "NoContinua", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(r => r.FechaCreacion)
+                .Select(MapearAlertItem)
+                .ToList();
+
+            if (noContinuaDelTitular.Count > 0)
+            {
+                noContinuaPorTitular[titularId] = noContinuaDelTitular;
+            }
+        }
+
+        foreach (var pasajero in pasajerosSinReinscripcion.Where(p => p.Titular != null))
+        {
+            var titularId = pasajero.Titular.Id;
+            if (!pendientesPorTitular.TryGetValue(titularId, out var pendientesDelTitular))
+            {
+                pendientesDelTitular = new List<ReinscripcionModel.AlertItem>();
+                pendientesPorTitular[titularId] = pendientesDelTitular;
+            }
+
+            pendientesDelTitular.Add(MapearAlertItemDesdePasajero(pasajero));
+        }
+
+        var pendientesOrdenados = pendientesPorTitular.Values
+            .SelectMany(lista => lista)
+            .OrderByDescending(item => item.FechaCreacion)
             .ToList();
 
-        var noContinua = reinscripciones
-            .Where(r => string.Equals(r.Estado, "NoContinua", StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(r => r.FechaCreacion)
-            .Select(MapearAlertItem)
+        var noContinuaOrdenados = noContinuaPorTitular
+            .Where(par => pendientesPorTitular.ContainsKey(par.Key))
+            .SelectMany(par => par.Value)
+            .OrderByDescending(item => item.FechaCreacion)
             .ToList();
 
-        return new ReinscripcionModel.AlertasPagoResponse(anio, pendientes, noContinua);
+        return new ReinscripcionModel.AlertasPagoResponse(anio, pendientesOrdenados, noContinuaOrdenados);
     }
 
     private static ReinscripcionModel.AlertItem MapearAlertItem(ReinscripcionPasajero reinscripcion)
@@ -223,7 +279,29 @@ public class ReinscripcionService : IReinscripcionService
             titular?.Id ?? 0,
             titularNombre,
             reinscripcion.Estado,
-            reinscripcion.FechaCreacion);
+            reinscripcion.FechaCreacion,
+            true);
+    }
+
+    private static ReinscripcionModel.AlertItem MapearAlertItemDesdePasajero(Pasajero pasajero)
+    {
+        var titularNombre = pasajero.Titular != null
+            ? $"{pasajero.Titular.NombreContacto} {pasajero.Titular.Apellido}".Trim()
+            : string.Empty;
+
+        var fechaReferencia = pasajero.FechaAlta == default
+            ? DateTime.UtcNow
+            : pasajero.FechaAlta;
+
+        return new ReinscripcionModel.AlertItem(
+            0,
+            pasajero.Id,
+            pasajero.Nombre,
+            pasajero.TitularId,
+            titularNombre,
+            "Pendiente",
+            fechaReferencia,
+            false);
     }
 
     private static string? NormalizarEstado(string? estado)

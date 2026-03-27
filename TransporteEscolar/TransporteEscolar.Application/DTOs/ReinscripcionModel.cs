@@ -47,6 +47,10 @@ public record ReinscripcionModel
         decimal RecargosAplicados,
         decimal TotalCalculado);
 
+    /// <summary>
+    /// Representa un pasajero pendiente dentro de las alertas, sin importar si ya existe la reinscripción.
+    /// Cuando <paramref name="TieneReinscripcion"/> es falso el registro usa Id 0 y describe que falta crear la reinscripción.
+    /// </summary>
     public record AlertItem(
         int ReinscripcionId,
         int PasajeroId,
@@ -54,8 +58,14 @@ public record ReinscripcionModel
         int TitularId,
         string TitularNombre,
         string Estado,
-        DateTime FechaCreacion);
+        DateTime FechaCreacion,
+        bool TieneReinscripcion);
 
+    /// <summary>
+    /// Resumen anual de alertas de pago. Solo incluye titulares activos con al menos un pasajero pendiente,
+    /// ya sea porque la reinscripción está en estado "Pendiente" o porque todavía no se generó.
+    /// Para esos titulares se listan también las reinscripciones marcadas como "NoContinua".
+    /// </summary>
     public record AlertasPagoResponse(
         int Anio,
         IReadOnlyList<AlertItem> Pendientes,
