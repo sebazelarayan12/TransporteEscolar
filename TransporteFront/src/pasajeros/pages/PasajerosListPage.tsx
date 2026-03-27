@@ -141,7 +141,7 @@ export const PasajerosListPage = () => {
                 <ul className="list-disc space-y-1 pl-4 text-xs text-yellow-900 sm:text-sm">
                   {pasajerosSinHorarioPreview.map((pasajero) => (
                     <li key={pasajero.id}>
-                      {pasajero.nombre} {pasajero.apellido} · {pasajero.turno} (Titular: {pasajero.nombreTitular})
+                      {pasajero.nombre} {pasajero.apellido}
                     </li>
                   ))}
                 </ul>
