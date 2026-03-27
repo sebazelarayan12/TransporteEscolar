@@ -48,6 +48,17 @@ public class PasajeroRepository : IPasajeroRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<Pasajero>> GetActivosSinHorariosAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Pasajeros
+            .Include(p => p.Titular)
+            .Where(p => p.FechaBaja == null)
+            .Where(p => !p.PasajeroHorarios.Any())
+            .OrderBy(p => p.Titular.Apellido)
+            .ThenBy(p => p.Nombre)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<List<Pasajero>> GetActivosDisponiblesParaReinscripcionAsync(int anio, CancellationToken cancellationToken = default)
     {
         return await _context.Pasajeros

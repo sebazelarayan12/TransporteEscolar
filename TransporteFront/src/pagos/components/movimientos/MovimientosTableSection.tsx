@@ -14,7 +14,7 @@ interface MovimientosTableSectionProps {
 const medioPagoClasses: Record<string, string> = {
   Efectivo: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   Transferencia: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-  Cheque: 'bg-amber-100 text-amber-700 border-amber-200',
+  Tarjeta: 'bg-indigo-100 text-indigo-700 border-indigo-200',
 };
 
 interface MovimientosMedioBadgeProps {

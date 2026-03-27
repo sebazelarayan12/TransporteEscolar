@@ -36,6 +36,14 @@ public class TitularRepository : ITitularRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<Titular>> GetSinTelefonosActivosAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Titulares
+            .Where(t => !t.Telefonos.Any(tel => tel.FechaBaja == null))
+            .OrderBy(t => t.Apellido)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Titular> AddAsync(Titular titular, CancellationToken cancellationToken = default)
     {
         _context.Titulares.Add(titular);

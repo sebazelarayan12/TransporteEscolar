@@ -11,4 +11,5 @@ public interface IReinscripcionService
     Task MarcarComoNoContinuaAsync(int id);
     Task MarcarComoPendienteAsync(int id);
     Task<ReinscripcionModel.PrecioPrevioResponse> ObtenerPrecioPrevioAsync(int id);
+    Task<ReinscripcionModel.AlertasPagoResponse> ObtenerAlertasPagoAsync(int anio);
 }

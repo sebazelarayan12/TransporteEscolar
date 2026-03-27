@@ -1,6 +1,6 @@
 import type { TitularOption } from './MovimientosTitularSearch';
 
-export const MEDIOS_PAGO = ['todos', 'Efectivo', 'Transferencia', 'Cheque'] as const;
+export const MEDIOS_PAGO = ['todos', 'Efectivo', 'Transferencia', 'Tarjeta'] as const;
 
 export type MedioPagoFiltro = (typeof MEDIOS_PAGO)[number];
 

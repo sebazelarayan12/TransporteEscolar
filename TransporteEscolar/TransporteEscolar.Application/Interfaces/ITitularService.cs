@@ -7,6 +7,7 @@ public interface ITitularService
     Task<TitularModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default);
     Task<List<TitularModel.Response>> ObtenerTodosAsync(CancellationToken cancellationToken = default);
     Task<List<TitularModel.Response>> ObtenerActivosAsync(CancellationToken cancellationToken = default);
+    Task<List<TitularModel.SinTelefonoResponse>> ObtenerSinTelefonosAsync(CancellationToken cancellationToken = default);
     Task<PaginationModel.ResponsePagination<TitularModel.Response>> ObtenerPaginadosAsync(PaginationModel.FilterRequest request, CancellationToken cancellationToken = default);
     Task<TitularModel.Response> CrearAsync(TitularModel.Request dto, CancellationToken cancellationToken = default);
     Task ActualizarAsync(int id, TitularModel.UpdateRequest dto, CancellationToken cancellationToken = default);

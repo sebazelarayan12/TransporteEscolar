@@ -59,6 +59,28 @@ public class ReinscripcionesController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene alertas para pagos según el estado de las reinscripciones
+    /// </summary>
+    [HttpGet("alertas-pagos")]
+    public async Task<ActionResult<ReinscripcionModel.AlertasPagoResponse>> GetAlertasPagos([FromQuery] int? anio = null)
+    {
+        var anioObjetivo = anio ?? DateTime.UtcNow.Year;
+
+        if (anioObjetivo <= 0)
+            return BadRequest("anio debe ser mayor a 0");
+
+        try
+        {
+            var resultado = await _service.ObtenerAlertasPagoAsync(anioObjetivo);
+            return Ok(resultado);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    /// <summary>
     /// Obtiene una reinscripción por ID
     /// </summary>
     [HttpGet("{id}")]

@@ -16,6 +16,7 @@ export const titularesKeys = {
   lists: () => [...titularesKeys.all, 'list'] as const,
   list: (filters?: string) => [...titularesKeys.lists(), { filters }] as const,
   activos: () => [...titularesKeys.all, 'activos'] as const,
+  sinTelefonos: () => [...titularesKeys.all, 'sin-telefonos'] as const,
   paginados: (filter: TitularFilterRequest) => [...titularesKeys.all, 'paginados', filter] as const,
   selector: () => [...titularesKeys.all, 'selector'] as const,
   details: () => [...titularesKeys.all, 'detail'] as const,
@@ -40,6 +41,17 @@ export const useTitularesActivos = () => {
   return useQuery({
     queryKey: titularesKeys.activos(),
     queryFn: () => titularesApi.getActivos(),
+  });
+};
+
+/**
+ * Hook para obtener titulares sin teléfonos cargados
+ */
+export const useTitularesSinTelefonos = () => {
+  return useQuery({
+    queryKey: titularesKeys.sinTelefonos(),
+    queryFn: () => titularesApi.getSinTelefonos(),
+    staleTime: 60000,
   });
 };
 

@@ -22,7 +22,7 @@ export interface PagoMovimiento {
   id: number;
   monto: number;
   fechaPago: string; // ISO DateTime from backend
-  medioPago: string; // "Efectivo" | "Transferencia" | "Cheque"
+  medioPago: string; // "Efectivo" | "Transferencia" | "Tarjeta"
   observaciones: string | null;
 }
 

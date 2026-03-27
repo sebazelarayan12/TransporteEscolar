@@ -43,6 +43,16 @@ public class PasajerosController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene pasajeros activos que no tienen horarios asignados
+    /// </summary>
+    [HttpGet("sin-horarios")]
+    public async Task<ActionResult<List<PasajeroModel.SinHorarioResponse>>> GetSinHorarios()
+    {
+        var dtos = await _sender.Send(new GetPasajerosSinHorariosQuery());
+        return Ok(dtos);
+    }
+
+    /// <summary>
     /// Obtiene pasajeros activos sin reinscripción confirmada para el año indicado
     /// </summary>
     [HttpGet("activos-disponibles")]

@@ -48,6 +48,17 @@ export const usePasajerosActivos = () => {
 };
 
 /**
+ * Hook para obtener pasajeros sin horarios asignados
+ */
+export const usePasajerosSinHorarios = () => {
+  return useQuery({
+    queryKey: pasajerosKeys.sinHorarios(),
+    queryFn: () => pasajerosApi.getSinHorarios(),
+    staleTime: 60000,
+  });
+};
+
+/**
  * Hook para obtener pasajeros disponibles para reinscripción por año
  */
 export const usePasajerosDisponibles = (anio: number) => {

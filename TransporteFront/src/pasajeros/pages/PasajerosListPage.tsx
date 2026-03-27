@@ -1,17 +1,69 @@
-import { useState } from 'react';
+import { useReducer, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { usePasajerosPaginados } from '../services/pasajeros.queries';
-import { LoadingScreen, ErrorState, SearchInput, MobileDrawer, Pagination } from '../../shared/ui';
+import { usePasajerosPaginados, usePasajerosSinHorarios } from '../services/pasajeros.queries';
+import { LoadingScreen, ErrorState, SearchInput, MobileDrawer, Pagination, Alert } from '../../shared/ui';
 import { PasajeroDetailPanel, PasajeroTableHeader, PasajeroTableRow, PasajeroCompactCard } from '../components';
 import type { PasajeroResponse } from '../types/pasajero.types';
 import { useDebounce } from '../../shared/hooks/useDebounce';
 
+type PanelState = {
+  selectedPasajero: PasajeroResponse | null;
+  showMobileDrawer: boolean;
+  isPanelExpanded: boolean;
+};
+
+type PanelAction =
+  | { type: 'select'; payload: PasajeroResponse }
+  | { type: 'closeDrawer' }
+  | { type: 'closePanel' }
+  | { type: 'expandPanel' }
+  | { type: 'clearSelection' };
+
+const PANEL_INITIAL_STATE: PanelState = {
+  selectedPasajero: null,
+  showMobileDrawer: false,
+  isPanelExpanded: false,
+};
+
+const panelReducer = (state: PanelState, action: PanelAction): PanelState => {
+  switch (action.type) {
+    case 'select':
+      return {
+        selectedPasajero: action.payload,
+        showMobileDrawer: true,
+        isPanelExpanded: true,
+      };
+    case 'closeDrawer':
+      return {
+        ...state,
+        showMobileDrawer: false,
+      };
+    case 'closePanel':
+      return {
+        selectedPasajero: null,
+        showMobileDrawer: false,
+        isPanelExpanded: false,
+      };
+    case 'expandPanel':
+      if (!state.selectedPasajero) {
+        return state;
+      }
+      return {
+        ...state,
+        isPanelExpanded: true,
+      };
+    case 'clearSelection':
+      return { ...PANEL_INITIAL_STATE };
+    default:
+      return state;
+  }
+};
+
 export const PasajerosListPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedPasajero, setSelectedPasajero] = useState<PasajeroResponse | null>(null);
-  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
-  const [isPanelExpanded, setIsPanelExpanded] = useState(false);
+  const [panelState, dispatchPanel] = useReducer(panelReducer, PANEL_INITIAL_STATE);
+  const { selectedPasajero, showMobileDrawer, isPanelExpanded } = panelState;
   
   const debouncedSearch = useDebounce(searchQuery, 300);
   const pageSize = 20;
@@ -21,23 +73,21 @@ export const PasajerosListPage = () => {
     pageNumber: currentPage,
     pageSize,
   });
+  const { data: pasajerosSinHorarios } = usePasajerosSinHorarios();
 
   const handleSelectPasajero = (pasajero: PasajeroResponse) => {
-    setSelectedPasajero(pasajero);
-    setShowMobileDrawer(true);
-    setIsPanelExpanded(true);
+    dispatchPanel({ type: 'select', payload: pasajero });
   };
 
-  const handleCloseDrawer = () => setShowMobileDrawer(false);
+  const handleCloseDrawer = () => dispatchPanel({ type: 'closeDrawer' });
 
   const handleCloseSidePanel = () => {
-    setIsPanelExpanded(false);
-    setSelectedPasajero(null);
+    dispatchPanel({ type: 'closePanel' });
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    setSelectedPasajero(null);
+    dispatchPanel({ type: 'clearSelection' });
   };
 
   const handleSearchChange = (value: string) => {
@@ -46,6 +96,9 @@ export const PasajerosListPage = () => {
   };
 
   const isInitialLoading = isLoading && !data;
+  const pasajerosSinHorarioList = pasajerosSinHorarios ?? [];
+  const pasajerosSinHorarioPreview = pasajerosSinHorarioList.slice(0, 5);
+  const pasajerosSinHorarioRestantes = pasajerosSinHorarioList.length - pasajerosSinHorarioPreview.length;
   
   if (isInitialLoading) return <LoadingScreen message="Cargando pasajeros..." />;
   if (error) return <ErrorState message="Error al cargar los pasajeros" />;
@@ -77,6 +130,31 @@ export const PasajerosListPage = () => {
                 </Link>
               </div>
             </div>
+
+            {pasajerosSinHorarioList.length > 0 && (
+              <Alert variant="warning" className="space-y-2 rounded-2xl border-yellow-200 bg-yellow-50 text-yellow-900">
+                <div>
+                  <p className="text-sm font-semibold">
+                    {pasajerosSinHorarioList.length} pasajero{pasajerosSinHorarioList.length !== 1 ? 's' : ''} sin horario asignado
+                  </p>
+                  <p className="text-xs text-yellow-800">
+                    No podremos planificar recorridos hasta asignar turno y horario en la ficha del pasajero.
+                  </p>
+                </div>
+                <ul className="list-disc space-y-1 pl-4 text-xs text-yellow-900 sm:text-sm">
+                  {pasajerosSinHorarioPreview.map((pasajero) => (
+                    <li key={pasajero.id}>
+                      {pasajero.nombre} {pasajero.apellido} · {pasajero.turno} (Titular: {pasajero.nombreTitular})
+                    </li>
+                  ))}
+                </ul>
+                {pasajerosSinHorarioRestantes > 0 && (
+                  <p className="text-xs font-medium text-yellow-900">
+                    y {pasajerosSinHorarioRestantes} pasajero{pasajerosSinHorarioRestantes !== 1 ? 's' : ''} más sin horarios configurados.
+                  </p>
+                )}
+              </Alert>
+            )}
 
             {/* Desktop Table View - Altura fija con scroll */}
             <div className="hidden overflow-hidden rounded-2xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a] md:flex md:h-[600px] md:flex-col">
@@ -182,16 +260,25 @@ export const PasajerosListPage = () => {
 
           {/* Overlay para LG cuando el panel está expandido */}
           {isPanelExpanded && selectedPasajero && (
-            <div 
+            <div
               className="fixed inset-0 z-40 hidden bg-black/50 transition-opacity duration-300 lg:block xl:hidden"
+              role="button"
+              tabIndex={0}
+              aria-label="Cerrar panel de detalle de pasajero"
               onClick={handleCloseSidePanel}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  handleCloseSidePanel();
+                }
+              }}
             />
           )}
 
           {/* Botón flotante para abrir panel en LG */}
           {selectedPasajero && !isPanelExpanded && (
             <button
-              onClick={() => setIsPanelExpanded(true)}
+              onClick={() => dispatchPanel({ type: 'expandPanel' })}
               className="fixed bottom-6 right-6 z-30 hidden items-center gap-2 rounded-full bg-[#007a8a] px-6 py-3 text-white shadow-lg transition-all hover:scale-105 hover:bg-[#00626e] lg:flex xl:hidden"
             >
               <span className="material-symbols-outlined text-[20px]">info</span>

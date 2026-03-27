@@ -38,4 +38,12 @@ public record PasajeroModel
         string? TitularApellido,
         HorarioModel.Resumen? Horario,
         IReadOnlyList<PasajeroHorarioModel.Response> HorariosAsignados);
+
+    public record SinHorarioResponse(
+        int Id,
+        string Nombre,
+        string Apellido,
+        string NombreTitular,
+        string Colegio,
+        string Turno);
 }

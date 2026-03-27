@@ -24,4 +24,10 @@ public record TitularModel
         DateTime FechaAlta,
         DateTime? FechaBaja,
         bool Activo);
+
+    public record SinTelefonoResponse(
+        int Id,
+        string Apellido,
+        string NombreContacto,
+        string Direccion);
 }

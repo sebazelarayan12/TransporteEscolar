@@ -13,6 +13,13 @@ export interface TitularResponse {
   activo: boolean;
 }
 
+export interface TitularSinTelefono {
+  id: number;
+  apellido: string;
+  nombreContacto: string;
+  direccion: string;
+}
+
 export interface TitularTelefonoResponse {
   id: number;
   numeroE164: string;

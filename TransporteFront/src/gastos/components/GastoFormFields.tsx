@@ -6,7 +6,7 @@ import { GASTO_ESTADOS, GASTO_TIPOS, type GastoTipo } from '../types/gastos.type
 import type { RegistrarGastoFormData } from './RegistrarGastoModal';
 import { getCategoriaConfig, normalizeCategoriaKey } from '../constants/categorias.config';
 
-const GASTO_MEDIOS_PAGO = Object.values(MEDIOS_PAGO).filter((medio) => medio !== MEDIOS_PAGO.CHEQUE);
+const GASTO_MEDIOS_PAGO = Object.values(MEDIOS_PAGO);
 
 type GastoFieldIds = {
   categoria: string;

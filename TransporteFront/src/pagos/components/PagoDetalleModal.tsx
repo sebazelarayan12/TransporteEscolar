@@ -15,7 +15,7 @@ interface PagoDetalleModalProps {
 const MEDIO_PAGO_ICONS: Record<string, string> = {
   Efectivo: 'payments',
   Transferencia: 'account_balance',
-  Cheque: 'receipt_long',
+  Tarjeta: 'credit_card',
   Débito: 'credit_card',
   Crédito: 'credit_card',
 } as const;

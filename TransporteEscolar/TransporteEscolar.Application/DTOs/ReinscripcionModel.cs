@@ -46,4 +46,18 @@ public record ReinscripcionModel
         decimal DescuentosAplicados,
         decimal RecargosAplicados,
         decimal TotalCalculado);
+
+    public record AlertItem(
+        int ReinscripcionId,
+        int PasajeroId,
+        string PasajeroNombre,
+        int TitularId,
+        string TitularNombre,
+        string Estado,
+        DateTime FechaCreacion);
+
+    public record AlertasPagoResponse(
+        int Anio,
+        IReadOnlyList<AlertItem> Pendientes,
+        IReadOnlyList<AlertItem> NoContinua);
 }

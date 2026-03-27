@@ -8,6 +8,7 @@ import type {
   TitularTelefonoRequest,
   TitularFilterRequest,
   TitularPaginationResponse,
+  TitularSinTelefono,
 } from '../types/titular.types';
 
 /**
@@ -28,6 +29,13 @@ export const titularesApi = {
    */
   getActivos: async (): Promise<TitularResponse[]> => {
     return apiClient.get<TitularResponse[]>('/titulares/activos');
+  },
+
+  /**
+   * GET /titulares/sin-telefonos - Obtiene titulares sin teléfonos cargados
+   */
+  getSinTelefonos: async (): Promise<TitularSinTelefono[]> => {
+    return apiClient.get<TitularSinTelefono[]>('/titulares/sin-telefonos');
   },
 
   /**

@@ -44,6 +44,22 @@ public static class PasajeroMappingExtensions
             horariosAsignados);
     }
 
+    public static PasajeroModel.SinHorarioResponse ToSinHorarioResponse(this Pasajero pasajero)
+    {
+        var apellidoTitular = pasajero.Titular?.Apellido ?? string.Empty;
+        var nombreTitular = pasajero.Titular != null
+            ? $"{pasajero.Titular.NombreContacto} {pasajero.Titular.Apellido}".Trim()
+            : string.Empty;
+
+        return new PasajeroModel.SinHorarioResponse(
+            pasajero.Id,
+            pasajero.Nombre,
+            apellidoTitular,
+            nombreTitular,
+            pasajero.Colegio,
+            pasajero.Turno);
+    }
+
     public static HorarioModel.Resumen? ToResumen(this Pasajero pasajero)
     {
         var principal = pasajero.PasajeroHorarios?

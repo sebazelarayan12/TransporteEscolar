@@ -6,6 +6,7 @@ import type {
   PasajeroFilterRequest,
   PasajeroPaginationResponse,
   PasajeroHorarioAsignacionPayload,
+  PasajeroSinHorarioResponse,
 } from '../types/pasajero.types';
 
 /**
@@ -26,6 +27,13 @@ export const pasajerosApi = {
    */
   getActivos: async (): Promise<PasajeroResponse[]> => {
     return apiClient.get<PasajeroResponse[]>('/pasajeros/activos');
+  },
+
+  /**
+   * GET /pasajeros/sin-horarios - Obtiene pasajeros sin horarios asignados
+   */
+  getSinHorarios: async (): Promise<PasajeroSinHorarioResponse[]> => {
+    return apiClient.get<PasajeroSinHorarioResponse[]>('/pasajeros/sin-horarios');
   },
 
   /**

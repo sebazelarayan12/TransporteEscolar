@@ -44,3 +44,18 @@ export interface ReinscripcionPrecioPrevioResponse {
   recargosAplicados: number;
   totalCalculado: number;
 }
+
+export interface ReinscripcionAlertItem {
+  reinscripcionId: number;
+  pasajeroId: number;
+  pasajeroNombre: string;
+  titularNombre: string;
+  estado: ReinscripcionEstado;
+  fechaCreacion: string;
+}
+
+export interface ReinscripcionAlertasPagosResponse {
+  anio: number;
+  pendientes: ReinscripcionAlertItem[];
+  noContinua: ReinscripcionAlertItem[];
+}

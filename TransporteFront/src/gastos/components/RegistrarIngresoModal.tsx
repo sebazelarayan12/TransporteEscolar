@@ -17,7 +17,7 @@ import {
 } from '../types/ingresos.types';
 import { useActualizarIngresoFijo, useCrearIngresoFijo, useCrearIngresoVariable } from '../services/ingresos.queries';
 
-const INGRESO_MEDIOS_COBRO = Object.values(MEDIOS_PAGO).filter((medio) => medio !== MEDIOS_PAGO.CHEQUE);
+const INGRESO_MEDIOS_COBRO = Object.values(MEDIOS_PAGO);
 
 interface RegistrarIngresoModalProps {
   isOpen: boolean;

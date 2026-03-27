@@ -6,7 +6,7 @@ public class PagoMovimiento
     public int PagoMensualId { get; private set; }
     public decimal Monto { get; private set; }
     public DateTimeOffset FechaPago { get; private set; }
-    public string MedioPago { get; private set; } = null!; // "Efectivo", "Transferencia", "Cheque"
+    public string MedioPago { get; private set; } = null!; // "Efectivo" o "Transferencia"
     public string? Observaciones { get; private set; }
 
     // Navegación

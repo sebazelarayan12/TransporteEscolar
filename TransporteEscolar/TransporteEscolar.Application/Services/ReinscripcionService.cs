@@ -186,6 +186,46 @@ public class ReinscripcionService : IReinscripcionService
         await VerificarYGenerarPagosMensualesAsync(reinscripcion.PasajeroId, reinscripcion.Anio);
     }
 
+    public async Task<ReinscripcionModel.AlertasPagoResponse> ObtenerAlertasPagoAsync(int anio)
+    {
+        if (anio <= 0)
+            throw new ArgumentOutOfRangeException(nameof(anio), "El año debe ser mayor a 0");
+
+        var reinscripciones = await _repository.GetByAnioConDetallesAsync(anio);
+
+        var pendientes = reinscripciones
+            .Where(r => string.Equals(r.Estado, "Pendiente", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(r => r.FechaCreacion)
+            .Select(MapearAlertItem)
+            .ToList();
+
+        var noContinua = reinscripciones
+            .Where(r => string.Equals(r.Estado, "NoContinua", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(r => r.FechaCreacion)
+            .Select(MapearAlertItem)
+            .ToList();
+
+        return new ReinscripcionModel.AlertasPagoResponse(anio, pendientes, noContinua);
+    }
+
+    private static ReinscripcionModel.AlertItem MapearAlertItem(ReinscripcionPasajero reinscripcion)
+    {
+        var titular = reinscripcion.Pasajero?.Titular;
+        var titularNombre = titular != null
+            ? $"{titular.NombreContacto} {titular.Apellido}".Trim()
+            : string.Empty;
+        var pasajeroNombre = reinscripcion.Pasajero?.Nombre ?? string.Empty;
+
+        return new ReinscripcionModel.AlertItem(
+            reinscripcion.Id,
+            reinscripcion.PasajeroId,
+            pasajeroNombre,
+            titular?.Id ?? 0,
+            titularNombre,
+            reinscripcion.Estado,
+            reinscripcion.FechaCreacion);
+    }
+
     private static string? NormalizarEstado(string? estado)
     {
         if (string.IsNullOrWhiteSpace(estado))

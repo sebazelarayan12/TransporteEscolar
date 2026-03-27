@@ -40,6 +40,16 @@ public class TitularesController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene titulares que no tienen teléfonos activos registrados
+    /// </summary>
+    [HttpGet("sin-telefonos")]
+    public async Task<ActionResult<List<TitularModel.SinTelefonoResponse>>> GetSinTelefonos()
+    {
+        var dtos = await _service.ObtenerSinTelefonosAsync();
+        return Ok(dtos);
+    }
+
+    /// <summary>
     /// Obtiene titulares activos con paginación y filtros
     /// </summary>
     [HttpGet("paginados")]
