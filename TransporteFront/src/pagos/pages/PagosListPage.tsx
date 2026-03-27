@@ -182,12 +182,9 @@ export const PagosListPage = () => {
     vencido: 'vencidos',
   };
   const pendientesAlert = alertasPagos?.pendientes ?? [];
-  const noContinuaAlert = alertasPagos?.noContinua ?? [];
-  const shouldShowAlertasPagos = pendientesAlert.length > 0 || noContinuaAlert.length > 0;
+  const shouldShowAlertasPagos = pendientesAlert.length > 0;
   const pendientesPreview = pendientesAlert.slice(0, 5);
-  const noContinuaPreview = noContinuaAlert.slice(0, 5);
   const pendientesRestantes = pendientesAlert.length - pendientesPreview.length;
-  const noContinuaRestantes = noContinuaAlert.length - noContinuaPreview.length;
 
   return (
     <div className="min-h-full w-full bg-[#fafafa] dark:bg-[#18181b]">
@@ -225,7 +222,7 @@ export const PagosListPage = () => {
           <Alert variant="warning" className="space-y-3 rounded-3xl border-yellow-200 bg-yellow-50 text-yellow-900">
             <div>
               <p className="text-sm font-semibold">
-                Hay {pendientesAlert.length + noContinuaAlert.length} pasajero{pendientesAlert.length + noContinuaAlert.length !== 1 ? 's' : ''} pendientes o marcados como "No continúa" en {selectedAnio}
+                Hay {pendientesAlert.length} pasajero{pendientesAlert.length !== 1 ? 's' : ''} pendientes en {selectedAnio}
               </p>
             </div>
             {pendientesAlert.length > 0 && (
@@ -234,30 +231,13 @@ export const PagosListPage = () => {
                 <ul className="list-disc space-y-1 pl-4 text-xs text-yellow-900 sm:text-sm">
                   {pendientesPreview.map((alerta) => (
                     <li key={alerta.reinscripcionId}>
-                      {alerta.pasajeroNombre} · Titular: {alerta.titularNombre}
+                      {alerta.pasajeroNombre} � Titular: {alerta.titularNombre}
                     </li>
                   ))}
                 </ul>
                 {pendientesRestantes > 0 && (
                   <p className="text-xs font-medium text-yellow-900">
-                    y {pendientesRestantes} pasajero{pendientesRestantes !== 1 ? 's' : ''} más pendientes de confirmar.
-                  </p>
-                )}
-              </div>
-            )}
-            {noContinuaAlert.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide">No Continúa ({noContinuaAlert.length})</p>
-                <ul className="list-disc space-y-1 pl-4 text-xs text-yellow-900 sm:text-sm">
-                  {noContinuaPreview.map((alerta) => (
-                    <li key={alerta.reinscripcionId}>
-                      {alerta.pasajeroNombre} · Titular: {alerta.titularNombre}
-                    </li>
-                  ))}
-                </ul>
-                {noContinuaRestantes > 0 && (
-                  <p className="text-xs font-medium text-yellow-900">
-                    y {noContinuaRestantes} pasajero{noContinuaRestantes !== 1 ? 's' : ''} más marcados como "No continúa".
+                    y {pendientesRestantes} pasajero{pendientesRestantes !== 1 ? 's' : ''} m�s pendientes de confirmar.
                   </p>
                 )}
               </div>

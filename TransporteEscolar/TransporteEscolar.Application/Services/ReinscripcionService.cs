@@ -196,13 +196,9 @@ public class ReinscripcionService : IReinscripcionService
         if (anio <= 0)
             throw new ArgumentOutOfRangeException(nameof(anio), "El año debe ser mayor a 0");
 
-        var reinscripcionesTask = _repository.GetByAnioConDetallesAsync(anio);
-        var pasajerosSinReinscripcionTask = _pasajeroRepository.GetActivosDisponiblesParaReinscripcionAsync(anio);
-
-        await Task.WhenAll(reinscripcionesTask, pasajerosSinReinscripcionTask);
-
-        var reinscripciones = reinscripcionesTask.Result;
-        var pasajerosSinReinscripcion = pasajerosSinReinscripcionTask.Result;
+        // Ejecutar consultas de forma secuencial para evitar concurrencia sobre el mismo DbContext.
+        var reinscripciones = await _repository.GetByAnioConDetallesAsync(anio);
+        var pasajerosSinReinscripcion = await _pasajeroRepository.GetActivosDisponiblesParaReinscripcionAsync(anio);
 
         var pendientesPorTitular = new Dictionary<int, List<ReinscripcionModel.AlertItem>>();
         var noContinuaPorTitular = new Dictionary<int, List<ReinscripcionModel.AlertItem>>();
