@@ -47,7 +47,10 @@ public class TitularService : ITitularService
     public async Task<List<TitularModel.SinTelefonoResponse>> ObtenerSinTelefonosAsync(CancellationToken cancellationToken = default)
     {
         var titulares = await _repository.GetSinTelefonosActivosAsync(cancellationToken);
-        return titulares.Select(TitularMapper.MapearSinTelefono).ToList();
+        return titulares
+            .Where(t => t.FechaBaja == null)
+            .Select(TitularMapper.MapearSinTelefono)
+            .ToList();
     }
 
     public async Task<PaginationModel.ResponsePagination<TitularModel.Response>> ObtenerPaginadosAsync(

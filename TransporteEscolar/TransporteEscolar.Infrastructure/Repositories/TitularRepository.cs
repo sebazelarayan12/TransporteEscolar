@@ -39,7 +39,7 @@ public class TitularRepository : ITitularRepository
     public async Task<List<Titular>> GetSinTelefonosActivosAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Titulares
-            .Where(t => !t.Telefonos.Any(tel => tel.FechaBaja == null))
+            .Where(t => t.FechaBaja == null && !t.Telefonos.Any(tel => tel.FechaBaja == null))
             .OrderBy(t => t.Apellido)
             .ToListAsync(cancellationToken);
     }
