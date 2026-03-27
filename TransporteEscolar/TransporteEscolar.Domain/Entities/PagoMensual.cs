@@ -69,7 +69,67 @@ public class PagoMensual
         if (nuevoMonto <= 0)
             throw new ArgumentOutOfRangeException(nameof(nuevoMonto), "El monto generado debe ser mayor a 0");
 
+        if (nuevoMonto < TotalPagado())
+            throw new InvalidOperationException("El nuevo monto no puede ser menor al total pagado");
+
         MontoGenerado = nuevoMonto;
+    }
+
+    public void AgregarAnotacion(string anotacion)
+    {
+        if (string.IsNullOrWhiteSpace(anotacion))
+            return;
+
+        Observaciones = string.IsNullOrWhiteSpace(Observaciones)
+            ? anotacion
+            : $"{Observaciones} | {anotacion}";
+    }
+
+    public PagoMovimiento AplicarPago(
+        decimal monto,
+        DateTimeOffset fechaPago,
+        string medioPago,
+        string? observaciones)
+    {
+        if (monto <= 0)
+            throw new ArgumentOutOfRangeException(nameof(monto), "El monto aplicado debe ser mayor a 0");
+
+        var saldoPendiente = SaldoPendiente();
+        if (saldoPendiente <= 0)
+            throw new InvalidOperationException("El pago mensual no tiene saldo pendiente");
+
+        if (monto > saldoPendiente)
+            throw new InvalidOperationException("El monto aplicado excede el saldo pendiente");
+
+        var observacionAplicada = monto < saldoPendiente
+            ? string.IsNullOrWhiteSpace(observaciones)
+                ? "Pago parcial"
+                : $"{observaciones} (Pago parcial)"
+            : observaciones;
+
+        var movimiento = new PagoMovimiento(
+            Id,
+            monto,
+            fechaPago,
+            medioPago,
+            observacionAplicada);
+
+        Movimientos.Add(movimiento);
+        return movimiento;
+    }
+
+    public PagoMovimiento EliminarMovimiento(int movimientoId)
+    {
+        var movimiento = Movimientos.FirstOrDefault(m => m.Id == movimientoId);
+        if (movimiento == null)
+            throw new InvalidOperationException("El movimiento indicado no pertenece al pago mensual");
+
+        var nuevoTotal = TotalPagado() - movimiento.Monto;
+        if (nuevoTotal < 0)
+            throw new InvalidOperationException("Eliminar el movimiento genera un total negativo");
+
+        Movimientos.Remove(movimiento);
+        return movimiento;
     }
 
     private static DateTime CrearFechaVencimiento(int anio, int mes)

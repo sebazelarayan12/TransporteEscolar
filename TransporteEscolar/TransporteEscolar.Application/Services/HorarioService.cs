@@ -84,7 +84,7 @@ public class HorarioService : IHorarioService
 
         return new HorarioModel.PasajerosResponse(
             resumen,
-            pasajeros.Select(PasajeroMapper.MapearAResponse).ToList(),
+            pasajeros.Select(p => p.ToResponse()).ToList(),
             new HorarioModel.PasajerosAsignados(horario.Id, horario.Etiqueta, asignados, conteosTransporte));
     }
 

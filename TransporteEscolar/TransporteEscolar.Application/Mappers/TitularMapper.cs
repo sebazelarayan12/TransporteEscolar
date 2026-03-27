@@ -15,4 +15,11 @@ public static class TitularMapper
             titular.FechaAlta,
             titular.FechaBaja,
             titular.FechaBaja == null);
+
+    public static TitularModel.SinTelefonoResponse MapearSinTelefono(Titular titular) =>
+        new(
+            titular.Id,
+            titular.Apellido,
+            titular.NombreContacto,
+            titular.Direccion);
 }

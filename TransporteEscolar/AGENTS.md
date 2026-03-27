@@ -1,3 +1,6 @@
+0. Regla global inamovible
+   - Nunca escribas tildes en ninguna palabra ni mensaje, sin importar el contexto.
+
 1. Header & Skills Reference
    - Title: “TransporteEscolar API – AI Agent Ruleset”.
    - “Skills Reference” list will include backend-relevant skills: csharp-developer, systematic-debugging, api-design-principles, error-handling-patterns, brainstorming, plus testing/infra skills such as playwright? No, backend-specific include csharp-developer, systematic-debugging, api-design-principles, error-handling-patterns, maybe general brainstorming for creative changes. Possibly mention typescript? not needed for backend. Incluye también vitest para guiar pruebas unitarias compartidas/front (Vitest) cuando sean relevantes.
@@ -16,7 +19,9 @@
    - Possibly include “Investigating CORS/security” -> error-handling-patterns? Maybe not.
    - Keep table concise.
 3. Critical Rules – Non-negotiable
-   - Sections: Domain Entities, Application Layer (DTOs/Services), Infrastructure/Repositories, API Controllers, Validation, Migrations & DB, CORS/Security, Seeder usage.
+    - Sections: Domain Entities, Application Layer (DTOs/Services), Infrastructure/Repositories, API Controllers, Validation, Migrations & DB, CORS/Security, Seeder usage.
+    - PagosMensuales module ya funciona con CQRS + MediatR: usa queries/commands bajo `Application/PagosMensuales`, `ISender` en controladores/servicios, `PagoMensualMappingExtensions` / `PagoMovimientoMappingExtensions` para responses y métodos ricos (`AplicarPago`, `RegistrarPago`, `AjustarMonto`, `GenerarPagos`) dentro de las entidades. Nunca reintroduzcas `IPagoMensualService`; cualquier nueva regla va al Dominio o a un handler.
+    - Pasajeros ahora sigue el mismo patrón CQRS/MediatR: `PasajerosController` opera con `ISender`, los comandos/queries viven en `Application/Pasajeros/*`, los mapeos están en `PasajeroMappingExtensions` y `ReinscripcionMappingExtensions`, y las reglas (horarios, prioridades, reinscripciones) se resuelven con métodos del agregado `Pasajero`. Evita revivir `IPasajeroService` o manipular `PasajeroHorario` a través de repos de infraestructura; todo pasa por el agregado y MediatR.
    - Each with ALWAYS/NEVER instructions (like example). Example:
      - Domain Entities: ALWAYS use private setters, managed constructors; NEVER expose EF navigation modifications outside services.
      - Application: ALWAYS validate via Validation/*, ALWAYS map DTOs using MapearAResponse, NEVER access DbContext from controller.

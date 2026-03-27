@@ -8,10 +8,12 @@ export const reinscripcionesKeys = {
   list: (params: ReinscripcionListParams) => [...reinscripcionesKeys.root, 'list', params] as const,
   detail: (id: number) => [...reinscripcionesKeys.root, 'detail', id] as const,
   precioPrevio: (id: number) => [...reinscripcionesKeys.root, 'precio-previo', id] as const,
+  alertasPagos: (anio: number) => [...reinscripcionesKeys.root, 'alertas-pagos', anio] as const,
 };
 
 const idleListKey = [...reinscripcionesKeys.root, 'list', 'idle'] as const;
 const idlePrecioKey = [...reinscripcionesKeys.root, 'precio-previo', 'idle'] as const;
+const idleAlertasPagosKey = [...reinscripcionesKeys.root, 'alertas-pagos', 'idle'] as const;
 
 /**
  * Hook para obtener las reinscripciones por año + estado con paginación
@@ -116,6 +118,22 @@ export function usePrecioPrevioReinscripcion(reinscripcionId: number | null) {
     enabled: hasValidId,
     placeholderData: (previous) => previous,
     refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Hook para obtener alertas de pagos bloqueados por reinscripciones pendientes/no continúa
+ */
+export function useReinscripcionesAlertasPagos(anio: number | null) {
+  const hasValidYear = typeof anio === 'number' && anio > 0;
+
+  return useQuery({
+    queryKey: hasValidYear ? reinscripcionesKeys.alertasPagos(anio!) : idleAlertasPagosKey,
+    queryFn: async () => {
+      return await reinscripcionesApi.getAlertasPagos(anio!);
+    },
+    enabled: hasValidYear,
+    staleTime: 60000,
   });
 }
 

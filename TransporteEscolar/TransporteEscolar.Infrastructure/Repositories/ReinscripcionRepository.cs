@@ -28,31 +28,47 @@ public class ReinscripcionRepository : IReinscripcionRepository
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
+    /// <summary>
+    /// Obtiene todas las reinscripciones ordenadas por fecha para titulares activos.
+    /// </summary>
     public async Task<List<ReinscripcionPasajero>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.ReinscripcionesPasajeros
+        return await SoloTitularesActivos(_context.ReinscripcionesPasajeros)
             .OrderByDescending(r => r.FechaCreacion)
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Devuelve las reinscripciones del año indicado excluyendo titulares dados de baja.
+    /// </summary>
     public async Task<List<ReinscripcionPasajero>> GetByAnioAsync(int anio, CancellationToken cancellationToken = default)
     {
-        return await _context.ReinscripcionesPasajeros
+        return await SoloTitularesActivos(_context.ReinscripcionesPasajeros)
             .Where(r => r.Anio == anio)
             .OrderByDescending(r => r.FechaCreacion)
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Obtiene las reinscripciones con detalles de pasajero/titular únicamente para titulares activos.
+    /// </summary>
     public async Task<List<ReinscripcionPasajero>> GetByAnioConDetallesAsync(int anio, CancellationToken cancellationToken = default)
     {
-        return await _context.ReinscripcionesPasajeros
+        var query = _context.ReinscripcionesPasajeros
             .Include(r => r.Pasajero)
                 .ThenInclude(p => p.Titular)
-            .Where(r => r.Anio == anio)
+            .Where(r => r.Anio == anio);
+
+        query = SoloTitularesActivos(query);
+
+        return await query
             .OrderByDescending(r => r.FechaCreacion)
             .ToListAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Devuelve resultados paginados por año/mes solo para titulares activos.
+    /// </summary>
     public async Task<(List<ReinscripcionPasajero> Reinscripciones, int TotalCount)> GetByAnioConDetallesPaginadoAsync(
         int anio,
         int mes,
@@ -65,6 +81,8 @@ public class ReinscripcionRepository : IReinscripcionRepository
             .Include(r => r.Pasajero)
                 .ThenInclude(p => p.Titular)
             .Where(r => r.Anio == anio);
+
+        query = SoloTitularesActivos(query);
 
         if (mes is >= 1 and <= 12)
         {
@@ -104,5 +122,10 @@ public class ReinscripcionRepository : IReinscripcionRepository
     {
         _context.ReinscripcionesPasajeros.Update(reinscripcion);
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    private static IQueryable<ReinscripcionPasajero> SoloTitularesActivos(IQueryable<ReinscripcionPasajero> query)
+    {
+        return query.Where(r => r.Pasajero != null && r.Pasajero.Titular != null && r.Pasajero.Titular.FechaBaja == null);
     }
 }

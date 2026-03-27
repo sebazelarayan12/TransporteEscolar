@@ -1,7 +1,9 @@
 using System;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TransporteEscolar.Application.DTOs;
-using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Application.Pasajeros.Commands;
+using TransporteEscolar.Application.Pasajeros.Queries;
 
 namespace TransporteEscolar.Api.Controllers;
 
@@ -9,14 +11,14 @@ namespace TransporteEscolar.Api.Controllers;
 [Route("api/[controller]")]
 public class PasajerosController : ControllerBase
 {
-    private readonly IPasajeroService _service;
+    private readonly ISender _sender;
     private readonly ILogger<PasajerosController> _logger;
 
     public PasajerosController(
-        IPasajeroService service,
+        ISender sender,
         ILogger<PasajerosController> logger)
     {
-        _service = service;
+        _sender = sender;
         _logger = logger;
     }
 
@@ -26,7 +28,7 @@ public class PasajerosController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<PasajeroModel.Response>>> GetAll()
     {
-        var dtos = await _service.ObtenerTodosAsync();
+        var dtos = await _sender.Send(new GetPasajerosQuery());
         return Ok(dtos);
     }
 
@@ -36,7 +38,17 @@ public class PasajerosController : ControllerBase
     [HttpGet("activos")]
     public async Task<ActionResult<List<PasajeroModel.Response>>> GetActivos()
     {
-        var dtos = await _service.ObtenerActivosAsync();
+        var dtos = await _sender.Send(new GetPasajerosActivosQuery());
+        return Ok(dtos);
+    }
+
+    /// <summary>
+    /// Obtiene pasajeros activos que no tienen horarios asignados
+    /// </summary>
+    [HttpGet("sin-horarios")]
+    public async Task<ActionResult<List<PasajeroModel.SinHorarioResponse>>> GetSinHorarios()
+    {
+        var dtos = await _sender.Send(new GetPasajerosSinHorariosQuery());
         return Ok(dtos);
     }
 
@@ -49,7 +61,7 @@ public class PasajerosController : ControllerBase
         if (anio <= 0)
             return BadRequest("anio es obligatorio");
 
-        var dtos = await _service.ObtenerActivosDisponiblesParaReinscripcionAsync(anio);
+        var dtos = await _sender.Send(new GetPasajerosDisponiblesReinscripcionQuery(anio));
         return Ok(dtos);
     }
 
@@ -63,7 +75,7 @@ public class PasajerosController : ControllerBase
         [FromQuery] int pageSize = 20)
     {
         var request = new PaginationModel.FilterRequest(search, pageNumber, pageSize);
-        var resultado = await _service.ObtenerPaginadosAsync(request);
+        var resultado = await _sender.Send(new GetPasajerosPaginadosQuery(request));
         return Ok(resultado);
     }
 
@@ -73,7 +85,7 @@ public class PasajerosController : ControllerBase
     [HttpGet("titular/{titularId}")]
     public async Task<ActionResult<List<PasajeroModel.Response>>> GetByTitular(int titularId)
     {
-        var dtos = await _service.ObtenerPorTitularAsync(titularId);
+        var dtos = await _sender.Send(new GetPasajerosPorTitularQuery(titularId));
         return Ok(dtos);
     }
 
@@ -83,7 +95,7 @@ public class PasajerosController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<PasajeroModel.Response>> GetById(int id)
     {
-        var dto = await _service.ObtenerPorIdAsync(id);
+        var dto = await _sender.Send(new GetPasajeroByIdQuery(id));
         
         if (dto == null)
             return NotFound();
@@ -97,7 +109,7 @@ public class PasajerosController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<PasajeroModel.Response>> Create([FromBody] PasajeroModel.Request dto)
     {
-        var resultado = await _service.CrearAsync(dto);
+        var resultado = await _sender.Send(new CreatePasajeroCommand(dto));
 
         _logger.LogInformation("Pasajero creado: {NombreCompleto} (ID: {Id})", 
             resultado.NombreCompleto, resultado.Id);
@@ -114,7 +126,7 @@ public class PasajerosController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(int id, [FromBody] PasajeroModel.UpdateRequest dto)
     {
-        await _service.ActualizarAsync(id, dto);
+        await _sender.Send(new UpdatePasajeroCommand(id, dto));
 
         _logger.LogInformation("Pasajero actualizado (ID: {Id})", id);
 
@@ -127,7 +139,7 @@ public class PasajerosController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> DarDeBaja(int id)
     {
-        await _service.DarDeBajaAsync(id);
+        await _sender.Send(new DarDeBajaPasajeroCommand(id));
 
         _logger.LogInformation("Pasajero dado de baja (ID: {Id})", id);
 
@@ -140,7 +152,7 @@ public class PasajerosController : ControllerBase
     [HttpPost("{id}/reactivar")]
     public async Task<ActionResult> Reactivar(int id)
     {
-        await _service.ReactivarAsync(id);
+        await _sender.Send(new ReactivarPasajeroCommand(id));
 
         _logger.LogInformation("Pasajero reactivado (ID: {Id})", id);
 
@@ -153,7 +165,7 @@ public class PasajerosController : ControllerBase
     [HttpPost("{id}/horarios")]
     public async Task<ActionResult<PasajeroModel.Response>> AgregarHorario(int id, [FromBody] PasajeroHorarioModel.AsignacionRequest dto)
     {
-        var resultado = await _service.AgregarHorarioAsync(id, dto);
+        var resultado = await _sender.Send(new AgregarHorarioPasajeroCommand(id, dto));
 
         _logger.LogInformation("Horario {HorarioId} agregado al pasajero {Id}", dto.HorarioId, id);
 
@@ -166,7 +178,7 @@ public class PasajerosController : ControllerBase
     [HttpDelete("{id}/horarios/{horarioId}")]
     public async Task<ActionResult> QuitarHorario(int id, int horarioId)
     {
-        await _service.QuitarHorarioAsync(id, horarioId);
+        await _sender.Send(new QuitarHorarioPasajeroCommand(id, horarioId));
 
         _logger.LogInformation("Horario {HorarioId} removido del pasajero {Id}", horarioId, id);
 
@@ -180,7 +192,7 @@ public class PasajerosController : ControllerBase
     [HttpDelete("{id}/horario")]
     public async Task<ActionResult> QuitarHorarioPrincipal(int id)
     {
-        await _service.QuitarHorarioPrincipalAsync(id);
+        await _sender.Send(new QuitarHorarioPrincipalPasajeroCommand(id));
 
         _logger.LogInformation("Horario principal removido para el pasajero {Id}", id);
 
@@ -194,7 +206,7 @@ public class PasajerosController : ControllerBase
     [HttpGet("{id}/reinscripciones")]
     public async Task<ActionResult<List<ReinscripcionModel.Response>>> GetReinscripciones(int id)
     {
-        var reinscripciones = await _service.ObtenerReinscripcionesAsync(id);
+        var reinscripciones = await _sender.Send(new GetPasajeroReinscripcionesQuery(id));
         return Ok(reinscripciones);
     }
 
@@ -204,7 +216,7 @@ public class PasajerosController : ControllerBase
     [HttpPost("{id}/reinscripciones")]
     public async Task<ActionResult<ReinscripcionModel.Response>> CrearReinscripcion(int id, [FromBody] ReinscripcionModel.Request dto)
     {
-        var reinscripcion = await _service.CrearReinscripcionAsync(id, dto);
+        var reinscripcion = await _sender.Send(new CrearReinscripcionPasajeroCommand(id, dto));
 
         _logger.LogInformation("Reinscripción creada para pasajero {PasajeroId}, año {Anio}", id, dto.Anio);
 
@@ -217,7 +229,7 @@ public class PasajerosController : ControllerBase
     [HttpPut("{id}/reinscripciones/{reinscripcionId}/confirmar")]
     public async Task<ActionResult> ConfirmarReinscripcion(int id, int reinscripcionId)
     {
-        await _service.ConfirmarReinscripcionAsync(id, reinscripcionId);
+        await _sender.Send(new ConfirmarReinscripcionPasajeroCommand(id, reinscripcionId));
 
         _logger.LogInformation("Reinscripción {ReinscripcionId} confirmada para pasajero {PasajeroId}", reinscripcionId, id);
 
@@ -230,7 +242,7 @@ public class PasajerosController : ControllerBase
     [HttpPut("{id}/reinscripciones/{reinscripcionId}/no-continua")]
     public async Task<ActionResult> MarcarComoNoContinua(int id, int reinscripcionId)
     {
-        await _service.MarcarComoNoContinuaAsync(id, reinscripcionId);
+        await _sender.Send(new MarcarReinscripcionNoContinuaCommand(id, reinscripcionId));
 
         _logger.LogInformation("Reinscripción {ReinscripcionId} marcada como no continúa para pasajero {PasajeroId}", reinscripcionId, id);
 

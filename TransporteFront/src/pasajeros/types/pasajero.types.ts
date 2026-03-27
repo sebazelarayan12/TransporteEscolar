@@ -31,6 +31,15 @@ export interface PasajeroResponse {
   horariosAsignados: PasajeroHorarioAsignado[];
 }
 
+export interface PasajeroSinHorarioResponse {
+  id: number;
+  nombre: string;
+  apellido: string;
+  nombreTitular: string;
+  colegio: string;
+  turno: PasajeroTurno;
+}
+
 export interface PasajeroRequest {
   titularId: number;
   nombre: string;

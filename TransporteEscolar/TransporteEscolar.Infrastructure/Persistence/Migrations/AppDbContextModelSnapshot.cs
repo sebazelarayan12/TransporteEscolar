@@ -336,6 +336,104 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.ToTable("IngresosMensuales", (string)null);
                 });
 
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.LoteWhatsApp", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaFinalizacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TipoMensaje")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Estado");
+
+                    b.HasIndex("FechaCreacion");
+
+                    b.ToTable("LotesWhatsApp", (string)null);
+                });
+
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.MensajeWhatsApp", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DetalleError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("FechaActualizacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Intentos")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("LoteId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NombreTitular")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ProviderMessageId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("TelefonoDestino")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("TitularId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Estado");
+
+                    b.HasIndex("LoteId");
+
+                    b.HasIndex("ProviderMessageId");
+
+                    b.HasIndex("TitularId");
+
+                    b.ToTable("MensajesWhatsApp", (string)null);
+                });
+
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.Notificacion", b =>
                 {
                     b.Property<int>("Id")
@@ -685,6 +783,25 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.Navigation("IngresoFijoTemplate");
                 });
 
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.MensajeWhatsApp", b =>
+                {
+                    b.HasOne("TransporteEscolar.Domain.Entities.LoteWhatsApp", "Lote")
+                        .WithMany("Mensajes")
+                        .HasForeignKey("LoteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TransporteEscolar.Domain.Entities.Titular", "Titular")
+                        .WithMany()
+                        .HasForeignKey("TitularId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Lote");
+
+                    b.Navigation("Titular");
+                });
+
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.PagoMensual", b =>
                 {
                     b.HasOne("TransporteEscolar.Domain.Entities.Titular", "Titular")
@@ -772,6 +889,11 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.IngresoFijoTemplate", b =>
                 {
                     b.Navigation("IngresosGenerados");
+                });
+
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.LoteWhatsApp", b =>
+                {
+                    b.Navigation("Mensajes");
                 });
 
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.PagoMensual", b =>

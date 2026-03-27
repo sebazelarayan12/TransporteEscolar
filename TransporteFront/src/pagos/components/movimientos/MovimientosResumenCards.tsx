@@ -6,7 +6,7 @@ interface MovimientosResumenCardsProps {
   breakdown: Record<string, number>;
 }
 
-const RESUMEN_MEDIOS = ['Efectivo', 'Transferencia', 'Cheque'] as const;
+const RESUMEN_MEDIOS = ['Efectivo', 'Transferencia', 'Tarjeta'] as const;
 
 export const MovimientosResumenCards = ({ totalMonto, totalMovimientos, breakdown }: MovimientosResumenCardsProps) => (
   <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">

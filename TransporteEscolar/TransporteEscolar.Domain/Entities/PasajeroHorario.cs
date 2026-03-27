@@ -55,6 +55,16 @@ public class PasajeroHorario
         FechaAsignacion = NormalizarFechaUtc(fechaAsignacion ?? DateTime.UtcNow);
     }
 
+    public static byte NormalizarTransporte(byte? transporte)
+    {
+        if (!transporte.HasValue)
+        {
+            return 1;
+        }
+
+        return ValidarTransporte(transporte.Value);
+    }
+
     private static DateTime NormalizarFechaUtc(DateTime valor)
     {
         var fechaUtc = valor.Kind switch

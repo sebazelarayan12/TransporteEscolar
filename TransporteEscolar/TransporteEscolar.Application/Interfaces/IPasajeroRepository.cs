@@ -8,6 +8,11 @@ public interface IPasajeroRepository
     Task<Pasajero?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<List<Pasajero>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<List<Pasajero>> GetActivosAsync(CancellationToken cancellationToken = default);
+    Task<List<Pasajero>> GetActivosSinHorariosAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Lista los pasajeros activos cuyos titulares siguen dados de alta y todavía no tienen una reinscripción creada para el año indicado.
+    /// Se utiliza para exponerlos como pendientes dentro de las alertas de pago.
+    /// </summary>
     Task<List<Pasajero>> GetActivosDisponiblesParaReinscripcionAsync(int anio, CancellationToken cancellationToken = default);
     Task<List<Pasajero>> GetByTitularIdAsync(int titularId, CancellationToken cancellationToken = default);
     Task<List<Pasajero>> GetActivosPorHorarioAsync(int horarioId, CancellationToken cancellationToken = default);

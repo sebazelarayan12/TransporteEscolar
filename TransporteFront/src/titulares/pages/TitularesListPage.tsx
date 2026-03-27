@@ -1,6 +1,6 @@
 import { useReducer, useState } from 'react';
-import { useTitulares } from '../services/titulares.queries';
-import { LoadingScreen, ErrorState, EmptyState, SearchInput } from '../../shared/ui';
+import { useTitulares, useTitularesSinTelefonos } from '../services/titulares.queries';
+import { LoadingScreen, ErrorState, EmptyState, SearchInput, Alert } from '../../shared/ui';
 import { TitularTableHeader, TitularTableRow, TitularDetailPanel } from '../components';
 import { filterTitulares } from '../helpers/search.helpers';
 import type { TitularResponse } from '../types/titular.types';
@@ -65,6 +65,7 @@ const panelReducer = (state: PanelState, action: PanelAction): PanelState => {
 
 export const TitularesListPage = () => {
   const { data: titulares, isLoading, error } = useTitulares();
+  const { data: titularesSinTelefonos } = useTitularesSinTelefonos();
   const [panelState, dispatchPanel] = useReducer(panelReducer, PANEL_INITIAL_STATE);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(STATUS_FILTERS.ACTIVE);
@@ -93,6 +94,9 @@ export const TitularesListPage = () => {
     return true;
   });
   const filteredCount = filteredTitulares.length;
+  const titularesSinTelefonoList = titularesSinTelefonos ?? [];
+  const titularesSinTelefonoPreview = titularesSinTelefonoList.slice(0, 5);
+  const titularesSinTelefonoRestantes = titularesSinTelefonoList.length - titularesSinTelefonoPreview.length;
 
   if (isLoading) return <LoadingScreen message="Cargando titulares..." />;
   if (error) return <ErrorState message="Error al cargar los titulares" />;
@@ -152,6 +156,28 @@ export const TitularesListPage = () => {
                 </button>
               </div>
             </div>
+
+            {titularesSinTelefonoList.length > 0 && (
+              <Alert variant="warning" className="space-y-2 rounded-xl border-yellow-200 bg-yellow-50 text-yellow-900">
+                <div>
+                  <p className="text-sm font-semibold">
+                    {titularesSinTelefonoList.length} titular{titularesSinTelefonoList.length !== 1 ? 'es' : ''} sin teléfonos cargados
+                  </p>
+                </div>
+                <ul className="list-disc space-y-1 pl-4 text-xs text-yellow-900 sm:text-sm">
+                  {titularesSinTelefonoPreview.map((titular) => (
+                    <li key={titular.id}>
+                      {titular.apellido}, {titular.nombreContacto}
+                    </li>
+                  ))}
+                </ul>
+                {titularesSinTelefonoRestantes > 0 && (
+                  <p className="text-xs font-medium text-yellow-900">
+                    y {titularesSinTelefonoRestantes} titular{titularesSinTelefonoRestantes !== 1 ? 'es' : ''} más sin teléfonos registrados.
+                  </p>
+                )}
+              </Alert>
+            )}
 
             {/* Table Card con Scroll Interno - Altura fija */}
             <div className="flex h-[600px] flex-col overflow-hidden rounded-xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a]">

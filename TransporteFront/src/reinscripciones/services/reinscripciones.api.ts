@@ -5,6 +5,7 @@ import type {
   ReinscripcionListParams,
   ReinscripcionListResponse,
   ReinscripcionPrecioPrevioResponse,
+  ReinscripcionAlertasPagosResponse,
 } from '../types/reinscripcion.types';
 
 const BASE_PATH = '/reinscripciones';
@@ -65,5 +66,12 @@ export const reinscripcionesApi = {
    */
   getPrecioPrevio: async (id: number): Promise<ReinscripcionPrecioPrevioResponse> => {
     return apiClient.get<ReinscripcionPrecioPrevioResponse>(`${BASE_PATH}/${id}/precio-previo`);
+  },
+
+  /**
+   * GET /reinscripciones/alertas-pagos?anio=YYYY - Pasajeros pendientes o no continúan que bloquean pagos
+   */
+  getAlertasPagos: async (anio: number): Promise<ReinscripcionAlertasPagosResponse> => {
+    return apiClient.get<ReinscripcionAlertasPagosResponse>(`${BASE_PATH}/alertas-pagos?anio=${anio}`);
   },
 };

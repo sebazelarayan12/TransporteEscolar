@@ -1,4 +1,6 @@
 TransporteFront UI – AI Agent Ruleset
+Regla global sin excepciones: nunca escribas tildes en ninguna palabra ni mensaje.
+
 Skills Reference: For detailed patterns, use these skills
 - brainstorming – Diverge before proposing new features, flows, or layout changes.
 - systematic-debugging – Structured approach for diagnosing UI/API failures.
