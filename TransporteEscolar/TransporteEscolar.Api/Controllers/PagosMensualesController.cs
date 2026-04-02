@@ -186,6 +186,19 @@ public class PagosMensualesController : ControllerBase
     }
 
     /// <summary>
+    /// Genera o reutiliza un link de Mercado Pago para una cuota
+    /// </summary>
+    [HttpPost("{id}/mercadopago-link")]
+    public async Task<ActionResult> GenerarMercadoPagoLink(int id, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(new GenerarLinkMercadoPagoCommand(id), cancellationToken);
+
+        _logger.LogInformation("Link Mercado Pago listo para pago mensual (ID: {Id})", id);
+
+        return Ok(new { url = result.Url });
+    }
+
+    /// <summary>
     /// Elimina un movimiento previamente registrado en un pago mensual
     /// </summary>
     [HttpDelete("{pagoMensualId}/movimientos/{movimientoId}")]

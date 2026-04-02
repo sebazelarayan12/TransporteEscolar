@@ -32,6 +32,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGastoService, GastoService>();
         services.AddScoped<IIngresoService, IngresoService>();
         services.AddScoped<INotificacionService, NotificacionService>();
+        services.AddScoped<IMercadoPagoService, MercadoPagoService>();
 
         // Gestión de Transacciones
         services.AddScoped<ITransactionManager, TransactionManager>();
