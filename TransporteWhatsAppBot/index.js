@@ -203,8 +203,8 @@ async function fetchDestinatariosRecordatorio() {
 function buildMensajeRecordatorio(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
   return (
-    `¡Hola! 🚌\n\n` +
-    `Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *${periodoNatural}* es de *${formatMonto(destinatario.monto)}*.\n\n` +
+    `¡Buen dia! 🚌\n\n` +
+    `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *abril* es de *${formatMonto(destinatario.monto)}*.\n\n` +
     `Podés abonar por transferencia o en efectivo. ¡Gracias por confiar en nosotros! 😊`
   );
 }

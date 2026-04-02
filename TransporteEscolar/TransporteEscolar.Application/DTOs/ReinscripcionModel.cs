@@ -29,7 +29,7 @@ public record ReinscripcionModel
     public record FilterRequest(
         int Anio = 2024,
         string? Estado = null,
-        int Mes = 0,
+        int? Mes = null,
         int PageNumber = 1,
         int PageSize = 20);
 
