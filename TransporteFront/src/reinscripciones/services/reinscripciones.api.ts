@@ -17,7 +17,6 @@ export const reinscripcionesApi = {
   getAll: async (params: ReinscripcionListParams): Promise<ReinscripcionListResponse> => {
     const searchParams = new URLSearchParams({
       anio: params.anio.toString(),
-      mes: params.mes.toString(),
       estado: params.estado,
       pageNumber: params.pageNumber.toString(),
       pageSize: params.pageSize.toString(),

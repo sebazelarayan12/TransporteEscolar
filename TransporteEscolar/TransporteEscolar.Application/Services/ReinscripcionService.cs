@@ -34,8 +34,11 @@ public class ReinscripcionService : IReinscripcionService
         if (request.PageSize < 1)
             throw new ArgumentOutOfRangeException(nameof(request.PageSize), "PageSize debe ser mayor o igual a 1");
 
-        if (request.Mes < 1 || request.Mes > 12)
-            throw new ArgumentOutOfRangeException(nameof(request.Mes), "Mes debe estar entre 1 y 12");
+        if (request.Mes.HasValue)
+        {
+            if (request.Mes.Value < 1 || request.Mes.Value > 12)
+                throw new ArgumentOutOfRangeException(nameof(request.Mes), "Mes debe estar entre 1 y 12");
+        }
 
         var estadoNormalizado = NormalizarEstado(request.Estado);
 

@@ -17,7 +17,6 @@ export type ReinscripcionEstado = 'Pendiente' | 'Confirmado' | 'NoContinua';
 
 export interface ReinscripcionListParams {
   anio: number;
-  mes: number;
   estado: ReinscripcionEstado;
   pageNumber: number;
   pageSize: number;

@@ -71,7 +71,7 @@ public class ReinscripcionRepository : IReinscripcionRepository
     /// </summary>
     public async Task<(List<ReinscripcionPasajero> Reinscripciones, int TotalCount)> GetByAnioConDetallesPaginadoAsync(
         int anio,
-        int mes,
+        int? mes,
         string? estado,
         int pageNumber,
         int pageSize,
@@ -84,9 +84,10 @@ public class ReinscripcionRepository : IReinscripcionRepository
 
         query = SoloTitularesActivos(query);
 
-        if (mes is >= 1 and <= 12)
+        if (mes.HasValue && mes.Value is >= 1 and <= 12)
         {
-            query = query.Where(r => r.FechaCreacion.Month == mes);
+            var mesFiltro = mes.Value;
+            query = query.Where(r => r.FechaCreacion.Month == mesFiltro);
         }
 
         if (!string.IsNullOrEmpty(estado))

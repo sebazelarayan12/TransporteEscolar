@@ -8,7 +8,7 @@ import {
   ReinscripcionCreateModal,
   LastPendingConfirmationModal,
 } from '../components';
-import { Button, LoadingScreen, ErrorState, EmptyState, Pagination, MonthYearFilter } from '../../shared/ui';
+import { Button, LoadingScreen, ErrorState, EmptyState, Pagination } from '../../shared/ui';
 import type { ReinscripcionDetallada } from '../types/reinscripcion.types';
 import { isLastPendingForTitular } from '../helpers/last-pending.helper';
 
@@ -21,11 +21,9 @@ export const ReinscripcionesListPage = () => {
     isUltimoPendiente: boolean;
   } | null>(null);
   const {
-    mes,
     anio,
     estadoSeleccionado,
     selectEstado,
-    handlePeriodoChange,
     reinscripciones,
     totalCount,
     enabled,
@@ -172,9 +170,6 @@ export const ReinscripcionesListPage = () => {
             Nueva Reinscripción
           </Button>
         </div>
-
-        {/* Month/Year Filter */}
-        <MonthYearFilter selectedMes={mes} selectedAnio={anio} onFilterChange={handlePeriodoChange} />
 
         {/* Filters & Search */}
         <ReinscripcionFilters

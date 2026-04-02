@@ -32,12 +32,15 @@ public class ReinscripcionesController : ControllerBase
         [FromQuery] int pageSize = 20)
     {
         if (!EsEstadoValido(estado, out var estadoNormalizado))
-            return BadRequest($"Estado inválido: {estado}");
+            return BadRequest($"Estado invalido: {estado}");
 
-        var mesFiltrado = mes ?? DateTime.UtcNow.Month;
+        var mesFiltrado = mes;
 
-        if (mesFiltrado < 1 || mesFiltrado > 12)
-            return BadRequest("mes debe estar entre 1 y 12");
+        if (mesFiltrado.HasValue)
+        {
+            if (mesFiltrado.Value < 1 || mesFiltrado.Value > 12)
+                return BadRequest("mes debe estar entre 1 y 12");
+        }
 
         if (pageNumber < 1)
             return BadRequest("pageNumber debe ser mayor o igual a 1");
