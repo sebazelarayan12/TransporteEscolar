@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Lib.Net.Http.WebPush;
 using Lib.Net.Http.WebPush.Authentication;
 using Microsoft.Extensions.Logging;
@@ -52,10 +54,12 @@ public class WebPushService : IWebPushService
             return;
         }
 
+        var mensajeNormalizado = FormatearMensajeConPeriodoActual(mensaje);
+
         var payload = JsonSerializer.Serialize(new
         {
             title = titulo,
-            body = mensaje,
+            body = mensajeNormalizado,
             url = url,
             icon = "/transporteicon.svg",
             badge = "/transporteicon.svg"
@@ -99,4 +103,25 @@ public class WebPushService : IWebPushService
         await Task.WhenAll(tareas);
         _logger.LogInformation("Push enviado a {Count} suscripciones", suscripciones.Count);
     }
+
+    private static readonly Regex PeriodoRegex = new(@"\(\d{2}/\d{4}\)", RegexOptions.Compiled);
+
+    private static string FormatearMensajeConPeriodoActual(string mensaje)
+    {
+        var periodoActual = DateTime.UtcNow.ToString("MM/yyyy", CultureInfo.InvariantCulture);
+        var periodoFormateado = $"({periodoActual})";
+
+        if (string.IsNullOrWhiteSpace(mensaje))
+        {
+            return periodoFormateado;
+        }
+
+        if (PeriodoRegex.IsMatch(mensaje))
+        {
+            return PeriodoRegex.Replace(mensaje, periodoFormateado);
+        }
+
+        return $"{mensaje.Trim()} {periodoFormateado}";
+    }
 }
+
