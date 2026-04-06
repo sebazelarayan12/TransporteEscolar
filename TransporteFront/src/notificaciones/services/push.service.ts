@@ -66,7 +66,7 @@ export async function subscribeToPush(): Promise<boolean> {
 
     // 3. Obtener la clave publica VAPID del backend
     const { publicKey } = await pushApi.getVapidPublicKey();
-    const applicationServerKey = urlBase64ToUint8Array(publicKey);
+    const applicationServerKey = urlBase64ToUint8Array(publicKey).buffer;
 
     // 4. Verificar si ya hay una suscripcion activa
     let subscription = await registration.pushManager.getSubscription();
