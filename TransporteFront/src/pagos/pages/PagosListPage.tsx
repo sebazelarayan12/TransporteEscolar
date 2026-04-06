@@ -16,6 +16,7 @@ import { useDebounce } from '../../shared/hooks/useDebounce';
 import type { PagoEstado, PagoMensual, PagosEstadoFiltro } from '../types/pago.types';
 import { RegistrarPagoModal, PagosStatusFilters, PagoDetalleModal } from '../components';
 import { useReinscripcionesAlertasPagos } from '../../reinscripciones/services/reinscripciones.queries';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 type PagosViewState = {
   selectedMes: number;
@@ -231,7 +232,7 @@ export const PagosListPage = () => {
                 <ul className="list-disc space-y-1 pl-4 text-xs text-yellow-900 sm:text-sm">
                   {pendientesPreview.map((alerta) => (
                     <li key={alerta.reinscripcionId}>
-                      {alerta.pasajeroNombre} - Titular: {alerta.titularNombre}
+                      {alerta.pasajeroNombre} - Titular: {getTitularApellidoDisplay(undefined, alerta.titularNombre)}
                     </li>
                   ))}
                 </ul>
@@ -425,6 +426,7 @@ const PagosDesktopTable = ({
         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
           {filteredPagos.map((pago) => {
             const estado = getPagoEstado(pago);
+            const titularDisplay = getTitularApellidoDisplay(pago.titularApellido, pago.titularNombre);
             return (
               <tr
                 key={pago.id}
@@ -434,9 +436,8 @@ const PagosDesktopTable = ({
                 <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                   <div className="flex flex-col">
                     <span className="text-base font-semibold leading-tight text-[#0f181a] dark:text-white">
-                      {pago.titularApellido}
+                      {titularDisplay}
                     </span>
-                    {pago.titularNombre ? <span className="text-xs text-gray-500">{pago.titularNombre}</span> : null}
                     {pago.titularDireccion ? <span className="text-xs text-gray-400">{pago.titularDireccion}</span> : null}
                   </div>
                 </td>
@@ -473,6 +474,7 @@ const PagosMobileCards = ({
     <div className="divide-y divide-gray-200 dark:divide-gray-700 md:hidden">
       {filteredPagos.map((pago) => {
         const estado = getPagoEstado(pago);
+        const titularDisplay = getTitularApellidoDisplay(pago.titularApellido, pago.titularNombre);
         return (
           <button
             type="button"
@@ -483,8 +485,7 @@ const PagosMobileCards = ({
             <div className="mb-2 flex items-start justify-between">
               <div>
                 <div>
-                  <p className="leading-tight font-semibold text-gray-900 dark:text-white">{pago.titularApellido}</p>
-                  {pago.titularNombre ? <p className="text-xs text-gray-500">{pago.titularNombre}</p> : null}
+                  <p className="leading-tight font-semibold text-gray-900 dark:text-white">{titularDisplay}</p>
                   {pago.titularDireccion ? <p className="text-xs text-gray-400">{pago.titularDireccion}</p> : null}
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{pago.periodo}</p>

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import type { NotificacionResponse } from '../types/notificacion.types';
 import { NOTIFICACION_CONFIG } from '../constants/notificacion.constants';
+import { formatNotificacionMensajeConPeriodo } from '../utils/notificacion.helpers';
 
 interface NotificacionItemProps {
   notificacion: NotificacionResponse;
@@ -30,6 +31,7 @@ const formatTimeAgo = (fechaIso: string): string => {
 export const NotificacionItem = ({ notificacion, onMarcarLeida, onEliminar, onClose }: NotificacionItemProps) => {
   const navigate = useNavigate();
   const config = NOTIFICACION_CONFIG[notificacion.tipo];
+  const mensajeConPeriodo = formatNotificacionMensajeConPeriodo(notificacion.mensaje, notificacion.fechaCreacion);
 
   const handleClick = () => {
     if (!notificacion.leida) {
@@ -82,7 +84,7 @@ export const NotificacionItem = ({ notificacion, onMarcarLeida, onEliminar, onCl
           )}
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">
-          {notificacion.mensaje}
+          {mensajeConPeriodo}
         </p>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
           {formatTimeAgo(notificacion.fechaCreacion)}

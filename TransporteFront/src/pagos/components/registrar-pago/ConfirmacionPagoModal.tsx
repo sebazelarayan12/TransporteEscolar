@@ -10,7 +10,7 @@ import type { MedioPago } from '../../constants/medios-pago.constants';
 
 export interface PagoConfirmacionData {
   pagoId: number;
-  titularNombreCompleto: string;
+  titularLabel: string;
   monto: number;
   medioPago: MedioPago;
   observaciones?: string;
@@ -44,7 +44,7 @@ export const ConfirmacionPagoModal = ({
           <dl className="space-y-3">
             <div className="flex items-start justify-between gap-4">
               <dt className="text-gray-500 dark:text-gray-400">Titular</dt>
-              <dd className="text-right font-semibold text-gray-900 dark:text-white">{data.titularNombreCompleto}</dd>
+              <dd className="text-right font-semibold text-gray-900 dark:text-white">{data.titularLabel}</dd>
             </div>
             <div className="flex items-start justify-between gap-4">
               <dt className="text-gray-500 dark:text-gray-400">Cuota destino</dt>

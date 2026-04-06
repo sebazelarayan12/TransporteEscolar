@@ -3,9 +3,11 @@
  * Handles search, pagination, and selection of titulares with generated payments
  */
 
+import type { ReactNode } from 'react';
 import type { TitularResponse } from '../../../titulares/types/titular.types';
 import { SearchInput } from '../../../shared/ui';
 import { formatCurrency } from '../../../shared/utils/currency.helpers';
+import { getTitularApellidoDisplay } from '../../../shared/utils/titulares.helpers';
 
 const titularButtonBaseClasses =
   'w-full rounded-2xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d8ca5] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#1f1f24]';
@@ -47,39 +49,35 @@ export const TitularSelector = ({
   const startItem = totalCount === 0 ? 0 : (pageNumber - 1) * pageSize + 1;
   const endItem = Math.min(pageNumber * pageSize, totalCount);
 
-  const renderContent = () => {
-    if (isLoading && !titulares.length) {
-      return (
-        <div className="flex h-40 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-          <span className="material-symbols-outlined mr-2 animate-spin text-[20px] text-[#1d8ca5]">progress_activity</span>
-          Cargando titulares con cuotas generadas...
-        </div>
-      );
-    }
-
-    if (isError) {
-      return (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-white/60 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-transparent dark:text-gray-400">
-          {error && typeof error === 'object' && 'message' in error
-            ? String(error.message)
-            : 'No se pudieron cargar los titulares. Intentá nuevamente en unos segundos.'}
-        </div>
-      );
-    }
-
-    if (!titulares.length) {
-      return (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-white/60 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-transparent dark:text-gray-400">
-          {search.trim() ? 'No hay resultados para tu búsqueda.' : 'No hay titulares con cuotas generadas.'}
-        </div>
-      );
-    }
-
-    return (
+  let content: ReactNode;
+  if (isLoading && !titulares.length) {
+    content = (
+      <div className="flex h-40 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+        <span className="material-symbols-outlined mr-2 animate-spin text-[20px] text-[#1d8ca5]">progress_activity</span>
+        Cargando titulares con cuotas generadas...
+      </div>
+    );
+  } else if (isError) {
+    content = (
+      <div className="rounded-2xl border border-dashed border-gray-300 bg-white/60 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-transparent dark:text-gray-400">
+        {error && typeof error === 'object' && 'message' in error
+          ? String(error.message)
+          : 'No se pudieron cargar los titulares. Intentá nuevamente en unos segundos.'}
+      </div>
+    );
+  } else if (!titulares.length) {
+    content = (
+      <div className="rounded-2xl border border-dashed border-gray-300 bg-white/60 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-transparent dark:text-gray-400">
+        {search.trim() ? 'No hay resultados para tu búsqueda.' : 'No hay titulares con cuotas generadas.'}
+      </div>
+    );
+  } else {
+    content = (
       <>
         <div className="mt-4 flex max-h-[420px] flex-col gap-3 overflow-y-auto pr-1">
           {titulares.map((titular) => {
             const isSelected = titular.id === selectedTitularId;
+            const titularLabel = getTitularApellidoDisplay(titular.apellido, titular.nombreContacto);
             return (
               <button
                 key={titular.id}
@@ -94,8 +92,7 @@ export const TitularSelector = ({
               >
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{titular.apellido}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{titular.nombreContacto}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{titularLabel}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Cuota</p>
@@ -135,7 +132,7 @@ export const TitularSelector = ({
         </div>
       </>
     );
-  };
+  }
 
   return (
     <div className="rounded-3xl border border-gray-200 bg-gray-50/70 p-4 dark:border-[#3f3f46] dark:bg-[#1f1f24]">
@@ -163,7 +160,7 @@ export const TitularSelector = ({
         placeholder="Buscar por apellido o nombre..."
         className="mt-4"
       />
-      {renderContent()}
+      {content}
     </div>
   );
 };

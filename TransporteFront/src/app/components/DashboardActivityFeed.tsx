@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Spinner } from '../../shared/ui/Spinner';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import type { DashboardActivityItem } from '../types/dashboard.types';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 interface DashboardActivityFeedProps {
   activityItems: DashboardActivityItem[];
@@ -11,8 +12,13 @@ interface DashboardActivityFeedProps {
 const formatFechaCorta = (iso: string) =>
   new Date(iso).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
 
-const getInitials = (apellido: string, nombre: string) =>
-  `${apellido?.charAt(0) ?? ''}${nombre?.charAt(0) ?? ''}`.toUpperCase() || '--';
+const getInitialsFromDisplay = (display: string) => {
+  const parts = display.split(/\s+/).filter(Boolean);
+  const first = parts[0]?.charAt(0) ?? '';
+  const second = parts[1]?.charAt(0) ?? '';
+  const initials = `${first}${second}`.toUpperCase();
+  return initials || '--';
+};
 
 export const DashboardActivityFeed = ({ activityItems, isLoading }: DashboardActivityFeedProps) => {
   const showActivitySpinner = isLoading && activityItems.length === 0;
@@ -33,7 +39,8 @@ export const DashboardActivityFeed = ({ activityItems, isLoading }: DashboardAct
         )}
         {!showActivitySpinner &&
           activityItems.map((item, index) => {
-            const initials = getInitials(item.titularApellido, item.titularNombre);
+            const titularDisplay = getTitularApellidoDisplay(item.titularApellido, item.titularNombre);
+            const initials = getInitialsFromDisplay(titularDisplay);
             const montoClass = item.saldoPendiente <= 0 ? 'text-emerald-500' : 'text-gray-500 dark:text-gray-400';
             return (
               <div key={`${item.movimientoId}-${item.titularId}`}>
@@ -42,9 +49,7 @@ export const DashboardActivityFeed = ({ activityItems, isLoading }: DashboardAct
                     {initials}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-[#0f181a] dark:text-white truncate">
-                      {item.titularNombre} {item.titularApellido}
-                    </p>
+                    <p className="text-sm font-bold text-[#0f181a] dark:text-white truncate">{titularDisplay}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       Pago {item.periodo} • {item.medioPago}
                     </p>

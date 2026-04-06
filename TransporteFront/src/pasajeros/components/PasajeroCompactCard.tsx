@@ -1,5 +1,6 @@
 import type { PasajeroResponse } from '../types/pasajero.types';
 import { PasajeroHorarioBadges } from './PasajeroHorarioBadges';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 interface PasajeroCompactCardProps {
   pasajero: PasajeroResponse;
@@ -8,6 +9,8 @@ interface PasajeroCompactCardProps {
 }
 
 export const PasajeroCompactCard = ({ pasajero, isSelected, onClick }: PasajeroCompactCardProps) => {
+  const titularDisplay = getTitularApellidoDisplay(pasajero.titularApellido, null);
+
   return (
     <button
       type="button"
@@ -27,7 +30,7 @@ export const PasajeroCompactCard = ({ pasajero, isSelected, onClick }: PasajeroC
       {/* Titular y Colegio */}
       <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
         <span className="truncate">
-          {pasajero.titularApellido || 'Sin titular'}
+          {titularDisplay}
         </span>
         <span>•</span>
         <span className="truncate">

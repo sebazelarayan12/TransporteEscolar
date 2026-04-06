@@ -1,13 +1,15 @@
 import { formatDateTime } from '../../shared/utils/date.helpers';
 import type { NotificacionResponse } from '../types/notificacion.types';
+import { formatNotificacionMensajeConPeriodo } from '../utils/notificacion.helpers';
 
 interface ActualizacionProductoCardProps {
   notificacion: NotificacionResponse;
 }
 
 export const ActualizacionProductoCard = ({ notificacion }: ActualizacionProductoCardProps) => {
-  const descripcion = notificacion.descripcion ?? notificacion.mensaje;
+  const descripcionBase = notificacion.descripcion ?? notificacion.mensaje;
   const fechaReferencia = notificacion.fechaPublicacion ?? notificacion.fechaCreacion;
+  const descripcion = formatNotificacionMensajeConPeriodo(descripcionBase, fechaReferencia);
 
   return (
     <div className="flex w-full items-start gap-3 rounded-xl border border-dashed border-cyan-500/30 bg-cyan-500/5 p-3">

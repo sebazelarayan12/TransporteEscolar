@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { TitularResponse } from '../../titulares/types/titular.types';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 interface TitularComboboxProps {
   titulares: TitularResponse[];
@@ -20,8 +21,8 @@ export const TitularCombobox = ({ titulares, value, onChange, error, disabled, i
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedTitular = titulares.find(t => t.id === value);
-  const displayText = selectedTitular 
-    ? `${selectedTitular.apellido}, ${selectedTitular.nombreContacto}`
+  const displayText = selectedTitular
+    ? getTitularApellidoDisplay(selectedTitular.apellido, selectedTitular.nombreContacto)
     : '';
 
   const filteredTitulares = titulares.filter(titular =>
@@ -81,19 +82,23 @@ export const TitularCombobox = ({ titulares, value, onChange, error, disabled, i
               No se encontraron titulares
             </div>
           ) : (
-            filteredTitulares.map((titular) => (
-              <button
-                key={titular.id}
-                type="button"
-                onClick={() => handleSelect(titular.id)}
-                className={`
-                  w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-[#3f3f46]
-                  ${titular.id === value ? 'bg-[#007a8a]/10 text-[#007a8a] dark:text-cyan-400' : 'text-gray-900 dark:text-white'}
-                `}
-              >
-                {titular.apellido}, {titular.nombreContacto}
-              </button>
-            ))
+            filteredTitulares.map((titular) => {
+              const label = getTitularApellidoDisplay(titular.apellido, titular.nombreContacto);
+              return (
+                <button
+                  key={titular.id}
+                  type="button"
+                  onClick={() => handleSelect(titular.id)}
+                  className={`
+                    w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-[#3f3f46]
+                    ${titular.id === value ? 'bg-[#007a8a]/10 text-[#007a8a] dark:text-cyan-400' : 'text-gray-900 dark:text-white'}
+                  `}
+                  aria-label={`Seleccionar titular ${label}`}
+                >
+                  {label}
+                </button>
+              );
+            })
           )}
         </div>
       )}

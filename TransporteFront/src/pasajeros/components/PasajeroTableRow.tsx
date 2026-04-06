@@ -1,5 +1,6 @@
 import type { PasajeroResponse } from '../types/pasajero.types';
 import { PasajeroHorarioBadges } from './PasajeroHorarioBadges';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 interface PasajeroTableRowProps {
   pasajero: PasajeroResponse;
@@ -11,6 +12,7 @@ export const PasajeroTableRow = ({ pasajero, isSelected, onSelect }: PasajeroTab
   const statusStyles = pasajero.activo
     ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
     : 'bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300';
+  const titularDisplay = getTitularApellidoDisplay(pasajero.titularApellido, null);
 
   return (
     <button
@@ -29,7 +31,7 @@ export const PasajeroTableRow = ({ pasajero, isSelected, onSelect }: PasajeroTab
           <p className="text-xs text-gray-500">ID #{pasajero.id}</p>
         </div>
       </div>
-      <span className="truncate text-sm text-gray-600 dark:text-gray-300">{pasajero.titularApellido || '—'}</span>
+      <span className="truncate text-sm text-gray-600 dark:text-gray-300">{titularDisplay}</span>
       <span className="truncate text-sm text-gray-600 dark:text-gray-300">{pasajero.colegio}</span>
       <span className="text-sm text-gray-600 dark:text-gray-300">{pasajero.gradoCurso}</span>
       <div className="text-sm font-medium text-gray-700 dark:text-gray-200">
