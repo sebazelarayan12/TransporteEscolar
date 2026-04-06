@@ -42,7 +42,7 @@ public class NotificacionesController : ControllerBase
     }
 
     /// <summary>
-    /// Registra o actualiza la última notificación de actualización de producto (se conserva un solo registro)
+    /// Registractualiza la última notificación de actualización de producto (se conserva un solo registro)
     /// </summary>
     [HttpPut("ultima-actualizacion")]
     public async Task<ActionResult<NotificacionModel.Response>> GuardarUltimaActualizacion(

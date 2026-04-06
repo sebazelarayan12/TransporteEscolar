@@ -1,6 +1,7 @@
 import { PaymentHistory } from './PaymentHistory';
 import { PaymentForm } from './PaymentForm';
 import type { PagoMensual, RegistrarPagoRequest } from '../types/pago.types';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 interface PaymentDetailPanelProps {
   pago: PagoMensual | null;
@@ -24,7 +25,7 @@ export const PaymentDetailPanel = ({ pago, onSubmitPayment, isSubmitting }: Paym
     );
   }
 
-  const titularNombreCompleto = [pago.titularApellido, pago.titularNombre].filter(Boolean).join(', ');
+  const titularDisplay = getTitularApellidoDisplay(pago.titularApellido, pago.titularNombre);
 
   return (
     <div className="space-y-6">
@@ -32,10 +33,7 @@ export const PaymentDetailPanel = ({ pago, onSubmitPayment, isSubmitting }: Paym
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-[#1d8ca5]">Detalle de pago</p>
-          <h2 className="text-2xl font-bold text-[#0f181a] dark:text-white leading-tight">{pago.titularApellido}</h2>
-          {pago.titularNombre ? (
-            <p className="text-sm text-gray-500">{pago.titularNombre}</p>
-          ) : null}
+          <h2 className="text-2xl font-bold text-[#0f181a] dark:text-white leading-tight">{titularDisplay}</h2>
           {pago.titularDireccion ? (
             <p className="text-xs text-gray-400">{pago.titularDireccion}</p>
           ) : null}
@@ -75,7 +73,7 @@ export const PaymentDetailPanel = ({ pago, onSubmitPayment, isSubmitting }: Paym
         <PaymentHistory
           movimientos={pago.movimientos}
           pagoId={pago.id}
-          titularLabel={titularNombreCompleto}
+          titularLabel={titularDisplay}
           periodo={pago.periodo}
         />
       </div>

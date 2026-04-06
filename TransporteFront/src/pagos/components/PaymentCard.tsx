@@ -1,5 +1,6 @@
 import type { PagoMensual, PaymentStatus } from '../types/pago.types';
 import { formatDateOnlyCompact } from '../../shared/utils/date.helpers';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 interface PaymentCardProps {
   pago: PagoMensual;
@@ -33,6 +34,8 @@ const currencyFormatter = new Intl.NumberFormat('es-AR', {
 });
 
 export const PaymentCard = ({ pago, isSelected, onSelect, status }: PaymentCardProps) => {
+  const titularDisplay = getTitularApellidoDisplay(pago.titularApellido, pago.titularNombre);
+
   return (
     <button
       type="button"
@@ -46,10 +49,7 @@ export const PaymentCard = ({ pago, isSelected, onSelect, status }: PaymentCardP
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-gray-500">{pago.periodo}</p>
-            <h4 className="text-lg font-bold text-[#0f181a] dark:text-white leading-tight">{pago.titularApellido}</h4>
-            {pago.titularNombre ? (
-              <p className="text-xs text-gray-500">{pago.titularNombre}</p>
-            ) : null}
+            <h4 className="text-lg font-bold text-[#0f181a] dark:text-white leading-tight">{titularDisplay}</h4>
             {pago.titularDireccion ? (
               <p className="text-[11px] text-gray-400">{pago.titularDireccion}</p>
             ) : null}

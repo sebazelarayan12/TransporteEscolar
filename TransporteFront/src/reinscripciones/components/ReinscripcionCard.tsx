@@ -1,5 +1,6 @@
 import type { ReinscripcionDetallada, ReinscripcionEstado } from '../types/reinscripcion.types';
 import { formatDateOnlyCompact } from '../../shared/utils/date.helpers';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 const statusConfig: Record<ReinscripcionEstado, { label: string; chip: string; card: string; foreground: string }> = {
   Confirmado: {
@@ -109,6 +110,7 @@ interface ReinscripcionCardProps {
 
 export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, onMarkAsPending }: ReinscripcionCardProps) => {
   const getInitial = (nombre: string) => nombre.charAt(0).toUpperCase();
+  const titularDisplay = getTitularApellidoDisplay(undefined, registro.titularNombre);
 
   return (
     <article
@@ -155,7 +157,7 @@ export const ReinscripcionCard = ({ registro, onConfirm, onMarkAsNotContinuing, 
       <div className="grid gap-y-3 gap-x-4 border-t border-dashed border-gray-200 pt-3 text-sm dark:border-gray-700 sm:grid-cols-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Titular</p>
-          <p className="text-gray-600 dark:text-gray-300">{registro.titularNombre}</p>
+          <p className="text-gray-600 dark:text-gray-300">{titularDisplay}</p>
         </div>
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Colegio</p>

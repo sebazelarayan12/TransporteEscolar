@@ -17,6 +17,7 @@ import {
 import { PagosMovimientosHeader } from '../components/movimientos/PagosMovimientosHeader';
 import { MovimientosResumenCards } from '../components/movimientos/MovimientosResumenCards';
 import { MovimientosTableSection } from '../components/movimientos/MovimientosTableSection';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 const MOVIMIENTOS_PAGE_SIZE = 20;
 
@@ -61,7 +62,7 @@ export const PagosMovimientosPage = () => {
   const shouldFetchTitular = typeof titularIdFromParams === 'number' && !Number.isNaN(titularIdFromParams);
   const { data: titularDetalle } = useTitular(shouldFetchTitular ? (titularIdFromParams as number) : 0);
   const titularLabelFromQuery = titularDetalle
-    ? `${titularDetalle.apellido}, ${titularDetalle.nombreContacto}`.trim()
+    ? getTitularApellidoDisplay(titularDetalle.apellido, titularDetalle.nombreContacto)
     : null;
 
   const titularOptionFromParams = shouldFetchTitular
@@ -262,9 +263,10 @@ export const PagosMovimientosPage = () => {
                   medioPago: movimientoSeleccionado.medioPago,
                   fechaPago: movimientoSeleccionado.fechaPago,
                   periodo: movimientoSeleccionado.periodo,
-                  titularLabel:
-                    movimientoSeleccionado.titularNombreCompleto ??
-                    `${movimientoSeleccionado.titularApellido}, ${movimientoSeleccionado.titularNombre}`,
+                  titularLabel: getTitularApellidoDisplay(
+                    movimientoSeleccionado.titularApellido,
+                    movimientoSeleccionado.titularNombreCompleto ?? movimientoSeleccionado.titularNombre,
+                  ),
                   observaciones: movimientoSeleccionado.observaciones,
                 }
               : null

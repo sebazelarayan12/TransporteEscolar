@@ -2,6 +2,7 @@ import type { PasajeroResponse } from '../types/pasajero.types';
 import { TRANSPORTE_LABELS, TRANSPORTE_TIPOS } from '../../shared/types/transporte.types';
 import type { TransporteTipo } from '../../shared/types/transporte.types';
 import { getPasajeroHorarioAsignado, getPasajeroHorariosResumen } from '../helpers/horario.helpers';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 interface PasajeroSelectableListProps {
   pasajeros: PasajeroResponse[];
@@ -80,6 +81,7 @@ const PasajeroSelectableRow = ({
 
   const checkboxId = `pasajero-${pasajero.id}-${section}`;
   const pasajeroNameId = `${checkboxId}-nombre`;
+  const titularDisplay = getTitularApellidoDisplay(pasajero.titularApellido, null);
 
   return (
     <label
@@ -106,7 +108,7 @@ const PasajeroSelectableRow = ({
           <p id={pasajeroNameId} className="font-semibold text-gray-900 dark:text-white">
             {pasajero.nombreCompleto}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Titular: {pasajero.titularApellido ?? 'Sin titular'}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Titular: {titularDisplay}</p>
         </div>
       </div>
       <div className="pl-7 text-sm text-gray-600 dark:text-gray-300 lg:pl-0">

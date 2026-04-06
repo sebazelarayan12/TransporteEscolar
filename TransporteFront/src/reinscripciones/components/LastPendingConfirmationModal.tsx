@@ -2,6 +2,7 @@ import { Modal, Button, Spinner } from '../../shared/ui';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { usePrecioPrevioReinscripcion } from '../services/reinscripciones.queries';
 import type { ReinscripcionPrecioPrevioResponse } from '../types/reinscripcion.types';
+import { DEFAULT_TITULAR_LABEL, getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 interface PrecioResumenProps {
   variant: 'confirmar' | 'noContinua';
@@ -112,6 +113,13 @@ export const LastPendingConfirmationModal = ({
     isProcessing ||
     (variant === 'confirmar' && (!reinscripcionId || !precioData || hasPrecioError || isPriceLoading));
 
+  const titularDisplay = titularNombre
+    ? (() => {
+        const label = getTitularApellidoDisplay(undefined, titularNombre);
+        return label === DEFAULT_TITULAR_LABEL ? undefined : label;
+      })()
+    : undefined;
+
   const actionDescription = variant === 'confirmar'
     ? isUltimoPendiente
       ? 'Esta confirmación cierra las reinscripciones pendientes de este titular y generará automáticamente las cuotas con el valor final calculado.'
@@ -147,10 +155,10 @@ export const LastPendingConfirmationModal = ({
               <dt className="text-xs uppercase tracking-wide opacity-80">Pasajero</dt>
               <dd className="text-right font-semibold">{pasajeroNombre}</dd>
             </div>
-            {titularNombre && (
+            {titularDisplay && (
               <div className="flex items-center justify-between gap-4">
                 <dt className="text-xs uppercase tracking-wide opacity-80">Titular</dt>
-                <dd className="text-right font-semibold">{titularNombre}</dd>
+                <dd className="text-right font-semibold">{titularDisplay}</dd>
               </div>
             )}
           </dl>

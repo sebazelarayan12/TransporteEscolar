@@ -5,6 +5,7 @@ import { useEliminarHorarioPasajero } from '../services/pasajeros.queries';
 import { useToast } from '../../shared/hooks';
 import { Button } from '../../shared/ui/Button';
 import { getHorariosAsignados, formatPasajeroHorarioEtiqueta } from '../helpers/horario.helpers';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 interface PasajeroDetailPanelProps {
   pasajero: PasajeroResponse | null;
@@ -48,6 +49,7 @@ export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelPr
   }
 
   const horariosAsignados = getHorariosAsignados(pasajero);
+  const titularDisplay = getTitularApellidoDisplay(pasajero.titularApellido, null);
 
   return (
     <div className="flex h-full flex-col">
@@ -124,7 +126,7 @@ export const PasajeroDetailPanel = ({ pasajero, onClose }: PasajeroDetailPanelPr
           </div>
           <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Titular</p>
-            <p className="text-base font-medium text-gray-900 dark:text-white">{pasajero.titularApellido || 'Sin titular asignado'}</p>
+            <p className="text-base font-medium text-gray-900 dark:text-white">{titularDisplay}</p>
           </div>
           <div className="rounded-xl border border-gray-100 p-4 dark:border-white/10">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Colegio</p>

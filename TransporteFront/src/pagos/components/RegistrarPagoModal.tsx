@@ -21,6 +21,7 @@ import {
   type PagoConfirmacionData,
 } from './registrar-pago';
 import { AjustarMontoTitularModal } from './AjustarMontoTitularModal';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 interface RegistrarPagoState {
   search: string;
@@ -192,7 +193,7 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
       type: 'openConfirmacion',
       payload: {
         pagoId: pagoDestino.id,
-        titularNombreCompleto: `${titularActivo.nombreContacto} ${titularActivo.apellido}`.trim(),
+        titularLabel: getTitularApellidoDisplay(titularActivo.apellido, titularActivo.nombreContacto),
         monto: montoNumber,
         medioPago,
         observaciones: trimmedObservaciones ? trimmedObservaciones : undefined,

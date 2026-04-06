@@ -19,6 +19,7 @@ import type {
   ReinscripcionActionVariant,
   ReinscripcionImmediateActionVariant,
 } from '../types/reinscripcion-actions.types';
+import { DEFAULT_TITULAR_LABEL, getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 type CriticalActionState =
   | {
@@ -151,7 +152,11 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
 
     try {
       const nuevaReinscripcion = await crearReinscripcionMutation.mutateAsync({ pasajeroId: pasajero.id, anio });
-      const titularDescripcion = nuevaReinscripcion.titularNombre || (pasajero.titularApellido ? `Familia ${pasajero.titularApellido}` : undefined);
+      const titularDescripcionRaw = getTitularApellidoDisplay(
+        pasajero.titularApellido ?? undefined,
+        nuevaReinscripcion.titularNombre,
+      );
+      const titularDescripcion = titularDescripcionRaw === DEFAULT_TITULAR_LABEL ? undefined : titularDescripcionRaw;
 
       setCriticalAction({
         variant: 'confirmado',
@@ -196,11 +201,13 @@ export const ReinscripcionCreateModal = ({ isOpen, onClose, anio, onCreated }: R
     }
 
     if (esUltimoPendiente) {
+      const titularNombreRaw = getTitularApellidoDisplay(selectedPasajero.titularApellido ?? undefined, undefined);
+      const titularNombre = titularNombreRaw === DEFAULT_TITULAR_LABEL ? undefined : titularNombreRaw;
       setCriticalAction({
         variant: 'noContinua',
         pasajero: selectedPasajero,
         pasajeroNombre: selectedPasajero.nombreCompleto,
-        titularNombre: selectedPasajero.titularApellido ? `Familia ${selectedPasajero.titularApellido}` : undefined,
+        titularNombre,
         isUltimoPendiente: true,
       });
       return;

@@ -8,6 +8,7 @@ import { useToast } from '../../shared/hooks/useToast';
 import { useAjustarMontoTitular } from '../services/pagos.queries';
 import type { AjusteTitularRequest } from '../types/pago.types';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 const ajustarMontoSchema = z.object({
   nuevoMonto: z
@@ -241,7 +242,9 @@ const FormActions = ({ isPending, submitDisabled, onCancel }: FormActionsProps) 
 );
 
 const TitularSummaryCard = ({ titular }: { titular: TitularResponse | null }) => {
-  const titularLabel = titular ? `${titular.apellido}, ${titular.nombreContacto}` : 'Sin titular seleccionado';
+  const titularLabel = titular
+    ? getTitularApellidoDisplay(titular.apellido, titular.nombreContacto)
+    : 'Sin titular seleccionado';
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-[#3f3f46] dark:bg-[#1f1f24]">

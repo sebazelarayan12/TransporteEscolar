@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { TitularResponse } from '../../../titulares/types/titular.types';
 import { useTitularesConPagos } from '../../services/pagos.queries';
 import { useDebounce } from '../../../shared/hooks/useDebounce';
+import { getTitularApellidoDisplay } from '../../../shared/utils/titulares.helpers';
 
 export interface TitularOption {
   id: number;
@@ -29,60 +30,58 @@ export const MovimientosTitularSearch = ({ value, onSelect, onClear }: Movimient
   const results = data?.data ?? [];
 
   const handleSelect = (titular: TitularResponse) => {
+    const label = getTitularApellidoDisplay(titular.apellido, titular.nombreContacto);
     onSelect({
       id: titular.id,
-      label: `${titular.apellido}, ${titular.nombreContacto}`.trim(),
+      label,
     });
     setQuery('');
   };
 
-  const renderResults = () => {
-    if (!shouldSearch) {
-      return (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Escribí al menos 2 caracteres para buscar titulares con cuotas generadas.
-        </p>
-      );
-    }
-
-    if (isError) {
-      return (
-        <p className="text-sm text-red-500">No pudimos cargar el listado. Intentá nuevamente.</p>
-      );
-    }
-
-    if (isLoading && !results.length) {
-      return (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span className="material-symbols-outlined animate-spin text-[18px] text-[#1d8ca5]">progress_activity</span>
-          Buscando titulares...
-        </div>
-      );
-    }
-
-    if (!results.length) {
-      return <p className="text-sm text-gray-500">No encontramos coincidencias para "{debouncedQuery}".</p>;
-    }
-
-    return (
+  let resultsContent: ReactNode;
+  if (!shouldSearch) {
+    resultsContent = (
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Escribí al menos 2 caracteres para buscar titulares con cuotas generadas.
+      </p>
+    );
+  } else if (isError) {
+    resultsContent = (
+      <p className="text-sm text-red-500">No pudimos cargar el listado. Intentá nuevamente.</p>
+    );
+  } else if (isLoading && !results.length) {
+    resultsContent = (
+      <div className="flex items-center gap-2 text-sm text-gray-500">
+        <span className="material-symbols-outlined animate-spin text-[18px] text-[#1d8ca5]">progress_activity</span>
+        Buscando titulares...
+      </div>
+    );
+  } else if (!results.length) {
+    resultsContent = (
+      <p className="text-sm text-gray-500">No encontramos coincidencias para "{debouncedQuery}".</p>
+    );
+  } else {
+    resultsContent = (
       <ul className="space-y-2" role="listbox" aria-label="Resultados de titulares">
-        {results.map((titular) => (
-          <li key={titular.id}>
-            <button
-              type="button"
-              onClick={() => handleSelect(titular)}
-              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left text-sm text-gray-900 shadow-sm transition hover:border-[#1d8ca5]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d8ca5] dark:border-[#3f3f46] dark:bg-[#1f1f24] dark:text-gray-100"
-              aria-label={`Seleccionar titular ${titular.apellido} ${titular.nombreContacto}`}
-            >
-              <p className="font-semibold text-gray-900 dark:text-white">{titular.apellido}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{titular.nombreContacto}</p>
-              <p className="text-xs text-gray-400">ID #{titular.id}</p>
-            </button>
-          </li>
-        ))}
+        {results.map((titular) => {
+          const label = getTitularApellidoDisplay(titular.apellido, titular.nombreContacto);
+          return (
+            <li key={titular.id}>
+              <button
+                type="button"
+                onClick={() => handleSelect(titular)}
+                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left text-sm text-gray-900 shadow-sm transition hover:border-[#1d8ca5]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d8ca5] dark:border-[#3f3f46] dark:bg-[#1f1f24] dark:text-gray-100"
+                aria-label={`Seleccionar titular ${label}`}
+              >
+                <p className="font-semibold text-gray-900 dark:text-white">{label}</p>
+                <p className="text-xs text-gray-400">ID #{titular.id}</p>
+              </button>
+            </li>
+          );
+        })}
       </ul>
     );
-  };
+  }
 
   return (
     <div className="space-y-3">
@@ -128,7 +127,7 @@ export const MovimientosTitularSearch = ({ value, onSelect, onClear }: Movimient
       ) : null}
 
       <div className="rounded-3xl border border-dashed border-gray-300 bg-white/80 p-4 dark:border-gray-700 dark:bg-[#1f1f24]">
-        {renderResults()}
+        {resultsContent}
       </div>
     </div>
   );

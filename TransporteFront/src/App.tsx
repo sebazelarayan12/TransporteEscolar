@@ -1,8 +1,13 @@
-import { lazy } from 'react';
+import { lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from './shared/ui/ToastProvider';
 import { MainLayout } from './app/MainLayout';
+import {
+  subscribeToPush,
+  isPushSupported,
+  getNotificationPermission,
+} from './notificaciones/services/push.service';
 
 const DashboardPage = lazy(() =>
   import('./app/DashboardPage').then((module) => ({ default: module.DashboardPage }))
@@ -56,6 +61,12 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  useEffect(() => {
+    if (isPushSupported() && getNotificationPermission() !== 'denied') {
+      subscribeToPush();
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>

@@ -5,6 +5,7 @@ import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { useToast } from '../../shared/hooks';
 import type { PagoMensualDetalle, PagoMovimiento } from '../types/pago.types';
 import { EliminarMovimientoDialog } from './EliminarMovimientoDialog';
+import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 interface PagoDetalleModalProps {
   isOpen: boolean;
@@ -73,15 +74,13 @@ const PagoDetalleContent = ({
   }
 
   const hasMovimientos = pago.movimientos && pago.movimientos.length > 0;
+  const titularDisplay = getTitularApellidoDisplay(pago.titularApellido, pago.titularNombre);
 
   return (
     <div className="space-y-6">
       {/* Cabecera: Titular + Período */}
       <div className="border-b border-gray-200 pb-4 dark:border-gray-700">
-        <h3 className="text-xl font-bold text-[#0f181a] dark:text-white">
-          {pago.titularApellido}
-          {pago.titularNombre ? ` ${pago.titularNombre}` : ''}
-        </h3>
+        <h3 className="text-xl font-bold text-[#0f181a] dark:text-white">{titularDisplay}</h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">{pago.periodo}</p>
         {pago.titularDireccion ? (
           <p className="text-xs text-gray-500 dark:text-gray-500">{pago.titularDireccion}</p>
@@ -243,7 +242,7 @@ export const PagoDetalleModal = ({ isOpen, onClose, pagoId }: PagoDetalleModalPr
         medioPago: movimientoSeleccionado.medioPago,
         fechaPago: movimientoSeleccionado.fechaPago,
         periodo: pago.periodo,
-        titularLabel: [pago.titularApellido, pago.titularNombre].filter(Boolean).join(', '),
+        titularLabel: getTitularApellidoDisplay(pago.titularApellido, pago.titularNombre),
         observaciones: movimientoSeleccionado.observaciones,
       }
     : null;
