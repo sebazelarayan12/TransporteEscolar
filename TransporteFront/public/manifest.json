@@ -1,0 +1,18 @@
+{
+  "name": "Transporte Escolar",
+  "short_name": "Transporte",
+  "description": "Plataforma de administracion de transporte escolar",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0891b2",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/transporteicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
