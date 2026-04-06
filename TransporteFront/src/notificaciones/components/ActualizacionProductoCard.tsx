@@ -1,15 +1,14 @@
 import { formatDateTime } from '../../shared/utils/date.helpers';
 import type { NotificacionResponse } from '../types/notificacion.types';
-import { formatNotificacionMensajeConPeriodo } from '../utils/notificacion.helpers';
 
 interface ActualizacionProductoCardProps {
   notificacion: NotificacionResponse;
 }
 
 export const ActualizacionProductoCard = ({ notificacion }: ActualizacionProductoCardProps) => {
-  const descripcionBase = notificacion.descripcion ?? notificacion.mensaje;
   const fechaReferencia = notificacion.fechaPublicacion ?? notificacion.fechaCreacion;
-  const descripcion = formatNotificacionMensajeConPeriodo(descripcionBase, fechaReferencia);
+  const titulo = 'Notificaciones';
+  const descripcion = 'ahora hay notificaciones';
 
   return (
     <div className="flex w-full items-start gap-3 rounded-xl border border-dashed border-cyan-500/30 bg-cyan-500/5 p-3">
@@ -21,7 +20,7 @@ export const ActualizacionProductoCard = ({ notificacion }: ActualizacionProduct
           <span className="material-symbols-outlined text-sm">upgrade</span>
           Actualización del sistema
         </div>
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{notificacion.titulo}</p>
+        <p className="text-sm font-medium text-gray-900 dark:text-white">{titulo}</p>
         <p className="text-xs text-gray-600 whitespace-pre-line dark:text-gray-300">{descripcion}</p>
         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
           <span>Publicado el {formatDateTime(fechaReferencia)}</span>
