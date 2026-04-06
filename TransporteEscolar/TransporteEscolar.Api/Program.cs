@@ -6,6 +6,7 @@ using TransporteEscolar.Api.DependencyInjection;
 using TransporteEscolar.Api.HostedServices;
 using TransporteEscolar.Api.Middleware;
 using TransporteEscolar.Api.Options;
+using TransporteEscolar.Application.Options;
 using TransporteEscolar.Infrastructure.Persistence;
 
 namespace TransporteEscolar.Api
@@ -29,6 +30,7 @@ namespace TransporteEscolar.Api
             builder.Services.AddApplicationServices();
             builder.Services.AddWhatsAppIntegration(builder.Configuration);
             builder.Services.Configure<ReleaseNotesOptions>(builder.Configuration.GetSection("ReleaseNotes"));
+            builder.Services.Configure<VapidSettings>(builder.Configuration.GetSection(VapidSettings.SectionName));
             builder.Services.AddHostedService<ReleaseNotesInitializer>();
 
             // CORS - Configurado dinámicamente mediante variable de entorno

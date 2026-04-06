@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGastoRepository, GastoRepository>();
         services.AddScoped<IIngresoRepository, IngresoRepository>();
         services.AddScoped<INotificacionRepository, NotificacionRepository>();
+        services.AddScoped<IPushSubscriptionRepository, PushSubscriptionRepository>();
         
         // Servicios
         services.AddScoped<ITitularService, TitularService>();
@@ -32,6 +33,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGastoService, GastoService>();
         services.AddScoped<IIngresoService, IngresoService>();
         services.AddScoped<INotificacionService, NotificacionService>();
+        services.AddScoped<IWebPushService, WebPushService>();
 
         // Gestión de Transacciones
         services.AddScoped<ITransactionManager, TransactionManager>();

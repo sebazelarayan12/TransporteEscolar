@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Domain.Entities;
@@ -7,10 +8,17 @@ namespace TransporteEscolar.Application.Services;
     public class NotificacionService : INotificacionService
     {
         private readonly INotificacionRepository _repository;
+        private readonly IWebPushService _webPushService;
+        private readonly ILogger<NotificacionService> _logger;
 
-        public NotificacionService(INotificacionRepository repository)
+        public NotificacionService(
+            INotificacionRepository repository,
+            IWebPushService webPushService,
+            ILogger<NotificacionService> logger)
         {
             _repository = repository;
+            _webPushService = webPushService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -37,6 +45,8 @@ namespace TransporteEscolar.Application.Services;
                 actualizacionExistente.ActualizarActualizacionProducto(titulo, descripcion, fechaPublicacion, linkNormalizado);
                 await _repository.UpdateAsync(actualizacionExistente, cancellationToken);
             }
+
+            await EnviarPushAsync(titulo, descripcion, linkNormalizado, cancellationToken);
 
             return MapearAResponse(actualizacionExistente);
         }
@@ -104,6 +114,12 @@ namespace TransporteEscolar.Application.Services;
         
         // Limpieza oportunista de notificaciones antiguas
         await LimpiarNotificacionesAntiguasAsync(cancellationToken);
+
+        await EnviarPushAsync(
+            "Nuevo pago registrado",
+            $"{nombreCorto} pagó ${monto:N0} ({periodo})",
+            $"/pagos?pagoId={pagoMensualId}",
+            cancellationToken);
     }
 
     public async Task CrearNotificacionAjusteMontoAsync(
@@ -124,6 +140,12 @@ namespace TransporteEscolar.Application.Services;
         
         // Limpieza oportunista de notificaciones antiguas
         await LimpiarNotificacionesAntiguasAsync(cancellationToken);
+
+        await EnviarPushAsync(
+            "Ajuste de monto",
+            $"Monto de {nombreCorto}: ${nuevoMonto:N0}",
+            $"/titulares/{titularId}",
+            cancellationToken);
     }
 
     public async Task CrearNotificacionReinscripcionAsync(
@@ -148,6 +170,12 @@ namespace TransporteEscolar.Application.Services;
         
         // Limpieza oportunista de notificaciones antiguas
         await LimpiarNotificacionesAntiguasAsync(cancellationToken);
+
+        await EnviarPushAsync(
+            "Reinscripción confirmada",
+            mensaje,
+            $"/titulares/{titularId}",
+            cancellationToken);
     }
 
     public async Task CrearNotificacionTitularCreadoAsync(
@@ -166,6 +194,12 @@ namespace TransporteEscolar.Application.Services;
         
         // Limpieza oportunista de notificaciones antiguas
         await LimpiarNotificacionesAntiguasAsync(cancellationToken);
+
+        await EnviarPushAsync(
+            "Nuevo titular",
+            $"Titular: {titularNombre}",
+            $"/titulares/{titularId}",
+            cancellationToken);
     }
 
     public async Task CrearNotificacionPasajeroCreadoAsync(
@@ -186,6 +220,24 @@ namespace TransporteEscolar.Application.Services;
         
         // Limpieza oportunista de notificaciones antiguas
         await LimpiarNotificacionesAntiguasAsync(cancellationToken);
+
+        await EnviarPushAsync(
+            "Nuevo pasajero",
+            $"{pasajeroNombre} (titular: {nombreCortoTitular})",
+            $"/pasajeros/{pasajeroId}",
+            cancellationToken);
+    }
+
+    private async Task EnviarPushAsync(string titulo, string mensaje, string? url, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _webPushService.EnviarATodosAsync(titulo, mensaje, url, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error al enviar notificacion push {Titulo}", titulo);
+        }
     }
 
     public async Task<int> LimpiarNotificacionesAntiguasAsync(CancellationToken cancellationToken = default)

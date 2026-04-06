@@ -23,6 +23,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
     public DbSet<LoteWhatsApp> LotesWhatsApp => Set<LoteWhatsApp>();
     public DbSet<MensajeWhatsApp> MensajesWhatsApp => Set<MensajeWhatsApp>();
+    public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -44,5 +45,6 @@ public sealed class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new NotificacionConfiguration());
         modelBuilder.ApplyConfiguration(new LoteWhatsAppConfiguration());
         modelBuilder.ApplyConfiguration(new MensajeWhatsAppConfiguration());
+        modelBuilder.ApplyConfiguration(new PushSubscriptionConfiguration());
     }
 }
