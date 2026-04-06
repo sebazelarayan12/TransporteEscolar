@@ -3,7 +3,7 @@ import { pushApi } from './push.api';
 /**
  * Convierte una clave VAPID base64 a Uint8Array (formato requerido por PushManager)
  */
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);
@@ -11,7 +11,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   for (let i = 0; i < rawData.length; i++) {
     outputArray[i] = rawData.charCodeAt(i);
   }
-  return outputArray;
+  return outputArray.buffer;
 }
 
 /**
@@ -66,8 +66,7 @@ export async function subscribeToPush(): Promise<boolean> {
 
     // 3. Obtener la clave publica VAPID del backend
     const { publicKey } = await pushApi.getVapidPublicKey();
-    const applicationServerKeyArray = urlBase64ToUint8Array(publicKey);
-    const applicationServerKey: BufferSource = applicationServerKeyArray;
+    const applicationServerKey = urlBase64ToUint8Array(publicKey);
 
     // 4. Verificar si ya hay una suscripcion activa
     let subscription = await registration.pushManager.getSubscription();
