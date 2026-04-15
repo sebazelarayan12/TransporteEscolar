@@ -10,7 +10,7 @@ const config = {
   activeEnvironment: 'production',
 
   // true = solo muestra los mensajes en consola, NO envía nada por WhatsApp
-  dryRun: true,
+  dryRun: false,
 
   environments: {
     testing: {

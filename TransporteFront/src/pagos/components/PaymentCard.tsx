@@ -1,6 +1,7 @@
 import type { PagoMensual, PaymentStatus } from '../types/pago.types';
 import { formatDateOnlyCompact } from '../../shared/utils/date.helpers';
 import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
+import { formatCurrency } from '../../shared/utils/currency.helpers';
 
 interface PaymentCardProps {
   pago: PagoMensual;
@@ -26,12 +27,6 @@ const statusStyles: Record<PaymentStatus, { label: string; chip: string; stripe:
     stripe: 'bg-emerald-500',
   },
 };
-
-const currencyFormatter = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-  minimumFractionDigits: 2,
-});
 
 export const PaymentCard = ({ pago, isSelected, onSelect, status }: PaymentCardProps) => {
   const titularDisplay = getTitularApellidoDisplay(pago.titularApellido, pago.titularNombre);
@@ -64,16 +59,16 @@ export const PaymentCard = ({ pago, isSelected, onSelect, status }: PaymentCardP
         <div className="grid grid-cols-3 gap-3 border-t border-dashed border-gray-200 pt-3 text-sm dark:border-gray-700">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Generado</p>
-            <p className="font-bold text-[#0f181a] dark:text-white">{currencyFormatter.format(pago.montoGenerado)}</p>
+            <p className="font-bold text-[#0f181a] dark:text-white">{formatCurrency(pago.montoGenerado)}</p>
           </div>
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Pagado</p>
-            <p className="font-bold text-emerald-600 dark:text-emerald-300">{currencyFormatter.format(pago.totalPagado)}</p>
+            <p className="font-bold text-emerald-600 dark:text-emerald-300">{formatCurrency(pago.totalPagado)}</p>
           </div>
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Saldo</p>
             <p className={`font-extrabold ${status === 'pagado' ? 'text-gray-400' : 'text-rose-500'}`}>
-              {currencyFormatter.format(pago.saldoPendiente)}
+              {formatCurrency(pago.saldoPendiente)}
             </p>
           </div>
         </div>

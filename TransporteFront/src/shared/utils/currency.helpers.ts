@@ -1,3 +1,5 @@
+import { truncateNumberTowardZero } from './number.helpers';
+
 /**
  * Currency formatting utilities
  * Centralized currency formatting to avoid duplication across components
@@ -9,16 +11,21 @@ const DEFAULT_CURRENCY = 'ARS';
 const currencyFormatter = new Intl.NumberFormat(DEFAULT_LOCALE, {
   style: 'currency',
   currency: DEFAULT_CURRENCY,
-  minimumFractionDigits: 2,
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
 });
 
 /**
  * Formats a number as Argentine Peso currency
  * @param value - The numeric value to format
- * @returns Formatted currency string (e.g., "$ 1.234,56")
+ * @returns Formatted currency string (e.g., "$ 1.234")
  */
 export const formatCurrency = (value: number): string => {
-  return currencyFormatter.format(value);
+  if (!Number.isFinite(value)) {
+    return '';
+  }
+
+  return currencyFormatter.format(truncateNumberTowardZero(value));
 };
 
 /**

@@ -1,14 +1,10 @@
+import { formatCurrency } from '../../shared/utils/currency.helpers';
+
 interface PaymentStatsProps {
   generated: number;
   paid: number;
   balance: number;
 }
-
-const currencyFormatter = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-  minimumFractionDigits: 2,
-});
 
 export const PaymentStats = ({ generated, paid, balance }: PaymentStatsProps) => {
   const stats = [
@@ -26,7 +22,7 @@ export const PaymentStats = ({ generated, paid, balance }: PaymentStatsProps) =>
         >
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{stat.label}</p>
           <p className={`mt-2 text-3xl font-bold ${stat.isBalance ? 'text-rose-500' : 'text-[#0f181a] dark:text-white'}`}>
-            {currencyFormatter.format(stat.value)}
+            {formatCurrency(stat.value)}
           </p>
           <p className="text-xs text-gray-500">{stat.description}</p>
         </div>

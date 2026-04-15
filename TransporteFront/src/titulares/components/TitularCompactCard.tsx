@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { TitularResponse } from '../types/titular.types';
 import { pasajerosApi } from '../../pasajeros/services/pasajeros.api';
+import { formatCurrency } from '../../shared/utils/currency.helpers';
 
 interface TitularCompactCardProps {
   titular: TitularResponse;
@@ -27,7 +28,8 @@ export const TitularCompactCard = ({ titular, isSelected, onClick }: TitularComp
     : 'Sin pasajeros';
 
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
       className={`flex items-center justify-between gap-4 px-5 py-4 border-b border-[#e4e4e7] dark:border-[#3f3f46] cursor-pointer transition-colors active:scale-[0.98] ${
         isSelected
@@ -47,8 +49,8 @@ export const TitularCompactCard = ({ titular, isSelected, onClick }: TitularComp
 
       {/* Monto */}
       <span className="text-base font-bold text-gray-900 dark:text-white tabular-nums shrink-0">
-        ${titular.montoMensualPactado.toLocaleString()}
+        {formatCurrency(titular.montoMensualPactado)}
       </span>
-    </div>
+    </button>
   );
 };

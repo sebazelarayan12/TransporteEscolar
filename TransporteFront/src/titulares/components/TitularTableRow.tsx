@@ -1,6 +1,7 @@
 import type { TitularResponse } from '../types/titular.types';
 import { Avatar, Badge } from '../../shared/ui';
 import { getInitials, getAvatarColor } from '../helpers/avatar.helpers';
+import { formatCurrency } from '../../shared/utils/currency.helpers';
 
 interface TitularTableRowProps {
   titular: TitularResponse;
@@ -11,7 +12,8 @@ interface TitularTableRowProps {
 
 export const TitularTableRow = ({ titular, isSelected, onClick, rowIndex }: TitularTableRowProps) => {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
       className={`group grid grid-cols-12 gap-4 px-6 py-4 items-center border-b border-[#e4e4e7] dark:border-[#3f3f46] cursor-pointer relative transition-colors ${
         isSelected
@@ -49,7 +51,7 @@ export const TitularTableRow = ({ titular, isSelected, onClick, rowIndex }: Titu
 
       {/* Monto */}
       <div className="hidden md:block md:col-span-2 text-right pr-4 text-sm font-medium text-gray-900 dark:text-gray-200 tabular-nums">
-        ${titular.montoMensualPactado.toLocaleString()}
+        {formatCurrency(titular.montoMensualPactado)}
       </div>
 
       {/* Estado */}
@@ -65,6 +67,6 @@ export const TitularTableRow = ({ titular, isSelected, onClick, rowIndex }: Titu
           <span className="material-symbols-outlined text-[20px]">more_vert</span>
         </button>
       </div>
-    </div>
+    </button>
   );
 };
