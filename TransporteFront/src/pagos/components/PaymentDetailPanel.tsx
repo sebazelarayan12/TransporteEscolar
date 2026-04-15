@@ -2,18 +2,13 @@ import { PaymentHistory } from './PaymentHistory';
 import { PaymentForm } from './PaymentForm';
 import type { PagoMensual, RegistrarPagoRequest } from '../types/pago.types';
 import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
+import { formatCurrency } from '../../shared/utils/currency.helpers';
 
 interface PaymentDetailPanelProps {
   pago: PagoMensual | null;
   onSubmitPayment: (data: RegistrarPagoRequest) => void;
   isSubmitting: boolean;
 }
-
-const currencyFormatter = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-  minimumFractionDigits: 2,
-});
 
 export const PaymentDetailPanel = ({ pago, onSubmitPayment, isSubmitting }: PaymentDetailPanelProps) => {
   if (!pago) {
@@ -38,7 +33,7 @@ export const PaymentDetailPanel = ({ pago, onSubmitPayment, isSubmitting }: Paym
             <p className="text-xs text-gray-400">{pago.titularDireccion}</p>
           ) : null}
           <p className="text-sm text-gray-500">
-            {pago.periodo} • Saldo pendiente <span className="font-bold text-rose-500">{currencyFormatter.format(pago.saldoPendiente)}</span>
+            {pago.periodo} • Saldo pendiente <span className="font-bold text-rose-500">{formatCurrency(pago.saldoPendiente)}</span>
           </p>
         </div>
         <button className="rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-300">
@@ -50,16 +45,16 @@ export const PaymentDetailPanel = ({ pago, onSubmitPayment, isSubmitting }: Paym
       <div className="grid grid-cols-3 gap-3 rounded-2xl bg-[#f6f8f8] p-4 text-sm dark:bg-white/5">
         <div>
           <p className="text-[11px] uppercase tracking-wide text-gray-500">Generado</p>
-          <p className="text-lg font-bold text-[#0f181a] dark:text-white">{currencyFormatter.format(pago.montoGenerado)}</p>
+          <p className="text-lg font-bold text-[#0f181a] dark:text-white">{formatCurrency(pago.montoGenerado)}</p>
         </div>
         <div>
           <p className="text-[11px] uppercase tracking-wide text-gray-500">Pagado</p>
-          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-300">{currencyFormatter.format(pago.totalPagado)}</p>
+          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-300">{formatCurrency(pago.totalPagado)}</p>
         </div>
         <div>
           <p className="text-[11px] uppercase tracking-wide text-gray-500">Saldo</p>
           <p className={`text-lg font-bold ${pago.saldoPendiente === 0 ? 'text-gray-400' : 'text-rose-500'}`}>
-            {currencyFormatter.format(pago.saldoPendiente)}
+            {formatCurrency(pago.saldoPendiente)}
           </p>
         </div>
       </div>

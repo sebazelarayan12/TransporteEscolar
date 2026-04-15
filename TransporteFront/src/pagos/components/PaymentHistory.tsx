@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { PagoMovimiento } from '../types/pago.types';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
+import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { Button } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
 import { useEliminarMovimiento } from '../services/pagos.queries';
@@ -12,12 +13,6 @@ interface PaymentHistoryProps {
   titularLabel?: string;
   periodo?: string;
 }
-
-const currencyFormatter = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'ARS',
-  minimumFractionDigits: 2,
-});
 
 export const PaymentHistory = ({ movimientos, pagoId, titularLabel, periodo }: PaymentHistoryProps) => {
   const [movimientoSeleccionado, setMovimientoSeleccionado] = useState<PagoMovimiento | null>(null);
@@ -104,7 +99,7 @@ export const PaymentHistory = ({ movimientos, pagoId, titularLabel, periodo }: P
               </div>
               <div className="mt-1 flex items-center justify-between">
                 <span className="text-xs text-gray-500">{movimiento.medioPago}</span>
-                <span className="text-sm font-bold text-emerald-600">+{currencyFormatter.format(movimiento.monto)}</span>
+                <span className="text-sm font-bold text-emerald-600">+{formatCurrency(movimiento.monto)}</span>
               </div>
               {movimiento.observaciones && <p className="mt-2 text-xs text-gray-500">{movimiento.observaciones}</p>}
             </div>

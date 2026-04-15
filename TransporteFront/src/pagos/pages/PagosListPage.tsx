@@ -14,6 +14,7 @@ import {
 } from '../../shared/ui';
 import { useDebounce } from '../../shared/hooks/useDebounce';
 import type { PagoEstado, PagoMensual, PagosEstadoFiltro } from '../types/pago.types';
+import { formatCurrency } from '../../shared/utils/currency.helpers';
 import { RegistrarPagoModal, PagosStatusFilters, PagoDetalleModal } from '../components';
 import { useReinscripcionesAlertasPagos } from '../../reinscripciones/services/reinscripciones.queries';
 import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
@@ -443,13 +444,13 @@ const PagosDesktopTable = ({
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{pago.periodo}</td>
                 <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-white">
-                  ${pago.montoGenerado.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                  {formatCurrency(pago.montoGenerado)}
                 </td>
                 <td className="px-6 py-4 text-sm text-right text-green-600 dark:text-green-500">
-                  ${pago.totalPagado.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                  {formatCurrency(pago.totalPagado)}
                 </td>
                 <td className="px-6 py-4 text-sm text-right font-medium text-red-600 dark:text-red-500">
-                  ${pago.saldoPendiente.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                  {formatCurrency(pago.saldoPendiente)}
                 </td>
                 <td className="px-6 py-4 text-center">
                   <PagoStatusBadge estado={estado} />
@@ -496,19 +497,19 @@ const PagosMobileCards = ({
               <div>
                 <p className="text-xs text-gray-500">Generado</p>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  ${pago.montoGenerado.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                  {formatCurrency(pago.montoGenerado)}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Pagado</p>
                 <p className="font-medium text-green-600">
-                  ${pago.totalPagado.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                  {formatCurrency(pago.totalPagado)}
                 </p>
               </div>
               <div className="col-span-2">
                 <p className="text-xs text-gray-500">Saldo Pendiente</p>
                 <p className="font-semibold text-red-600">
-                  ${pago.saldoPendiente.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                  {formatCurrency(pago.saldoPendiente)}
                 </p>
               </div>
             </div>

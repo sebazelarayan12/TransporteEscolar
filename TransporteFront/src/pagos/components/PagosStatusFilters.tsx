@@ -1,4 +1,5 @@
 import type { PagosEstadoFiltro } from '../types/pago.types';
+import { formatNumber } from '../../shared/utils/number.helpers';
 
 interface PagosStatusFiltersProps {
   totalPeriodo: number;
@@ -67,8 +68,6 @@ const baseButtonClass =
 const inactiveClass =
   'border-gray-200 bg-white text-gray-600 hover:border-[#1d8ca5]/70 dark:border-white/10 dark:bg-[#1f1f24] dark:text-gray-200';
 
-const numberFormatter = new Intl.NumberFormat('es-AR');
-
 export const PagosStatusFilters = ({
   totalPeriodo,
   matchingCount,
@@ -92,10 +91,10 @@ export const PagosStatusFilters = ({
             <span className="text-xs font-semibold uppercase tracking-wide text-[#1d8ca5]">Pagos</span>
           </div>
           <p className="mt-2 text-4xl font-extrabold text-[#0f181a] dark:text-white">
-            {numberFormatter.format(totalPeriodo)}
+            {formatNumber(totalPeriodo)}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Coincidencias actuales: {numberFormatter.format(matchingCount)}
+            Coincidencias actuales: {formatNumber(matchingCount)}
           </p>
         </div>
       </div>
@@ -119,7 +118,7 @@ export const PagosStatusFilters = ({
               <div className="text-right">
                 <p className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">Registros</p>
                 <p className={`text-2xl font-bold ${isActive ? filter.countClass : 'text-gray-800 dark:text-gray-100'}`}>
-                  {numberFormatter.format(count)}
+                  {formatNumber(count)}
                 </p>
                 <span className={`material-symbols-outlined text-xl ${isActive ? filter.iconClass : 'text-gray-400 dark:text-gray-500'}`}>
                   {filter.icon}

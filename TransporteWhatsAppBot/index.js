@@ -157,7 +157,7 @@ async function fetchDestinatariosPendientes() {
 function buildMensajePendientes(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
   return (
-    `Hola! 🚌\n\n` +
+    `Buen dia! 🚌\n\n` +
     `Te recordamos que tenés la cuota del mes *${periodoNatural}* pendiente por *${formatMonto(destinatario.saldoPendiente)}*.\n\n` +
     `Por favor realizá el pago lo antes posible. ¡Muchas gracias! 😊`
   );
