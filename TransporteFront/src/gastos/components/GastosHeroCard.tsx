@@ -48,46 +48,47 @@ export const GastosHeroCard = ({ totales, periodLabel, periodFilter }: GastosHer
             <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-teal-200">Control de gastos</p>
             <h2 className="mt-2 text-3xl font-semibold leading-tight text-white sm:text-4xl">{periodLabel}</h2>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-3xl border border-white/20 bg-black/20 p-5 shadow-inner">
-                <p className="text-xs uppercase tracking-[0.35em] text-white/70">Resultado neto</p>
-                <p className={`mt-3 text-4xl font-semibold ${netPositive ? 'text-emerald-200' : 'text-rose-200'}`}>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="rounded-3xl border border-white/20 bg-black/20 p-3 shadow-inner sm:p-5">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-white/70 sm:text-xs sm:tracking-[0.35em]">Resultado neto</p>
+                <p className={`mt-2 text-xl font-semibold sm:mt-3 sm:text-4xl ${netPositive ? 'text-emerald-200' : 'text-rose-200'}`}>
                   {formatCurrency(netResult)}
                 </p>
-                <span className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-white/90">
-                  <span className="material-symbols-rounded text-base" aria-hidden>
+                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90 sm:mt-3 sm:gap-2 sm:px-4 sm:py-1.5 sm:text-xs sm:tracking-widest">
+                  <span className="material-symbols-rounded text-sm sm:text-base" aria-hidden>
                     {netPositive ? 'trending_up' : 'trending_down'}
                   </span>
-                  {netPositive ? 'Por encima del equilibrio' : 'Requiere atención inmediata'}
+                  <span className="hidden sm:inline">{netPositive ? 'Por encima del equilibrio' : 'Requiere atención'}</span>
+                  <span className="sm:hidden">{netPositive ? 'Equilibrio ✓' : 'Atención'}</span>
                 </span>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/10 p-5 shadow-inner">
-                <p className="text-xs uppercase tracking-[0.35em] text-white/70">Ingresos vs. gastos</p>
-                <p className="mt-3 text-2xl font-semibold text-white">
+              <div className="rounded-3xl border border-white/10 bg-white/10 p-3 shadow-inner sm:p-5">
+                <p className="text-[10px] uppercase tracking-[0.25em] text-white/70 sm:text-xs sm:tracking-[0.35em]">Ingresos vs. gastos</p>
+                <p className="mt-2 text-lg font-semibold text-white sm:mt-3 sm:text-2xl">
                   {formatCurrency(totales.totalCuotas + totales.totalIngresosExternos)}
                 </p>
-                <p className="text-xs text-white/80">Total de ingresos</p>
-                <p className="mt-3 text-xl font-semibold text-white/90">{formatCurrency(totalGastos)}</p>
-                <p className="text-xs text-white/70">Total de gastos</p>
+                <p className="text-[10px] text-white/80 sm:text-xs">Total de ingresos</p>
+                <p className="mt-2 text-base font-semibold text-white/90 sm:mt-3 sm:text-xl">{formatCurrency(totalGastos)}</p>
+                <p className="text-[10px] text-white/70 sm:text-xs">Total de gastos</p>
               </div>
             </div>
           </div>
           {periodFilter ? <div className="w-full max-w-sm lg:self-stretch">{periodFilter}</div> : null}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {heroMetrics.map((metric) => (
             <article
               key={metric.key}
-              className="rounded-3xl border border-white/15 bg-white/10 p-4 shadow-inner backdrop-blur"
+              className="rounded-3xl border border-white/15 bg-white/10 p-3 shadow-inner backdrop-blur sm:p-4"
             >
-              <div className="flex items-center justify-between gap-3 text-xs uppercase tracking-[0.3em] text-white/70">
+              <div className="flex items-center justify-between gap-2 text-[10px] uppercase tracking-[0.2em] text-white/70 sm:text-xs sm:tracking-[0.3em]">
                 <span>{metric.label}</span>
-                <span className="material-symbols-rounded text-lg text-white" aria-hidden>
+                <span className="material-symbols-rounded text-base text-white sm:text-lg" aria-hidden>
                   {metric.icon}
                 </span>
               </div>
-              <p className="mt-3 text-2xl font-semibold text-white">{formatCurrency(metric.value)}</p>
+              <p className="mt-2 text-lg font-semibold text-white sm:mt-3 sm:text-2xl">{formatCurrency(metric.value)}</p>
               {metric.key === 'totalIngresosExternos' ? (
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-white/90">
