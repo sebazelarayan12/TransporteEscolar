@@ -51,6 +51,8 @@ docker-compose up -d                                   # Production DB
 - `VITE_API_BASE_URL` en el frontend se configura como variable de entorno en **Cloudflare Pages** (no en `.env` commiteado).
 - CORS debe incluir el dominio de Cloudflare Pages en `AllowedOrigins` via variable de entorno en Railway.
 - Nunca commitear `.env` con valores de produccion — Railway y Cloudflare Pages inyectan las variables directamente.
+- **NUNCA hardcodear variables** (URLs, claves, tokens, connection strings, puertos) en el codigo fuente. Toda configuracion va via variables de entorno. El usuario las agrega manualmente en el dashboard de Railway (backend) o Cloudflare Pages (frontend).
+- Si se necesita una nueva variable, indicar el nombre exacto y donde agregarla — nunca agregarla directamente al codigo.
 
 ## Architecture
 
