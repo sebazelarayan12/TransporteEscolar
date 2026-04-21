@@ -13,7 +13,6 @@ import {
   type GastoEstadoPago,
   type GastoItem,
   type GastoTipo,
-  type VehiculoCombustible,
 } from '../types/gastos.types';
 import { VehiculoSelectorDialog } from './VehiculoSelectorDialog';
 import { MEDIOS_PAGO } from '../../pagos/constants/medios-pago.constants';
@@ -229,7 +228,7 @@ export const RegistrarGastoModal = ({
   const selectedTipo = watchedTipo ?? (isEditMode ? GASTO_TIPOS.FIJO : GASTO_TIPOS.VARIABLE);
   const watchedCategoria = useWatch({ control, name: 'categoria' });
 
-  const [vehiculo, setVehiculo] = useState<VehiculoCombustible | null>(null);
+  const [vehiculo, setVehiculo] = useState<string | null>(null);
   const [vehiculoDialogOpen, setVehiculoDialogOpen] = useState(false);
   const { min, max } = getPeriodBounds(mes, anio);
   const { showSuccess, showError } = useToast();
@@ -444,7 +443,11 @@ export const RegistrarGastoModal = ({
 
       <VehiculoSelectorDialog
         isOpen={vehiculoDialogOpen}
-        onSelect={(v) => { setVehiculo(v); setVehiculoDialogOpen(false); }}
+        onSelect={(v) => {
+          setVehiculo(v);
+          setVehiculoDialogOpen(false);
+          setValue('descripcion', v);
+        }}
         onClose={() => setVehiculoDialogOpen(false)}
       />
     </>
