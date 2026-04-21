@@ -37,6 +37,21 @@ docker-compose -f docker-compose.testing.yml up -d   # Testing DB
 docker-compose up -d                                   # Production DB
 ```
 
+## Deployment
+
+> **IMPORTANTE:** Siempre tener en cuenta esta infraestructura al hablar de deploy, variables de entorno, CORS, URLs o cualquier configuracion relacionada con produccion.
+
+| Componente | Plataforma | Notas |
+|---|---|---|
+| Frontend | **Cloudflare Pages** | Deploy automatico desde `main`. Build: `npm run build`, directorio: `TransporteFront/dist` |
+| Backend | **Railway** | Deploy automatico desde `main`. Variables de entorno configuradas en el dashboard de Railway |
+| Base de datos | **Railway** (PostgreSQL) | Cadena de conexion via variable `ConnectionStrings__Default` en Railway |
+
+- Variables de entorno del backend (VAPID, WhatsApp, CORS, DB) se configuran en el **dashboard de Railway**, no en archivos commiteados.
+- `VITE_API_BASE_URL` en el frontend se configura como variable de entorno en **Cloudflare Pages** (no en `.env` commiteado).
+- CORS debe incluir el dominio de Cloudflare Pages en `AllowedOrigins` via variable de entorno en Railway.
+- Nunca commitear `.env` con valores de produccion — Railway y Cloudflare Pages inyectan las variables directamente.
+
 ## Architecture
 
 ### Backend — Clean Architecture + CQRS
