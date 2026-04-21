@@ -136,6 +136,7 @@ public class GastoService : IGastoService
         var fecha = DateTime.SpecifyKind(dto.Fecha.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
         var observaciones = dto.Observaciones?.Trim();
         var estadoPago = MapearEstadoPago(dto.EstadoPago);
+        var vehiculo = dto.Vehiculo?.Trim();
         var gasto = new GastoMensual(
             dto.Mes,
             dto.Anio,
@@ -146,7 +147,8 @@ public class GastoService : IGastoService
             fecha,
             dto.MedioPago.Trim(),
             estadoPago,
-            observaciones);
+            observaciones,
+            vehiculo: vehiculo);
 
         var gastoCreado = await _gastoRepository.AgregarGastoMensualAsync(gasto, cancellationToken);
         return MapearGasto(gastoCreado);
@@ -311,6 +313,7 @@ public class GastoService : IGastoService
             gasto.MedioPago,
             gasto.EstadoPago.ToString(),
             gasto.Observaciones,
+            gasto.Vehiculo,
             gasto.GastoFijoTemplateId,
             gasto.NumeroCuota,
             gasto.TotalCuotas,

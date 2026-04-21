@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useForm, useWatch, type FieldError, type Resolver, type SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,7 +13,9 @@ import {
   type GastoEstadoPago,
   type GastoItem,
   type GastoTipo,
+  type VehiculoCombustible,
 } from '../types/gastos.types';
+import { VehiculoSelectorDialog } from './VehiculoSelectorDialog';
 import { MEDIOS_PAGO } from '../../pagos/constants/medios-pago.constants';
 import { GastoModalHeader } from './GastoModalHeader';
 import { GastoTipoSection } from './GastoTipoSection';
@@ -225,6 +227,10 @@ export const RegistrarGastoModal = ({
     Partial<Record<'diaDeAplicacion' | 'fecha' | 'estadoPago', FieldError | undefined>>;
   const watchedTipo = useWatch({ control, name: 'tipo' }) as GastoTipo | undefined;
   const selectedTipo = watchedTipo ?? (isEditMode ? GASTO_TIPOS.FIJO : GASTO_TIPOS.VARIABLE);
+  const watchedCategoria = useWatch({ control, name: 'categoria' });
+
+  const [vehiculo, setVehiculo] = useState<VehiculoCombustible | null>(null);
+  const [vehiculoDialogOpen, setVehiculoDialogOpen] = useState(false);
   const { min, max } = getPeriodBounds(mes, anio);
   const { showSuccess, showError } = useToast();
   const crearGastoFijo = useCrearGastoFijo();
@@ -232,6 +238,14 @@ export const RegistrarGastoModal = ({
   const actualizarGastoFijo = useActualizarGastoFijo();
   const isPending = isSubmitting || crearGastoFijo.isPending || crearGastoVariable.isPending || actualizarGastoFijo.isPending;
   const periodLabel = monthFormatter.format(new Date(anio, mes - 1, 1));
+
+  useEffect(() => {
+    if (watchedCategoria === 'Combustible' && selectedTipo === GASTO_TIPOS.VARIABLE && !vehiculo) {
+      setVehiculoDialogOpen(true);
+    } else if (watchedCategoria !== 'Combustible') {
+      setVehiculo(null);
+    }
+  }, [watchedCategoria, selectedTipo, vehiculo]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -268,6 +282,7 @@ export const RegistrarGastoModal = ({
       return;
     }
     reset(getDefaultValues(mes, anio));
+    setVehiculo(null);
     onClose();
   };
 
@@ -332,6 +347,7 @@ export const RegistrarGastoModal = ({
           medioPago: data.medioPago,
           estadoPago: data.estadoPago,
           observaciones,
+          vehiculo: vehiculo ?? undefined,
         });
       }
 
@@ -351,47 +367,86 @@ export const RegistrarGastoModal = ({
   const categorias = selectedTipo === GASTO_TIPOS.FIJO ? GASTO_CATEGORIAS.FIJOS : GASTO_CATEGORIAS.VARIABLES;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={closeModal}
-      title={isEditMode ? 'Editar gasto fijo' : 'Registrar nuevo gasto'}
-      maxWidth="2xl"
-    >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <GastoModalHeader periodLabel={periodLabel} mes={mes} anio={anio} />
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={closeModal}
+        title={isEditMode ? 'Editar gasto fijo' : 'Registrar nuevo gasto'}
+        maxWidth="2xl"
+      >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <GastoModalHeader periodLabel={periodLabel} mes={mes} anio={anio} />
 
-        <GastoTipoSection
-          isEditMode={isEditMode}
-          selectedTipo={selectedTipo}
-          onSelectTipo={(tipo) => {
-            setValue('tipo', tipo);
-          }}
-        />
+          <GastoTipoSection
+            isEditMode={isEditMode}
+            selectedTipo={selectedTipo}
+            onSelectTipo={(tipo) => {
+              setValue('tipo', tipo);
+            }}
+          />
 
-        <GastoFormFields
-          control={control}
-          register={register}
-          errors={errors}
-          typedErrors={typedErrors}
-          fieldIds={fieldIds}
-          isPending={isPending}
-          categorias={categorias}
-          selectedTipo={selectedTipo}
-          minDate={min}
-          maxDate={max}
-        />
+          <GastoFormFields
+            control={control}
+            register={register}
+            errors={errors}
+            typedErrors={typedErrors}
+            fieldIds={fieldIds}
+            isPending={isPending}
+            categorias={categorias}
+            selectedTipo={selectedTipo}
+            minDate={min}
+            maxDate={max}
+          />
 
-        <GastoPlanCuotasSection
-          control={control}
-          register={register}
-          errors={errors}
-          isPending={isPending}
-          minDate={min}
-          selectedTipo={selectedTipo}
-        />
+          {watchedCategoria === 'Combustible' && selectedTipo === GASTO_TIPOS.VARIABLE ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3">
+              <span className="material-symbols-rounded text-xl text-amber-400">local_gas_station</span>
+              {vehiculo ? (
+                <>
+                  <span className="text-sm text-slate-300">
+                    Vehículo: <span className="font-semibold text-white">{vehiculo}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setVehiculo(null); setVehiculoDialogOpen(true); }}
+                    className="ml-auto text-xs text-teal-400 hover:text-teal-300"
+                  >
+                    Cambiar
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm text-slate-400">Sin vehículo seleccionado</span>
+                  <button
+                    type="button"
+                    onClick={() => setVehiculoDialogOpen(true)}
+                    className="ml-auto text-xs text-teal-400 hover:text-teal-300"
+                  >
+                    Seleccionar
+                  </button>
+                </>
+              )}
+            </div>
+          ) : null}
 
-        <GastoModalActions isPending={isPending} isEditMode={isEditMode} onCancel={closeModal} />
-      </form>
-    </Modal>
+          <GastoPlanCuotasSection
+            control={control}
+            register={register}
+            errors={errors}
+            isPending={isPending}
+            minDate={min}
+            selectedTipo={selectedTipo}
+          />
+
+          <GastoModalActions isPending={isPending} isEditMode={isEditMode} onCancel={closeModal} />
+        </form>
+      </Modal>
+
+      <VehiculoSelectorDialog
+        isOpen={vehiculoDialogOpen}
+        onSelect={(v) => { setVehiculo(v); setVehiculoDialogOpen(false); }}
+        onClose={() => setVehiculoDialogOpen(false)}
+      />
+    </>
   );
 };
