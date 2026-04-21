@@ -99,11 +99,89 @@ Call `invalidateQueries` with the domain key after mutations.
 - **Outside `src/titulares/`**, always display account holders using `getTitularApellidoDisplay` (surname only).
 - **Numeric values** (non-percentage) must use shared helpers from `shared/utils/number.helpers.ts` and `currency.helpers.ts` — truncate toward zero. Percentages keep their own format.
 - **Form inputs** use React Hook Form + Zod (`zodResolver`). Numeric inputs use `z.coerce.number()`.
+- ALWAYS fetch server data via TanStack Query; NEVER store API caches in `useState`.
+- ALWAYS handle loading/error/empty states for every list and detail page.
+- ALWAYS register new routes inside `App.tsx` under `<MainLayout>` and update navigation items.
+- ALWAYS call backend via `apiClient`; NEVER hardcode absolute URLs.
+- Reuse code via `shared/` only when 2+ domains need it; otherwise keep logic local.
 
 ### Backend
 - New services must be wired in `ServiceCollectionExtensions.cs`.
 - Push notifications use `WebPushService` with VAPID config; message formatting uses `FormatearMensajeConPeriodoActual` helper.
 - Migrations target `TransporteEscolar.Infrastructure` with `TransporteEscolar.Api` as startup project.
+- **NEVER reintroduce `IPagoMensualService` or `IPasajeroService`** — both modules use CQRS/MediatR. New business rules go in Domain entities or new handlers.
+- **NEVER return EF entities from controllers** — always map to DTOs using the `MapearAResponse` / `*MappingExtensions` pattern.
+- **NEVER access `DbContext` from controllers** — only from repositories.
+- Domain entities use **private setters and managed constructors**; EF navigation must not be modified outside the aggregate/services.
+- ALWAYS throw `ValidationException` from validators; ALWAYS throw `NotFoundException` for missing resources.
+- Seeder (`TestDataSeeder`) runs **only in Testing profile**, never in Production.
+- CORS: NEVER combine `AllowCredentials` with `AllowAnyOrigin` in production.
+
+## Backend Naming Conventions
+
+| Element | Pattern | Example |
+|---|---|---|
+| DTO | `<Entity>Model.Request` / `<Entity>Model.Response` | `PagoMensualModel.Response` |
+| Service interface/class | `I<Entity>Service` / `<Entity>Service` | `IReinscripcionService` |
+| Repository | `I<Entity>Repository` / `<Entity>Repository` | `IPagoMensualRepository` |
+| Controller | `<Entities>Controller` | `PagosMensualesController` |
+| Validator | `<Entity>Validator` | `PagoMensualValidator` |
+| Mapping extensions | `<Entity>MappingExtensions` | `PagoMensualMappingExtensions` |
+| CQRS Command | `<Action><Entity>Command` | `RegistrarPagoCommand` |
+| CQRS Query | `Get<Entity>Query` | `GetPagosMensualesQuery` |
+
+## Frontend Naming Conventions
+
+| Element | Pattern | Example |
+|---|---|---|
+| Page | `<Domain><Name>Page` | `PagosListPage` |
+| Hook | `use<Domain><Action>` | `usePagosList` |
+| Query keys | `<domain>Keys.<scope>` | `pagosKeys.list` |
+| API service | `<domain>Api.method` in `services/<domain>.api.ts` | `pagosApi.getList` |
+| Component | PascalCase in `components/` | `PaymentCard` |
+| Types | `<Domain>Response` or `<Domain>Model` | `PagoMensualModel` |
+| Helpers | `<domain>.helpers.ts` | `number.helpers.ts` |
+
+## Frontend Decision Trees
+
+**Where to place a component:**
+- Used in only one domain → `src/<domain>/components/`
+- Used by 2+ domains → `src/shared/ui/`
+- Layout-wide → `src/app/`
+
+**Where to place new stateful logic:**
+- Needs data fetch/caching → `services/*.queries.ts` (TanStack Query)
+- Pure UI helper reused by 2+ components → `shared/hooks/`
+- One-off for a single page → next to that page/component
+
+**Adding a new page:**
+1. Create file in `src/<domain>/pages/`
+2. Wire data via `services/*.queries.ts`
+3. Compose UI from `shared/ui/` + domain components
+4. Register route in `App.tsx` + update `MainLayout` navigation if needed
+
+## QA Checklist
+
+### Before committing backend changes
+- [ ] Migrations created and applied (`dotnet ef database update`)
+- [ ] Seeder limited to Testing profile
+- [ ] `dotnet run --launch-profile Testing` boots without errors
+- [ ] Swagger accessible at `http://localhost:5074/swagger`
+- [ ] DTOs updated and controllers return correct types
+- [ ] No sensitive data in config or commits
+
+### Before committing frontend changes
+- [ ] `npm run lint` passes cleanly
+- [ ] `react-doctor` passes (`npx -y react-doctor@latest . --verbose --diff`)
+- [ ] Loading/error/empty states implemented for every list/detail
+- [ ] TanStack Query caches invalidated after mutations
+- [ ] DTO types updated to match backend changes
+- [ ] Layout tested on desktop and mobile
+- [ ] `VITE_API_BASE_URL` via `.env`; no secrets committed
+
+## Session Commands
+
+**"guarda todo"** → update `recarga.md` in project root with: current date, what changed, files modified, key decisions, pending next steps. This file is gitignored and used to restore context in future sessions.
 
 <!-- autoskills:start -->
 
