@@ -1,6 +1,5 @@
 import type { ComponentProps } from 'react';
 import { MonthYearFilter } from '../../shared/ui';
-import { GastosPageHeader } from './GastosPageHeader';
 import { GastosHeroCard } from './GastosHeroCard';
 import { GastosToolbar } from './GastosToolbar';
 import { GastosContent } from './GastosContent';
