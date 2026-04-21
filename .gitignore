@@ -30,3 +30,6 @@ DESARROLLO-RED-LOCAL.md
 recarga.md
 cosas.md
 not.md
+
+# Claude Code worktrees (repos git internos temporales)
+.claude/worktrees/
