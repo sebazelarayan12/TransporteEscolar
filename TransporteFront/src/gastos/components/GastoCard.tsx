@@ -224,6 +224,12 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false, on
         <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-600 dark:bg-white/10 dark:text-slate-200">
           {categoriaConfig.label.toUpperCase()}
         </span>
+        {gasto.vehiculo ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-teal-500/15 px-2.5 py-1 text-[10px] font-semibold text-teal-800 dark:text-teal-200">
+            <span className="material-symbols-rounded text-[11px]">airport_shuttle</span>
+            {gasto.vehiculo}
+          </span>
+        ) : null}
         {showPendienteBadge ? (
           <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2 py-1 text-[10px] font-semibold text-amber-800 dark:text-amber-100">
             Pendiente

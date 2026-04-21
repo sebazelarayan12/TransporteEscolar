@@ -25,6 +25,7 @@ public record GastoModel
         string MedioPago,
         string EstadoPago,
         string? Observaciones,
+        string? Vehiculo,
         int? TemplateId,
         int? NumeroCuota,
         int? TotalCuotas,
@@ -62,7 +63,8 @@ public record GastoModel
         DateOnly Fecha,
         string MedioPago,
         string EstadoPago,
-        string? Observaciones);
+        string? Observaciones,
+        string? Vehiculo);
 
     public record PlanCuotasRequest(
         DateOnly FechaPrimeraCuota,

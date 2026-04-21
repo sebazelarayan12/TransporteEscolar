@@ -19,19 +19,8 @@ export const GastosCategoriasCarousel = ({ items }: GastosCategoriasCarouselProp
 
   return (
     <section className="rounded-[32px] border border-slate-200/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/40">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">
-            Resumen por categoría
-          </p>
-        </div>
-        {hasItems ? (
-          <p className="text-xs text-slate-500 dark:text-slate-400">Arrastrá para ver más categorías</p>
-        ) : null}
-      </header>
-
       {hasItems ? (
-        <div className="mt-4 flex snap-x gap-4 overflow-x-auto pb-2">
+        <div className="flex snap-x gap-4 overflow-x-auto pb-2">
           {items.map((item) => {
             const safePercentage = Math.min(100, Math.max(5, Number.isFinite(item.percentage) ? item.percentage : 0));
             return (

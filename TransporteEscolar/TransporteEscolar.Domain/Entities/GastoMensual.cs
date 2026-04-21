@@ -21,6 +21,7 @@ public class GastoMensual
     public int? NumeroCuota { get; private set; }
     public int? TotalCuotas { get; private set; }
     public string? Observaciones { get; private set; }
+    public string? Vehiculo { get; private set; }
     public int? GastoFijoTemplateId { get; private set; }
 
     public GastoFijoTemplate? GastoFijoTemplate { get; private set; }
@@ -42,7 +43,8 @@ public class GastoMensual
         string? observaciones = null,
         int? gastoFijoTemplateId = null,
         int? numeroCuota = null,
-        int? totalCuotas = null)
+        int? totalCuotas = null,
+        string? vehiculo = null)
     {
         Mes = mes;
         Anio = anio;
@@ -54,6 +56,7 @@ public class GastoMensual
         MedioPago = medioPago;
         EstadoPago = estadoPago;
         Observaciones = observaciones;
+        Vehiculo = vehiculo;
         GastoFijoTemplateId = gastoFijoTemplateId;
         NumeroCuota = numeroCuota;
         TotalCuotas = totalCuotas;

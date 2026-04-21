@@ -53,6 +53,8 @@ public static class GastoValidator
 
         if (dto.Fecha.Year != dto.Anio || dto.Fecha.Month != dto.Mes)
             throw new ValidationException("La fecha del gasto debe pertenecer al mes seleccionado.");
+
+        ValidateVehiculo(dto.Vehiculo);
     }
 
     public static void ValidateMesAnio(int mes, int anio)
@@ -98,6 +100,16 @@ public static class GastoValidator
         {
             throw new ValidationException("estadoPago debe ser Pendiente o Pagado.");
         }
+    }
+
+    private static void ValidateVehiculo(string? vehiculo)
+    {
+        if (vehiculo is null)
+            return;
+
+        var vehiculosValidos = new[] { "Ducato", "Sprinter" };
+        if (!vehiculosValidos.Contains(vehiculo.Trim(), StringComparer.OrdinalIgnoreCase))
+            throw new ValidationException("vehiculo debe ser Ducato o Sprinter.");
     }
 
     private static void ValidatePlanCuotas(GastoModel.PlanCuotasRequest plan)

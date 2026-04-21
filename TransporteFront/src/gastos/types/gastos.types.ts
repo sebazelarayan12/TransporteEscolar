@@ -24,6 +24,9 @@ export interface ResumenTotales {
   gananciaNeta: number;
 }
 
+export const VEHICULOS_COMBUSTIBLE = ['Ducato', 'Sprinter'] as const;
+export type VehiculoCombustible = (typeof VEHICULOS_COMBUSTIBLE)[number];
+
 export interface GastoItem {
   id: number;
   mes: number;
@@ -36,6 +39,7 @@ export interface GastoItem {
   medioPago: string;
   estadoPago: GastoEstadoPago;
   observaciones?: string | null;
+  vehiculo?: string | null;
   templateId?: number | null;
   numeroCuota?: number | null;
   totalCuotas?: number | null;
@@ -77,6 +81,7 @@ export interface CrearGastoVariableRequest {
   medioPago: string;
   estadoPago: GastoEstadoPago;
   observaciones?: string;
+  vehiculo?: string;
 }
 
 export type GastosTabValue = 'variables' | 'fijos';
