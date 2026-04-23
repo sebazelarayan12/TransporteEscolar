@@ -21,6 +21,14 @@ public class TitularRepository : ITitularRepository
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 
+    public async Task<List<Titular>> GetByIdsAsync(List<int> ids, CancellationToken cancellationToken = default)
+    {
+        return await _context.Titulares
+            .Include(t => t.Telefonos)
+            .Where(t => ids.Contains(t.Id))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<List<Titular>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Titulares
