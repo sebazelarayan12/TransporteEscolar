@@ -69,14 +69,14 @@ function App() {
               <Route path="pasajeros" element={<PasajerosListPage />} />
               <Route path="pasajeros/nuevo" element={<PasajeroCreatePage />} />
               <Route path="horarios" element={<HorariosPage />} />
-               <Route path="reinscripciones" element={<ReinscripcionesListPage />} />
-               {/* <Route path="reinscripciones/nueva" element={<ReinscripcionCreatePage />} /> */}
-               <Route path="pagos" element={<PagosListPage />} />
-               <Route path="pagos/movimientos" element={<PagosMovimientosPage />} />
-               <Route path="gastos" element={<GastosControlPage />} />
-               <Route path="*" element={<NotFoundPage />} />
-             </Route>
-           </Routes>
+              <Route path="reinscripciones" element={<ReinscripcionesListPage />} />
+              {/* <Route path="reinscripciones/nueva" element={<ReinscripcionCreatePage />} /> */}
+              <Route path="pagos" element={<PagosListPage />} />
+              <Route path="pagos/movimientos" element={<PagosMovimientosPage />} />
+              <Route path="gastos" element={<GastosControlPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
         </BrowserRouter>
       </ToastProvider>
     </QueryClientProvider>

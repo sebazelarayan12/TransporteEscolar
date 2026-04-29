@@ -11,4 +11,5 @@ public sealed class MercadoPagoSettings
     public string? ReturnUrlPending { get; set; }
     public string? ReturnUrlFailure { get; set; }
     public bool UseSandbox { get; set; } = true;
+    public string? WebhookSecretKey { get; set; }
 }
