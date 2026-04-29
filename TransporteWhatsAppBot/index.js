@@ -204,7 +204,7 @@ function buildMensajeRecordatorio(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
   return (
     `¡Buen dia! 🚌\n\n` +
-    `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *abril* es de *${formatMonto(destinatario.monto)}*.\n\n` +
+    `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *junio* es de *${formatMonto(destinatario.monto)}*.\n\n` +
     `Podés abonar por transferencia o en efectivo. ¡Gracias por confiar en nosotros! 😊`
   );
 }
