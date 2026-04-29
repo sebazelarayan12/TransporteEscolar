@@ -210,6 +210,38 @@ function buildMensajeRecordatorio(destinatario) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Comando: personalizado
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function fetchDestinatariosPersonalizado() {
+  console.log(`\n🌐 API [${env.label}]: ${env.API_BASE_URL}`);
+  console.log('📋 Recuperando titulares activos...');
+
+  const { data } = await axios.get(`${env.API_BASE_URL}/titulares/activos`);
+  const titulares = Array.isArray(data) ? data : [];
+
+  if (titulares.length === 0) {
+    console.log('✅ No se encontraron titulares activos.');
+    return [];
+  }
+
+  const telefonos = await cargarTelefonosPrincipales(titulares.map((t) => t.id));
+  const destinatarios = titulares
+    .map((titular) => {
+      const telefono = telefonos[titular.id];
+      if (!telefono) return null;
+      return { telefono };
+    })
+    .filter(Boolean);
+
+  const sinTelefono = titulares.length - destinatarios.length;
+  if (sinTelefono > 0) console.log(`⚠️  ${sinTelefono} titular(es) sin teléfono activo, omitidos.`);
+  console.log(`📤 Destinatarios listos: ${destinatarios.length}`);
+
+  return destinatarios;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Configuración de comandos
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -223,6 +255,11 @@ const commands = {
     description: 'Aviso masivo con el monto mensual pactado para titulares activos.',
     fetchDestinatarios: fetchDestinatariosRecordatorio,
     buildMensaje: buildMensajeRecordatorio,
+  },
+  personalizado: {
+    description: 'Mensaje personalizado a todos los titulares activos. Uso: node index.js personalizado "mensaje"',
+    fetchDestinatarios: fetchDestinatariosPersonalizado,
+    buildMensaje: null, // se asigna en main() con el texto del argumento
   },
 };
 
@@ -309,8 +346,12 @@ async function enviarMensajes(client, destinatarios, buildMensaje) {
 
     try {
       const numberId = await client.getNumberId(numeroWA);
-      const chatId = numberId ? numberId._serialized : `${numeroWA}@c.us`;
-      await client.sendMessage(chatId, buildMensaje(destinatario));
+      if (!numberId) {
+        console.warn(`⚠️  ${destinatario.telefono} (${numeroWA}) no tiene WhatsApp activo, omitido.`);
+        errores++;
+        continue;
+      }
+      await client.sendMessage(numberId._serialized, buildMensaje(destinatario));
       console.log(`✅ Enviado a ${destinatario.telefono}`);
       enviados++;
     } catch (err) {
@@ -331,13 +372,25 @@ async function enviarMensajes(client, destinatarios, buildMensaje) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function main() {
-  const [, , commandName] = process.argv;
+  const [, , commandName, mensajeArg] = process.argv;
   if (!commandName || !commands[commandName]) {
     printHelp();
     process.exit(1);
   }
 
-  await runCommand(commandName, commands[commandName]);
+  const commandConfig = { ...commands[commandName] };
+
+  if (commandName === 'personalizado') {
+    if (!mensajeArg || !mensajeArg.trim()) {
+      console.error('❌ Debés pasar el mensaje como segundo argumento.');
+      console.error('   Ejemplo: node index.js personalizado "Tu mensaje aquí"');
+      process.exit(1);
+    }
+    const texto = mensajeArg.trim();
+    commandConfig.buildMensaje = () => texto;
+  }
+
+  await runCommand(commandName, commandConfig);
 }
 
 main()
