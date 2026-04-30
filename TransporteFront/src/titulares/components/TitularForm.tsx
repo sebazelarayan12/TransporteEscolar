@@ -6,6 +6,20 @@ import { useCreateTitular } from '../services/titulares.queries';
 import { Button, PriceInput } from '../../shared/ui';
 import { useToast } from '../../shared/hooks';
 
+const inputBase =
+  'w-full px-4 py-2.5 rounded-lg border text-gray-900 dark:text-white bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-colors';
+const inputError = 'border-red-500 dark:border-red-500';
+const inputNormal = 'border-gray-300 dark:border-zinc-700';
+
+function FieldError({ id, message }: { id: string; message: string }) {
+  return (
+    <p id={id} role="alert" className="mt-1.5 flex items-center gap-1 text-sm text-red-600 dark:text-red-400">
+      <span className="material-symbols-outlined text-[16px]" aria-hidden="true">error</span>
+      {message}
+    </p>
+  );
+}
+
 export const TitularForm = () => {
   const navigate = useNavigate();
   const createTitular = useCreateTitular();
@@ -32,26 +46,22 @@ export const TitularForm = () => {
       showSuccess('¡Titular registrado exitosamente!');
       navigate('/titulares');
     } catch (error: unknown) {
-      const errorMessage = error && typeof error === 'object' && 'message' in error 
-        ? String(error.message) 
-        : 'Error al registrar el titular';
+      const errorMessage =
+        error && typeof error === 'object' && 'message' in error
+          ? String(error.message)
+          : 'Error al registrar el titular';
       showError(errorMessage);
     }
   };
 
-  const handleCancel = () => {
-    navigate('/titulares');
-  };
+  const isPending = isSubmitting || createTitular.isPending;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Campo Apellido */}
+      {/* Apellido */}
       <div>
-        <label
-          htmlFor="apellido"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          Apellido <span className="text-red-500">*</span>
+        <label htmlFor="apellido" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Apellido <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <input
           id="apellido"
@@ -59,33 +69,17 @@ export const TitularForm = () => {
           {...register('apellido')}
           aria-invalid={errors.apellido ? 'true' : 'false'}
           aria-describedby={errors.apellido ? 'apellido-error' : undefined}
-          className={`
-            w-full px-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
-            bg-white dark:bg-[#27272a]
-            focus:outline-none focus:ring-2 focus:ring-[#007a8a] focus:border-transparent
-            transition-colors
-            ${
-              errors.apellido
-                ? 'border-red-500 dark:border-red-500'
-                : 'border-gray-300 dark:border-[#3f3f46]'
-            }
-          `}
+          aria-required="true"
+          className={`${inputBase} ${errors.apellido ? inputError : inputNormal}`}
           placeholder="Ingrese el apellido"
         />
-        {errors.apellido && (
-          <p id="apellido-error" className="mt-1.5 text-sm text-red-600 dark:text-red-400">
-            {errors.apellido.message}
-          </p>
-        )}
+        {errors.apellido && <FieldError id="apellido-error" message={errors.apellido.message!} />}
       </div>
 
-      {/* Campo Nombre de Contacto */}
+      {/* Nombre de Contacto */}
       <div>
-        <label
-          htmlFor="nombreContacto"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          Nombre de Contacto <span className="text-red-500">*</span>
+        <label htmlFor="nombreContacto" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Nombre de Contacto <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <input
           id="nombreContacto"
@@ -93,33 +87,19 @@ export const TitularForm = () => {
           {...register('nombreContacto')}
           aria-invalid={errors.nombreContacto ? 'true' : 'false'}
           aria-describedby={errors.nombreContacto ? 'nombreContacto-error' : undefined}
-          className={`
-            w-full px-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
-            bg-white dark:bg-[#27272a]
-            focus:outline-none focus:ring-2 focus:ring-[#007a8a] focus:border-transparent
-            transition-colors
-            ${
-              errors.nombreContacto
-                ? 'border-red-500 dark:border-red-500'
-                : 'border-gray-300 dark:border-[#3f3f46]'
-            }
-          `}
+          aria-required="true"
+          className={`${inputBase} ${errors.nombreContacto ? inputError : inputNormal}`}
           placeholder="Ingrese el nombre de contacto"
         />
         {errors.nombreContacto && (
-          <p id="nombreContacto-error" className="mt-1.5 text-sm text-red-600 dark:text-red-400">
-            {errors.nombreContacto.message}
-          </p>
+          <FieldError id="nombreContacto-error" message={errors.nombreContacto.message!} />
         )}
       </div>
 
-      {/* Campo Dirección */}
+      {/* Dirección */}
       <div>
-        <label
-          htmlFor="direccion"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          Dirección <span className="text-red-500">*</span>
+        <label htmlFor="direccion" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Dirección <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <input
           id="direccion"
@@ -127,33 +107,17 @@ export const TitularForm = () => {
           {...register('direccion')}
           aria-invalid={errors.direccion ? 'true' : 'false'}
           aria-describedby={errors.direccion ? 'direccion-error' : undefined}
-          className={`
-            w-full px-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
-            bg-white dark:bg-[#27272a]
-            focus:outline-none focus:ring-2 focus:ring-[#007a8a] focus:border-transparent
-            transition-colors
-            ${
-              errors.direccion
-                ? 'border-red-500 dark:border-red-500'
-                : 'border-gray-300 dark:border-[#3f3f46]'
-            }
-          `}
+          aria-required="true"
+          className={`${inputBase} ${errors.direccion ? inputError : inputNormal}`}
           placeholder="Ingrese la dirección"
         />
-        {errors.direccion && (
-          <p id="direccion-error" className="mt-1.5 text-sm text-red-600 dark:text-red-400">
-            {errors.direccion.message}
-          </p>
-        )}
+        {errors.direccion && <FieldError id="direccion-error" message={errors.direccion.message!} />}
       </div>
 
-      {/* Campo Monto Mensual Pactado */}
+      {/* Monto Mensual Pactado */}
       <div>
-        <label
-          htmlFor="montoMensualPactado"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          Monto Mensual Pactado <span className="text-red-500">*</span>
+        <label htmlFor="montoMensualPactado" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Monto Mensual Pactado <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <Controller
           control={control}
@@ -170,52 +134,41 @@ export const TitularForm = () => {
                 field.onChange(floatValue ?? undefined);
               }}
               onBlur={field.onBlur}
-              disabled={isSubmitting || createTitular.isPending}
+              disabled={isPending}
               placeholder="0,00"
               prefix="$"
               containerClassName="relative"
-              inputClassName={`
-                w-full pr-4 py-2.5 rounded-lg border text-gray-900 dark:text-white
-                bg-white dark:bg-[#27272a]
-                focus:outline-none focus:ring-2 focus:ring-[#007a8a] focus:border-transparent
-                transition-colors
-                ${
-                  errors.montoMensualPactado
-                    ? 'border-red-500 dark:border-red-500'
-                    : 'border-gray-300 dark:border-[#3f3f46]'
-                }
-              `}
+              inputClassName={`w-full pr-4 py-2.5 rounded-lg border text-gray-900 dark:text-white bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-colors ${errors.montoMensualPactado ? inputError : inputNormal}`}
               aria-invalid={errors.montoMensualPactado ? 'true' : 'false'}
               aria-describedby={errors.montoMensualPactado ? 'montoMensualPactado-error' : undefined}
+              aria-required="true"
             />
           )}
         />
         {errors.montoMensualPactado && (
-          <p id="montoMensualPactado-error" className="mt-1.5 text-sm text-red-600 dark:text-red-400">
-            {errors.montoMensualPactado.message}
-          </p>
+          <FieldError id="montoMensualPactado-error" message={errors.montoMensualPactado.message!} />
         )}
       </div>
 
-      {/* Botones de acción */}
+      {/* Acciones */}
       <div className="flex flex-col sm:flex-row gap-3 pt-4">
         <Button
           type="button"
           variant="ghost"
-          onClick={handleCancel}
-          disabled={isSubmitting || createTitular.isPending}
+          onClick={() => navigate('/titulares')}
+          disabled={isPending}
           className="w-full sm:w-auto order-2 sm:order-1"
         >
           Cancelar
         </Button>
         <Button
           type="submit"
-          disabled={isSubmitting || createTitular.isPending}
-          className="w-full sm:flex-1 sm:order-2 bg-[#007a8a] hover:bg-[#00626e] text-white disabled:bg-gray-400 disabled:hover:bg-gray-400"
+          disabled={isPending}
+          className="w-full sm:flex-1 sm:order-2 bg-brand hover:bg-brand-dark text-white disabled:bg-gray-400 disabled:hover:bg-gray-400"
         >
-          {isSubmitting || createTitular.isPending ? (
+          {isPending ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+              <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
               Guardando...
             </span>
           ) : (
