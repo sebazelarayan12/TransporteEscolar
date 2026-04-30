@@ -214,8 +214,8 @@ export const TitularesListPage = () => {
 
             {/* Table Card con Scroll Interno - Altura fija */}
             <div className="flex h-[600px] flex-col overflow-hidden rounded-xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a]">
-              <TitularTableHeader />
               <div className="custom-scrollbar flex-1 overflow-y-auto">
+                <TitularTableHeader />
                 {filteredTitulares.length > 0 ? (
                   filteredTitulares.map((titular, rowIndex) => (
                     <TitularTableRow
