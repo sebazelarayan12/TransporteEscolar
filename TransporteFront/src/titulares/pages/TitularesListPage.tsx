@@ -1,6 +1,6 @@
 import { useReducer, useState } from 'react';
 import { useTitulares, useTitularesSinTelefonos } from '../services/titulares.queries';
-import { LoadingScreen, ErrorState, EmptyState, SearchInput, Alert } from '../../shared/ui';
+import { ErrorState, EmptyState, SearchInput, Alert, Skeleton } from '../../shared/ui';
 import { TitularTableHeader, TitularTableRow, TitularDetailPanel } from '../components';
 import { filterTitulares } from '../helpers/search.helpers';
 import type { TitularResponse } from '../types/titular.types';
@@ -63,6 +63,39 @@ const panelReducer = (state: PanelState, action: PanelAction): PanelState => {
   }
 };
 
+const TitularesListSkeleton = () => (
+  <div className="w-full bg-zinc-50 dark:bg-zinc-900">
+    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8 space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-36" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <Skeleton className="h-10 w-full md:w-72 rounded-lg" />
+      </div>
+      <div className="flex h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="border-b border-zinc-200 px-6 py-3 dark:border-zinc-700">
+          <div className="grid grid-cols-4 gap-4">
+            {['Apellido', 'Contacto', 'Dirección', 'Estado'].map((col) => (
+              <Skeleton key={col} className="h-4 w-full" />
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 divide-y divide-zinc-100 overflow-y-auto dark:divide-zinc-700/50">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="grid grid-cols-4 gap-4 px-6 py-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export const TitularesListPage = () => {
   const { data: titulares, isLoading, error } = useTitulares();
   const { data: titularesSinTelefonos } = useTitularesSinTelefonos();
@@ -98,7 +131,7 @@ export const TitularesListPage = () => {
   const titularesSinTelefonoPreview = titularesSinTelefonoList.slice(0, 5);
   const titularesSinTelefonoRestantes = titularesSinTelefonoList.length - titularesSinTelefonoPreview.length;
 
-  if (isLoading) return <LoadingScreen message="Cargando titulares..." />;
+  if (isLoading) return <TitularesListSkeleton />;
   if (error) return <ErrorState message="Error al cargar los titulares" />;
   if (!titulares || titulares.length === 0) return <EmptyState message="No hay titulares registrados" />;
 
@@ -181,8 +214,8 @@ export const TitularesListPage = () => {
 
             {/* Table Card con Scroll Interno - Altura fija */}
             <div className="flex h-[600px] flex-col overflow-hidden rounded-xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a]">
-              <TitularTableHeader />
               <div className="custom-scrollbar flex-1 overflow-y-auto">
+                <TitularTableHeader />
                 {filteredTitulares.length > 0 ? (
                   filteredTitulares.map((titular, rowIndex) => (
                     <TitularTableRow

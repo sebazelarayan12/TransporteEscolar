@@ -17,4 +17,6 @@ export { ToastProvider } from './ToastProvider';
 export { ConfirmDialog } from './ConfirmDialog';
 export * from './icons';
 export { PriceInput } from './PriceInput';
+export { Skeleton, SkeletonTableRow } from './Skeleton';
+export { ErrorBoundary } from './ErrorBoundary';
 

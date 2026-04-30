@@ -1,7 +1,7 @@
 import { useReducer, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usePasajerosPaginados, usePasajerosSinHorarios } from '../services/pasajeros.queries';
-import { LoadingScreen, ErrorState, SearchInput, MobileDrawer, Pagination, Alert } from '../../shared/ui';
+import { ErrorState, SearchInput, MobileDrawer, Pagination, Alert, Skeleton } from '../../shared/ui';
 import { PasajeroDetailPanel, PasajeroTableHeader, PasajeroTableRow, PasajeroCompactCard } from '../components';
 import type { PasajeroResponse } from '../types/pasajero.types';
 import { useDebounce } from '../../shared/hooks/useDebounce';
@@ -59,6 +59,40 @@ const panelReducer = (state: PanelState, action: PanelAction): PanelState => {
   }
 };
 
+const PasajerosListSkeleton = () => (
+  <div className="w-full bg-zinc-50 dark:bg-zinc-900">
+    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8 space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-36" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <Skeleton className="h-10 w-full md:w-72 rounded-lg" />
+      </div>
+      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="hidden border-b border-zinc-200 bg-zinc-50 px-6 py-3 dark:border-zinc-700 dark:bg-zinc-800 md:block">
+          <div className="grid grid-cols-5 gap-4">
+            {['Nombre', 'Titular', 'Colegio', 'Horario', 'Estado'].map((col) => (
+              <Skeleton key={col} className="h-4 w-full" />
+            ))}
+          </div>
+        </div>
+        <div className="divide-y divide-zinc-100 dark:divide-zinc-700/50">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="grid grid-cols-1 gap-2 px-6 py-4 md:grid-cols-5 md:gap-4">
+              <Skeleton className="h-5 w-40 md:w-full" />
+              <Skeleton className="h-4 w-32 md:w-full" />
+              <Skeleton className="h-4 w-24 md:w-full" />
+              <Skeleton className="h-4 w-20 md:w-full" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export const PasajerosListPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -100,7 +134,7 @@ export const PasajerosListPage = () => {
   const pasajerosSinHorarioPreview = pasajerosSinHorarioList.slice(0, 5);
   const pasajerosSinHorarioRestantes = pasajerosSinHorarioList.length - pasajerosSinHorarioPreview.length;
   
-  if (isInitialLoading) return <LoadingScreen message="Cargando pasajeros..." />;
+  if (isInitialLoading) return <PasajerosListSkeleton />;
   if (error) return <ErrorState message="Error al cargar los pasajeros" />;
 
   return (

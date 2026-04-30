@@ -2,6 +2,7 @@ import { lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from './shared/ui/ToastProvider';
+import { ErrorBoundary } from './shared/ui/ErrorBoundary';
 import { MainLayout } from './app/MainLayout';
 import {
   subscribeToPush,
@@ -71,6 +72,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <BrowserRouter>
+          <ErrorBoundary>
           <Routes>
             <Route path="/" element={<MainLayout />}>
               <Route index element={<DashboardPage />} />
@@ -88,6 +90,7 @@ function App() {
                <Route path="*" element={<NotFoundPage />} />
              </Route>
            </Routes>
+          </ErrorBoundary>
         </BrowserRouter>
       </ToastProvider>
     </QueryClientProvider>

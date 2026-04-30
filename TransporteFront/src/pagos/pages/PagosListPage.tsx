@@ -4,13 +4,14 @@ import { usePagosPaginados, useEstadisticasMes } from '../services/pagos.queries
 import { getPagoEstado } from '../helpers/periodo.helpers';
 import {
   SearchInput,
-  LoadingScreen,
   MonthYearFilter,
   EstadisticasMesCard,
   PagoStatusBadge,
   Pagination,
   Button,
   Alert,
+  Skeleton,
+  SkeletonTableRow,
 } from '../../shared/ui';
 import { useDebounce } from '../../shared/hooks/useDebounce';
 import type { PagoEstado, PagoMensual, PagosEstadoFiltro } from '../types/pago.types';
@@ -148,9 +149,8 @@ export const PagosListPage = () => {
     dispatch({ type: 'toggleRegisterModal', isOpen });
   };
 
-  // Show loading on first load
   if (isLoading) {
-    return <LoadingScreen message="Cargando pagos..." />;
+    return <PagosListSkeleton />;
   }
 
   const pagos = paginatedData?.data ?? [];
@@ -189,20 +189,20 @@ export const PagosListPage = () => {
   const pendientesRestantes = pendientesAlert.length - pendientesPreview.length;
 
   return (
-    <div className="min-h-full w-full bg-[#fafafa] dark:bg-[#18181b]">
+    <div className="min-h-full w-full bg-zinc-50 dark:bg-zinc-900">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         {/* Header */}
-        <header className="rounded-3xl border border-[#e1e8ec] bg-white px-6 py-5 shadow-sm dark:border-white/5 dark:bg-[#1f1f24]">
+        <header className="rounded-3xl border border-zinc-200 bg-white px-6 py-5 shadow-sm dark:border-white/5 dark:bg-zinc-900">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#1d8ca5]">Control mensual</p>
-              <h1 className="text-2xl font-bold text-[#0f181a] dark:text-white">Pagos y Recaudación</h1>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-accent">Control mensual</p>
+              <h1 className="text-2xl font-bold text-ink dark:text-white">Pagos y Recaudación</h1>
               <p className="text-sm text-gray-500">Seguimiento en tiempo real de vencimientos, saldos y registros manuales.</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 to="/pagos/movimientos"
-                className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-[#1d8ca5]/60 hover:text-[#1d8ca5]"
+                className="inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-brand-accent/60 hover:text-brand-accent"
               >
                 <span className="material-symbols-outlined text-[18px]">history</span>
                 Ver historial
@@ -266,28 +266,30 @@ export const PagosListPage = () => {
           />
           {isFetching && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#1d8ca5] border-t-transparent" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-accent border-t-transparent" />
             </div>
           )}
         </div>
 
         {/* Payments Table */}
-        {noPagosDisponibles ? (
-          <PagosEmptyStateCard hasSearch={Boolean(search)} />
-        ) : (
-          <PagosListadoSection
-            filteredPagos={filteredPagos}
-            totalCount={totalCount}
-            estadoFiltro={estadoFiltro}
-            estadoFiltroLabels={estadoFiltroLabels}
-            filterCounts={filterCounts}
-            sinResultadosPorFiltro={sinResultadosPorFiltro}
-            pageNumber={pageNumber}
-            onPageChange={handlePageChange}
-            onSelectPago={handleOpenDetalleModal}
-            onEstadoSelect={(estado) => dispatch({ type: 'setEstadoFiltro', value: estado })}
-          />
-        )}
+        <div aria-live="polite" aria-atomic="false">
+          {noPagosDisponibles ? (
+            <PagosEmptyStateCard hasSearch={Boolean(search)} />
+          ) : (
+            <PagosListadoSection
+              filteredPagos={filteredPagos}
+              totalCount={totalCount}
+              estadoFiltro={estadoFiltro}
+              estadoFiltroLabels={estadoFiltroLabels}
+              filterCounts={filterCounts}
+              sinResultadosPorFiltro={sinResultadosPorFiltro}
+              pageNumber={pageNumber}
+              onPageChange={handlePageChange}
+              onSelectPago={handleOpenDetalleModal}
+              onEstadoSelect={(estado) => dispatch({ type: 'setEstadoFiltro', value: estado })}
+            />
+          )}
+        </div>
         <RegistrarPagoModal
           isOpen={isRegisterModalOpen}
           onClose={() => toggleRegisterModal(false)}
@@ -306,6 +308,55 @@ export const PagosListPage = () => {
     </div>
   );
 };
+
+const PagosListSkeleton = () => (
+  <div className="min-h-full w-full bg-zinc-50 dark:bg-zinc-900">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="rounded-3xl border border-zinc-200 bg-white px-6 py-5 shadow-sm dark:border-white/5 dark:bg-zinc-900">
+        <Skeleton className="mb-2 h-3 w-28" />
+        <Skeleton className="mb-2 h-7 w-56" />
+        <Skeleton className="h-4 w-80" />
+      </div>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-20 rounded-2xl" />
+        ))}
+      </div>
+      <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm dark:border-white/5 dark:bg-zinc-900">
+        <div className="hidden md:block">
+          <table className="w-full" aria-label="Cargando pagos">
+            <thead className="border-b border-zinc-200 dark:border-zinc-700">
+              <tr className="bg-zinc-50 dark:bg-zinc-800">
+                {['Titular', 'Periodo', 'Monto Generado', 'Total Pagado', 'Saldo Pendiente', 'Estado'].map((col) => (
+                  <th key={col} scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <SkeletonTableRow key={i} cols={6} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="divide-y divide-zinc-200 dark:divide-zinc-700 md:hidden">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="p-4 space-y-2">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-24" />
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <Skeleton className="h-10 rounded-lg" />
+                <Skeleton className="h-10 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const PagosEmptyStateCard = ({ hasSearch }: { hasSearch: boolean }) => {
   return (
@@ -357,7 +408,7 @@ const PagosListadoSection = ({
         onEstadoSelect={onEstadoSelect}
         counts={filterCounts}
       />
-      <div className="overflow-hidden rounded-3xl border border-[#e1e8ec] bg-white shadow-sm dark:border-white/5 dark:bg-[#1f1f24]">
+      <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm dark:border-white/5 dark:bg-zinc-900">
         {sinResultadosPorFiltro ? (
           <PagosSinResultados estadoFiltro={estadoFiltro} labels={estadoFiltroLabels} />
         ) : (
@@ -403,23 +454,23 @@ const PagosDesktopTable = ({
     <div className="hidden overflow-x-auto md:block">
       <table className="w-full">
         <thead className="border-b border-gray-200 dark:border-gray-700">
-          <tr className="bg-gray-50 dark:bg-[#27272a]">
-            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+          <tr className="bg-gray-50 dark:bg-zinc-800">
+            <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
               Titular
             </th>
-            <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+            <th scope="col" className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
               Periodo
             </th>
-            <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+            <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
               Monto Generado
             </th>
-            <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+            <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
               Total Pagado
             </th>
-            <th className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+            <th scope="col" className="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
               Saldo Pendiente
             </th>
-            <th className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
+            <th scope="col" className="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
               Estado
             </th>
           </tr>
@@ -432,7 +483,7 @@ const PagosDesktopTable = ({
               <tr
                 key={pago.id}
                 onClick={() => onSelectPago(pago.id)}
-                className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-[#27272a]"
+                className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800"
               >
                 <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                   <div className="flex flex-col">
@@ -481,7 +532,7 @@ const PagosMobileCards = ({
             type="button"
             key={pago.id}
             onClick={() => onSelectPago(pago.id)}
-            className="w-full cursor-pointer p-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-[#27272a]"
+            className="w-full cursor-pointer p-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800"
           >
             <div className="mb-2 flex items-start justify-between">
               <div>

@@ -15,7 +15,7 @@ export const TitularTableRow = ({ titular, isSelected, onClick, rowIndex }: Titu
     <button
       type="button"
       onClick={onClick}
-      className={`group grid grid-cols-12 gap-4 px-6 py-4 items-center border-b border-[#e4e4e7] dark:border-[#3f3f46] cursor-pointer relative transition-colors ${
+      className={`w-full group grid grid-cols-12 gap-4 px-6 py-4 items-center border-b border-[#e4e4e7] dark:border-[#3f3f46] cursor-pointer relative transition-colors ${
         isSelected
           ? 'bg-[#007a8a]/5 hover:bg-[#007a8a]/10'
           : rowIndex % 2 === 0

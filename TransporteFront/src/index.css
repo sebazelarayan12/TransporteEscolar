@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand: #007a8a;
+  --color-brand-dark: #00626e;
+  --color-brand-accent: #1d8ca5;
+  --color-ink: #0f181a;
+}
+
 /* Fuente principal */
 body {
   font-family: 'Manrope', sans-serif;
