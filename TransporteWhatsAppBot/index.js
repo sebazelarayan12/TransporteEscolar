@@ -244,6 +244,42 @@ function buildMensajeRecordatorio(destinatario) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Comando: prueba
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TELEFONO_PRUEBA = '543814488860';
+
+async function fetchDestinatariosPrueba() {
+  console.log(`\n🧪 Modo prueba — destinatario: ${TELEFONO_PRUEBA}`);
+  const todos = await fetchDestinatariosPendientes();
+  const encontrado = todos.find(
+    (d) => normalizeWhatsappNumber(d.telefono) === normalizeWhatsappNumber(TELEFONO_PRUEBA)
+  );
+
+  if (encontrado) {
+    console.log('✅ Pago pendiente encontrado para el destinatario de prueba.');
+    return [encontrado];
+  }
+
+  console.log('⚠️  Sin pago pendiente para ese número. Enviando mensaje de prueba básico.');
+  return [{ telefono: TELEFONO_PRUEBA, periodo: getPeriodoActual().label, saldoPendiente: 0 }];
+}
+
+function buildMensajePrueba(destinatario) {
+  const periodoNatural = formatPeriodoNatural(destinatario.periodo);
+  const linkLinea = destinatario.linkMP
+    ? `\n💳 Pagá con Mercado Pago:\n${destinatario.linkMP}\n`
+    : '';
+  return (
+    `🧪 *MENSAJE DE PRUEBA*\n\n` +
+    `Hola Sebastian! 🚌\n` +
+    `Cuota *${periodoNatural}* — *${formatMonto(destinatario.saldoPendiente)}*` +
+    `${linkLinea}\n` +
+    `(Este es un mensaje de prueba del sistema)`
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Configuración de comandos
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -257,6 +293,11 @@ const commands = {
     description: 'Aviso masivo con el monto mensual pactado para titulares activos.',
     fetchDestinatarios: fetchDestinatariosRecordatorio,
     buildMensaje: buildMensajeRecordatorio,
+  },
+  prueba: {
+    description: 'Envía mensaje de prueba solo a Sebastian Zelarayan (+54 381448 8860).',
+    fetchDestinatarios: fetchDestinatariosPrueba,
+    buildMensaje: buildMensajePrueba,
   },
 };
 
