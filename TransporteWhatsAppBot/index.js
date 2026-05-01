@@ -435,7 +435,7 @@ async function enviarMensajes(client, destinatarios, buildMensaje) {
     }
 
     try {
-      const numberId = await client.getNumberId(numeroWA);
+      const numberId = await client.getNumberId(`+${numeroWA}`);
       if (!numberId) {
         console.warn(`⚠️  ${destinatario.telefono} (${numeroWA}) no tiene WhatsApp activo, omitido.`);
         errores++;
