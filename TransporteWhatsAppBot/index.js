@@ -88,6 +88,18 @@ function seleccionarTelefonoPrincipal(telefonos) {
   );
 }
 
+async function fetchLinkMP(pagoId) {
+  try {
+    const { data } = await axios.post(
+      `${env.API_BASE_URL}/pagosmensuales/${pagoId}/mercadopago-link`
+    );
+    return data.url ?? null;
+  } catch (err) {
+    console.warn(`⚠️  No se pudo generar link MP para pago ${pagoId}: ${err.message}`);
+    return null;
+  }
+}
+
 function printHeader(commandName, description) {
   console.log('='.repeat(60));
   console.log('  🚌 Bot WhatsApp — Transporte Escolar');
@@ -144,6 +156,7 @@ async function fetchDestinatariosPendientes() {
       telefono,
       periodo: periodo.label,
       saldoPendiente: pago.saldoPendiente,
+      pagoId: pago.id,
     });
   }
 
@@ -151,15 +164,29 @@ async function fetchDestinatariosPendientes() {
   if (sinTelefono > 0) console.log(`⚠️  ${sinTelefono} titular(es) sin teléfono activo, omitidos.`);
   console.log(`📤 Destinatarios listos: ${destinatarios.length}`);
 
+  console.log('💳 Generando links de Mercado Pago...');
+  await Promise.all(
+    destinatarios.map(async (dest) => {
+      if (!dest.pagoId) return;
+      dest.linkMP = await fetchLinkMP(dest.pagoId);
+    })
+  );
+  const conLink = destinatarios.filter((d) => d.linkMP).length;
+  console.log(`🔗 Links generados: ${conLink}/${destinatarios.length}`);
+
   return destinatarios;
 }
 
 function buildMensajePendientes(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
+  const linkLinea = destinatario.linkMP
+    ? `\n💳 Pagá con Mercado Pago:\n${destinatario.linkMP}\n`
+    : '';
   return (
     `Hola! 🚌\n\n` +
-    `Te recordamos que tenés la cuota del mes *${periodoNatural}* pendiente por *${formatMonto(destinatario.saldoPendiente)}*.\n\n` +
-    `Por favor realizá el pago lo antes posible. ¡Muchas gracias! 😊`
+    `Te recordamos que tenés la cuota del mes *${periodoNatural}* pendiente por *${formatMonto(destinatario.saldoPendiente)}*.` +
+    `${linkLinea}\n` +
+    `¡Muchas gracias! 😊`
   );
 }
 
@@ -204,7 +231,7 @@ function buildMensajeRecordatorio(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
   return (
     `¡Buen dia! 🚌\n\n` +
-    `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *abril* es de *${formatMonto(destinatario.monto)}*.\n\n` +
+    `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *${periodoNatural}* es de *${formatMonto(destinatario.monto)}*.\n\n` +
     `Podés abonar por transferencia o en efectivo. ¡Gracias por confiar en nosotros! 😊`
   );
 }

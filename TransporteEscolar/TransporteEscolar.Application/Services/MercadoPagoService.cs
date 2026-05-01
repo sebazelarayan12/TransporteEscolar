@@ -152,6 +152,7 @@ public sealed class MercadoPagoService : IMercadoPagoService
             ExternalReference = pago.Id.ToString(CultureInfo.InvariantCulture),
             NotificationUrl = notificationUrl,
             AutoReturn = "approved",
+            StatementDescriptor = "Transporte Escolar",
             Items = new List<PreferenceItemRequest>
             {
                 new()
