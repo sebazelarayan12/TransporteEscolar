@@ -441,7 +441,8 @@ async function enviarMensajes(client, destinatarios, buildMensaje) {
         errores++;
         continue;
       }
-      await client.sendMessage(numberId._serialized, buildMensaje(destinatario));
+      const chatId = `${numberId.user}@c.us`;
+      await client.sendMessage(chatId, buildMensaje(destinatario));
       console.log(`✅ Enviado a ${destinatario.telefono}`);
       enviados++;
     } catch (err) {
