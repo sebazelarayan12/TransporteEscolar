@@ -24,7 +24,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IIngresoRepository, IngresoRepository>();
         services.AddScoped<INotificacionRepository, NotificacionRepository>();
         services.AddScoped<IPushSubscriptionRepository, PushSubscriptionRepository>();
-        
+
         // Servicios
         services.AddScoped<ITitularService, TitularService>();
         services.AddScoped<IReinscripcionService, ReinscripcionService>();
@@ -34,6 +34,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IIngresoService, IngresoService>();
         services.AddScoped<INotificacionService, NotificacionService>();
         services.AddScoped<IWebPushService, WebPushService>();
+        services.AddScoped<IMercadoPagoService, MercadoPagoService>();
 
         // Gestión de Transacciones
         services.AddScoped<ITransactionManager, TransactionManager>();

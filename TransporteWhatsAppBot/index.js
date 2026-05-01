@@ -17,6 +17,13 @@ function getPeriodoActual() {
   return { mes, anio, label: `${String(mes).padStart(2, '0')}/${anio}` };
 }
 
+function getPeriodoSiguiente() {
+  const now = new Date();
+  const mes = now.getMonth() === 11 ? 1 : now.getMonth() + 2;
+  const anio = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+  return { mes, anio, label: `${String(mes).padStart(2, '0')}/${anio}` };
+}
+
 function formatPeriodoNatural(label) {
   if (typeof label !== 'string') return label;
   const [mesRaw, anioRaw] = label.split('/').map((part) => part?.trim());
@@ -88,6 +95,18 @@ function seleccionarTelefonoPrincipal(telefonos) {
   );
 }
 
+async function fetchLinkMP(pagoId) {
+  try {
+    const { data } = await axios.post(
+      `${env.API_BASE_URL}/pagosmensuales/${pagoId}/mercadopago-link`
+    );
+    return data.url ?? null;
+  } catch (err) {
+    console.warn(`⚠️  No se pudo generar link MP para pago ${pagoId}: ${err.message}`);
+    return null;
+  }
+}
+
 function printHeader(commandName, description) {
   console.log('='.repeat(60));
   console.log('  🚌 Bot WhatsApp — Transporte Escolar');
@@ -144,6 +163,7 @@ async function fetchDestinatariosPendientes() {
       telefono,
       periodo: periodo.label,
       saldoPendiente: pago.saldoPendiente,
+      pagoId: pago.id,
     });
   }
 
@@ -151,15 +171,29 @@ async function fetchDestinatariosPendientes() {
   if (sinTelefono > 0) console.log(`⚠️  ${sinTelefono} titular(es) sin teléfono activo, omitidos.`);
   console.log(`📤 Destinatarios listos: ${destinatarios.length}`);
 
+  console.log('💳 Generando links de Mercado Pago...');
+  await Promise.all(
+    destinatarios.map(async (dest) => {
+      if (!dest.pagoId) return;
+      dest.linkMP = await fetchLinkMP(dest.pagoId);
+    })
+  );
+  const conLink = destinatarios.filter((d) => d.linkMP).length;
+  console.log(`🔗 Links generados: ${conLink}/${destinatarios.length}`);
+
   return destinatarios;
 }
 
 function buildMensajePendientes(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
+  const linkLinea = destinatario.linkMP
+    ? `\n💳 Pagá con Mercado Pago:\n${destinatario.linkMP}\n`
+    : '';
   return (
-    `Buen dia! 🚌\n\n` +
-    `Te recordamos que tenés la cuota del mes *${periodoNatural}* pendiente por *${formatMonto(destinatario.saldoPendiente)}*.\n\n` +
-    `Por favor realizá el pago lo antes posible. ¡Muchas gracias! 😊`
+    `Hola! 🚌\n\n` +
+    `Te recordamos que tenés la cuota del mes *${periodoNatural}* pendiente por *${formatMonto(destinatario.saldoPendiente)}*.` +
+    `${linkLinea}\n` +
+    `¡Muchas gracias! 😊`
   );
 }
 
@@ -168,7 +202,7 @@ function buildMensajePendientes(destinatario) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchDestinatariosRecordatorio() {
-  const periodo = getPeriodoActual();
+  const periodo = getPeriodoSiguiente();
   console.log(`\n🌐 API [${env.label}]: ${env.API_BASE_URL}`);
   console.log('📋 Recuperando titulares activos...');
 
@@ -204,12 +238,17 @@ function buildMensajeRecordatorio(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
   return (
     `¡Buen dia! 🚌\n\n` +
+<<<<<<< HEAD
     `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *junio* es de *${formatMonto(destinatario.monto)}*.\n\n` +
+=======
+    `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *${periodoNatural}* es de *${formatMonto(destinatario.monto)}*.\n\n` +
+>>>>>>> mp
     `Podés abonar por transferencia o en efectivo. ¡Gracias por confiar en nosotros! 😊`
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+<<<<<<< HEAD
 // Comando: personalizado
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -239,6 +278,41 @@ async function fetchDestinatariosPersonalizado() {
   console.log(`📤 Destinatarios listos: ${destinatarios.length}`);
 
   return destinatarios;
+=======
+// Comando: prueba
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TELEFONO_PRUEBA = '543814488860';
+
+async function fetchDestinatariosPrueba() {
+  console.log(`\n🧪 Modo prueba — destinatario: ${TELEFONO_PRUEBA}`);
+  const todos = await fetchDestinatariosPendientes();
+  const encontrado = todos.find(
+    (d) => normalizeWhatsappNumber(d.telefono) === normalizeWhatsappNumber(TELEFONO_PRUEBA)
+  );
+
+  if (encontrado) {
+    console.log('✅ Pago pendiente encontrado para el destinatario de prueba.');
+    return [encontrado];
+  }
+
+  console.log('⚠️  Sin pago pendiente para ese número. Enviando mensaje de prueba básico.');
+  return [{ telefono: TELEFONO_PRUEBA, periodo: getPeriodoActual().label, saldoPendiente: 0 }];
+}
+
+function buildMensajePrueba(destinatario) {
+  const periodoNatural = formatPeriodoNatural(destinatario.periodo);
+  const linkLinea = destinatario.linkMP
+    ? `\n💳 Pagá con Mercado Pago:\n${destinatario.linkMP}\n`
+    : '';
+  return (
+    `🧪 *MENSAJE DE PRUEBA*\n\n` +
+    `Hola Sebastian! 🚌\n` +
+    `Cuota *${periodoNatural}* — *${formatMonto(destinatario.saldoPendiente)}*` +
+    `${linkLinea}\n` +
+    `(Este es un mensaje de prueba del sistema)`
+  );
+>>>>>>> mp
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -256,10 +330,17 @@ const commands = {
     fetchDestinatarios: fetchDestinatariosRecordatorio,
     buildMensaje: buildMensajeRecordatorio,
   },
+<<<<<<< HEAD
   personalizado: {
     description: 'Mensaje personalizado a todos los titulares activos. Uso: node index.js personalizado "mensaje"',
     fetchDestinatarios: fetchDestinatariosPersonalizado,
     buildMensaje: null, // se asigna en main() con el texto del argumento
+=======
+  prueba: {
+    description: 'Envía mensaje de prueba solo a Sebastian Zelarayan (+54 381448 8860).',
+    fetchDestinatarios: fetchDestinatariosPrueba,
+    buildMensaje: buildMensajePrueba,
+>>>>>>> mp
   },
 };
 

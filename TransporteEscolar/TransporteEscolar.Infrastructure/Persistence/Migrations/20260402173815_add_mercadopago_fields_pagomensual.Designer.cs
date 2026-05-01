@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TransporteEscolar.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using TransporteEscolar.Infrastructure.Persistence;
 namespace TransporteEscolar.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260402173815_add_mercadopago_fields_pagomensual")]
+    partial class add_mercadopago_fields_pagomensual
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -140,9 +143,6 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
 
                     b.Property<int?>("TotalCuotas")
                         .HasColumnType("integer");
-
-                    b.Property<string>("Vehiculo")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -678,47 +678,6 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_PasajeroHorarios_Transporte", "\"Transporte\" IN (1,2)");
                         });
-                });
-
-            modelBuilder.Entity("TransporteEscolar.Domain.Entities.PushSubscription", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Auth")
-                        .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
-
-                    b.Property<string>("Endpoint")
-                        .IsRequired()
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("P256dh")
-                        .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
-
-                    b.Property<DateTime?>("UltimoUso")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UserAgent")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Endpoint")
-                        .IsUnique();
-
-                    b.ToTable("PushSubscriptions", (string)null);
                 });
 
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.ReinscripcionPasajero", b =>

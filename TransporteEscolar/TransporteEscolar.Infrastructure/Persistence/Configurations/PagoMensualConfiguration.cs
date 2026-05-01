@@ -35,22 +35,41 @@ public class PagoMensualConfiguration : IEntityTypeConfiguration<PagoMensual>
             .IsRequired(false)
             .HasMaxLength(500);
 
-        // Relación con Titular
+        builder.Property(pm => pm.MercadoPagoPreferenceId)
+            .IsRequired(false)
+            .HasMaxLength(100);
+
+        builder.Property(pm => pm.MercadoPagoUrl)
+            .IsRequired(false)
+            .HasMaxLength(500);
+
+        builder.Property(pm => pm.MercadoPagoPaymentId)
+            .IsRequired(false)
+            .HasMaxLength(100);
+
+        builder.Property(pm => pm.MercadoPagoGeneratedAt)
+            .IsRequired(false);
+
+        // Relaciï¿½n con Titular
         builder.HasOne(pm => pm.Titular)
             .WithMany()
             .HasForeignKey(pm => pm.TitularId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relación con Movimientos
+        // Relaciï¿½n con Movimientos
         builder.HasMany(pm => pm.Movimientos)
             .WithOne(m => m.PagoMensual)
             .HasForeignKey(m => m.PagoMensualId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Índice único: TitularId + Mes + Anio
+        // ï¿½ndice ï¿½nico: TitularId + Mes + Anio
         builder.HasIndex(pm => new { pm.TitularId, pm.Mes, pm.Anio })
             .IsUnique();
 
-        // Nota: Los métodos TotalPagado(), EstaPagado(), etc. son ignorados automáticamente por EF Core
+        builder.HasIndex(pm => pm.MercadoPagoPreferenceId)
+            .IsUnique()
+            .HasFilter("\"MercadoPagoPreferenceId\" IS NOT NULL");
+
+        // Nota: Los mï¿½todos TotalPagado(), EstaPagado(), etc. son ignorados automï¿½ticamente por EF Core
     }
 }

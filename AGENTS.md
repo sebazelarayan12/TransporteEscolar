@@ -1,416 +1,148 @@
-# ⚠️ INSTRUCCIÓN PRIORITARIA: Recarga de Contexto
+# AGENTS Transporte
 
-**ANTES DE CUALQUIER TAREA**: Si esta es tu primera interacción en la sesión, **LEE INMEDIATAMENTE** el archivo `recarga.md` (si existe) para cargar el contexto de la sesión anterior.
+## Recarga obligatoria
+- Ejecuta `cat recarga.md` al inicio de cada sesion y lee todo sin saltar secciones.
+- Si el archivo falta continua trabajando pero prepara datos para recrearlo cuando se ordene.
+- Nunca subas `recarga.md`; permanece en .gitignore y se mantiene local.
+- Documenta riesgos y decisiones durante la sesion y no reutilices datos viejos si contradicen hallazgos recientes.
+- Ante conflictos sigue prioridad: este AGENTS, luego los AGENTS de dominio y por ultimo comentarios del repo.
 
-```bash
-# Ejecuta esto primero si es inicio de sesión
-cat recarga.md
-```
-
-## Comando "guarda todo"
-
-### Regla global sin excepciones
-- Nunca escribas tildes en ninguna palabra ni mensaje, sin importar el contexto.
-
-Cuando el usuario diga **"guarda todo"**, crea o sobrescribe el archivo `recarga.md` en la raíz del proyecto con el siguiente contenido:
-
-### Estructura del archivo recarga.md:
-
-```markdown
-# Contexto de Sesión - Transporte Escolar
-
-**Última actualización**: [fecha y hora actual]
-
+## Guarda todo template
+- El comando "guarda todo" obliga a regenerar `recarga.md` sin tildes y con la plantilla completa.
+- Completa todos los campos aun si se repiten y actualiza fecha y hora reales antes de cerrar.
+- Usa "Pendiente" solo cuando realmente no exista informacion disponible.
+- Plantilla oficial:
+````markdown
+# Contexto de Sesion - Transporte Escolar
+**Ultima actualizacion**: [fecha y hora actual]
 ---
-
-## 🎯 Idea General del Proyecto
-
-[Describe brevemente el propósito del sistema: gestión de transporte escolar, entidades principales (titulares, pasajeros, pagos, reinscripciones), objetivo del negocio]
-
+## Idea General del Proyecto
+[Descripcion breve del proposito del sistema y entidades]
 ---
-
-## 🛠️ Stack Tecnológico
-
+## Stack Tecnologico
 ### Backend
 - .NET 8, ASP.NET Core Web API
 - Entity Framework Core 8
-- SQL Server (Docker)
-- Puerto: 5074
-- Perfil: Testing (con seeder)
-
+- SQL Server en Docker puerto 1433
+- Perfil Testing en puerto 5074
 ### Frontend
 - React 19 + Vite 7
-- TypeScript 5.9
-- TailwindCSS 4
-- TanStack Query 5
-- React Router 7
-- Axios
-- Puerto: 5173
-
+- TypeScript 5.9, TailwindCSS 4, TanStack Query 5, React Router 7, Axios
+- Puerto 5173 host 0.0.0.0
 ### Arquitectura
-- Backend: Domain, Application, Infrastructure, Api (Clean Architecture)
-- Frontend: Screaming Architecture (dominios: titulares, pasajeros, pagos, reinscripciones)
-
+- Backend: Domain / Application / Infrastructure / Api
+- Frontend: Screaming Architecture por dominios
 ---
-
-## 📋 Últimos Cambios
-
-### [Fecha] - [Título del cambio]
-
-**Archivos modificados/creados:**
-- `ruta/archivo1.tsx`
-- `ruta/archivo2.cs`
-
-**Qué se hizo:**
-- Detalle 1
-- Detalle 2
-
-**Decisiones importantes:**
-- Por qué se eligió X solución sobre Y
-- Patrones específicos implementados
-
-**Estado actual:**
-- ✅ Funcionalidad completa
-- ⚠️ Pendiente: [algo por hacer]
-
+## Ultimos Cambios
+### [Fecha] - [Titulo]
+**Archivos:** `ruta/archivo1`, `ruta/archivo2`
+**Que se hizo:** Detalle 1; Detalle 2
+**Decisiones:** Motivo de la solucion; Patrones aplicados
+**Estado:** OK Resultado; Pendiente por resolver
 ---
-
-### [Fecha anterior] - [Cambio anterior]
-
-[Repetir estructura anterior para los últimos 3-5 cambios significativos]
-
+### [Fecha anterior] - [Cambio]
+[Repite la estructura para 3-5 hitos]
 ---
-
-## 🔑 Patrones y Convenciones Críticos
-
+## Patrones clave
 ### Frontend
-- NUNCA usar `useMemo`/`useCallback` (React 19 Compiler)
-- NUNCA usar `var()` en className (usar Tailwind semantic)
-- Usar `z.coerce.number()` para inputs numéricos
-- Query keys por dominio (titularesKeys, pasajerosKeys, etc.)
-
+- Nunca usar `useMemo` ni `useCallback`
+- No usar `var()` dentro de className
+- Inputs numericos con `z.coerce.number()`
+- Query keys agrupadas por dominio
 ### Backend
-- Servicios registrados en `ServiceCollectionExtensions.cs`
+- Servicios registrados en `ServiceCollectionExtensions`
 - Migraciones desde `TransporteEscolar.Infrastructure`
-- GlobalExceptionHandler para errores consistentes
-
+- Errores via `GlobalExceptionHandler`
 ---
-
-## 📂 Archivos Clave Recientes
-
-[Lista de los 10-15 archivos más importantes trabajados recientemente]
-
-- `src/pasajeros/components/PasajeroForm.tsx` - Formulario completo de pasajeros
-- `src/pasajeros/components/TitularCombobox.tsx` - Combobox personalizado con búsqueda
-- [etc.]
-
+## Archivos destacados
+- `ruta/a`, `ruta/b` (maximo 10-15 entradas)
 ---
-
-## 🚀 Próximos Pasos Sugeridos
-
-- [ ] Implementar edición de pasajeros
-- [ ] Crear módulo de pagos
-- [ ] Agregar tests E2E con Playwright
-- [etc.]
-
+## Proximos pasos
+- [ ] Item 1, Item 2, Item 3
 ---
-
-## ⚡ Comandos Rápidos
-
+## Comandos rapidos
 ```bash
-# Levantar base de datos
 docker-compose -f docker-compose.testing.yml up -d
-
-# Backend (desde TransporteEscolar/TransporteEscolar.Api)
-dotnet run --launch-profile Testing
-
-# Frontend (desde TransporteFront)
-npm run dev
-
-# Migraciones (desde TransporteEscolar/TransporteEscolar.Infrastructure)
-dotnet ef migrations add NombreMigracion --startup-project ../TransporteEscolar.Api
-dotnet ef database update --startup-project ../TransporteEscolar.Api
+cd TransporteEscolar/TransporteEscolar.Api && dotnet run --launch-profile Testing
+cd TransporteFront && npm run dev && npm run lint && npm run build
+cd TransporteEscolar/TransporteEscolar.Infrastructure
 ```
+````
 
----
-```
+## Panorama del repositorio
+- Monorepo Transporte con `TransporteEscolar` (backend) y `TransporteFront` (frontend) mas archivos Docker en la raiz.
+- Backend expone APIs REST limpias en perfil Testing 5074 y el frontend React 19 + Vite 7 sirve en 5173 consumiendo TanStack Query.
+- SQL Server corre en Docker en 1433; aseguralo antes de correr migraciones o pruebas.
+- Dominios clave: titulares, pasajeros, pagos, reinscripciones; mantener contratos sincronizados entre capas.
 
-**Notas importantes:**
-- Este archivo está en `.gitignore` (no se sube a git)
-- Actualízalo cada vez que el usuario diga "guarda todo"
-- Incluye contexto suficiente para que la siguiente sesión arranque sin preguntas
-- Prioriza: tecnologías, últimos cambios, decisiones de diseño, patrones usados
+## Build, lint y test
+- Backend: `dotnet restore && dotnet build TransporteEscolar.sln` y luego `dotnet test TransporteEscolar.sln` con Docker Testing levantado.
+- `npm install` una vez por sesion seguido de `npm run lint` y `npm run build`.
+- `npm run dev` sirve la UI en 5173 para validaciones manuales.
+- `docker-compose -f docker-compose.testing.yml up -d` levanta la base; usa `down` al cerrar la sesion.
+- Ejecuta suites completas antes de solicitar revision o abrir PR.
 
----
+## Pruebas unitarias individuales
+- Backend: `dotnet test TransporteEscolar.sln --filter FullyQualifiedName~NombreDelTest`.
+- Frontend: `npm run test -- Dominio` usando Vitest; remueve filtros antes de commitear y documenta pendientes en `recarga.md` si quedan fallos abiertos.
 
-# ⚠️ INSTRUCCIÓN PRIORITARIA: Recarga de Contexto
+## Workflows esenciales
+1. Base de datos: levanta Docker Testing antes de ejecutar seeds o Api.
+2. Backend: corre `dotnet run --launch-profile Testing` desde Api para validar endpoints reales.
+3. Frontend: arranca `npm run dev` y revisa rutas titulares, pasajeros, pagos y reinscripciones.
+4. Deploy: sincroniza cambios backend/frontend antes de empujar a Railway u otros entornos.
+5. Documentacion y QA: actualiza `recarga.md`, este AGENTS y registra hallazgos con enlaces a commits.
 
-**ANTES DE CUALQUIER TAREA**: Si esta es tu primera interacción en la sesión, **LEE INMEDIATAMENTE** el archivo `recarga.md` (si existe) para cargar el contexto de la sesión anterior.
+## Estilo backend
+- Respeta el flujo Domain -> Application -> Infrastructure -> Api sin dependencias inversas.
+- Registra servicios y repositorios en `ServiceCollectionExtensions` y usa inyeccion de dependencias.
+- Prefiere records o clases inmutables para DTOs expuestos por la Api.
+- Propaga `CancellationToken` en servicios asincronos y repositorios.
+- Repositorios filtran titulares activos y evitan consultas costosas sin paginar.
+- Los errores se canalizan via `GlobalExceptionHandlerMiddleware`; no silencies excepciones.
+- Genera migraciones desde `TransporteEscolar.Infrastructure` apuntando a `TransporteEscolar.Api` y mantiene configuraciones sensibles en variables de entorno o `appsettings.Testing.json`.
 
-```bash
-# Ejecuta esto primero si es inicio de sesión
-cat recarga.md
-```
+## Estilo frontend
+- Arquitectura por dominio: cada carpeta contiene pages, components, hooks, services y types dedicados.
+- Formularios usan react-hook-form con validaciones Zod v4 y helpers compartidos.
+- Inputs numericos se parsean con `z.coerce.number()` y montos usan `PriceInput`.
+- TanStack Query agrupa keys por dominio e invalida caches despues de mutaciones.
+- Prohibido `useMemo` y `useCallback` salvo dependencia externa documentada.
+- No usar `var()` en className; define tokens en Tailwind 4 y combinaciones via helpers.
+- Ordena imports (externas, alias compartidos, rutas relativas) y evita comentarios triviales manteniendo props tipadas.
 
-## Comando "guarda todo"
+## Skills auto invoke
+- **brainstorming**: nuevas caracteristicas, flujos o copy creativo.
+- **systematic-debugging**: bugs, regresiones o errores de build.
+- **csharp-developer**: servicios, repositorios, controllers o EF Core.
+- **api-design-principles**: contratos REST, versionado y payloads.
+- **error-handling-patterns**: middleware, filtros y politicas de excepcion.
+- **react-19**: componentes, hooks, routing y TanStack Query.
+- **tailwind-4** junto con **frontend-design** o **interface-design** en tareas de UI.
+- **vercel-react-best-practices**: diagnosticos y optimizaciones en React.
+- **typescript** y **zod-4**: definicion de tipos estrictos y validaciones.
+- **vitest** o **playwright**: pruebas unitarias o E2E.
+- **better-auth-best-practices**: autenticacion, interceptores y proteccion de rutas.
 
-Cuando el usuario diga **"guarda todo"**, crea o sobrescribe el archivo `recarga.md` en la raíz del proyecto con el siguiente contenido:
+## React doctor
+- Corre `npx -y react-doctor@latest . --verbose --diff` despues de cada cambio dentro de `TransporteFront`.
+- Resuelve todas las advertencias y vuelve a ejecutar la herramienta hasta obtener salida limpia.
+- Documenta en `recarga.md` si algun hallazgo permanece abierto, describe el motivo y adjunta resultados relevantes al preparar PRs o handoff.
 
-### Estructura del archivo recarga.md:
+## Seguridad
+- Nunca agregues archivos `.env`, `.sql` ni `recarga.md` a un commit.
+- Usa variables de entorno para credenciales y no hardcodees secretos.
+- Respeta los puertos asignados: 5074 backend, 5173 frontend, 1433 SQL.
+- Configura CORS y HTTPS antes de exponer servicios fuera de la red local.
+- Evita registrar datos personales en logs persistentes y limpia dumps sensibles.
+- Consulta `DESARROLLO-RED-LOCAL.md` antes de abrir el Api hacia la red.
 
-```markdown
-# Contexto de Sesión - Transporte Escolar
-
-**Última actualización**: [fecha y hora actual]
-
----
-
-## 🎯 Idea General del Proyecto
-
-[Describe brevemente el propósito del sistema: gestión de transporte escolar, entidades principales (titulares, pasajeros, pagos, reinscripciones), objetivo del negocio]
-
----
-
-## 🛠️ Stack Tecnológico
-
-### Backend
-- .NET 8, ASP.NET Core Web API
-- Entity Framework Core 8
-- SQL Server (Docker)
-- Puerto: 5074
-- Perfil: Testing (con seeder)
-
-### Frontend
-- React 19 + Vite 7
-- TypeScript 5.9
-- TailwindCSS 4
-- TanStack Query 5
-- React Router 7
-- Axios
-- Puerto: 5173
-
-### Arquitectura
-- Backend: Domain, Application, Infrastructure, Api (Clean Architecture)
-- Frontend: Screaming Architecture (dominios: titulares, pasajeros, pagos, reinscripciones)
-
----
-
-## 📋 Últimos Cambios
-
-### [Fecha] - [Título del cambio]
-
-**Archivos modificados/creados:**
-- `ruta/archivo1.tsx`
-- `ruta/archivo2.cs`
-
-**Qué se hizo:**
-- Detalle 1
-- Detalle 2
-
-**Decisiones importantes:**
-- Por qué se eligió X solución sobre Y
-- Patrones específicos implementados
-
-**Estado actual:**
-- ✅ Funcionalidad completa
-- ⚠️ Pendiente: [algo por hacer]
-
----
-
-### [Fecha anterior] - [Cambio anterior]
-
-[Repetir estructura anterior para los últimos 3-5 cambios significativos]
-
----
-
-## 🔑 Patrones y Convenciones Críticos
-
-### Frontend
-- NUNCA usar `useMemo`/`useCallback` (React 19 Compiler)
-- NUNCA usar `var()` en className (usar Tailwind semantic)
-- Usar `z.coerce.number()` para inputs numéricos
-- Query keys por dominio (titularesKeys, pasajerosKeys, etc.)
-
-### Backend
-- Servicios registrados en `ServiceCollectionExtensions.cs`
-- Migraciones desde `TransporteEscolar.Infrastructure`
-- GlobalExceptionHandler para errores consistentes
-
----
-
-## 📂 Archivos Clave Recientes
-
-[Lista de los 10-15 archivos más importantes trabajados recientemente]
-
-- `src/pasajeros/components/PasajeroForm.tsx` - Formulario completo de pasajeros
-- `src/pasajeros/components/TitularCombobox.tsx` - Combobox personalizado con búsqueda
-- [etc.]
-
----
-
-## 🚀 Próximos Pasos Sugeridos
-
-- [ ] Implementar edición de pasajeros
-- [ ] Crear módulo de pagos
-- [ ] Agregar tests E2E con Playwright
-- [etc.]
-
----
-
-## ⚡ Comandos Rápidos
-
-```bash
-# Levantar base de datos
-docker-compose -f docker-compose.testing.yml up -d
-
-# Backend (desde TransporteEscolar/TransporteEscolar.Api)
-dotnet run --launch-profile Testing
-
-# Frontend (desde TransporteFront)
-npm run dev
-
-# Migraciones (desde TransporteEscolar/TransporteEscolar.Infrastructure)
-dotnet ef migrations add NombreMigracion --startup-project ../TransporteEscolar.Api
-dotnet ef database update --startup-project ../TransporteEscolar.Api
-```
-
----
-```
-
-**Notas importantes:**
-- Este archivo está en `.gitignore` (no se sube a git)
-- Actualízalo cada vez que el usuario diga "guarda todo"
-- Incluye contexto suficiente para que la siguiente sesión arranque sin preguntas
-- Prioriza: tecnologías, últimos cambios, decisiones de diseño, patrones usados
-
----
-
-## 🆕 Contexto reciente (10 feb 2026)
-
-- Reinscripciones: el detalle de titular ahora permite marcar teléfonos principales desde el listado y la modal de “Nueva Reinscripción” vive en la misma página, usando los endpoints existentes y refrescando TanStack Query.
-- Pagos: el botón superior abre un modal "Registrar Pago" con búsqueda paginada (debounce) de titulares que ya tienen cuotas generadas; el modal muestra resumen financiero y registra movimientos usando `useRegistrarPago`.
-- Backend: se agregó `GET /pagosmensuales/titulares-con-pagos` para obtener titulares con cuotas generadas; `PagoMensualService` + repos implementan paginación y filtros, reutilizando el mapper de Titulares.
-- UI: el modal de pagos ahora soporta anchura `2xl`, estados mejorados en mobile/desktop y contraste ajustado para los titulares seleccionados.
-- Pendientes inmediatos: limpiar deudas de meses futuros, enriquecer la lista de pagos con estados (confirmado/pendiente), ajustar el botón primario del modal y revisar el dashboard.
-
-Para más detalle, también revisa el archivo `recarga.md`.
-
-# Repository Guidelines
-- Este archivo gobierna todo el monorepo Transporte. Cada componente puede tener su propio AGENTS.md; si existe, prevalece sobre este documento.  
-  - Para tareas del backend ve a TransporteEscolar/AGENTS.md.  
-  - Para tareas del frontend ve a TransporteFront/AGENTS.md.
-- Mantén credenciales y datos sensibles fuera del repositorio. Revisa .gitignore (.env*, .sql, DESARROLLO-RED-LOCAL.md, recarga.md) y respétalo siempre.
-- Trabaja con los perfiles y puertos establecidos: backend 5074, frontend 5173, SQL Server en Docker 1433/1434. Usa el perfil Testing y el seeder solo en entornos de prueba.
-- Sigue un flujo Git limpio y describe los cambios con claridad (convencional commits recomendado). No modifiques o reviertas trabajo ajeno.
-- Después de cada `git push`, el orquestador debe preguntarle al usuario si desea registrar una nueva notificación de actualización y solo hacerlo si el usuario lo confirma y entrega la descripción exacta que quiere mostrar.
-- Antes de desplegar, endurece CORS, elimina IPs locales y usa HTTPS/env vars seguras (ver Program.cs y DESARROLLO-RED-LOCAL.md).
-- Recomendado: docker-compose -f docker-compose.testing.yml up -d → dotnet run --launch-profile Testing → npm run dev.
-- Cuando modifiques o agregues código en el frontend, siempre debes ejecutar `npx -y react-doctor@latest . --verbose --diff` al final, corregir cualquier error o warning que aparezca y volver a correrlo hasta que esté limpio.
-How to Use This Guide
-1. Determina si el trabajo es backend o frontend. Luego:
-   - Backend → usa TransporteEscolar/AGENTS.md.
-   - Frontend → usa TransporteFront/AGENTS.md.
-   - Este orquestador solo resume las normas globales; cada componente tiene instrucciones más específicas.
-2. Invoca los skills apropiados antes de ejecutar cualquier tarea (ver tablas siguientes).
-3. Mantén sincronizados los contratos API↔front: cada cambio en controllers exige actualizar services/*.api.ts y *.queries.ts.
-Available Skills
-Generic Skills (cualquier componente)
-| Skill | Descripción | Ubicación |
-| --- | --- | --- |
-| brainstorming | Diverge antes de tareas creativas | .agents/skills/brainstorming/SKILL.md |
-| systematic-debugging | Diagnóstico de bugs y fallas | .agents/skills/systematic-debugging/SKILL.md |
-| csharp-developer | Patrones .NET 8, ASP.NET Core, EF Core | .agents/skills/csharp-developer/SKILL.md |
-| api-design-principles | Buenas prácticas REST/HTTP | .agents/skills/api-design-principles/SKILL.md |
-| error-handling-patterns | Manejo robusto de errores | .agents/skills/error-handling-patterns/SKILL.md |
-| react-19 | Reglas de React Compiler, hooks, routing | .claude/skills/react-19/SKILL.md |
-| next-best-practices | Guía de mejores prácticas Next/Vite | .agents/skills/next-best-practices/SKILL.md |
-| tailwind-4 | Patrones Tailwind v4 | .claude/skills/tailwind-4/SKILL.md |
-| typescript | Tipado estricto y utilidades TS | .claude/skills/typescript/SKILL.md |
-| zod-4 | Validaciones Zod v4 | .claude/skills/zod-4/SKILL.md |
-| playwright | Testing end-to-end | .claude/skills/playwright/SKILL.md |
-| vitest | Pruebas unitarias con Vitest (React/Vite) | .agents/skills/vitest/SKILL.md |
-Skills específicas de Transporte
-| Skill | Cuándo usarla | Ubicación |
-| --- | --- | --- |
-| frontend-design | Diseños UI refinados | .agents/skills/frontend-design/SKILL.md |
-| interface-design | Dashboards/paneles internos | .agents/skills/interface-design/SKILL.md |
-| vercel-react-best-practices | Rendimiento React/Vite | .agents/skills/vercel-react-best-practices/SKILL.md |
-| tailwind-v4-shadcn / tailwind-design-system | Tokens/temas Tailwind | .agents/skills/... |
-| better-auth-best-practices | Preparar auth/interceptors | .agents/skills/better-auth-best-practices/SKILL.md |
-Auto-invoke Skills
-| Acción | Skill obligatorio |
-| --- | --- |
-| Idear nuevas features o UI | brainstorming |
-| Depurar errores | systematic-debugging |
-| Controllers/Services/Repos EF Core | csharp-developer |
-| Definir contratos REST | api-design-principles |
-| Middleware/manejo de errores | error-handling-patterns |
-| Componentes React, hooks, TanStack Query | react-19 |
-| Optimización/patrones avanzados React/Vite | vercel-react-best-practices |
-| Estilos Tailwind/layout responsive | tailwind-4 |
-| UI compleja/dashboards | frontend-design o interface-design |
-| Tipos TS / Zod schemas | typescript, zod-4 |
-| Formularios/validaciones front | typescript + zod-4 |
-| Auth/interceptors | better-auth-best-practices |
-| Pruebas unitarias con Vitest | vitest |
-| Testing E2E | playwright |
-Project Overview
-| Componente | Ubicación | Stack |
-| --- | --- | --- |
-| TransporteEscolar (Backend) | ./TransporteEscolar | .NET 8, ASP.NET Core Web API, EF Core, SQL Server |
-| TransporteFront (Frontend) | ./TransporteFront | React 19 + Vite, TypeScript, Tailwind 4, TanStack Query |
-| Infraestructura | Raíz | Docker Compose (SQL Server), herramientas de red local |
-Backend – TransporteEscolar  
-(Usa TransporteEscolar/AGENTS.md para instrucciones detalladas)
-- Capas: Domain, Application, Infrastructure, Api. Servicios y repos se registran en Api/DependencyInjection/ServiceCollectionExtensions.cs.
-- Setup rápido:
-  - dotnet restore && dotnet build TransporteEscolar.sln
-  - Migraciones:
- cd TransporteEscolar/TransporteEscolar.Infrastructure && dotnet ef migrations add ...
-  - Ejecución: cd TransporteEscolar/TransporteEscolar.Api && dotnet run --launch-profile Testing
-  - DB: docker-compose -f docker-compose.testing.yml up -d (usa MSSQL_SA_PASSWORD_TEST)
-- Middleware GlobalExceptionHandler convierte excepciones en respuestas JSON.
-- CORS abierto solo para IPs locales; endurecer antes de producción.
-- Seeder TestDataSeeder se ejecuta solo en ambiente Testing.
-- Mantén cadenas de conexión y configuraciones en env vars.
-Frontend – TransporteFront  
-(Usa TransporteFront/AGENTS.md para instrucciones detalladas)
-- Stack: React 19, Vite, Tailwind 4, TanStack Query, React Router, Axios.
-- Arquitectura Screaming: src/app, src/shared, src/api, src/config, y dominios (titulares, pasajeros, pagos, reinscripciones).
-- Scripts: npm run dev, npm run build, npm run lint, npm run preview.
-- Cliente Axios (src/api/client.ts) centraliza interceptor y manejo de errores.
-- Query keys por dominio (titularesKeys, etc.) para invalidaciones consistentes.
-- UI utiliza shared/ui y layout MainLayout; tailwind con paleta #007a8a y soporte dark.
-- Config .env: VITE_API_BASE_URL (default http://localhost:5074/api). Vite server host: '0.0.0.0' para red local.
-Infraestructura y Workflows
-- Docker: docker-compose.yml (SQL base) y docker-compose.testing.yml (SQL Testing).
-- Flujo local recomendado:
-  1. docker-compose -f docker-compose.testing.yml up -d
-  2. Backend Testing
-  3. Frontend npm run dev
-- DESARROLLO-RED-LOCAL.md documenta cómo exponer backend/frontend en la red y ajustar firewall.
-- Testing:
-  - Backend: preparar dotnet test (no hay proyecto aún).
-  - Frontend: npm run lint. Tests futuros con Vitest/RTL/Playwright (usa skill playwright).
-- Troubleshooting: revisar CORS/IPs, logs del middleware, firewall/host.
-Sincronización Backend↔Frontend
-- Cambios en controllers → actualiza services/*.api.ts, services/*.queries.ts, y tipos src/<dominio>/types.
-- Pagos/paginación: mantén paridad entre PaginationModel (backend) y los tipos de frontend.
-- Invalidar caches TanStack Query tras mutaciones (queryClient.invalidateQueries).
-Seguridad y Buenas Prácticas
-- No combines AllowCredentials con orígenes abiertos. Usa HTTPS y dominios específicos.
-- Variables sensibles siempre por entorno.
-- DESARROLLO-RED-LOCAL.md es solo referencia local; no lo mezcles en ambientes con datos reales.
-- Elimina .env y .sql antes de compartir artefactos.
-Checklist rápido antes de terminar una tarea
-- Backend:
-  - Migraciones aplicadas (dotnet ef database update).
-  - Swagger en http://localhost:5074/swagger funciona.
-- Frontend:
-  - npm run lint sin errores.
-  - Tipos/queries alineados con DTOs recientes.
-- General:
-  - Docker DB activo, seeder solo en Testing.
-  - Nada sensible en commits.
-  - Documentaste cualquier configuración nueva.
----
+## Checklist final
+1. Docker Testing arriba sin errores.
+2. `dotnet build` y `dotnet test` completados.
+3. `npm run lint` y `npm run build` exitosos.
+4. `react-doctor` limpio cuando hubo cambios en la UI.
+5. Contratos backend/frontend sincronizados y documentados.
+6. `recarga.md` actualizado si hubo orden de "guarda todo" o hallazgos relevantes.
+7. Git sin cambios pendientes y hooks superados antes de pedir revision.
+8. Pendientes y riesgos anotados para la siguiente sesion.
