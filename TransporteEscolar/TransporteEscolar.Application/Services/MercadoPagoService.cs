@@ -145,7 +145,9 @@ public sealed class MercadoPagoService : IMercadoPagoService
 
         var notificationUrl = BuildWebhookUrl(settings.WebhookBaseUrl);
 
-        var itemTitle = $"Cuota {pago.Mes:D2}/{pago.Anio} - {titular.NombreContacto}";
+        var mesNombre = new System.Globalization.CultureInfo("es-AR")
+            .DateTimeFormat.GetMonthName(pago.Mes);
+        var itemTitle = $"Transporte Escolar {char.ToUpper(mesNombre[0])}{mesNombre[1..]} {pago.Anio} - {titular.NombreContacto}";
 
         var request = new PreferenceRequest
         {
