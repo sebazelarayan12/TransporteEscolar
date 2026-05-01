@@ -238,17 +238,12 @@ function buildMensajeRecordatorio(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
   return (
     `¡Buen dia! 🚌\n\n` +
-<<<<<<< HEAD
-    `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *junio* es de *${formatMonto(destinatario.monto)}*.\n\n` +
-=======
     `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *${periodoNatural}* es de *${formatMonto(destinatario.monto)}*.\n\n` +
->>>>>>> mp
     `Podés abonar por transferencia o en efectivo. ¡Gracias por confiar en nosotros! 😊`
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
 // Comando: personalizado
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -278,7 +273,9 @@ async function fetchDestinatariosPersonalizado() {
   console.log(`📤 Destinatarios listos: ${destinatarios.length}`);
 
   return destinatarios;
-=======
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Comando: prueba
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -312,7 +309,6 @@ function buildMensajePrueba(destinatario) {
     `${linkLinea}\n` +
     `(Este es un mensaje de prueba del sistema)`
   );
->>>>>>> mp
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -330,17 +326,15 @@ const commands = {
     fetchDestinatarios: fetchDestinatariosRecordatorio,
     buildMensaje: buildMensajeRecordatorio,
   },
-<<<<<<< HEAD
   personalizado: {
     description: 'Mensaje personalizado a todos los titulares activos. Uso: node index.js personalizado "mensaje"',
     fetchDestinatarios: fetchDestinatariosPersonalizado,
     buildMensaje: null, // se asigna en main() con el texto del argumento
-=======
+  },
   prueba: {
     description: 'Envía mensaje de prueba solo a Sebastian Zelarayan (+54 381448 8860).',
     fetchDestinatarios: fetchDestinatariosPrueba,
     buildMensaje: buildMensajePrueba,
->>>>>>> mp
   },
 };
 
