@@ -147,7 +147,7 @@ public sealed class MercadoPagoService : IMercadoPagoService
 
         var mesNombre = new System.Globalization.CultureInfo("es-AR")
             .DateTimeFormat.GetMonthName(pago.Mes);
-        var itemTitle = $"Transporte Escolar {char.ToUpper(mesNombre[0])}{mesNombre[1..]} {pago.Anio} - {titular.NombreContacto}";
+        var itemTitle = $"Transporte Escolar {char.ToUpper(mesNombre[0])}{mesNombre[1..]} {pago.Anio}";
 
         var request = new PreferenceRequest
         {
