@@ -282,19 +282,40 @@ async function fetchDestinatariosPersonalizado() {
 const TELEFONO_PRUEBA = '543814488860';
 
 async function fetchDestinatariosPrueba() {
+  const periodo = getPeriodoActual();
   console.log(`\n🧪 Modo prueba — destinatario: ${TELEFONO_PRUEBA}`);
-  const todos = await fetchDestinatariosPendientes();
-  const encontrado = todos.find(
-    (d) => normalizeWhatsappNumber(d.telefono) === normalizeWhatsappNumber(TELEFONO_PRUEBA)
+
+  const [{ data: pendientes }, { data: vencidos }] = await Promise.all([
+    axios.get(`${env.API_BASE_URL}/pagosmensuales/pendientes`),
+    axios.get(`${env.API_BASE_URL}/pagosmensuales/vencidos`),
+  ]);
+
+  const todos = [...(pendientes ?? []), ...(vencidos ?? [])];
+  const delMes = todos.filter(
+    (p) => p.mes === periodo.mes && p.anio === periodo.anio && p.saldoPendiente > 0
   );
 
-  if (encontrado) {
-    console.log('✅ Pago pendiente encontrado para el destinatario de prueba.');
-    return [encontrado];
+  // Buscar el pago del titular de prueba por teléfono
+  const titularIds = [...new Set(delMes.map((p) => p.titularId))];
+  const telefonos = await cargarTelefonosPrincipales(titularIds);
+  const pagoEncontrado = delMes.find(
+    (p) => normalizeWhatsappNumber(telefonos[p.titularId]) === normalizeWhatsappNumber(TELEFONO_PRUEBA)
+  );
+
+  if (pagoEncontrado) {
+    console.log('✅ Pago pendiente encontrado. Generando link MP...');
+    const dest = {
+      telefono: TELEFONO_PRUEBA,
+      periodo: periodo.label,
+      saldoPendiente: pagoEncontrado.saldoPendiente,
+      pagoId: pagoEncontrado.id,
+    };
+    dest.linkMP = await fetchLinkMP(dest.pagoId);
+    return [dest];
   }
 
-  console.log('⚠️  Sin pago pendiente para ese número. Enviando mensaje de prueba básico.');
-  return [{ telefono: TELEFONO_PRUEBA, periodo: getPeriodoActual().label, saldoPendiente: 0 }];
+  console.log('⚠️  Sin pago pendiente para ese número. Enviando mensaje básico de prueba.');
+  return [{ telefono: TELEFONO_PRUEBA, periodo: periodo.label, saldoPendiente: 0 }];
 }
 
 function buildMensajePrueba(destinatario) {
