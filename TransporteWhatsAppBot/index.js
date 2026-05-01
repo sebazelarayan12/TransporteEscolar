@@ -280,10 +280,11 @@ async function fetchDestinatariosPersonalizado() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TELEFONO_PRUEBA = '543814488860';
+const TITULAR_ID_PRUEBA = 62;
 
 async function fetchDestinatariosPrueba() {
   const periodo = getPeriodoActual();
-  console.log(`\n🧪 Modo prueba — destinatario: ${TELEFONO_PRUEBA}`);
+  console.log(`\n🧪 Modo prueba — titular ID: ${TITULAR_ID_PRUEBA}, teléfono: ${TELEFONO_PRUEBA}`);
 
   const [{ data: pendientes }, { data: vencidos }] = await Promise.all([
     axios.get(`${env.API_BASE_URL}/pagosmensuales/pendientes`),
@@ -291,22 +292,15 @@ async function fetchDestinatariosPrueba() {
   ]);
 
   const todos = [...(pendientes ?? []), ...(vencidos ?? [])];
-  const delMes = todos.filter(
-    (p) => p.mes === periodo.mes && p.anio === periodo.anio && p.saldoPendiente > 0
-  );
-
-  // Buscar el pago del titular de prueba por teléfono
-  const titularIds = [...new Set(delMes.map((p) => p.titularId))];
-  const telefonos = await cargarTelefonosPrincipales(titularIds);
-  const pagoEncontrado = delMes.find(
-    (p) => normalizeWhatsappNumber(telefonos[p.titularId]) === normalizeWhatsappNumber(TELEFONO_PRUEBA)
+  const pagoEncontrado = todos.find(
+    (p) => p.titularId === TITULAR_ID_PRUEBA && p.saldoPendiente > 0
   );
 
   if (pagoEncontrado) {
-    console.log('✅ Pago pendiente encontrado. Generando link MP...');
+    console.log(`✅ Pago encontrado (ID: ${pagoEncontrado.id}, saldo: ${pagoEncontrado.saldoPendiente}). Generando link MP...`);
     const dest = {
       telefono: TELEFONO_PRUEBA,
-      periodo: periodo.label,
+      periodo: `${String(pagoEncontrado.mes).padStart(2, '0')}/${pagoEncontrado.anio}`,
       saldoPendiente: pagoEncontrado.saldoPendiente,
       pagoId: pagoEncontrado.id,
     };
@@ -314,7 +308,7 @@ async function fetchDestinatariosPrueba() {
     return [dest];
   }
 
-  console.log('⚠️  Sin pago pendiente para ese número. Enviando mensaje básico de prueba.');
+  console.log('⚠️  Sin pago pendiente para ese titular. Enviando mensaje básico de prueba.');
   return [{ telefono: TELEFONO_PRUEBA, periodo: periodo.label, saldoPendiente: 0 }];
 }
 
