@@ -17,6 +17,13 @@ function getPeriodoActual() {
   return { mes, anio, label: `${String(mes).padStart(2, '0')}/${anio}` };
 }
 
+function getPeriodoSiguiente() {
+  const now = new Date();
+  const mes = now.getMonth() === 11 ? 1 : now.getMonth() + 2;
+  const anio = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+  return { mes, anio, label: `${String(mes).padStart(2, '0')}/${anio}` };
+}
+
 function formatPeriodoNatural(label) {
   if (typeof label !== 'string') return label;
   const [mesRaw, anioRaw] = label.split('/').map((part) => part?.trim());
@@ -195,7 +202,7 @@ function buildMensajePendientes(destinatario) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchDestinatariosRecordatorio() {
-  const periodo = getPeriodoActual();
+  const periodo = getPeriodoSiguiente();
   console.log(`\n🌐 API [${env.label}]: ${env.API_BASE_URL}`);
   console.log('📋 Recuperando titulares activos...');
 
