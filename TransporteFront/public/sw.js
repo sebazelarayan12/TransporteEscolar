@@ -45,8 +45,8 @@ self.addEventListener('push', function (event) {
       { action: 'open', title: 'Abrir' },
       { action: 'close', title: 'Cerrar' },
     ],
-    tag: 'transporte-notification',
-    renotify: true,
+    tag: data.tag || `notif-${Date.now()}`,
+    renotify: false,
   };
 
   event.waitUntil(self.registration.showNotification(data.title || 'Transporte Escolar', options));

@@ -63,15 +63,4 @@ public class PushSubscriptionsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPost("test")]
-    public async Task<ActionResult> TestPush(CancellationToken cancellationToken)
-    {
-        await _webPushService.EnviarATodosAsync(
-            "Notificacion de prueba",
-            "Si ves esto, las notificaciones push funcionan correctamente",
-            "/",
-            cancellationToken);
-
-        return Ok(new { mensaje = "Push de prueba enviado" });
-    }
 }

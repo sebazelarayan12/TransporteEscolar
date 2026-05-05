@@ -36,18 +36,26 @@ namespace TransporteEscolar.Application.Services;
 
             var actualizacionExistente = await _repository.GetActualizacionProductoAsync(cancellationToken);
 
+            bool contenidoCambio;
             if (actualizacionExistente is null)
             {
                 actualizacionExistente = Notificacion.CrearActualizacionProducto(titulo, descripcion, fechaPublicacion, linkNormalizado);
                 await _repository.AddAsync(actualizacionExistente, cancellationToken);
+                contenidoCambio = true;
             }
             else
             {
+                contenidoCambio = actualizacionExistente.Titulo != titulo
+                    || actualizacionExistente.Mensaje != descripcion
+                    || actualizacionExistente.FechaPublicacion != fechaPublicacion
+                    || actualizacionExistente.Link != linkNormalizado;
+
                 actualizacionExistente.ActualizarActualizacionProducto(titulo, descripcion, fechaPublicacion, linkNormalizado);
                 await _repository.UpdateAsync(actualizacionExistente, cancellationToken);
             }
 
-            await EnviarPushAsync(titulo, descripcion, linkNormalizado, cancellationToken);
+            if (contenidoCambio)
+                await EnviarPushAsync(titulo, descripcion, linkNormalizado, cancellationToken);
 
             return MapearAResponse(actualizacionExistente);
         }
