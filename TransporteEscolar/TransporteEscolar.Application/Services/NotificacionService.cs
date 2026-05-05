@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using TransporteEscolar.Application.DTOs;
+using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Domain.Entities;
 
@@ -35,18 +36,26 @@ namespace TransporteEscolar.Application.Services;
 
             var actualizacionExistente = await _repository.GetActualizacionProductoAsync(cancellationToken);
 
+            bool contenidoCambio;
             if (actualizacionExistente is null)
             {
                 actualizacionExistente = Notificacion.CrearActualizacionProducto(titulo, descripcion, fechaPublicacion, linkNormalizado);
                 await _repository.AddAsync(actualizacionExistente, cancellationToken);
+                contenidoCambio = true;
             }
             else
             {
+                contenidoCambio = actualizacionExistente.Titulo != titulo
+                    || actualizacionExistente.Mensaje != descripcion
+                    || actualizacionExistente.FechaPublicacion != fechaPublicacion
+                    || actualizacionExistente.Link != linkNormalizado;
+
                 actualizacionExistente.ActualizarActualizacionProducto(titulo, descripcion, fechaPublicacion, linkNormalizado);
                 await _repository.UpdateAsync(actualizacionExistente, cancellationToken);
             }
 
-            await EnviarPushAsync(titulo, descripcion, linkNormalizado, cancellationToken);
+            if (contenidoCambio)
+                await EnviarPushAsync(titulo, descripcion, linkNormalizado, cancellationToken);
 
             return MapearAResponse(actualizacionExistente);
         }
@@ -76,9 +85,8 @@ namespace TransporteEscolar.Application.Services;
 
     public async Task MarcarComoLeidaAsync(int id, CancellationToken cancellationToken = default)
     {
-        var notificacion = await _repository.GetByIdAsync(id, cancellationToken);
-        if (notificacion == null)
-            throw new KeyNotFoundException($"Notificación {id} no encontrada");
+        var notificacion = await _repository.GetByIdAsync(id, cancellationToken)
+            ?? throw new NotFoundException("Notificación", id);
 
         notificacion.MarcarComoLeida();
         await _repository.UpdateAsync(notificacion, cancellationToken);

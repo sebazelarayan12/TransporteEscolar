@@ -17,6 +17,13 @@ function getPeriodoActual() {
   return { mes, anio, label: `${String(mes).padStart(2, '0')}/${anio}` };
 }
 
+function getPeriodoSiguiente() {
+  const now = new Date();
+  const mes = now.getMonth() === 11 ? 1 : now.getMonth() + 2;
+  const anio = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear();
+  return { mes, anio, label: `${String(mes).padStart(2, '0')}/${anio}` };
+}
+
 function formatPeriodoNatural(label) {
   if (typeof label !== 'string') return label;
   const [mesRaw, anioRaw] = label.split('/').map((part) => part?.trim());
@@ -88,6 +95,18 @@ function seleccionarTelefonoPrincipal(telefonos) {
   );
 }
 
+async function fetchLinkMP(pagoId) {
+  try {
+    const { data } = await axios.post(
+      `${env.API_BASE_URL}/pagosmensuales/${pagoId}/mercadopago-link`
+    );
+    return data.url ?? null;
+  } catch (err) {
+    console.warn(`⚠️  No se pudo generar link MP para pago ${pagoId}: ${err.message}`);
+    return null;
+  }
+}
+
 function printHeader(commandName, description) {
   console.log('='.repeat(60));
   console.log('  🚌 Bot WhatsApp — Transporte Escolar');
@@ -144,6 +163,7 @@ async function fetchDestinatariosPendientes() {
       telefono,
       periodo: periodo.label,
       saldoPendiente: pago.saldoPendiente,
+      pagoId: pago.id,
     });
   }
 
@@ -151,15 +171,29 @@ async function fetchDestinatariosPendientes() {
   if (sinTelefono > 0) console.log(`⚠️  ${sinTelefono} titular(es) sin teléfono activo, omitidos.`);
   console.log(`📤 Destinatarios listos: ${destinatarios.length}`);
 
+  console.log('💳 Generando links de Mercado Pago...');
+  await Promise.all(
+    destinatarios.map(async (dest) => {
+      if (!dest.pagoId) return;
+      dest.linkMP = await fetchLinkMP(dest.pagoId);
+    })
+  );
+  const conLink = destinatarios.filter((d) => d.linkMP).length;
+  console.log(`🔗 Links generados: ${conLink}/${destinatarios.length}`);
+
   return destinatarios;
 }
 
 function buildMensajePendientes(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
+  const linkLinea = destinatario.linkMP
+    ? `\n💳 Pagá con Mercado Pago:\n${destinatario.linkMP}\n`
+    : '';
   return (
-    `Buen dia! 🚌\n\n` +
-    `Te recordamos que tenés la cuota del mes *${periodoNatural}* pendiente por *${formatMonto(destinatario.saldoPendiente)}*.\n\n` +
-    `Por favor realizá el pago lo antes posible. ¡Muchas gracias! 😊`
+    `Hola! 🚌\n\n` +
+    `Te recordamos que tenés la cuota del mes *${periodoNatural}* pendiente por *${formatMonto(destinatario.saldoPendiente)}*.` +
+    `${linkLinea}\n` +
+    `¡Muchas gracias! 😊`
   );
 }
 
@@ -168,7 +202,7 @@ function buildMensajePendientes(destinatario) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchDestinatariosRecordatorio() {
-  const periodo = getPeriodoActual();
+  const periodo = getPeriodoSiguiente();
   console.log(`\n🌐 API [${env.label}]: ${env.API_BASE_URL}`);
   console.log('📋 Recuperando titulares activos...');
 
@@ -204,7 +238,7 @@ function buildMensajeRecordatorio(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
   return (
     `¡Buen dia! 🚌\n\n` +
-    `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *junio* es de *${formatMonto(destinatario.monto)}*.\n\n` +
+    `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *${periodoNatural}* es de *${formatMonto(destinatario.monto)}*.\n\n` +
     `Podés abonar por transferencia o en efectivo. ¡Gracias por confiar en nosotros! 😊`
   );
 }
@@ -242,6 +276,57 @@ async function fetchDestinatariosPersonalizado() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Comando: prueba
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TELEFONO_PRUEBA = '543814488860';
+const TITULAR_ID_PRUEBA = 62;
+
+async function fetchDestinatariosPrueba() {
+  const periodo = getPeriodoActual();
+  console.log(`\n🧪 Modo prueba — titular ID: ${TITULAR_ID_PRUEBA}, teléfono: ${TELEFONO_PRUEBA}`);
+
+  const [{ data: pendientes }, { data: vencidos }] = await Promise.all([
+    axios.get(`${env.API_BASE_URL}/pagosmensuales/pendientes`),
+    axios.get(`${env.API_BASE_URL}/pagosmensuales/vencidos`),
+  ]);
+
+  const todos = [...(pendientes ?? []), ...(vencidos ?? [])];
+  const pagoEncontrado = todos.find(
+    (p) => p.titularId === TITULAR_ID_PRUEBA && p.saldoPendiente > 0
+  );
+
+  if (pagoEncontrado) {
+    console.log(`✅ Pago encontrado (ID: ${pagoEncontrado.id}, saldo: ${pagoEncontrado.saldoPendiente}). Generando link MP...`);
+    const dest = {
+      telefono: TELEFONO_PRUEBA,
+      periodo: `${String(pagoEncontrado.mes).padStart(2, '0')}/${pagoEncontrado.anio}`,
+      saldoPendiente: pagoEncontrado.saldoPendiente,
+      pagoId: pagoEncontrado.id,
+    };
+    dest.linkMP = await fetchLinkMP(dest.pagoId);
+    return [dest];
+  }
+
+  console.log('⚠️  Sin pago pendiente para ese titular. Enviando mensaje básico de prueba.');
+  return [{ telefono: TELEFONO_PRUEBA, periodo: periodo.label, saldoPendiente: 0 }];
+}
+
+function buildMensajePrueba(destinatario) {
+  const periodoNatural = formatPeriodoNatural(destinatario.periodo);
+  const linkLinea = destinatario.linkMP
+    ? `\n💳 Pagá con Mercado Pago:\n${destinatario.linkMP}\n`
+    : '';
+  return (
+    `🧪 *MENSAJE DE PRUEBA*\n\n` +
+    `Hola Sebastian! 🚌\n` +
+    `Cuota *${periodoNatural}* — *${formatMonto(destinatario.saldoPendiente)}*` +
+    `${linkLinea}\n` +
+    `(Este es un mensaje de prueba del sistema)`
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Configuración de comandos
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -260,6 +345,11 @@ const commands = {
     description: 'Mensaje personalizado a todos los titulares activos. Uso: node index.js personalizado "mensaje"',
     fetchDestinatarios: fetchDestinatariosPersonalizado,
     buildMensaje: null, // se asigna en main() con el texto del argumento
+  },
+  prueba: {
+    description: 'Envía mensaje de prueba solo a Sebastian Zelarayan (+54 381448 8860).',
+    fetchDestinatarios: fetchDestinatariosPrueba,
+    buildMensaje: buildMensajePrueba,
   },
 };
 
@@ -345,13 +435,14 @@ async function enviarMensajes(client, destinatarios, buildMensaje) {
     }
 
     try {
-      const numberId = await client.getNumberId(numeroWA);
+      const numberId = await client.getNumberId(`+${numeroWA}`);
       if (!numberId) {
         console.warn(`⚠️  ${destinatario.telefono} (${numeroWA}) no tiene WhatsApp activo, omitido.`);
         errores++;
         continue;
       }
-      await client.sendMessage(numberId._serialized, buildMensaje(destinatario));
+      const chatId = `${numberId.user}@c.us`;
+      await client.sendMessage(chatId, buildMensaje(destinatario));
       console.log(`✅ Enviado a ${destinatario.telefono}`);
       enviados++;
     } catch (err) {

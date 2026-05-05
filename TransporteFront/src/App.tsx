@@ -7,6 +7,7 @@ import { MainLayout } from './app/MainLayout';
 import {
   subscribeToPush,
   isPushSupported,
+  isSubscribedToPush,
   getNotificationPermission,
 } from './notificaciones/services/push.service';
 
@@ -63,9 +64,10 @@ const queryClient = new QueryClient({
 
 function App() {
   useEffect(() => {
-    if (isPushSupported() && getNotificationPermission() !== 'denied') {
-      subscribeToPush();
-    }
+    if (!isPushSupported() || getNotificationPermission() === 'denied') return;
+    isSubscribedToPush().then((alreadySubscribed) => {
+      if (!alreadySubscribed) subscribeToPush();
+    });
   }, []);
 
   return (
@@ -73,23 +75,23 @@ function App() {
       <ToastProvider>
         <BrowserRouter>
           <ErrorBoundary>
-          <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="titulares" element={<TitularesListPage />} />
-              <Route path="titulares/nuevo" element={<TitularCreatePage />} />
-              <Route path="titulares/:id" element={<TitularDetailPage />} />
-              <Route path="pasajeros" element={<PasajerosListPage />} />
-              <Route path="pasajeros/nuevo" element={<PasajeroCreatePage />} />
-              <Route path="horarios" element={<HorariosPage />} />
-               <Route path="reinscripciones" element={<ReinscripcionesListPage />} />
-               {/* <Route path="reinscripciones/nueva" element={<ReinscripcionCreatePage />} /> */}
-               <Route path="pagos" element={<PagosListPage />} />
-               <Route path="pagos/movimientos" element={<PagosMovimientosPage />} />
-               <Route path="gastos" element={<GastosControlPage />} />
-               <Route path="*" element={<NotFoundPage />} />
-             </Route>
-           </Routes>
+            <Routes>
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="titulares" element={<TitularesListPage />} />
+                <Route path="titulares/nuevo" element={<TitularCreatePage />} />
+                <Route path="titulares/:id" element={<TitularDetailPage />} />
+                <Route path="pasajeros" element={<PasajerosListPage />} />
+                <Route path="pasajeros/nuevo" element={<PasajeroCreatePage />} />
+                <Route path="horarios" element={<HorariosPage />} />
+                <Route path="reinscripciones" element={<ReinscripcionesListPage />} />
+                {/* <Route path="reinscripciones/nueva" element={<ReinscripcionCreatePage />} /> */}
+                <Route path="pagos" element={<PagosListPage />} />
+                <Route path="pagos/movimientos" element={<PagosMovimientosPage />} />
+                <Route path="gastos" element={<GastosControlPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+            </Routes>
           </ErrorBoundary>
         </BrowserRouter>
       </ToastProvider>

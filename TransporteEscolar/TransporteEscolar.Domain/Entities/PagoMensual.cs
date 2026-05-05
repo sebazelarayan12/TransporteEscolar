@@ -9,6 +9,10 @@ public class PagoMensual
     public decimal MontoGenerado { get; private set; }
     public DateTime FechaVencimiento { get; private set; }
     public string? Observaciones { get; private set; }
+    public string? MercadoPagoPreferenceId { get; private set; }
+    public string? MercadoPagoUrl { get; private set; }
+    public string? MercadoPagoPaymentId { get; private set; }
+    public DateTime? MercadoPagoGeneratedAt { get; private set; }
 
     // Navegación
     public Titular Titular { get; private set; } = null!;
@@ -73,6 +77,7 @@ public class PagoMensual
             throw new InvalidOperationException("El nuevo monto no puede ser menor al total pagado");
 
         MontoGenerado = nuevoMonto;
+        InvalidarMercadoPagoLink();
     }
 
     public void AgregarAnotacion(string anotacion)
@@ -116,6 +121,39 @@ public class PagoMensual
 
         Movimientos.Add(movimiento);
         return movimiento;
+    }
+
+    public void AsignarMercadoPagoLink(string preferenceId, string url, DateTime generatedAtUtc)
+    {
+        if (string.IsNullOrWhiteSpace(preferenceId))
+            throw new ArgumentException("El identificador de Mercado Pago es obligatorio", nameof(preferenceId));
+
+        if (string.IsNullOrWhiteSpace(url))
+            throw new ArgumentException("La url de Mercado Pago es obligatoria", nameof(url));
+
+        MercadoPagoPreferenceId = preferenceId;
+        MercadoPagoUrl = url;
+        MercadoPagoGeneratedAt = DateTime.SpecifyKind(generatedAtUtc, DateTimeKind.Utc);
+    }
+
+    public void LimpiarMercadoPagoPayment()
+    {
+        MercadoPagoPaymentId = null;
+    }
+
+    public void RegistrarMercadoPagoPayment(string paymentId)
+    {
+        if (string.IsNullOrWhiteSpace(paymentId))
+            throw new ArgumentException("El identificador del pago confirmado es obligatorio", nameof(paymentId));
+
+        MercadoPagoPaymentId = paymentId;
+    }
+
+    public void InvalidarMercadoPagoLink()
+    {
+        MercadoPagoPreferenceId = null;
+        MercadoPagoUrl = null;
+        MercadoPagoGeneratedAt = null;
     }
 
     public PagoMovimiento EliminarMovimiento(int movimientoId)

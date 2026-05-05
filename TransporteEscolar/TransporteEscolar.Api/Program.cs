@@ -29,6 +29,7 @@ namespace TransporteEscolar.Api
             // Registrar servicios y repositorios
             builder.Services.AddApplicationServices();
             builder.Services.AddWhatsAppIntegration(builder.Configuration);
+            builder.Services.Configure<MercadoPagoSettings>(builder.Configuration.GetSection(MercadoPagoSettings.SectionName));
             builder.Services.Configure<ReleaseNotesOptions>(builder.Configuration.GetSection("ReleaseNotes"));
             builder.Services.Configure<VapidSettings>(builder.Configuration.GetSection(VapidSettings.SectionName));
             builder.Services.AddHostedService<ReleaseNotesInitializer>();
