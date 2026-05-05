@@ -153,7 +153,6 @@ public sealed class MercadoPagoService : IMercadoPagoService
         {
             ExternalReference = pago.Id.ToString(CultureInfo.InvariantCulture),
             NotificationUrl = notificationUrl,
-            AutoReturn = "approved",
             StatementDescriptor = "Transporte Escolar",
             Items = new List<PreferenceItemRequest>
             {
@@ -175,15 +174,6 @@ public sealed class MercadoPagoService : IMercadoPagoService
                 }
             }
         };
-
-        var backUrls = BuildBackUrls(settings.WebhookBaseUrl!, settings);
-        request.BackUrls = backUrls.Request;
-
-        _logger.LogInformation(
-            "BackUrls Mercado Pago configuradas success={SuccessConfigured} pending={PendingConfigured} failure={FailureConfigured}",
-            backUrls.HasSuccess,
-            backUrls.HasPending,
-            backUrls.HasFailure);
 
         return request;
     }
@@ -216,46 +206,6 @@ public sealed class MercadoPagoService : IMercadoPagoService
         return $"{trimmed}/api/webhooks/mercadopago";
     }
 
-    private static BackUrlsConfiguration BuildBackUrls(string webhookBaseUrl, MercadoPagoSettings settings)
-    {
-        var successUrl = BuildAbsoluteUrl(settings.ReturnUrlSuccess, webhookBaseUrl);
-        if (string.IsNullOrWhiteSpace(successUrl))
-            throw new InvalidOperationException("Configurar MercadoPago: ReturnUrlSuccess");
-
-        var pendingUrl = BuildAbsoluteUrl(settings.ReturnUrlPending, webhookBaseUrl);
-        var failureUrl = BuildAbsoluteUrl(settings.ReturnUrlFailure, webhookBaseUrl);
-
-        var request = new PreferenceBackUrlsRequest
-        {
-            Success = successUrl,
-            Pending = pendingUrl,
-            Failure = failureUrl
-        };
-
-        return new BackUrlsConfiguration(
-            request,
-            HasSuccess: true,
-            HasPending: !string.IsNullOrWhiteSpace(pendingUrl),
-            HasFailure: !string.IsNullOrWhiteSpace(failureUrl));
-    }
-
-    private static string? BuildAbsoluteUrl(string? candidate, string baseUrl)
-    {
-        if (string.IsNullOrWhiteSpace(candidate))
-            return null;
-
-        if (Uri.TryCreate(candidate, UriKind.Absolute, out var absolute))
-            return absolute.AbsoluteUri;
-
-        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var baseUri))
-            throw new InvalidOperationException("WebhookBaseUrl no es una url valida");
-
-        if (Uri.TryCreate(baseUri, candidate, out var combined))
-            return combined.AbsoluteUri;
-
-        throw new InvalidOperationException("No se pudo componer url absoluta para Mercado Pago");
-    }
-
     private static string? SelectPaymentUrl(Preference preference, bool useSandbox)
     {
         // SandboxInitPoint (sandbox.mercadopago.com.ar) usa checkout legacy con loop de login.
@@ -263,10 +213,4 @@ public sealed class MercadoPagoService : IMercadoPagoService
         _ = useSandbox;
         return preference.InitPoint ?? preference.SandboxInitPoint;
     }
-
-    private sealed record BackUrlsConfiguration(
-        PreferenceBackUrlsRequest Request,
-        bool HasSuccess,
-        bool HasPending,
-        bool HasFailure);
 }
