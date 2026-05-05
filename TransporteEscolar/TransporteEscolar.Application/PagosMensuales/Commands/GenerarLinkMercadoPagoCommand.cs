@@ -35,11 +35,6 @@ public sealed class GenerarLinkMercadoPagoCommandHandler : IRequestHandler<Gener
         if (pago.EstaPagado())
             throw new ValidationException("El pago mensual ya esta saldado");
 
-        if (!string.IsNullOrWhiteSpace(pago.MercadoPagoUrl) && !string.IsNullOrWhiteSpace(pago.MercadoPagoPreferenceId))
-        {
-            return new MercadoPagoLinkResponse(pago.MercadoPagoUrl, pago.MercadoPagoPreferenceId);
-        }
-
         var linkResult = await _mercadoPagoService.GetOrCreatePreferenceAsync(pago, cancellationToken);
 
         pago.AsignarMercadoPagoLink(linkResult.PreferenceId, linkResult.PaymentUrl, DateTime.UtcNow);
