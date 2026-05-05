@@ -1,3 +1,4 @@
+import { config } from '../../config/env';
 import { pushApi } from './push.api';
 
 /**
@@ -88,6 +89,13 @@ export async function subscribeToPush(): Promise<boolean> {
       p256dh,
       auth,
       userAgent: navigator.userAgent,
+    });
+
+    // Pasar URL del backend al SW para que pueda renovar la suscripcion sin la pagina abierta
+    const activeWorker = registration.active ?? registration.installing ?? registration.waiting;
+    activeWorker?.postMessage({
+      type: 'SET_API_SUBSCRIBE_URL',
+      url: `${config.apiBaseUrl}/push-subscriptions/subscribe`,
     });
 
     console.info('Suscripcion push registrada exitosamente');

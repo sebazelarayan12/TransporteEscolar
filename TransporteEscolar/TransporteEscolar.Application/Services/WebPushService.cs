@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Lib.Net.Http.WebPush;
-using Lib.Net.Http.WebPush.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TransporteEscolar.Application.Interfaces;
@@ -22,21 +21,13 @@ public class WebPushService : IWebPushService
     public WebPushService(
         IPushSubscriptionRepository repository,
         IOptions<VapidSettings> vapidSettings,
+        PushServiceClient pushClient,
         ILogger<WebPushService> logger)
     {
         _repository = repository;
         _vapidSettings = vapidSettings.Value;
+        _pushClient = pushClient;
         _logger = logger;
-
-        _pushClient = new PushServiceClient
-        {
-            DefaultAuthentication = new VapidAuthentication(
-                _vapidSettings.PublicKey,
-                _vapidSettings.PrivateKey)
-            {
-                Subject = _vapidSettings.Subject
-            }
-        };
     }
 
     public string ObtenerClavePublicaVapid()

@@ -7,6 +7,7 @@ import { MainLayout } from './app/MainLayout';
 import {
   subscribeToPush,
   isPushSupported,
+  isSubscribedToPush,
   getNotificationPermission,
 } from './notificaciones/services/push.service';
 
@@ -63,9 +64,10 @@ const queryClient = new QueryClient({
 
 function App() {
   useEffect(() => {
-    if (isPushSupported() && getNotificationPermission() !== 'denied') {
-      subscribeToPush();
-    }
+    if (!isPushSupported() || getNotificationPermission() === 'denied') return;
+    isSubscribedToPush().then((alreadySubscribed) => {
+      if (!alreadySubscribed) subscribeToPush();
+    });
   }, []);
 
   return (

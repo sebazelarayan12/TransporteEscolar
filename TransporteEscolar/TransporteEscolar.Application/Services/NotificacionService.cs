@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using TransporteEscolar.Application.DTOs;
+using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Domain.Entities;
 
@@ -76,9 +77,8 @@ namespace TransporteEscolar.Application.Services;
 
     public async Task MarcarComoLeidaAsync(int id, CancellationToken cancellationToken = default)
     {
-        var notificacion = await _repository.GetByIdAsync(id, cancellationToken);
-        if (notificacion == null)
-            throw new KeyNotFoundException($"Notificación {id} no encontrada");
+        var notificacion = await _repository.GetByIdAsync(id, cancellationToken)
+            ?? throw new NotFoundException("Notificación", id);
 
         notificacion.MarcarComoLeida();
         await _repository.UpdateAsync(notificacion, cancellationToken);

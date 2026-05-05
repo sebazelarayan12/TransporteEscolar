@@ -1,6 +1,10 @@
+using Lib.Net.Http.WebPush;
+using Lib.Net.Http.WebPush.Authentication;
 using MediatR;
+using Microsoft.Extensions.Options;
 using TransporteEscolar.Application;
 using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Application.Options;
 using TransporteEscolar.Application.Services;
 using TransporteEscolar.Infrastructure.Persistence;
 using TransporteEscolar.Infrastructure.Repositories;
@@ -33,6 +37,17 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGastoService, GastoService>();
         services.AddScoped<IIngresoService, IngresoService>();
         services.AddScoped<INotificacionService, NotificacionService>();
+        services.AddSingleton<PushServiceClient>(sp =>
+        {
+            var vapid = sp.GetRequiredService<IOptions<VapidSettings>>().Value;
+            return new PushServiceClient
+            {
+                DefaultAuthentication = new VapidAuthentication(vapid.PublicKey, vapid.PrivateKey)
+                {
+                    Subject = vapid.Subject
+                }
+            };
+        });
         services.AddScoped<IWebPushService, WebPushService>();
         services.AddScoped<IMercadoPagoService, MercadoPagoService>();
 

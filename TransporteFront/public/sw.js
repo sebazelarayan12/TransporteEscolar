@@ -1,6 +1,23 @@
 // Service Worker para Web Push Notifications
 // Este archivo se sirve desde la raiz del dominio
 
+let apiSubscribeUrl = null;
+
+self.addEventListener('message', function (event) {
+  if (event.data?.type === 'SET_API_SUBSCRIBE_URL') {
+    apiSubscribeUrl = event.data.url;
+  }
+});
+
+function arrayBufferToBase64Url(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
 self.addEventListener('push', function (event) {
   if (!event.data) {
     return;
@@ -61,19 +78,23 @@ self.addEventListener('notificationclick', function (event) {
 });
 
 self.addEventListener('pushsubscriptionchange', function (event) {
-  // Cuando la suscripcion cambia (renueva), re-suscribir automaticamente
+  if (!apiSubscribeUrl) {
+    // URL no disponible (SW recien iniciado sin pagina activa); la suscripcion
+    // se renovara la proxima vez que el usuario abra la app.
+    return;
+  }
+
   event.waitUntil(
     self.registration.pushManager
       .subscribe(event.oldSubscription.options)
       .then(function (subscription) {
-        // Enviar la nueva suscripcion al backend
-        return fetch('/api/push-subscriptions/subscribe', {
+        return fetch(apiSubscribeUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             endpoint: subscription.endpoint,
-            p256dh: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))),
-            auth: btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))),
+            p256dh: arrayBufferToBase64Url(subscription.getKey('p256dh')),
+            auth: arrayBufferToBase64Url(subscription.getKey('auth')),
           }),
         });
       })
