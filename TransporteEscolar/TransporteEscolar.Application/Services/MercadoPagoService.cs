@@ -258,9 +258,9 @@ public sealed class MercadoPagoService : IMercadoPagoService
 
     private static string? SelectPaymentUrl(Preference preference, bool useSandbox)
     {
-        if (useSandbox)
-            return preference.SandboxInitPoint ?? preference.InitPoint;
-
+        // SandboxInitPoint (sandbox.mercadopago.com.ar) usa checkout legacy con loop de login.
+        // InitPoint funciona en sandbox via access token — no via URL.
+        _ = useSandbox;
         return preference.InitPoint ?? preference.SandboxInitPoint;
     }
 
