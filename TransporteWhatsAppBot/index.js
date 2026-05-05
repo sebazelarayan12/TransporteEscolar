@@ -279,12 +279,19 @@ async function fetchDestinatariosPersonalizado() {
 // Comando: prueba
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TELEFONO_PRUEBA = '543814488860';
 const TITULAR_ID_PRUEBA = 62;
 
 async function fetchDestinatariosPrueba() {
   const periodo = getPeriodoActual();
-  console.log(`\n🧪 Modo prueba — titular ID: ${TITULAR_ID_PRUEBA}, teléfono: ${TELEFONO_PRUEBA}`);
+  console.log(`\n🧪 Modo prueba — titular ID: ${TITULAR_ID_PRUEBA}`);
+
+  const telefonos = await cargarTelefonosPrincipales([TITULAR_ID_PRUEBA]);
+  const telefono = telefonos[TITULAR_ID_PRUEBA];
+  if (!telefono) {
+    console.log(`❌ No se encontró teléfono activo para titular ${TITULAR_ID_PRUEBA}.`);
+    return [];
+  }
+  console.log(`📞 Teléfono obtenido de API: ${telefono}`);
 
   const [{ data: pendientes }, { data: vencidos }] = await Promise.all([
     axios.get(`${env.API_BASE_URL}/pagosmensuales/pendientes`),
@@ -299,7 +306,7 @@ async function fetchDestinatariosPrueba() {
   if (pagoEncontrado) {
     console.log(`✅ Pago encontrado (ID: ${pagoEncontrado.id}, saldo: ${pagoEncontrado.saldoPendiente}). Generando link MP...`);
     const dest = {
-      telefono: TELEFONO_PRUEBA,
+      telefono,
       periodo: `${String(pagoEncontrado.mes).padStart(2, '0')}/${pagoEncontrado.anio}`,
       saldoPendiente: pagoEncontrado.saldoPendiente,
       pagoId: pagoEncontrado.id,
@@ -309,7 +316,7 @@ async function fetchDestinatariosPrueba() {
   }
 
   console.log('⚠️  Sin pago pendiente para ese titular. Enviando mensaje básico de prueba.');
-  return [{ telefono: TELEFONO_PRUEBA, periodo: periodo.label, saldoPendiente: 0 }];
+  return [{ telefono, periodo: periodo.label, saldoPendiente: 10000 }];
 }
 
 function buildMensajePrueba(destinatario) {
@@ -435,18 +442,23 @@ async function enviarMensajes(client, destinatarios, buildMensaje) {
     }
 
     try {
-      const numberId = await client.getNumberId(`+${numeroWA}`);
+      const numberId = await Promise.race([
+        client.getNumberId(numeroWA),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('getNumberId timeout')), 10000)),
+      ]);
+      console.log(`🔍 getNumberId result:`, JSON.stringify(numberId));
       if (!numberId) {
-        console.warn(`⚠️  ${destinatario.telefono} (${numeroWA}) no tiene WhatsApp activo, omitido.`);
+        console.warn(`⚠️  ${numeroWA} no tiene WhatsApp activo, omitido.`);
         errores++;
         continue;
       }
-      const chatId = `${numberId.user}@c.us`;
+      const chatId = numberId._serialized ?? `${numberId.user}@c.us`;
       await client.sendMessage(chatId, buildMensaje(destinatario));
-      console.log(`✅ Enviado a ${destinatario.telefono}`);
+      console.log(`✅ Enviado a ${destinatario.telefono} (chatId: ${chatId})`);
       enviados++;
     } catch (err) {
-      console.error(`❌ Error al enviar a ${destinatario.telefono}: ${err.message}`);
+      console.error(`❌ Error al enviar a ${destinatario.telefono}: ${err.message ?? err}`);
+      console.error(err.stack);
       errores++;
     }
 

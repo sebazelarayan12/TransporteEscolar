@@ -7,7 +7,7 @@ require('dotenv').config();
 
 const config = {
   // Cambiar a 'production' cuando estés listo para el envío real
-  activeEnvironment: 'production',
+  activeEnvironment: 'testing',
 
   // true = solo muestra los mensajes en consola, NO envía nada por WhatsApp
   dryRun: false,
