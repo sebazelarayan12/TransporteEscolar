@@ -151,7 +151,6 @@ public sealed class MercadoPagoService : IMercadoPagoService
         {
             ExternalReference = pago.Id.ToString(CultureInfo.InvariantCulture),
             NotificationUrl = notificationUrl,
-            StatementDescriptor = "Transporte Escolar",
             Items = new List<PreferenceItemRequest>
             {
                 new()
@@ -160,14 +159,6 @@ public sealed class MercadoPagoService : IMercadoPagoService
                     Quantity = 1,
                     CurrencyId = "ARS",
                     UnitPrice = decimal.Round(saldo, 2, MidpointRounding.AwayFromZero)
-                }
-            },
-            PaymentMethods = new PreferencePaymentMethodsRequest
-            {
-                ExcludedPaymentTypes = new List<PreferencePaymentTypeRequest>
-                {
-                    new() { Id = "ticket" },
-                    new() { Id = "atm" }
                 }
             }
         };
