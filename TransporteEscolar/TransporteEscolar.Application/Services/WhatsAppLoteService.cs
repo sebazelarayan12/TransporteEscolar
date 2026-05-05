@@ -225,7 +225,7 @@ public class WhatsAppLoteService : IWhatsAppLoteService
             try
             {
                 var linkResult = await _mercadoPagoService.GetOrCreatePreferenceAsync(
-                    pago, titular, cancellationToken);
+                    pago, cancellationToken);
 
                 pago.AsignarMercadoPagoLink(linkResult.PreferenceId, linkResult.PaymentUrl, DateTime.UtcNow);
                 if (linkResult.CreatedNew)

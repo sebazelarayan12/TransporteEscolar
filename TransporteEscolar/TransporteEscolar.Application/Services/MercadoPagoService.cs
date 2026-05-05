@@ -1,5 +1,4 @@
 using System.Globalization;
-using MercadoPago.Client.Common;
 using MercadoPago.Client.Payment;
 using MercadoPago.Client.Preference;
 using MercadoPago.Config;
@@ -29,7 +28,6 @@ public sealed class MercadoPagoService : IMercadoPagoService
 
     public async Task<MercadoPagoLinkResult> GetOrCreatePreferenceAsync(
         PagoMensual pago,
-        Titular titular,
         CancellationToken cancellationToken)
     {
         var settings = _settings.Value;
@@ -53,7 +51,7 @@ public sealed class MercadoPagoService : IMercadoPagoService
             }
         }
 
-        var request = BuildPreferenceRequest(pago, titular, settings);
+        var request = BuildPreferenceRequest(pago, settings);
         var client = new PreferenceClient();
         var created = await client.CreateAsync(request, cancellationToken: cancellationToken);
 
@@ -134,7 +132,7 @@ public sealed class MercadoPagoService : IMercadoPagoService
         return unitPrice == decimal.Round(saldoPendiente, 2, MidpointRounding.AwayFromZero);
     }
 
-    private PreferenceRequest BuildPreferenceRequest(PagoMensual pago, Titular titular, MercadoPagoSettings settings)
+    private PreferenceRequest BuildPreferenceRequest(PagoMensual pago, MercadoPagoSettings settings)
     {
         var saldo = pago.SaldoPendiente();
         if (saldo <= 0)
@@ -164,7 +162,6 @@ public sealed class MercadoPagoService : IMercadoPagoService
                     UnitPrice = decimal.Round(saldo, 2, MidpointRounding.AwayFromZero)
                 }
             },
-            Payer = BuildPayerRequest(titular),
             PaymentMethods = new PreferencePaymentMethodsRequest
             {
                 ExcludedPaymentTypes = new List<PreferencePaymentTypeRequest>
@@ -176,28 +173,6 @@ public sealed class MercadoPagoService : IMercadoPagoService
         };
 
         return request;
-    }
-
-    private static PreferencePayerRequest BuildPayerRequest(Titular titular)
-    {
-        var payer = new PreferencePayerRequest
-        {
-            Name = titular.NombreContacto,
-            Surname = titular.Apellido
-        };
-
-        var telefono = titular.Telefonos.FirstOrDefault(t => t.EsPrincipal && t.FechaBaja == null)
-                       ?? titular.Telefonos.FirstOrDefault(t => t.FechaBaja == null);
-
-        if (telefono != null)
-        {
-            payer.Phone = new PhoneRequest
-            {
-                Number = telefono.NumeroE164
-            };
-        }
-
-        return payer;
     }
 
     private static string BuildWebhookUrl(string baseUrl)
