@@ -3,6 +3,7 @@ import { useTitulares, useTitularesSinTelefonos } from '../services/titulares.qu
 import { ErrorState, EmptyState, SearchInput, Alert, Skeleton } from '../../shared/ui';
 import { TitularTableHeader, TitularTableRow, TitularDetailPanel } from '../components';
 import { filterTitulares } from '../helpers/search.helpers';
+import { exportarContactosVcf } from '../helpers/vcard.helpers';
 import type { TitularResponse } from '../types/titular.types';
 
 const STATUS_FILTERS = {
@@ -102,6 +103,7 @@ export const TitularesListPage = () => {
   const [panelState, dispatchPanel] = useReducer(panelReducer, PANEL_INITIAL_STATE);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(STATUS_FILTERS.ACTIVE);
+  const [exportando, setExportando] = useState(false);
   const { selectedTitular, showMobileDrawer, isPanelExpanded } = panelState;
 
   const handleSelectTitular = (titular: TitularResponse) => {
@@ -114,6 +116,16 @@ export const TitularesListPage = () => {
 
   const handleCloseSidePanel = () => {
     dispatchPanel({ type: 'closePanel' });
+  };
+
+  const handleExportarContactos = async () => {
+    const activos = (titulares ?? []).filter((t) => t.activo);
+    setExportando(true);
+    try {
+      await exportarContactosVcf(activos);
+    } finally {
+      setExportando(false);
+    }
   };
 
   const titularesList = titulares ?? [];
@@ -180,13 +192,26 @@ export const TitularesListPage = () => {
                     ))}
                   </div>
                 </div>
-                <button 
-                  onClick={() => window.location.href = '/titulares/nuevo'}
-                  className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#007a8a] px-5 py-2.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#00626e]"
-                >
-                  <span className="material-symbols-outlined text-[20px]">add</span>
-                  Nuevo Titular
-                </button>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleExportarContactos}
+                    disabled={exportando}
+                    className="flex items-center justify-center gap-2 rounded-lg border border-[#007a8a] px-4 py-2.5 text-sm font-bold text-[#007a8a] transition-colors hover:bg-[#007a8a]/10 disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">
+                      {exportando ? 'hourglass_empty' : 'contacts'}
+                    </span>
+                    {exportando ? 'Exportando...' : 'Exportar contactos'}
+                  </button>
+                  <button
+                    onClick={() => window.location.href = '/titulares/nuevo'}
+                    className="flex items-center justify-center gap-2 rounded-lg bg-[#007a8a] px-5 py-2.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#00626e]"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">add</span>
+                    Nuevo Titular
+                  </button>
+                </div>
               </div>
             </div>
 
