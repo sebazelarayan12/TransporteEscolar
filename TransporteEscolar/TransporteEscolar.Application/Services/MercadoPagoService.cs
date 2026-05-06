@@ -33,7 +33,7 @@ public sealed class MercadoPagoService : IMercadoPagoService
         var settings = _settings.Value;
         ConfigureAccessToken(settings);
 
-        if (!string.IsNullOrWhiteSpace(pago.MercadoPagoPreferenceId))
+        if (!settings.UseSandbox && !string.IsNullOrWhiteSpace(pago.MercadoPagoPreferenceId))
         {
             var preference = await TryGetPreferenceAsync(pago.MercadoPagoPreferenceId, cancellationToken);
             if (preference != null && PreferenceMatchesAmount(preference, pago.SaldoPendiente()))
