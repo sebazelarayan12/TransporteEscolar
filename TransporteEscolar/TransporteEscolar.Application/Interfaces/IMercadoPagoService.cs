@@ -7,7 +7,6 @@ public interface IMercadoPagoService
 {
     Task<MercadoPagoLinkResult> GetOrCreatePreferenceAsync(
         PagoMensual pago,
-        Titular titular,
         CancellationToken cancellationToken);
 
     Task<MercadoPagoPaymentInfo?> GetPaymentAsync(

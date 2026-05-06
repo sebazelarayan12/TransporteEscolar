@@ -4,6 +4,7 @@ using TransporteEscolar.Application.Helpers;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Domain.Entities;
 
+
 namespace TransporteEscolar.Application.PagosMensuales.Commands;
 
 public sealed record GenerarLinkMercadoPagoCommand(int PagoMensualId) : IRequest<MercadoPagoLinkResponse>;
@@ -13,16 +14,13 @@ public sealed record MercadoPagoLinkResponse(string Url, string PreferenceId);
 public sealed class GenerarLinkMercadoPagoCommandHandler : IRequestHandler<GenerarLinkMercadoPagoCommand, MercadoPagoLinkResponse>
 {
     private readonly IPagoMensualRepository _pagoMensualRepository;
-    private readonly ITitularRepository _titularRepository;
     private readonly IMercadoPagoService _mercadoPagoService;
 
     public GenerarLinkMercadoPagoCommandHandler(
         IPagoMensualRepository pagoMensualRepository,
-        ITitularRepository titularRepository,
         IMercadoPagoService mercadoPagoService)
     {
         _pagoMensualRepository = pagoMensualRepository;
-        _titularRepository = titularRepository;
         _mercadoPagoService = mercadoPagoService;
     }
 
@@ -37,18 +35,7 @@ public sealed class GenerarLinkMercadoPagoCommandHandler : IRequestHandler<Gener
         if (pago.EstaPagado())
             throw new ValidationException("El pago mensual ya esta saldado");
 
-        if (!string.IsNullOrWhiteSpace(pago.MercadoPagoUrl) && !string.IsNullOrWhiteSpace(pago.MercadoPagoPreferenceId))
-        {
-            return new MercadoPagoLinkResponse(pago.MercadoPagoUrl, pago.MercadoPagoPreferenceId);
-        }
-
-        var titular = await RepositoryHelper.GetByIdOrThrowAsync(
-            _titularRepository.GetByIdAsync,
-            pago.TitularId,
-            nameof(Titular),
-            cancellationToken);
-
-        var linkResult = await _mercadoPagoService.GetOrCreatePreferenceAsync(pago, titular, cancellationToken);
+        var linkResult = await _mercadoPagoService.GetOrCreatePreferenceAsync(pago, cancellationToken);
 
         pago.AsignarMercadoPagoLink(linkResult.PreferenceId, linkResult.PaymentUrl, DateTime.UtcNow);
 

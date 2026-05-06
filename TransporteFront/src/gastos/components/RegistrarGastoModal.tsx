@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useForm, useWatch, type FieldError, type Resolver, type SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -229,6 +229,7 @@ export const RegistrarGastoModal = ({
   const watchedCategoria = useWatch({ control, name: 'categoria' });
 
   const [vehiculo, setVehiculo] = useState<string | null>(null);
+  const vehiculoRef = useRef<string | null>(null);
   const [vehiculoDialogOpen, setVehiculoDialogOpen] = useState(false);
   const { min, max } = getPeriodBounds(mes, anio);
   const { showSuccess, showError } = useToast();
@@ -239,12 +240,22 @@ export const RegistrarGastoModal = ({
   const periodLabel = monthFormatter.format(new Date(anio, mes - 1, 1));
 
   useEffect(() => {
-    if (watchedCategoria === 'Combustible' && selectedTipo === GASTO_TIPOS.VARIABLE && !vehiculo) {
-      setVehiculoDialogOpen(true);
-    } else if (watchedCategoria !== 'Combustible') {
-      setVehiculo(null);
-    }
-  }, [watchedCategoria, selectedTipo, vehiculo]);
+    vehiculoRef.current = vehiculo;
+  });
+
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name !== 'categoria' && name !== 'tipo') return;
+      const cat = value.categoria;
+      const tipo = value.tipo;
+      if (cat === 'Combustible' && tipo === GASTO_TIPOS.VARIABLE && !vehiculoRef.current) {
+        setVehiculoDialogOpen(true);
+      } else if (cat !== 'Combustible') {
+        setVehiculo(null);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   useEffect(() => {
     if (!isOpen) {
