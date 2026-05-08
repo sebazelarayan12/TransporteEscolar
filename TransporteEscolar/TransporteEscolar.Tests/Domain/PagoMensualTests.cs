@@ -281,4 +281,33 @@ public class PagoMensualTests
         pago.FechaVencimiento.Month.Should().Be(8);
         pago.FechaVencimiento.Year.Should().Be(2025);
     }
+
+    // ── ActualizarObservaciones ──────────────────────────────────────────────
+
+    [Fact]
+    public void ActualizarObservaciones_ConTexto_GuardaObservaciones()
+    {
+        var pago = CrearPago();
+        pago.ActualizarObservaciones("nueva observacion");
+
+        pago.Observaciones.Should().Be("nueva observacion");
+    }
+
+    [Fact]
+    public void ActualizarObservaciones_ConNull_LimpiaCampo()
+    {
+        var pago = new PagoMensual(1, 6, 2025, 10000m, "obs existente");
+        pago.ActualizarObservaciones(null);
+
+        pago.Observaciones.Should().BeNull();
+    }
+
+    [Fact]
+    public void ActualizarObservaciones_SobreescribeValorAnterior()
+    {
+        var pago = new PagoMensual(1, 6, 2025, 10000m, "primer valor");
+        pago.ActualizarObservaciones("segundo valor");
+
+        pago.Observaciones.Should().Be("segundo valor");
+    }
 }

@@ -136,4 +136,29 @@ public class AjustarMontoTitularCommandHandlerTests
 
         await act.Should().ThrowAsync<ValidationException>().WithMessage("*menor al total pagado*");
     }
+
+    [Fact]
+    public async Task Handle_ErrorEnRepositorioDePagos_HaceRollback()
+    {
+        var scopeMock = new Mock<ITransactionScope>();
+        scopeMock.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        scopeMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        scopeMock.Setup(t => t.DisposeAsync()).Returns(ValueTask.CompletedTask);
+        _txManager.Setup(t => t.BeginTransactionAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(scopeMock.Object);
+
+        var titular = CrearTitular();
+        _titularRepo.Setup(r => r.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(titular);
+        _pagoRepo.Setup(r => r.GetByTitularIdAsync(1, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("error de base de datos"));
+
+        var handler = CrearHandler();
+        var act = async () => await handler.Handle(
+            new AjustarMontoTitularCommand(1, new PagoMensualModel.AjusteTitularRequest(12000m)),
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<Exception>();
+        scopeMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
 }
