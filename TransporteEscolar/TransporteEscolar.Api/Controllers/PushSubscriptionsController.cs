@@ -53,6 +53,17 @@ public class PushSubscriptionsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("test")]
+    public async Task<ActionResult> Test(CancellationToken cancellationToken)
+    {
+        await _webPushService.EnviarATodosAsync(
+            "Test de notificación",
+            "Si ves esto, el badge y el ícono funcionan correctamente.",
+            null,
+            cancellationToken);
+        return NoContent();
+    }
+
     [HttpPost("unsubscribe")]
     public async Task<ActionResult> Unsubscribe(
         [FromBody] PushSubscriptionModel.UnsubscribeRequest request,
