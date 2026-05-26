@@ -52,8 +52,8 @@ public class WebPushService : IWebPushService
             title = titulo,
             body = mensajeNormalizado,
             url = url,
-            icon = "/transporteicon.svg",
-            badge = "/transporteicon.svg"
+            icon = "/icon.png",
+            badge = "/badge.png"
         });
 
         var tareas = suscripciones.Select(async suscripcion =>
