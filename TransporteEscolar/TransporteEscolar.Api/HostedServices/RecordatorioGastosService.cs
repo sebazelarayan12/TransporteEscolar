@@ -62,8 +62,8 @@ public class RecordatorioGastosService : BackgroundService
         var webPushService = scope.ServiceProvider.GetRequiredService<IWebPushService>();
 
         await webPushService.EnviarATodosAsync(
-            "Recordatorio de gastos",
             "¿Cargaste los gastos de hoy?",
+            "Hacé click aquí para cargar lo que gastaste hoy",
             "/gastos",
             cancellationToken);
 
