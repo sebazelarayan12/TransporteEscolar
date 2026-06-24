@@ -33,6 +33,7 @@ namespace TransporteEscolar.Api
             builder.Services.Configure<ReleaseNotesOptions>(builder.Configuration.GetSection("ReleaseNotes"));
             builder.Services.Configure<VapidSettings>(builder.Configuration.GetSection(VapidSettings.SectionName));
             builder.Services.AddHostedService<ReleaseNotesInitializer>();
+            builder.Services.AddHostedService<RecordatorioGastosService>();
 
             // CORS - Configurado dinámicamente mediante variable de entorno
             var allowedOrigins = builder.Configuration.GetValue<string>("AllowedOrigins")
