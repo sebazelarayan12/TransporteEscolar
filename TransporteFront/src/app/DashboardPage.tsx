@@ -1,7 +1,7 @@
 import { useBackendHealth } from '../shared/hooks/useBackendHealth';
 import { useDashboardResumen } from './services/dashboard.queries';
 import { Alert } from '../shared/ui/Alert';
-import { DashboardHeaderCard } from './components/DashboardHeaderCard';
+
 import { DashboardWelcomeStatus } from './components/DashboardWelcomeStatus';
 import { DashboardSummaryKpis } from './components/DashboardSummaryKpis';
 import { DashboardRecaudacionChart } from './components/DashboardRecaudacionChart';
@@ -56,7 +56,6 @@ export const DashboardPage = () => {
             {getErrorMessage(error)}
           </Alert>
         )}
-        <DashboardHeaderCard />
         <DashboardWelcomeStatus isSystemActive={isSystemActive} />
         <DashboardSummaryKpis summary={summary} isLoading={isLoading} />
         <DashboardRecaudacionChart chartData={chartData} isLoading={isLoading} />
