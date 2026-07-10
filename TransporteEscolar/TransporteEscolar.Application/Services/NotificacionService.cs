@@ -110,22 +110,22 @@ namespace TransporteEscolar.Application.Services;
         int pagoMensualId, 
         CancellationToken cancellationToken = default)
     {
-        var nombreCorto = FormatearNombreCompacto(titularNombre);
+        var apellido = FormatearApellido(titularNombre);
         var notificacion = new Notificacion(
             "PAGO_REGISTRADO",
             "Nuevo pago registrado",
-            $"{nombreCorto} pagó ${monto:N0} ({periodo})",
+            $"{apellido} pagó ${monto:N0} ({periodo})",
             "PagoMensual",
             pagoMensualId);
-        
+
         await _repository.AddAsync(notificacion, cancellationToken);
-        
+
         // Limpieza oportunista de notificaciones antiguas
         await LimpiarNotificacionesAntiguasAsync(cancellationToken);
 
         await EnviarPushAsync(
             "Nuevo pago registrado",
-            $"{nombreCorto} pagó ${monto:N0} ({periodo})",
+            $"{apellido} pagó ${monto:N0} ({periodo})",
             $"/pagos?pagoId={pagoMensualId}",
             cancellationToken);
     }
@@ -290,6 +290,21 @@ namespace TransporteEscolar.Application.Services;
         var apellidos = string.Join(" ", partes.Skip(1));
         
         return $"{inicial}. {apellidos}";
+    }
+
+    /// <summary>
+    /// Extrae solo el apellido de un nombre completo: "Cecilia BERTIKIAN" → "BERTIKIAN"
+    /// </summary>
+    private static string FormatearApellido(string nombreCompleto)
+    {
+        if (string.IsNullOrWhiteSpace(nombreCompleto))
+            return nombreCompleto;
+
+        var partes = nombreCompleto.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (partes.Length <= 1)
+            return partes.Length == 1 ? partes[0] : nombreCompleto;
+
+        return string.Join(" ", partes.Skip(1));
     }
 
     private static DateTime NormalizarFechaPublicacion(DateTime fechaPublicacion)
