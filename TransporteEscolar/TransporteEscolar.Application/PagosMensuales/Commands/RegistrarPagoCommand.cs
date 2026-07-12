@@ -65,11 +65,10 @@ public sealed class RegistrarPagoCommandHandler : IRequestHandler<RegistrarPagoC
             await _pagoMensualRepository.UpdateAsync(pago, cancellationToken);
         }
 
-        var titularNombre = $"{titular.NombreContacto} {titular.Apellido}".Trim();
         var periodo = PagoMensualMappingExtensions.BuildPeriodo(pagoMensual.Mes, pagoMensual.Anio);
 
         await _notificacionService.CrearNotificacionPagoRegistradoAsync(
-            titularNombre,
+            titular.Apellido,
             request.Payload.Monto,
             periodo,
             request.PagoMensualId,
