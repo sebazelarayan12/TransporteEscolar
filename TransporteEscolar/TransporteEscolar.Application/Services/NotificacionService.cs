@@ -104,17 +104,16 @@ namespace TransporteEscolar.Application.Services;
 
     // Métodos de creación de notificaciones
     public async Task CrearNotificacionPagoRegistradoAsync(
-        string titularNombre, 
-        decimal monto, 
-        string periodo, 
-        int pagoMensualId, 
+        string titularApellido,
+        decimal monto,
+        string periodo,
+        int pagoMensualId,
         CancellationToken cancellationToken = default)
     {
-        var apellido = FormatearApellido(titularNombre);
         var notificacion = new Notificacion(
             "PAGO_REGISTRADO",
             "Nuevo pago registrado",
-            $"{apellido} pagó ${monto:N0} ({periodo})",
+            $"{titularApellido} pagó ${monto:N0} ({periodo})",
             "PagoMensual",
             pagoMensualId);
 
@@ -125,7 +124,7 @@ namespace TransporteEscolar.Application.Services;
 
         await EnviarPushAsync(
             "Nuevo pago registrado",
-            $"{apellido} pagó ${monto:N0} ({periodo})",
+            $"{titularApellido} pagó ${monto:N0} ({periodo})",
             $"/pagos?pagoId={pagoMensualId}",
             cancellationToken);
     }
@@ -290,21 +289,6 @@ namespace TransporteEscolar.Application.Services;
         var apellidos = string.Join(" ", partes.Skip(1));
         
         return $"{inicial}. {apellidos}";
-    }
-
-    /// <summary>
-    /// Extrae solo el apellido de un nombre completo: "Cecilia BERTIKIAN" → "BERTIKIAN"
-    /// </summary>
-    private static string FormatearApellido(string nombreCompleto)
-    {
-        if (string.IsNullOrWhiteSpace(nombreCompleto))
-            return nombreCompleto;
-
-        var partes = nombreCompleto.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (partes.Length <= 1)
-            return partes.Length == 1 ? partes[0] : nombreCompleto;
-
-        return string.Join(" ", partes.Skip(1));
     }
 
     private static DateTime NormalizarFechaPublicacion(DateTime fechaPublicacion)

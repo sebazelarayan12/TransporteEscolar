@@ -2,21 +2,20 @@ import { useReducer } from 'react';
 import { Link } from 'react-router-dom';
 import { usePagosPaginados, useEstadisticasMes } from '../services/pagos.queries';
 import { getPagoEstado } from '../helpers/periodo.helpers';
-import {
-  SearchInput,
-  MonthYearFilter,
-  EstadisticasMesCard,
-  PagoStatusBadge,
-  Pagination,
-  Button,
-  Alert,
-  Skeleton,
-  SkeletonTableRow,
-} from '../../shared/ui';
+import { SearchInput } from '../../shared/ui/SearchInput';
+import { MonthYearFilter } from '../../shared/ui/MonthYearFilter';
+import { EstadisticasMesCard } from '../../shared/ui/EstadisticasMesCard';
+import { PagoStatusBadge } from '../../shared/ui/PagoStatusBadge';
+import { Pagination } from '../../shared/ui/Pagination';
+import { Button } from '../../shared/ui/Button';
+import { Alert } from '../../shared/ui/Alert';
+import { Skeleton, SkeletonTableRow } from '../../shared/ui/Skeleton';
 import { useDebounce } from '../../shared/hooks/useDebounce';
-import type { PagoEstado, PagoMensual, PagosEstadoFiltro } from '../types/pago.types';
+import type { PagoMensual, PagosEstadoFiltro } from '../types/pago.types';
 import { formatCurrency } from '../../shared/utils/currency.helpers';
-import { RegistrarPagoModal, PagosStatusFilters, PagoDetalleModal } from '../components';
+import { RegistrarPagoModal } from '../components/RegistrarPagoModal';
+import { PagosStatusFilters } from '../components/PagosStatusFilters';
+import { PagoDetalleModal } from '../components/PagoDetalleModal';
 import { useReinscripcionesAlertasPagos } from '../../reinscripciones/services/reinscripciones.queries';
 import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
@@ -156,23 +155,14 @@ export const PagosListPage = () => {
   const pagos = paginatedData?.data ?? [];
   const totalCount = paginatedData?.totalCount ?? 0;
 
-  const estadoCounts = pagos.reduce<Record<PagoEstado, number>>(
-    (acc, pago) => {
-      const estado = getPagoEstado(pago);
-      acc[estado] += 1;
-      return acc;
-    },
-    { pendiente: 0, pagado: 0, vencido: 0 }
-  );
-
   const filteredPagos =
     estadoFiltro === 'todos' ? pagos : pagos.filter((pago) => getPagoEstado(pago) === estadoFiltro);
 
   const filterCounts: Record<PagosEstadoFiltro, number> = {
-    todos: pagos.length,
-    pendiente: estadoCounts.pendiente,
-    pagado: estadoCounts.pagado,
-    vencido: estadoCounts.vencido,
+    todos: estadisticas?.totalPagos ?? totalCount,
+    pendiente: estadisticas?.cantidadPendientes ?? 0,
+    pagado: estadisticas?.cantidadPagados ?? 0,
+    vencido: estadisticas?.cantidadVencidos ?? 0,
   };
 
   const noPagosDisponibles = pagos.length === 0;
