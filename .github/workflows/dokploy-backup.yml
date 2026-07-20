@@ -1,0 +1,40 @@
+name: Dokploy PostgreSQL Backup
+
+on:
+    schedule:
+        # Todos los domingos a las 2 AM UTC (11 PM Sábado Argentina)
+        - cron: "0 2 * * 0"
+    workflow_dispatch: # Permite ejecutar manualmente
+
+jobs:
+    backup-prod:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Setup SSH
+              uses: webfactory/ssh-agent@v0.9.0
+              with:
+                  ssh-private-key: ${{ secrets.DOKPLOY_VPS_SSH_KEY }}
+
+            - name: Dump PostgreSQL via SSH + docker exec
+              env:
+                  VPS_HOST: ${{ secrets.DOKPLOY_VPS_HOST }}
+                  VPS_USER: ${{ secrets.DOKPLOY_VPS_USER }}
+                  DB_CONTAINER_NAME: transporte-escolar-eye-db-prod-rkc8aa
+                  DB_USER: transporteadmin
+                  DB_NAME: transportedb
+                  DB_PASSWORD: ${{ secrets.DOKPLOY_DB_PASSWORD_PROD }}
+              run: |
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  ssh -o StrictHostKeyChecking=no "$VPS_USER@$VPS_HOST" \
+                    "CONTAINER=\$(docker ps --filter name=$DB_CONTAINER_NAME --format '{{.ID}}' | head -n1); \
+                     docker exec -e PGPASSWORD='$DB_PASSWORD' \"\$CONTAINER\" pg_dump -U $DB_USER -d $DB_NAME -Fc" \
+                    > backup_prod_$TIMESTAMP.dump
+                  ls -lh backup_prod_*.dump
+
+            - name: Upload Backup to Artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: dokploy-postgres-backup-${{ github.run_number }}
+                  path: backup_prod_*.dump
+                  retention-days: 90
