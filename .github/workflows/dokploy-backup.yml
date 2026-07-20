@@ -33,7 +33,7 @@ jobs:
                   ls -lh backup_prod_*.dump
 
             - name: Upload Backup to Artifacts
-              uses: actions/upload-artifact@v5
+              uses: actions/upload-artifact@v6
               with:
                   name: dokploy-postgres-backup-${{ github.run_number }}
                   path: backup_prod_*.dump
