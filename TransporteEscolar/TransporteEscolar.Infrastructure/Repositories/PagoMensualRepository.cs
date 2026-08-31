@@ -185,10 +185,11 @@ public class PagoMensualRepository : IPagoMensualRepository
         return (titulares, totalCount);
     }
 
-    public async Task DeleteByTitularIdAsync(int titularId, CancellationToken cancellationToken = default)
+    public async Task DeleteFuturosByTitularIdAsync(int titularId, int anioDesde, int mesDesde, CancellationToken cancellationToken = default)
     {
         await _context.PagosMensuales
-            .Where(p => p.TitularId == titularId)
+            .Where(p => p.TitularId == titularId &&
+                (p.Anio > anioDesde || (p.Anio == anioDesde && p.Mes >= mesDesde)))
             .ExecuteDeleteAsync(cancellationToken);
     }
 
