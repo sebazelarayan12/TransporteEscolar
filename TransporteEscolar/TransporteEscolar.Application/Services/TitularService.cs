@@ -1,7 +1,9 @@
+using MediatR;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Helpers;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Application.Mappers;
+using TransporteEscolar.Application.PagosMensuales.Commands;
 using TransporteEscolar.Application.Validation;
 using TransporteEscolar.Domain.Entities;
 
@@ -13,17 +15,20 @@ public class TitularService : ITitularService
     private readonly IPasajeroRepository _pasajeroRepository;
     private readonly INotificacionService _notificacionService;
     private readonly IPagoMensualRepository _pagoMensualRepository;
+    private readonly ISender _sender;
 
     public TitularService(
-        ITitularRepository repository, 
+        ITitularRepository repository,
         IPasajeroRepository pasajeroRepository,
         INotificacionService notificacionService,
-        IPagoMensualRepository pagoMensualRepository)
+        IPagoMensualRepository pagoMensualRepository,
+        ISender sender)
     {
         _repository = repository;
         _pasajeroRepository = pasajeroRepository;
         _notificacionService = notificacionService;
         _pagoMensualRepository = pagoMensualRepository;
+        _sender = sender;
     }
 
     public async Task<TitularModel.Response?> ObtenerPorIdAsync(int id, CancellationToken cancellationToken = default)
@@ -133,7 +138,11 @@ public class TitularService : ITitularService
         }
 
         await _repository.UpdateAsync(titular, cancellationToken);
-        await _pagoMensualRepository.DeleteByTitularIdAsync(titular.Id, cancellationToken);
+
+        // Solo se borran las cuotas del mes en curso en adelante; los meses pasados
+        // quedan como historial aunque el titular esté de baja.
+        var hoy = DateTime.UtcNow;
+        await _pagoMensualRepository.DeleteFuturosByTitularIdAsync(titular.Id, hoy.Year, hoy.Month, cancellationToken);
     }
 
     public async Task ReactivarAsync(int id, CancellationToken cancellationToken = default)
@@ -154,6 +163,10 @@ public class TitularService : ITitularService
         }
 
         await _repository.UpdateAsync(titular, cancellationToken);
+
+        // Genera las cuotas faltantes del año en curso (desde el mes actual hasta noviembre),
+        // saltando las que ya existan. Es el mismo mecanismo que dispara la confirmación de reinscripción.
+        await _sender.Send(new GenerarPagosMensualesAutomaticosCommand(id, DateTime.UtcNow.Year), cancellationToken);
     }
 
     public async Task<List<TelefonoModel.Response>> ObtenerTelefonosAsync(int titularId, CancellationToken cancellationToken = default)
