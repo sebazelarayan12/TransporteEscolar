@@ -15,6 +15,11 @@ public interface IPasajeroRepository
     /// </summary>
     Task<List<Pasajero>> GetActivosDisponiblesParaReinscripcionAsync(int anio, CancellationToken cancellationToken = default);
     Task<List<Pasajero>> GetByTitularIdAsync(int titularId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Igual que GetByTitularIdAsync pero sin filtrar por estado del titular.
+    /// Necesario en reactivación de titular: en ese punto el titular todavía figura de baja en BD.
+    /// </summary>
+    Task<List<Pasajero>> GetTodosByTitularIdAsync(int titularId, CancellationToken cancellationToken = default);
     Task<List<Pasajero>> GetActivosPorHorarioAsync(int horarioId, CancellationToken cancellationToken = default);
     Task<List<Pasajero>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
     Task<Dictionary<int, ConteoPorTransporte>> GetActivosCountByHorarioAsync(CancellationToken cancellationToken = default);
