@@ -103,6 +103,18 @@ public class PasajeroRepository : IPasajeroRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<Pasajero>> GetTodosByTitularIdAsync(int titularId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Pasajeros
+            .Include(p => p.Titular)
+            .Include(p => p.PasajeroHorarios)
+                .ThenInclude(ph => ph.Horario)
+            .Include(p => p.Reinscripciones)
+            .Where(p => p.TitularId == titularId)
+            .OrderBy(p => p.Nombre)
+            .ToListAsync(cancellationToken);
+    }
+
     /// <summary>
     /// Lista pasajeros ligados a un horario cuando el titular no está dado de baja.
     /// </summary>

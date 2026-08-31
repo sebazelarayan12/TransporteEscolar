@@ -140,7 +140,9 @@ public class TitularService : ITitularService
     {
         var titular = await RepositoryHelper.GetByIdOrThrowAsync(
             _repository.GetByIdAsync, id, nameof(Titular), cancellationToken);
-        var pasajeros = await _pasajeroRepository.GetByTitularIdAsync(id, cancellationToken);
+        // GetTodosByTitularIdAsync (no GetByTitularIdAsync): en este punto el titular
+        // sigue de baja en BD, y GetByTitularIdAsync filtra por titular activo.
+        var pasajeros = await _pasajeroRepository.GetTodosByTitularIdAsync(id, cancellationToken);
         var pasajerosDadosDeBaja = pasajeros.Where(p => p.FechaBaja != null).ToList();
 
         titular.Reactivar();
