@@ -2,7 +2,7 @@ import { useWatch, type Control, type FieldErrors, type UseFormRegister } from '
 import { GASTO_TIPOS, type GastoTipo } from '../types/gastos.types';
 import type { RegistrarGastoFormData } from './RegistrarGastoModal';
 import { calculatePlanCuotasMontos } from '../helpers/plan-cuotas.helpers';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 
 interface GastoPlanCuotasSectionProps {
   control: Control<RegistrarGastoFormData>;
@@ -109,12 +109,12 @@ export const GastoPlanCuotasSection = ({
             {regularCuota ? (
               <div className="mt-2 flex flex-wrap items-center gap-6">
                 <div>
-                  <p className="text-3xl font-bold text-[#0b2e33] dark:text-white">{formatCurrency(regularCuota)}</p>
+                  <p className="text-3xl font-bold text-[#0b2e33] dark:text-white"><Amount value={regularCuota} /></p>
                   <p className="text-xs text-gray-500">{regularRangeLabel}</p>
                 </div>
                 {ultimaCuota && ultimaCuota !== regularCuota ? (
                   <div>
-                    <p className="text-3xl font-bold text-[#0b2e33] dark:text-white">{formatCurrency(ultimaCuota)}</p>
+                    <p className="text-3xl font-bold text-[#0b2e33] dark:text-white"><Amount value={ultimaCuota} /></p>
                     <p className="text-xs text-gray-500">Última cuota ajustada</p>
                   </div>
                 ) : null}

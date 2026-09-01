@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from './shared/ui/ToastProvider';
 import { ErrorBoundary } from './shared/ui/ErrorBoundary';
+import { PrivacyModeProvider } from './shared/hooks/usePrivacyMode';
 import { MainLayout } from './app/MainLayout';
 import {
   subscribeToPush,
@@ -72,29 +73,31 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <BrowserRouter>
-          <ErrorBoundary>
-            <Routes>
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<DashboardPage />} />
-                <Route path="titulares" element={<TitularesListPage />} />
-                <Route path="titulares/nuevo" element={<TitularCreatePage />} />
-                <Route path="titulares/:id" element={<TitularDetailPage />} />
-                <Route path="pasajeros" element={<PasajerosListPage />} />
-                <Route path="pasajeros/nuevo" element={<PasajeroCreatePage />} />
-                <Route path="horarios" element={<HorariosPage />} />
-                <Route path="reinscripciones" element={<ReinscripcionesListPage />} />
-                {/* <Route path="reinscripciones/nueva" element={<ReinscripcionCreatePage />} /> */}
-                <Route path="pagos" element={<PagosListPage />} />
-                <Route path="pagos/movimientos" element={<PagosMovimientosPage />} />
-                <Route path="gastos" element={<GastosControlPage />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
-            </Routes>
-          </ErrorBoundary>
-        </BrowserRouter>
-      </ToastProvider>
+      <PrivacyModeProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<MainLayout />}>
+                  <Route index element={<DashboardPage />} />
+                  <Route path="titulares" element={<TitularesListPage />} />
+                  <Route path="titulares/nuevo" element={<TitularCreatePage />} />
+                  <Route path="titulares/:id" element={<TitularDetailPage />} />
+                  <Route path="pasajeros" element={<PasajerosListPage />} />
+                  <Route path="pasajeros/nuevo" element={<PasajeroCreatePage />} />
+                  <Route path="horarios" element={<HorariosPage />} />
+                  <Route path="reinscripciones" element={<ReinscripcionesListPage />} />
+                  {/* <Route path="reinscripciones/nueva" element={<ReinscripcionCreatePage />} /> */}
+                  <Route path="pagos" element={<PagosListPage />} />
+                  <Route path="pagos/movimientos" element={<PagosMovimientosPage />} />
+                  <Route path="gastos" element={<GastosControlPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
+              </Routes>
+            </ErrorBoundary>
+          </BrowserRouter>
+        </ToastProvider>
+      </PrivacyModeProvider>
     </QueryClientProvider>
   );
 }

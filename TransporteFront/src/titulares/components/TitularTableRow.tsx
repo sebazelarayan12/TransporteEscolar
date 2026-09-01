@@ -1,7 +1,8 @@
 import type { TitularResponse } from '../types/titular.types';
-import { Avatar, Badge } from '../../shared/ui';
+import { Avatar } from '../../shared/ui/Avatar';
+import { Badge } from '../../shared/ui/Badge';
 import { getInitials, getAvatarColor } from '../helpers/avatar.helpers';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 
 interface TitularTableRowProps {
   titular: TitularResponse;
@@ -51,7 +52,7 @@ export const TitularTableRow = ({ titular, isSelected, onClick, rowIndex }: Titu
 
       {/* Monto */}
       <div className="hidden md:block md:col-span-2 text-right pr-4 text-sm font-medium text-gray-900 dark:text-gray-200 tabular-nums">
-        {formatCurrency(titular.montoMensualPactado)}
+        <Amount value={titular.montoMensualPactado} />
       </div>
 
       {/* Estado */}

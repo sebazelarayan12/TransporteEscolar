@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Spinner } from '../../shared/ui/Spinner';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 import type { DashboardActivityItem } from '../types/dashboard.types';
 import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
@@ -55,7 +55,7 @@ export const DashboardActivityFeed = ({ activityItems, isLoading }: DashboardAct
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-sm font-bold ${montoClass}`}>{formatCurrency(item.monto)}</p>
+                    <p className={`text-sm font-bold ${montoClass}`}><Amount value={item.monto} /></p>
                     <p className="text-[11px] text-gray-400">{formatFechaCorta(item.fechaPago)}</p>
                   </div>
                 </div>

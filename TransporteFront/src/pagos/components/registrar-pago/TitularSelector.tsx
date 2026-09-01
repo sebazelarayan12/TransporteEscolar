@@ -5,8 +5,8 @@
 
 import type { ReactNode } from 'react';
 import type { TitularResponse } from '../../../titulares/types/titular.types';
-import { SearchInput } from '../../../shared/ui';
-import { formatCurrency } from '../../../shared/utils/currency.helpers';
+import { SearchInput } from '../../../shared/ui/SearchInput';
+import { Amount } from '../../../shared/ui/Amount';
 import { getTitularApellidoDisplay } from '../../../shared/utils/titulares.helpers';
 
 const titularButtonBaseClasses =
@@ -96,7 +96,7 @@ export const TitularSelector = ({
                   </div>
                   <div className="text-right">
                     <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Cuota</p>
-                    <p className="text-sm font-semibold text-[#1d8ca5]">{formatCurrency(titular.montoMensualPactado)}</p>
+                    <p className="text-sm font-semibold text-[#1d8ca5]"><Amount value={titular.montoMensualPactado} /></p>
                   </div>
                 </div>
               </button>

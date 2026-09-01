@@ -1,4 +1,4 @@
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 import type { DashboardSummary } from '../types/dashboard.types';
 
 interface DashboardSummaryKpisProps {
@@ -24,7 +24,7 @@ export const DashboardSummaryKpis = ({ summary, isLoading }: DashboardSummaryKpi
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Pagos pendientes</p>
           <div className="flex items-end gap-2">
             <span className="text-3xl font-bold text-[#0f181a] dark:text-white">
-              {showSummarySkeleton ? renderSkeleton('h-8 w-24') : summary ? formatCurrency(summary.totalPendiente) : '--'}
+              {showSummarySkeleton ? renderSkeleton('h-8 w-24') : summary ? <Amount value={summary.totalPendiente} /> : '--'}
             </span>
             <span className="text-xs font-bold text-[#1d8ca5]">
               {showSummarySkeleton
@@ -46,7 +46,7 @@ export const DashboardSummaryKpis = ({ summary, isLoading }: DashboardSummaryKpi
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Pagos vencidos</p>
           <div className="flex items-end gap-2">
             <span className="text-3xl font-bold text-[#0f181a] dark:text-white">
-              {showSummarySkeleton ? renderSkeleton('h-8 w-24') : summary ? formatCurrency(summary.totalVencido) : '--'}
+              {showSummarySkeleton ? renderSkeleton('h-8 w-24') : summary ? <Amount value={summary.totalVencido} /> : '--'}
             </span>
             <span className="text-xs font-bold text-rose-500">
               {showSummarySkeleton

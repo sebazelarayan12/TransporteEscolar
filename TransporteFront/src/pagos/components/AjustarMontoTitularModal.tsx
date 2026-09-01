@@ -3,11 +3,13 @@ import { Controller, useForm, type UseFormRegisterReturn } from 'react-hook-form
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { TitularResponse } from '../../titulares/types/titular.types';
-import { Button, Modal, PriceInput } from '../../shared/ui';
+import { Button } from '../../shared/ui/Button';
+import { Modal } from '../../shared/ui/Modal';
+import { PriceInput } from '../../shared/ui/PriceInput';
 import { useToast } from '../../shared/hooks/useToast';
 import { useAjustarMontoTitular } from '../services/pagos.queries';
 import type { AjusteTitularRequest } from '../types/pago.types';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
 
 const ajustarMontoSchema = z.object({
@@ -257,7 +259,7 @@ const TitularSummaryCard = ({ titular }: { titular: TitularResponse | null }) =>
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-500">Monto actual</p>
             <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">
-              {formatCurrency(titular.montoMensualPactado)}
+              <Amount value={titular.montoMensualPactado} />
             </p>
           </div>
           <div>

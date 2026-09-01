@@ -1,4 +1,4 @@
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 import type { DashboardRevenuePoint } from '../types/dashboard.types';
 
 interface DashboardRecaudacionChartProps {
@@ -61,7 +61,7 @@ export const DashboardRecaudacionChart = ({ chartData, isLoading }: DashboardRec
                 <div className="relative w-full rounded-2xl bg-[#e9eff2] dark:bg-white/5" style={{ height: '160px' }}>
                   {isLatest && point.totalPagado > 0 && (
                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 rounded-full bg-[#0f181a] px-2 py-1 text-[10px] font-semibold text-white shadow-sm dark:bg-white/10 dark:text-white">
-                      {formatCurrency(point.totalPagado)}
+                      <Amount value={point.totalPagado} />
                     </div>
                   )}
                   {isCompleto && (

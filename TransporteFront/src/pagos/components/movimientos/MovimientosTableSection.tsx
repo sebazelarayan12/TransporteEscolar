@@ -1,5 +1,6 @@
-import { Button, EmptyState } from '../../../shared/ui';
-import { formatCurrency } from '../../../shared/utils/currency.helpers';
+import { Button } from '../../../shared/ui/Button';
+import { EmptyState } from '../../../shared/ui/Alert';
+import { Amount } from '../../../shared/ui/Amount';
 import { formatDateTime } from '../../../shared/utils/date.helpers';
 import type { MovimientoHistorial } from '../../types/movimientos.types';
 import { getTitularApellidoDisplay } from '../../../shared/utils/titulares.helpers';
@@ -78,7 +79,7 @@ export const MovimientosTableSection = ({
                   {movimiento.observaciones ? movimiento.observaciones : <span className="text-gray-400">—</span>}
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-semibold text-[#0f181a] dark:text-white">
-                  {formatCurrency(movimiento.monto)}
+                  <Amount value={movimiento.monto} />
                 </td>
                 <td className="px-6 py-4 text-right">
                   <Button
@@ -120,7 +121,7 @@ export const MovimientosTableSection = ({
               </div>
               <p className="mt-2 text-xs uppercase tracking-wide text-gray-400">{movimiento.periodo}</p>
               <p className="text-sm text-gray-600 dark:text-gray-300">{formatDateTime(movimiento.fechaPago)}</p>
-              <p className="mt-2 text-sm font-semibold text-[#0f181a] dark:text-white">{formatCurrency(movimiento.monto)}</p>
+              <p className="mt-2 text-sm font-semibold text-[#0f181a] dark:text-white"><Amount value={movimiento.monto} /></p>
               <p className="mt-1 text-xs text-gray-500">{movimiento.observaciones || 'Sin observaciones'}</p>
               <div className="mt-3 flex justify-end">
                 <Button

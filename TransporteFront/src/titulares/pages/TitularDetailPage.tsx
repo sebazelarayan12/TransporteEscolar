@@ -2,15 +2,16 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTitular, useTitularTelefonos, useUpdateTitular, useMarkTitularTelefonoPrincipal } from '../services/titulares.queries';
 import { usePasajerosByTitular } from '../../pasajeros/services/pasajeros.queries';
-import { LoadingScreen, ErrorState } from '../../shared/ui';
+import { LoadingScreen } from '../../shared/ui/Spinner';
+import { ErrorState } from '../../shared/ui/Alert';
 import { TitularPhoneList } from '../components/TitularPhoneList';
 import { TitularPasajerosList } from '../components/TitularPasajerosList';
 import { TitularEditModal } from '../components/TitularEditModal';
 import { TitularPhoneEditModal } from '../components/TitularPhoneEditModal';
-import { useToast } from '../../shared/hooks';
+import { useToast } from '../../shared/hooks/useToast';
 import type { UpdateTitularFormData } from '../schemas/titular.schema';
 import type { TitularTelefonoResponse } from '../types/titular.types';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 
 const formatDate = (value: string | null) => {
   if (!value) return null;
@@ -202,7 +203,7 @@ export const TitularDetailPage = () => {
               <div className="p-6">
                 <div className="rounded-2xl bg-gradient-to-br from-[#007a8a] to-[#00626e] p-6 text-white shadow-lg">
                   <p className="text-sm font-semibold uppercase tracking-wide opacity-90">Monto Mensual Pactado</p>
-                  <p className="mt-2 text-4xl font-bold">{formatCurrency(titular.montoMensualPactado)}</p>
+                  <p className="mt-2 text-4xl font-bold"><Amount value={titular.montoMensualPactado} /></p>
                   <div className="mt-4 flex items-center gap-2 text-sm opacity-80">
                     <span className="material-symbols-outlined text-[16px]">calendar_month</span>
                     <span>Renovación mensual</span>

@@ -19,4 +19,5 @@ export * from './icons';
 export { PriceInput } from './PriceInput';
 export { Skeleton, SkeletonTableRow } from './Skeleton';
 export { ErrorBoundary } from './ErrorBoundary';
+export { Amount } from './Amount';
 
