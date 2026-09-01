@@ -1,4 +1,4 @@
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 
 export type GastosCategoriasCarouselItem = {
   id: string;
@@ -38,7 +38,7 @@ export const GastosCategoriasCarousel = ({ items }: GastosCategoriasCarouselProp
                     {item.label}
                   </span>
                 </div>
-                <p className="mt-5 text-2xl font-semibold text-slate-900 dark:text-white">{formatCurrency(item.amount)}</p>
+                <p className="mt-5 text-2xl font-semibold text-slate-900 dark:text-white"><Amount value={item.amount} /></p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{safePercentage.toFixed(0)}% del total</p>
                 <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
                   <div

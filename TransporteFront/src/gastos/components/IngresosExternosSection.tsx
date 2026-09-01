@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Button, Spinner } from '../../shared/ui';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Button } from '../../shared/ui/Button';
+import { Spinner } from '../../shared/ui/Spinner';
+import { Amount } from '../../shared/ui/Amount';
 import type { IngresoItem, IngresosTabValue } from '../types/ingresos.types';
 import { IngresoCard } from './IngresoCard';
 
@@ -78,19 +79,19 @@ export const IngresosExternosSection = ({
           <div className="flex h-full flex-col justify-between rounded-3xl border border-slate-200/60 bg-white/85 px-5 py-4 shadow-sm dark:border-white/10 dark:bg-white/5">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">Total externo</p>
-              <p className="mt-1 text-3xl font-bold leading-tight text-slate-900 dark:text-white">{formatCurrency(totalGeneral)}</p>
+              <p className="mt-1 text-3xl font-bold leading-tight text-slate-900 dark:text-white"><Amount value={totalGeneral} /></p>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">{ingresosFijos.length + ingresosVariables.length} registros</p>
           </div>
           <div className="grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-1">
             <div className="rounded-3xl border border-slate-200/60 bg-slate-50/80 px-4 py-3 text-right shadow-sm dark:border-white/10 dark:bg-white/5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-indigo-600 dark:text-indigo-200">Fijo</p>
-              <p className="text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(totalFijos)}</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-white"><Amount value={totalFijos} /></p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">{ingresosFijos.length} registros</p>
             </div>
             <div className="rounded-3xl border border-slate-200/60 bg-emerald-50/80 px-4 py-3 text-right shadow-sm dark:border-white/10 dark:bg-emerald-400/5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-200">Variable</p>
-              <p className="text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(totalVariables)}</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-white"><Amount value={totalVariables} /></p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">{ingresosVariables.length} registros</p>
             </div>
           </div>
@@ -115,7 +116,7 @@ export const IngresosExternosSection = ({
                 <span className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">
                   {tab.label}
                 </span>
-                <p className="mt-2 text-xl font-bold text-slate-900 dark:text-white">{formatCurrency(tab.total)}</p>
+                <p className="mt-2 text-xl font-bold text-slate-900 dark:text-white"><Amount value={tab.total} /></p>
                 <p className="text-xs text-slate-400 dark:text-slate-500">{tab.count} registros</p>
               </button>
             );

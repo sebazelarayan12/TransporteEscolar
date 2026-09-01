@@ -1,5 +1,6 @@
-import { Modal, Button } from '../../shared/ui';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Modal } from '../../shared/ui/Modal';
+import { Button } from '../../shared/ui/Button';
+import { Amount } from '../../shared/ui/Amount';
 import { formatDateTime } from '../../shared/utils/date.helpers';
 
 export interface MovimientoEliminarResumen {
@@ -53,7 +54,7 @@ export const EliminarMovimientoDialog = ({
           <div className="flex items-center justify-between text-gray-600 dark:text-gray-300">
             <span className="font-semibold text-gray-900 dark:text-white">{resumen.medioPago}</span>
             <span className="text-base font-bold text-emerald-600 dark:text-emerald-300">
-              {formatCurrency(resumen.monto)}
+              <Amount value={resumen.monto} />
             </span>
           </div>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(resumen.fechaPago)}</p>

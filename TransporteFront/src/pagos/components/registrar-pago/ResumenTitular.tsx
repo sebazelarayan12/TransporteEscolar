@@ -6,8 +6,8 @@
 import type { TitularResponse } from '../../../titulares/types/titular.types';
 import type { PagoMensual } from '../../types/pago.types';
 import { useSaldoPrioritario } from '../../hooks/useSaldoPrioritario';
-import { formatCurrency } from '../../../shared/utils/currency.helpers';
-import { Button } from '../../../shared/ui';
+import { Amount } from '../../../shared/ui/Amount';
+import { Button } from '../../../shared/ui/Button';
 
 interface ResumenTitularProps {
   titular: TitularResponse | null;
@@ -60,7 +60,7 @@ export const ResumenTitular = ({
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-400">Cuota mensual</p>
             <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">
-              {formatCurrency(titular.montoMensualPactado)}
+              <Amount value={titular.montoMensualPactado} />
             </p>
           </div>
           {onAdjustMonto && (
@@ -83,7 +83,9 @@ export const ResumenTitular = ({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-400">Saldo prioritario</p>
-            <p className={`mt-1 text-xl font-semibold ${saldoInfo.colorClass}`}>{saldoInfo.label}</p>
+            <p className={`mt-1 text-xl font-semibold ${saldoInfo.colorClass}`}>
+              {saldoInfo.saldoValue !== null ? <Amount value={saldoInfo.saldoValue} /> : saldoInfo.label}
+            </p>
           </div>
           <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${saldoInfo.badge.className}`}>
             {saldoInfo.badge.label}

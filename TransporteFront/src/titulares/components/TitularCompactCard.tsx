@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { TitularResponse } from '../types/titular.types';
 import { pasajerosApi } from '../../pasajeros/services/pasajeros.api';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 
 interface TitularCompactCardProps {
   titular: TitularResponse;
@@ -49,7 +49,7 @@ export const TitularCompactCard = ({ titular, isSelected, onClick }: TitularComp
 
       {/* Monto */}
       <span className="text-base font-bold text-gray-900 dark:text-white tabular-nums shrink-0">
-        {formatCurrency(titular.montoMensualPactado)}
+        <Amount value={titular.montoMensualPactado} />
       </span>
     </button>
   );

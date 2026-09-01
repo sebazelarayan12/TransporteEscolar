@@ -1,5 +1,5 @@
 import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
 import { CardActionsMenu, type CardActionItem } from './CardActionsMenu';
 import { getCategoriaConfig } from '../constants/categorias.config';
@@ -217,7 +217,7 @@ export const GastoCard = ({ gasto, onEdit, onDelete, actionsDisabled = false, on
           </div>
         </div>
         <div className="ml-auto flex flex-col items-end text-right flex-shrink-0">
-          <p className="text-base font-semibold text-rose-500 dark:text-rose-300">{formatCurrency(gasto.monto)}</p>
+          <p className="text-base font-semibold text-rose-500 dark:text-rose-300"><Amount value={gasto.monto} /></p>
         </div>
       </div>
       <div className="ml-auto flex flex-wrap justify-end gap-1.5">

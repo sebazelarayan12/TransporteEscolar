@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { Modal, Spinner, ErrorState, EmptyState, Button } from '../../shared/ui';
+import { Modal } from '../../shared/ui/Modal';
+import { Spinner } from '../../shared/ui/Spinner';
+import { ErrorState, EmptyState } from '../../shared/ui/Alert';
+import { Button } from '../../shared/ui/Button';
 import { usePagoDetalle, useEliminarMovimiento } from '../services/pagos.queries';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
-import { useToast } from '../../shared/hooks';
+import { Amount } from '../../shared/ui/Amount';
+import { useToast } from '../../shared/hooks/useToast';
 import type { PagoMensualDetalle, PagoMovimiento } from '../types/pago.types';
 import { EliminarMovimientoDialog } from './EliminarMovimientoDialog';
 import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
@@ -93,11 +96,11 @@ const PagoDetalleContent = ({
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             Monto Generado
           </p>
-          <p className="mt-1 text-2xl font-bold text-[#0f181a] dark:text-white">{formatCurrency(pago.montoGenerado)}</p>
+          <p className="mt-1 text-2xl font-bold text-[#0f181a] dark:text-white"><Amount value={pago.montoGenerado} /></p>
         </div>
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/30 dark:bg-emerald-900/10">
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">Total Pagado</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-300">{formatCurrency(pago.totalPagado)}</p>
+          <p className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-300"><Amount value={pago.totalPagado} /></p>
         </div>
         <div
           className={`rounded-xl border p-4 ${
@@ -118,7 +121,7 @@ const PagoDetalleContent = ({
               pago.saldoPendiente > 0 ? 'text-rose-600 dark:text-rose-300' : 'text-gray-400 dark:text-gray-500'
             }`}
           >
-            {formatCurrency(pago.saldoPendiente)}
+            <Amount value={pago.saldoPendiente} />
           </p>
         </div>
       </div>
@@ -160,7 +163,7 @@ const PagoDetalleContent = ({
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2 text-right">
-                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(movimiento.monto)}</p>
+                  <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400"><Amount value={movimiento.monto} /></p>
                   <Button
                     type="button"
                     size="sm"

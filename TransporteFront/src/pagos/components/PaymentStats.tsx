@@ -1,4 +1,4 @@
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 
 interface PaymentStatsProps {
   generated: number;
@@ -22,7 +22,7 @@ export const PaymentStats = ({ generated, paid, balance }: PaymentStatsProps) =>
         >
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{stat.label}</p>
           <p className={`mt-2 text-3xl font-bold ${stat.isBalance ? 'text-rose-500' : 'text-[#0f181a] dark:text-white'}`}>
-            {formatCurrency(stat.value)}
+            <Amount value={stat.value} />
           </p>
           <p className="text-xs text-gray-500">{stat.description}</p>
         </div>

@@ -1,4 +1,4 @@
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
 import { INGRESO_TIPOS, type IngresoItem } from '../types/ingresos.types';
 import { CardActionsMenu, type CardActionItem } from './CardActionsMenu';
@@ -87,7 +87,7 @@ export const IngresoCard = ({ ingreso, onEdit, onDelete, actionsDisabled = false
           </div>
           <div className="text-right sm:min-w-[160px]">
             <p className="text-[11px] uppercase tracking-[0.35em] text-slate-400 dark:text-slate-500">Importe</p>
-            <p className="text-2xl font-bold leading-tight text-slate-900 dark:text-white">{formatCurrency(ingreso.monto)}</p>
+            <p className="text-2xl font-bold leading-tight text-slate-900 dark:text-white"><Amount value={ingreso.monto} /></p>
             {actions.length > 0 ? (
               <div className="mt-1 inline-flex md:hidden">
                 <CardActionsMenu items={actions} disabled={actionsDisabled} />

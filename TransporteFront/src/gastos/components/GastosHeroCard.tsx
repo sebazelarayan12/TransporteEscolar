@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 
 interface GastosHeroTotals {
   totalCuotas: number;
@@ -52,7 +52,7 @@ export const GastosHeroCard = ({ totales, periodLabel, periodFilter }: GastosHer
               <div className="rounded-3xl border border-white/20 bg-black/20 p-3 shadow-inner sm:p-5">
                 <p className="text-[10px] uppercase tracking-[0.25em] text-white/70 sm:text-xs sm:tracking-[0.35em]">Resultado neto</p>
                 <p className={`mt-2 text-xl font-semibold sm:mt-3 sm:text-4xl ${netPositive ? 'text-emerald-200' : 'text-rose-200'}`}>
-                  {formatCurrency(netResult)}
+                  <Amount value={netResult} />
                 </p>
                 <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90 sm:mt-3 sm:gap-2 sm:px-4 sm:py-1.5 sm:text-xs sm:tracking-widest">
                   <span className="material-symbols-rounded text-sm sm:text-base" aria-hidden>
@@ -65,10 +65,10 @@ export const GastosHeroCard = ({ totales, periodLabel, periodFilter }: GastosHer
               <div className="rounded-3xl border border-white/10 bg-white/10 p-3 shadow-inner sm:p-5">
                 <p className="text-[10px] uppercase tracking-[0.25em] text-white/70 sm:text-xs sm:tracking-[0.35em]">Ingresos vs. gastos</p>
                 <p className="mt-2 text-lg font-semibold text-white sm:mt-3 sm:text-2xl">
-                  {formatCurrency(totales.totalCuotas + totales.totalIngresosExternos)}
+                  <Amount value={totales.totalCuotas + totales.totalIngresosExternos} />
                 </p>
                 <p className="text-[10px] text-white/80 sm:text-xs">Total de ingresos</p>
-                <p className="mt-2 text-base font-semibold text-white/90 sm:mt-3 sm:text-xl">{formatCurrency(totalGastos)}</p>
+                <p className="mt-2 text-base font-semibold text-white/90 sm:mt-3 sm:text-xl"><Amount value={totalGastos} /></p>
                 <p className="text-[10px] text-white/70 sm:text-xs">Total de gastos</p>
               </div>
             </div>
@@ -88,20 +88,20 @@ export const GastosHeroCard = ({ totales, periodLabel, periodFilter }: GastosHer
                   {metric.icon}
                 </span>
               </div>
-              <p className="mt-2 text-lg font-semibold text-white sm:mt-3 sm:text-2xl">{formatCurrency(metric.value)}</p>
+              <p className="mt-2 text-lg font-semibold text-white sm:mt-3 sm:text-2xl"><Amount value={metric.value} /></p>
               {metric.key === 'totalIngresosExternos' ? (
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-white/90">
                     <span className="material-symbols-rounded text-sm" aria-hidden>
                       task_alt
                     </span>
-                    Fijo {formatCurrency(totales.totalIngresosFijos)}
+                    Fijo <Amount value={totales.totalIngresosFijos} />
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-black/20 px-3 py-1 text-white/80">
                     <span className="material-symbols-rounded text-sm" aria-hidden>
                       contrast
                     </span>
-                    Variable {formatCurrency(totales.totalIngresosVariables)}
+                    Variable <Amount value={totales.totalIngresosVariables} />
                   </span>
                 </div>
               ) : metric.key === 'totalGastosVariables' ? (
@@ -110,13 +110,13 @@ export const GastosHeroCard = ({ totales, periodLabel, periodFilter }: GastosHer
                     <span className="material-symbols-rounded text-sm" aria-hidden>
                       pending_actions
                     </span>
-                    Pendiente {formatCurrency(totales.gastosVariablesPendientes)}
+                    Pendiente <Amount value={totales.gastosVariablesPendientes} />
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 px-3 py-1 text-emerald-100">
                     <span className="material-symbols-rounded text-sm" aria-hidden>
                       task_alt
                     </span>
-                    Pagado {formatCurrency(totales.gastosVariablesPagados)}
+                    Pagado <Amount value={totales.gastosVariablesPagados} />
                   </span>
                 </div>
               ) : null}

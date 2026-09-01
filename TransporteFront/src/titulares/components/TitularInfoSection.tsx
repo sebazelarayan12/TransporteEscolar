@@ -1,6 +1,6 @@
-import { SectionHeader } from '../../shared/ui';
+import { SectionHeader } from '../../shared/ui/SectionHeader';
 import { formatDateOnly } from '../../shared/utils/date.helpers';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 import type { TitularResponse } from '../types/titular.types';
 
 interface TitularInfoSectionProps {
@@ -15,7 +15,7 @@ export const TitularInfoSection = ({ titular }: TitularInfoSectionProps) => {
         <div className="flex justify-between p-3 rounded-lg bg-gray-50 dark:bg-white/5 border border-[#e4e4e7] dark:border-[#3f3f46]">
           <span className="text-sm text-gray-500">Monto Mensual</span>
           <span className="text-sm font-bold text-gray-900 dark:text-white">
-            {formatCurrency(titular.montoMensualPactado)}
+            <Amount value={titular.montoMensualPactado} />
           </span>
         </div>
         <div className="flex justify-between p-3 rounded-lg bg-gray-50 dark:bg-white/5 border border-[#e4e4e7] dark:border-[#3f3f46]">

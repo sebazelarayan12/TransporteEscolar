@@ -1,5 +1,5 @@
-import { formatCurrency } from '../../shared/utils/currency.helpers';
-import { Spinner } from '../../shared/ui';
+import { Amount } from '../../shared/ui/Amount';
+import { Spinner } from '../../shared/ui/Spinner';
 import { GastoCard } from './GastoCard';
 import { GASTO_TIPOS, type GastoItem } from '../types/gastos.types';
 
@@ -63,7 +63,7 @@ export const GastoListSection = ({
         </div>
         <div className="w-full text-left md:w-auto md:text-right">
           <p className="text-xs uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400">Total</p>
-          <p className="text-3xl font-bold text-slate-900 dark:text-white">{formatCurrency(totalAmount)}</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white"><Amount value={totalAmount} /></p>
           {isRefreshing ? (
             <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-widest text-teal-600 dark:text-teal-300">
               <span className="material-symbols-rounded text-sm animate-spin" aria-hidden>

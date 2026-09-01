@@ -21,6 +21,7 @@ interface UseSaldoPrioritarioResult {
   badge: { label: string; className: string };
   colorClass: string;
   label: string;
+  saldoValue: number | null;
   periodo: string;
   cuotasConDeuda: PagoMensual[];
   proximoVencimientoLabel: string;
@@ -77,9 +78,8 @@ export const useSaldoPrioritario = (pagosTitular: PagoMensual[] | undefined): Us
 
     const badge = SALDO_PRIORITARIO_BADGE_BY_ESTADO[estado];
     const colorClass = SALDO_PRIORITARIO_COLOR_BY_ESTADO[estado];
-    const label = cuotaPrioritaria
-      ? formatCurrency(Math.max(0, cuotaPrioritaria.saldoPendiente))
-      : 'Sin deuda activa';
+    const saldoValue = cuotaPrioritaria ? Math.max(0, cuotaPrioritaria.saldoPendiente) : null;
+    const label = saldoValue !== null ? formatCurrency(saldoValue) : 'Sin deuda activa';
     const periodo = cuotaPrioritaria?.periodo ?? 'Sin deudas activas';
 
     return {
@@ -88,6 +88,7 @@ export const useSaldoPrioritario = (pagosTitular: PagoMensual[] | undefined): Us
       badge,
       colorClass,
       label,
+      saldoValue,
       periodo,
       cuotasConDeuda,
       proximoVencimientoLabel,

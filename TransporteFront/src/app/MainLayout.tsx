@@ -1,7 +1,10 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Suspense, useState } from 'react';
 import { Spinner } from '../shared/ui/Spinner';
-import { NotificacionesDropdown } from '../notificaciones';
+import { NotificacionesDropdown } from '../notificaciones/components/NotificacionesDropdown';
+import { usePrivacyMode } from '../shared/hooks/usePrivacyMode';
+import { EyeIcon } from '../shared/ui/icons/EyeIcon';
+import { EyeOffIcon } from '../shared/ui/icons/EyeOffIcon';
 
 const LayoutContentFallback = () => (
   <div className="flex min-h-[360px] w-full items-center justify-center px-6 py-10">
@@ -22,6 +25,11 @@ type NavigationItem = {
 export const MainLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { hidden, toggle } = usePrivacyMode();
+
+  const privacyToggleLabel = hidden ? 'Mostrar montos' : 'Ocultar montos';
+  const privacyToggleButtonClass =
+    'relative rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-cyan-600 dark:text-gray-300 dark:hover:bg-white/10';
 
   const navigation: NavigationItem[] = [
     { name: 'Dashboard', href: '/', icon: 'dashboard', match: 'exact' },
@@ -145,12 +153,30 @@ export const MainLayout = () => {
             </h2>
 
             {/* Notificaciones - siempre visibles en mobile */}
+            <button
+              type="button"
+              onClick={toggle}
+              className={privacyToggleButtonClass}
+              aria-label={privacyToggleLabel}
+              title={privacyToggleLabel}
+            >
+              {hidden ? <EyeOffIcon className="text-2xl" /> : <EyeIcon className="text-2xl" />}
+            </button>
             <NotificacionesDropdown />
           </div>
         </header>
 
         {/* Desktop top bar - solo visible en lg+ */}
         <header className="hidden lg:flex items-center justify-end gap-3 px-6 py-4 border-b border-gray-100 dark:border-white/5 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm relative z-50">
+          <button
+            type="button"
+            onClick={toggle}
+            className={privacyToggleButtonClass}
+            aria-label={privacyToggleLabel}
+            title={privacyToggleLabel}
+          >
+            {hidden ? <EyeOffIcon className="text-2xl" /> : <EyeIcon className="text-2xl" />}
+          </button>
           <NotificacionesDropdown />
           <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#007a8a] to-cyan-400 flex items-center justify-center text-sm font-bold text-white">
             EA

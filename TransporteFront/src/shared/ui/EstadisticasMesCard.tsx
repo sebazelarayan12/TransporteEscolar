@@ -1,4 +1,4 @@
-import { formatCurrency } from '../utils/currency.helpers';
+import { Amount } from './Amount';
 
 interface EstadisticasMes {
   totalPagos: number;
@@ -52,14 +52,14 @@ export const EstadisticasMesCard = ({ estadisticas }: EstadisticasMesCardProps) 
         <div>
           <p className="text-xs text-gray-500 mb-1">Total Recaudado</p>
           <p className="text-xl font-bold text-green-600">
-            {formatCurrency(estadisticas.totalRecaudado)}
+            <Amount value={estadisticas.totalRecaudado} />
           </p>
         </div>
         
         <div>
           <p className="text-xs text-gray-500 mb-1">Total Pendiente</p>
           <p className="text-xl font-bold text-red-600">
-            {formatCurrency(estadisticas.totalPendiente)}
+            <Amount value={estadisticas.totalPendiente} />
           </p>
         </div>
       </div>

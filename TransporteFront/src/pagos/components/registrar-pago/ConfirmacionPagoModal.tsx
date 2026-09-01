@@ -3,8 +3,9 @@
  * Modal for confirming payment details before submission
  */
 
-import { Modal, Button } from '../../../shared/ui';
-import { formatCurrency } from '../../../shared/utils/currency.helpers';
+import { Modal } from '../../../shared/ui/Modal';
+import { Button } from '../../../shared/ui/Button';
+import { Amount } from '../../../shared/ui/Amount';
 import { formatDateTime } from '../../../shared/utils/date.helpers';
 import type { MedioPago } from '../../constants/medios-pago.constants';
 
@@ -52,7 +53,7 @@ export const ConfirmacionPagoModal = ({
             </div>
             <div className="flex items-start justify-between gap-4">
               <dt className="text-gray-500 dark:text-gray-400">Monto</dt>
-              <dd className="text-right font-semibold text-gray-900 dark:text-white">{formatCurrency(data.monto)}</dd>
+              <dd className="text-right font-semibold text-gray-900 dark:text-white"><Amount value={data.monto} /></dd>
             </div>
             <div className="flex items-start justify-between gap-4">
               <dt className="text-gray-500 dark:text-gray-400">Medio de pago</dt>

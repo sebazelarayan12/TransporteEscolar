@@ -12,7 +12,7 @@ import { Alert } from '../../shared/ui/Alert';
 import { Skeleton, SkeletonTableRow } from '../../shared/ui/Skeleton';
 import { useDebounce } from '../../shared/hooks/useDebounce';
 import type { PagoMensual, PagosEstadoFiltro } from '../types/pago.types';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Amount } from '../../shared/ui/Amount';
 import { RegistrarPagoModal } from '../components/RegistrarPagoModal';
 import { PagosStatusFilters } from '../components/PagosStatusFilters';
 import { PagoDetalleModal } from '../components/PagoDetalleModal';
@@ -485,13 +485,13 @@ const PagosDesktopTable = ({
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{pago.periodo}</td>
                 <td className="px-6 py-4 text-sm text-right text-gray-900 dark:text-white">
-                  {formatCurrency(pago.montoGenerado)}
+                  <Amount value={pago.montoGenerado} />
                 </td>
                 <td className="px-6 py-4 text-sm text-right text-green-600 dark:text-green-500">
-                  {formatCurrency(pago.totalPagado)}
+                  <Amount value={pago.totalPagado} />
                 </td>
                 <td className="px-6 py-4 text-sm text-right font-medium text-red-600 dark:text-red-500">
-                  {formatCurrency(pago.saldoPendiente)}
+                  <Amount value={pago.saldoPendiente} />
                 </td>
                 <td className="px-6 py-4 text-center">
                   <PagoStatusBadge estado={estado} />
@@ -538,19 +538,19 @@ const PagosMobileCards = ({
               <div>
                 <p className="text-xs text-gray-500">Generado</p>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  {formatCurrency(pago.montoGenerado)}
+                  <Amount value={pago.montoGenerado} />
                 </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">Pagado</p>
                 <p className="font-medium text-green-600">
-                  {formatCurrency(pago.totalPagado)}
+                  <Amount value={pago.totalPagado} />
                 </p>
               </div>
               <div className="col-span-2">
                 <p className="text-xs text-gray-500">Saldo Pendiente</p>
                 <p className="font-semibold text-red-600">
-                  {formatCurrency(pago.saldoPendiente)}
+                  <Amount value={pago.saldoPendiente} />
                 </p>
               </div>
             </div>

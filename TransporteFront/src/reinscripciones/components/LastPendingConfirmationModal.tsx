@@ -1,5 +1,7 @@
-import { Modal, Button, Spinner } from '../../shared/ui';
-import { formatCurrency } from '../../shared/utils/currency.helpers';
+import { Modal } from '../../shared/ui/Modal';
+import { Button } from '../../shared/ui/Button';
+import { Spinner } from '../../shared/ui/Spinner';
+import { Amount } from '../../shared/ui/Amount';
 import { usePrecioPrevioReinscripcion } from '../services/reinscripciones.queries';
 import type { ReinscripcionPrecioPrevioResponse } from '../types/reinscripcion.types';
 import { DEFAULT_TITULAR_LABEL, getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
@@ -48,8 +50,6 @@ const PrecioResumen = ({ variant, isLoading, hasError, precioData, onRetry }: Pr
   }
 
   const { montoBase, descuentosAplicados, recargosAplicados, totalCalculado } = precioData;
-  const descuentosLabel = descuentosAplicados > 0 ? `- ${formatCurrency(descuentosAplicados)}` : formatCurrency(0);
-  const recargosLabel = recargosAplicados > 0 ? `+ ${formatCurrency(recargosAplicados)}` : formatCurrency(0);
   const hayAjustes = descuentosAplicados > 0 || recargosAplicados > 0;
 
   return (
@@ -57,20 +57,32 @@ const PrecioResumen = ({ variant, isLoading, hasError, precioData, onRetry }: Pr
       <dl className="space-y-3 text-sm text-gray-600 dark:text-gray-100">
         <div className="flex items-center justify-between gap-4">
           <dt className="text-xs uppercase tracking-wide text-gray-500">Monto base</dt>
-          <dd className="text-right font-semibold text-gray-900 dark:text-white">{formatCurrency(montoBase)}</dd>
+          <dd className="text-right font-semibold text-gray-900 dark:text-white"><Amount value={montoBase} /></dd>
         </div>
         <div className="flex items-center justify-between gap-4">
           <dt className="text-xs uppercase tracking-wide text-gray-500">Descuentos</dt>
-          <dd className="text-right font-semibold text-emerald-600 dark:text-emerald-300">{descuentosLabel}</dd>
+          <dd className="text-right font-semibold text-emerald-600 dark:text-emerald-300">
+            {descuentosAplicados > 0 ? (
+              <>- <Amount value={descuentosAplicados} /></>
+            ) : (
+              <Amount value={0} />
+            )}
+          </dd>
         </div>
         <div className="flex items-center justify-between gap-4">
           <dt className="text-xs uppercase tracking-wide text-gray-500">Recargos</dt>
-          <dd className="text-right font-semibold text-rose-600 dark:text-rose-300">{recargosLabel}</dd>
+          <dd className="text-right font-semibold text-rose-600 dark:text-rose-300">
+            {recargosAplicados > 0 ? (
+              <>+ <Amount value={recargosAplicados} /></>
+            ) : (
+              <Amount value={0} />
+            )}
+          </dd>
         </div>
       </dl>
       <div className="rounded-2xl bg-[#0f181a] p-4 text-white dark:bg-white/10 dark:text-white">
         <p className="text-xs uppercase tracking-wide text-white/80">Total a generar</p>
-        <p className="mt-2 text-3xl font-bold">{formatCurrency(totalCalculado)}</p>
+        <p className="mt-2 text-3xl font-bold"><Amount value={totalCalculado} /></p>
         <p className="mt-1 text-xs text-white/70">
           Este será el importe usado para crear las cuotas automáticas{hayAjustes ? ', incluyendo los ajustes aplicados.' : '.'}
         </p>
