@@ -15,6 +15,12 @@ public record TitularModel
         string Direccion,
         decimal MontoMensualPactado);
 
+    /// <summary>
+    /// Desde qué período se generan las cuotas al reactivar. Si no se especifica,
+    /// se usa el mes/año actual.
+    /// </summary>
+    public record ReactivarRequest(int? MesInicio = null, int? AnioInicio = null);
+
     public record Response(
         int Id,
         string Apellido,

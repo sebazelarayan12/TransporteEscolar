@@ -145,8 +145,11 @@ public class TitularService : ITitularService
         await _pagoMensualRepository.DeleteFuturosByTitularIdAsync(titular.Id, hoy.Year, hoy.Month, cancellationToken);
     }
 
-    public async Task ReactivarAsync(int id, CancellationToken cancellationToken = default)
+    public async Task ReactivarAsync(int id, TitularModel.ReactivarRequest? request = null, CancellationToken cancellationToken = default)
     {
+        if (request != null)
+            TitularValidator.ValidateReactivar(request);
+
         var titular = await RepositoryHelper.GetByIdOrThrowAsync(
             _repository.GetByIdAsync, id, nameof(Titular), cancellationToken);
         // GetTodosByTitularIdAsync (no GetByTitularIdAsync): en este punto el titular
@@ -164,9 +167,12 @@ public class TitularService : ITitularService
 
         await _repository.UpdateAsync(titular, cancellationToken);
 
-        // Genera las cuotas faltantes del año en curso (desde el mes actual hasta noviembre),
+        // Genera las cuotas faltantes desde el período elegido (o el mes actual si no se especifica),
         // saltando las que ya existan. Es el mismo mecanismo que dispara la confirmación de reinscripción.
-        await _sender.Send(new GenerarPagosMensualesAutomaticosCommand(id, DateTime.UtcNow.Year), cancellationToken);
+        var anioInicio = request?.AnioInicio ?? DateTime.UtcNow.Year;
+        await _sender.Send(
+            new GenerarPagosMensualesAutomaticosCommand(id, anioInicio, request?.MesInicio),
+            cancellationToken);
     }
 
     public async Task<List<TelefonoModel.Response>> ObtenerTelefonosAsync(int titularId, CancellationToken cancellationToken = default)

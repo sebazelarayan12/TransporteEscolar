@@ -49,6 +49,11 @@ export interface TitularUpdateRequest {
   montoMensualPactado: number;
 }
 
+export interface TitularReactivarRequest {
+  mesInicio?: number;
+  anioInicio?: number;
+}
+
 export interface TitularSelectorItem {
   id: number;
   label: string;

@@ -6,6 +6,7 @@ import type {
   TitularUpdateRequest,
   TitularTelefonoRequest,
   TitularFilterRequest,
+  TitularReactivarRequest,
 } from '../types/titular.types';
 
 /**
@@ -166,17 +167,18 @@ export const useReactivarTitular = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => titularesApi.reactivate(id),
-    onSuccess: (_, id) => {
-      if (typeof id === 'number') {
-        queryClient.invalidateQueries({ queryKey: titularesKeys.detail(id) });
-        queryClient.invalidateQueries({ queryKey: titularesKeys.telefonos(id) });
-      }
+    mutationFn: ({ id, data }: { id: number; data?: TitularReactivarRequest }) =>
+      titularesApi.reactivate(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: titularesKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: titularesKeys.telefonos(variables.id) });
       queryClient.invalidateQueries({ queryKey: titularesKeys.lists() });
       queryClient.invalidateQueries({ queryKey: titularesKeys.activos() });
       queryClient.invalidateQueries({ queryKey: titularesKeys.selector() });
       queryClient.invalidateQueries({ queryKey: titularesKeys.all });
       queryClient.invalidateQueries({ queryKey: pasajerosKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['pagos'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 };

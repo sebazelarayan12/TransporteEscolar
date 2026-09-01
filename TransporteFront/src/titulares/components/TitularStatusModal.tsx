@@ -1,4 +1,5 @@
-import type { TitularResponse } from '../types/titular.types';
+import { useEffect, useState } from 'react';
+import type { TitularResponse, TitularReactivarRequest } from '../types/titular.types';
 
 import { Modal } from '../../shared/ui/Modal';
 import { Button } from '../../shared/ui/Button';
@@ -11,9 +12,21 @@ interface TitularStatusModalProps {
   pasajerosCount: number;
   mode: TitularStatusMode;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (reactivarData?: TitularReactivarRequest) => void;
   isPending: boolean;
 }
+
+const MESES_CICLO = [
+  { value: 3, label: 'Marzo' },
+  { value: 4, label: 'Abril' },
+  { value: 5, label: 'Mayo' },
+  { value: 6, label: 'Junio' },
+  { value: 7, label: 'Julio' },
+  { value: 8, label: 'Agosto' },
+  { value: 9, label: 'Septiembre' },
+  { value: 10, label: 'Octubre' },
+  { value: 11, label: 'Noviembre' },
+];
 
 const STATUS_CONFIG: Record<
   TitularStatusMode,
@@ -63,6 +76,19 @@ export const TitularStatusModal = ({
   const fullName = `${titular.nombreContacto} ${titular.apellido}`;
   const pasajerosLabel = `${pasajerosCount} ${pasajerosCount === 1 ? 'pasajero cargado' : 'pasajeros cargados'}`;
 
+  const now = new Date();
+  const mesActualEnCiclo = Math.min(Math.max(now.getMonth() + 1, 3), 11);
+  const [mesInicio, setMesInicio] = useState(mesActualEnCiclo);
+  const [anioInicio, setAnioInicio] = useState(now.getFullYear());
+
+  useEffect(() => {
+    if (isOpen && mode === 'reactivate') {
+      setMesInicio(mesActualEnCiclo);
+      setAnioInicio(now.getFullYear());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, mode]);
+
   const handleClose = () => {
     if (isPending) {
       return;
@@ -74,7 +100,7 @@ export const TitularStatusModal = ({
     if (isPending) {
       return;
     }
-    onConfirm();
+    onConfirm(mode === 'reactivate' ? { mesInicio, anioInicio } : undefined);
   };
 
   return (
@@ -111,6 +137,47 @@ export const TitularStatusModal = ({
               <p className="text-sm text-gray-600 dark:text-gray-300">{pasajerosLabel}</p>
             </div>
           </div>
+
+          {mode === 'reactivate' && (
+            <div className="flex items-start gap-3 border-t border-[#e4e4e7] pt-4 dark:border-[#3f3f46]">
+              <span className="material-symbols-outlined text-[22px] text-[#007a8a]">event</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Cobrar cuotas desde</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  No se generará cuota para meses anteriores al elegido.
+                </p>
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <select
+                    value={mesInicio}
+                    onChange={(e) => setMesInicio(Number(e.target.value))}
+                    disabled={isPending}
+                    aria-label="Mes desde el que cobrar"
+                    className="w-full rounded-lg border border-[#e4e4e7] bg-white px-3 py-2 text-sm text-gray-900 focus:border-[#007a8a] focus:outline-none focus:ring-1 focus:ring-[#007a8a] disabled:opacity-60 dark:border-[#3f3f46] dark:bg-[#18181b] dark:text-white sm:flex-1"
+                  >
+                    {MESES_CICLO.map((mes) => (
+                      <option key={mes.value} value={mes.value}>
+                        {mes.label}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    value={anioInicio}
+                    onChange={(e) => {
+                      const anio = parseInt(e.target.value, 10);
+                      if (!isNaN(anio)) {
+                        setAnioInicio(anio);
+                      }
+                    }}
+                    disabled={isPending}
+                    min={2000}
+                    aria-label="Año desde el que cobrar"
+                    className="w-full rounded-lg border border-[#e4e4e7] bg-white px-3 py-2 text-sm text-gray-900 focus:border-[#007a8a] focus:outline-none focus:ring-1 focus:ring-[#007a8a] disabled:opacity-60 dark:border-[#3f3f46] dark:bg-[#18181b] dark:text-white sm:w-28"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 pt-2">

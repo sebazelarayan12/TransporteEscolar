@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { TitularResponse } from '../types/titular.types';
+import type { TitularResponse, TitularReactivarRequest } from '../types/titular.types';
 import { TitularDetailHeader } from './TitularDetailHeader';
 import { TitularPhoneList } from './TitularPhoneList';
 import { TitularPasajerosList } from './TitularPasajerosList';
@@ -14,7 +14,7 @@ import {
   useReactivarTitular,
   useTitularTelefonos,
 } from '../services/titulares.queries';
-import { useToast } from '../../shared/hooks';
+import { useToast } from '../../shared/hooks/useToast';
 import { Button } from '../../shared/ui/Button';
 import { buildWhatsappUrl, formatPhoneNumber, getPrincipalTelefono } from '../helpers/phone.helpers';
 
@@ -117,12 +117,12 @@ export const TitularDetailPanel = ({ titular, onClose }: TitularDetailPanelProps
     }
   };
 
-  const handleConfirmReactivate = async () => {
+  const handleConfirmReactivate = async (reactivarData?: TitularReactivarRequest) => {
     if (!titular) {
       return;
     }
     try {
-      await reactivateTitular(titular.id);
+      await reactivateTitular({ id: titular.id, data: reactivarData });
       showSuccess('Titular reactivado correctamente');
       setReactivateModalOpen(false);
       onClose?.();

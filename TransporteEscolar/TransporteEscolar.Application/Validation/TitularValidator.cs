@@ -34,4 +34,13 @@ public static class TitularValidator
         if (request.MontoMensualPactado <= 0)
             throw new ValidationException("El monto pactado debe ser mayor a 0");
     }
+
+    public static void ValidateReactivar(TitularModel.ReactivarRequest request)
+    {
+        if (request.MesInicio.HasValue && (request.MesInicio.Value < 1 || request.MesInicio.Value > 12))
+            throw new ValidationException("El mes de inicio debe estar entre 1 y 12");
+
+        if (request.AnioInicio.HasValue && request.AnioInicio.Value < 2000)
+            throw new ValidationException("El año de inicio no es válido");
+    }
 }
