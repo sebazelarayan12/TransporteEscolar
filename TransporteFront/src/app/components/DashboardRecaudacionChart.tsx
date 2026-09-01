@@ -55,6 +55,7 @@ export const DashboardRecaudacionChart = ({ chartData, isLoading }: DashboardRec
           chartData.map((point, index) => {
             const percent = Math.min(((point.totalPagado ?? 0) / maxValue) * 100, 100);
             const isLatest = index === chartData.length - 1;
+            const isCompleto = (point.totalGenerado ?? 0) > 0 && (point.totalPagado ?? 0) >= point.totalGenerado;
             return (
               <div key={`${point.anio}-${point.mes}`} className="flex min-w-[40px] flex-1 flex-col items-center gap-2 sm:min-w-0">
                 <div className="relative w-full rounded-2xl bg-[#e9eff2] dark:bg-white/5" style={{ height: '160px' }}>
@@ -63,11 +64,22 @@ export const DashboardRecaudacionChart = ({ chartData, isLoading }: DashboardRec
                       {formatCurrency(point.totalPagado)}
                     </div>
                   )}
+                  {isCompleto && (
+                    <div
+                      className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm"
+                      title="Mes cobrado al 100%"
+                      aria-label="Mes cobrado al 100%"
+                    >
+                      <span className="material-symbols-outlined text-[11px] leading-none sm:text-xs">check</span>
+                    </div>
+                  )}
                   <div
                     className={`absolute inset-x-0 bottom-0 rounded-2xl ${
                       isLatest
                         ? 'bg-[#1d8ca5] shadow-[0_8px_20px_rgba(29,140,165,0.35)]'
-                        : 'bg-[#8ed2df] dark:bg-[#38bdf8]'
+                        : isCompleto
+                          ? 'bg-emerald-300 dark:bg-emerald-500/70'
+                          : 'bg-[#8ed2df] dark:bg-[#38bdf8]'
                     }`}
                     style={{ height: `${percent}%` }}
                   />
