@@ -9,6 +9,7 @@ import type {
   TitularFilterRequest,
   TitularPaginationResponse,
   TitularSinTelefono,
+  TitularReactivarRequest,
 } from '../types/titular.types';
 
 /**
@@ -91,8 +92,8 @@ export const titularesApi = {
   /**
    * POST /titulares/{id}/reactivar - Reactiva un titular dado de baja
    */
-  reactivate: async (id: number): Promise<void> => {
-    return apiClient.post<void>(`/titulares/${id}/reactivar`);
+  reactivate: async (id: number, data?: TitularReactivarRequest): Promise<void> => {
+    return apiClient.post<void, TitularReactivarRequest | undefined>(`/titulares/${id}/reactivar`, data);
   },
 
   /**

@@ -5,7 +5,7 @@ using TransporteEscolar.Domain.Entities;
 
 namespace TransporteEscolar.Application.PagosMensuales.Commands;
 
-public sealed record GenerarPagosMensualesAutomaticosCommand(int TitularId, int Anio) : IRequest<Unit>;
+public sealed record GenerarPagosMensualesAutomaticosCommand(int TitularId, int Anio, int? MesInicio = null) : IRequest<Unit>;
 
 public sealed class GenerarPagosMensualesAutomaticosCommandHandler : IRequestHandler<GenerarPagosMensualesAutomaticosCommand, Unit>
 {
@@ -32,7 +32,7 @@ public sealed class GenerarPagosMensualesAutomaticosCommandHandler : IRequestHan
         if (request.Anio == anioActual && mesActual > 11)
             return Unit.Value;
 
-        var mesInicio = request.Anio == anioActual ? mesActual : 3;
+        var mesInicio = request.MesInicio ?? (request.Anio == anioActual ? mesActual : 3);
         var mesFin = 11;
 
         if (mesInicio < 3)

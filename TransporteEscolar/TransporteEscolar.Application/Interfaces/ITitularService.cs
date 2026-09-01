@@ -12,7 +12,7 @@ public interface ITitularService
     Task<TitularModel.Response> CrearAsync(TitularModel.Request dto, CancellationToken cancellationToken = default);
     Task ActualizarAsync(int id, TitularModel.UpdateRequest dto, CancellationToken cancellationToken = default);
     Task DarDeBajaAsync(int id, CancellationToken cancellationToken = default);
-    Task ReactivarAsync(int id, CancellationToken cancellationToken = default);
+    Task ReactivarAsync(int id, TitularModel.ReactivarRequest? request = null, CancellationToken cancellationToken = default);
     
     // Gestión de teléfonos
     Task<List<TelefonoModel.Response>> ObtenerTelefonosAsync(int titularId, CancellationToken cancellationToken = default);

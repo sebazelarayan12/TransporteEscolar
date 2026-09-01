@@ -139,9 +139,9 @@ public class TitularesController : ControllerBase
     /// Reactivar un titular dado de baja
     /// </summary>
     [HttpPost("{id}/reactivar")]
-    public async Task<ActionResult> Reactivar(int id)
+    public async Task<ActionResult> Reactivar(int id, [FromBody] TitularModel.ReactivarRequest? request = null)
     {
-        await _service.ReactivarAsync(id);
+        await _service.ReactivarAsync(id, request);
 
         _logger.LogInformation("Titular reactivado (ID: {Id})", id);
 
