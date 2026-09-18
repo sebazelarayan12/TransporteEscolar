@@ -89,6 +89,7 @@ export const PaymentForm = ({ onSubmit, isSubmitting, defaultAmount = 0 }: Payme
         <div>
           <label htmlFor="observaciones" className="text-xs font-semibold text-gray-500">Observaciones</label>
           <textarea
+            id="observaciones"
             rows={3}
             value={formData.observaciones}
             onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}

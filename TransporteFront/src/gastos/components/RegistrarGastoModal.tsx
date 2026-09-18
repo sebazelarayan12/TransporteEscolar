@@ -2,8 +2,8 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useForm, useWatch, type FieldError, type Resolver, type SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Modal } from '../../shared/ui';
-import { useToast } from '../../shared/hooks';
+import { Modal } from '../../shared/ui/Modal';
+import { useToast } from '../../shared/hooks/useToast';
 import { useActualizarGastoFijo, useCrearGastoFijo, useCrearGastoVariable } from '../services/gastos.queries';
 import {
   GASTO_CATEGORIAS,
@@ -180,12 +180,53 @@ const getPeriodBounds = (mes: number, anio: number) => {
   };
 };
 
+/** Valores iniciales del formulario: los del gasto fijo a editar, o los defaults del periodo. */
+const getInitialValues = (
+  mes: number,
+  anio: number,
+  isEditMode: boolean,
+  initialData?: GastoItem | null,
+): RegistrarGastoFormData => {
+  if (!isEditMode || !initialData) {
+    return getDefaultValues(mes, anio);
+  }
+
+  const fallbackDate = getPeriodBounds(initialData.mes ?? mes, initialData.anio ?? anio).min;
+  return {
+    tipo: GASTO_TIPOS.FIJO,
+    categoria: initialData.categoria,
+    descripcion: initialData.descripcion,
+    monto: initialData.monto,
+    medioPago: initialData.medioPago,
+    observaciones: initialData.observaciones ?? '',
+    diaDeAplicacion: new Date(initialData.fechaCuota ?? fallbackDate).getUTCDate(),
+    planCuotas: {
+      habilitado: Boolean(initialData.esPlanCuotas),
+      fechaPrimeraCuota: normalizeDateInput(initialData.fechaPrimeraCuota) || fallbackDate,
+      cantidadCuotas: initialData.cantidadCuotas ?? initialData.totalCuotas ?? 2,
+    },
+  };
+};
+
 const monthFormatter = new Intl.DateTimeFormat('es-AR', {
   month: 'long',
   year: 'numeric',
 });
 
-export const RegistrarGastoModal = ({
+/**
+ * El contenido solo existe mientras el modal está abierto: al cerrarse se desmonta y el
+ * formulario arranca de cero (con los valores del gasto a editar) la próxima vez que se abre.
+ */
+export const RegistrarGastoModal = (props: RegistrarGastoModalProps) => {
+  if (!props.isOpen) {
+    return null;
+  }
+
+  const contentKey = `${props.modo ?? 'create'}-${props.initialData?.id ?? 'new'}-${props.mes}-${props.anio}`;
+  return <RegistrarGastoModalContent key={contentKey} {...props} />;
+};
+
+const RegistrarGastoModalContent = ({
   isOpen,
   onClose,
   mes,
@@ -211,14 +252,13 @@ export const RegistrarGastoModal = ({
   const isEditMode = modo === 'edit';
   const form = useForm<RegistrarGastoFormData>({
     resolver,
-    defaultValues: getDefaultValues(mes, anio),
+    defaultValues: getInitialValues(mes, anio, isEditMode, initialData),
   });
 
   const {
     register,
     handleSubmit,
     control,
-    reset,
     setValue,
     formState: { errors, isSubmitting },
   } = form;
@@ -257,42 +297,10 @@ export const RegistrarGastoModal = ({
     return () => subscription.unsubscribe();
   }, [form]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    if (isEditMode && initialData) {
-      const fallbackDate = getPeriodBounds(initialData.mes ?? mes, initialData.anio ?? anio).min;
-      const diaAplicacion = new Date(initialData.fechaCuota ?? fallbackDate).getUTCDate();
-      const fechaPrimeraPlan = normalizeDateInput(initialData.fechaPrimeraCuota) || fallbackDate;
-      const cantidadPlan = initialData.cantidadCuotas ?? initialData.totalCuotas ?? 2;
-      reset({
-        tipo: GASTO_TIPOS.FIJO,
-        categoria: initialData.categoria,
-        descripcion: initialData.descripcion,
-        monto: initialData.monto,
-        medioPago: initialData.medioPago,
-        observaciones: initialData.observaciones ?? '',
-        diaDeAplicacion: diaAplicacion,
-        planCuotas: {
-          habilitado: Boolean(initialData.esPlanCuotas),
-          fechaPrimeraCuota: fechaPrimeraPlan,
-          cantidadCuotas: cantidadPlan,
-        },
-      });
-      return;
-    }
-
-    reset(getDefaultValues(mes, anio));
-  }, [anio, initialData, isEditMode, isOpen, mes, reset]);
-
   const closeModal = () => {
     if (isPending) {
       return;
     }
-    reset(getDefaultValues(mes, anio));
-    setVehiculo(null);
     onClose();
   };
 
@@ -363,7 +371,6 @@ export const RegistrarGastoModal = ({
 
       showSuccess(isEditMode ? 'Gasto fijo actualizado' : 'Gasto registrado correctamente');
       onSuccess();
-      reset(getDefaultValues(mes, anio));
       onClose();
     } catch (error) {
       const message =

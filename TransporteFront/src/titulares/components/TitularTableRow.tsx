@@ -62,11 +62,14 @@ export const TitularTableRow = ({ titular, isSelected, onClick, rowIndex }: Titu
 
       {/* Acciones */}
       <div className="hidden md:flex md:col-span-1 justify-center">
-        <button className={`size-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-[#007a8a] hover:bg-[#007a8a]/10 transition-colors ${
-          isSelected ? '' : 'opacity-0 group-hover:opacity-100'
-        }`}>
+        <span
+          aria-hidden="true"
+          className={`size-8 rounded-lg flex items-center justify-center text-gray-400 group-hover:text-[#007a8a] group-hover:bg-[#007a8a]/10 transition-colors ${
+            isSelected ? '' : 'opacity-0 group-hover:opacity-100'
+          }`}
+        >
           <span className="material-symbols-outlined text-[20px]">more_vert</span>
-        </button>
+        </span>
       </div>
     </button>
   );

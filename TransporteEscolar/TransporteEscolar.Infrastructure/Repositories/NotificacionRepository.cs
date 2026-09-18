@@ -32,7 +32,8 @@ public class NotificacionRepository : INotificacionRepository
         bool soloNoLeidas, 
         CancellationToken cancellationToken = default)
     {
-        var query = _context.Notificaciones.AsQueryable();
+        // Las actualizaciones de producto no se muestran en el listado de notificaciones.
+        var query = _context.Notificaciones.Where(n => !n.EsActualizacionProducto);
 
         if (soloNoLeidas)
             query = query.Where(n => !n.Leida);
@@ -47,7 +48,7 @@ public class NotificacionRepository : INotificacionRepository
     public async Task<int> GetCountNoLeidasAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Notificaciones
-            .CountAsync(n => !n.Leida, cancellationToken);
+            .CountAsync(n => !n.Leida && !n.EsActualizacionProducto, cancellationToken);
     }
 
     public async Task<Notificacion> AddAsync(Notificacion notificacion, CancellationToken cancellationToken = default)

@@ -73,6 +73,18 @@ export const formatDateOnlyCompact = (dateOnlyISO: string): string => {
   });
 };
 
+const dateFormatter = new Intl.DateTimeFormat('es-AR', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+});
+
+const timeFormatter = new Intl.DateTimeFormat('es-AR', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
 /**
  * Formatea una fecha/hora ISO (DateTime) a "11 feb 2026 - 14:30"
  * Retorna el valor original si no se puede parsear
@@ -87,18 +99,6 @@ export const formatDateTime = (isoDateTime: string): string => {
   if (Number.isNaN(parsed.getTime())) {
     return isoDateTime;
   }
-
-  const dateFormatter = new Intl.DateTimeFormat('es-AR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-
-  const timeFormatter = new Intl.DateTimeFormat('es-AR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
 
   const datePart = dateFormatter.format(parsed).replace('.', '');
   const timePart = timeFormatter.format(parsed);
