@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 interface MonthYearFilterProps {
   selectedMes: number | null;
   selectedAnio: number;
@@ -32,6 +34,7 @@ const ANIOS = (() => {
 })();
 
 export const MonthYearFilter = ({ selectedMes, selectedAnio, onFilterChange }: MonthYearFilterProps) => {
+  const mesSelectId = useId();
   const currentDate = new Date();
   const currentMes = currentDate.getMonth() + 1;
   const currentAnio = currentDate.getFullYear();
@@ -42,11 +45,13 @@ export const MonthYearFilter = ({ selectedMes, selectedAnio, onFilterChange }: M
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+      <label htmlFor={mesSelectId} className="text-sm font-semibold text-gray-700 dark:text-gray-300">
         Filtrar por mes/año:
       </label>
-      
+
       <select
+        id={mesSelectId}
+        aria-label="Mes"
         value={selectedMes ?? ''}
         onChange={(e) => {
           const mes = parseInt(e.target.value);
@@ -65,6 +70,7 @@ export const MonthYearFilter = ({ selectedMes, selectedAnio, onFilterChange }: M
       </select>
 
       <select
+        aria-label="Año"
         value={selectedAnio}
         onChange={(e) => {
           const anio = parseInt(e.target.value);

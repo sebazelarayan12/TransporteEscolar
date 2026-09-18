@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { createPasajeroSchema, type CreatePasajeroFormData } from '../schemas/pasajero.schema';
 import { useAgregarHorarioPasajero, useCreatePasajero } from '../services/pasajeros.queries';
 import { useTitularesActivos } from '../../titulares/services/titulares.queries';
-import { useToast } from '../../shared/hooks';
+import { useToast } from '../../shared/hooks/useToast';
+import { runInSequence } from '../../shared/utils/async.helpers';
 import { useHorariosOptions } from '../../horarios/services/horarios.queries';
 import { inferirTurnoDesdeEtiqueta, getHorarioEtiquetaDisplay } from '../helpers/horario.helpers';
 import { PasajeroTitularSection } from './PasajeroTitularSection';
@@ -158,8 +159,9 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
     syncTurnoDesdeHorario(horarioId);
   };
 
-  const selectableHorarios = horariosOptions.filter((option) => !horariosSeleccionados.includes(option.value));
-  const canAddHorario = typeof horarioToAdd === 'number' && !horariosSeleccionados.includes(horarioToAdd);
+  const seleccionadosSet = new Set(horariosSeleccionados);
+  const selectableHorarios = horariosOptions.filter((option) => !seleccionadosSet.has(option.value));
+  const canAddHorario = typeof horarioToAdd === 'number' && !seleccionadosSet.has(horarioToAdd);
   const isSaving = isSubmitting || createPasajero.isPending || isAssigningHorarios;
 
   const handleTitularChange = (value: number) => {
@@ -184,15 +186,15 @@ export const PasajeroForm = ({ initialTitularId, titularApellido }: PasajeroForm
       if (horariosSeleccionados.length) {
         dispatch({ type: 'setIsAssigningHorarios', value: true });
         try {
-          for (let index = 0; index < horariosSeleccionados.length; index += 1) {
-            const horarioId = horariosSeleccionados[index];
-            await agregarHorarioPasajero.mutateAsync({
+          // En orden: todas las altas modifican el mismo pasajero (principal y prioridades)
+          await runInSequence(horariosSeleccionados, (horarioId, index) =>
+            agregarHorarioPasajero.mutateAsync({
               pasajeroId: nuevoPasajero.id,
               horarioId,
               esPrincipal: horarioId === principalHorarioId,
               prioridad: index + 1,
-            });
-          }
+            }),
+          );
         } catch {
           assignmentsFailed = true;
         } finally {

@@ -6,6 +6,8 @@ interface ToastProps {
   onDismiss: (id: string) => void;
 }
 
+const EXIT_ANIMATION_MS = 300;
+
 const VARIANT_STYLES: Record<ToastVariant, { bg: string; border: string; icon: string }> = {
   success: {
     bg: 'bg-green-500',
@@ -34,25 +36,21 @@ export const Toast = ({ toast, onDismiss }: ToastProps) => {
   const styles = VARIANT_STYLES[toast.variant];
   const duration = toast.duration ?? 4000;
 
-  const handleDismiss = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      onDismiss(toast.id);
-    }, 300);
-  };
-
+  // Al vencer la duración (o al cerrar a mano) el toast pasa a "saliendo"
   useEffect(() => {
     if (duration <= 0) return;
 
-    const timer = setTimeout(() => {
-      setIsExiting(true);
-      setTimeout(() => {
-        onDismiss(toast.id);
-      }, 300);
-    }, duration);
-
+    const timer = setTimeout(() => setIsExiting(true), duration);
     return () => clearTimeout(timer);
-  }, [duration, toast.id, onDismiss]);
+  }, [duration]);
+
+  // Una vez terminada la animación de salida, se elimina
+  useEffect(() => {
+    if (!isExiting) return;
+
+    const timer = setTimeout(() => onDismiss(toast.id), EXIT_ANIMATION_MS);
+    return () => clearTimeout(timer);
+  }, [isExiting, onDismiss, toast.id]);
 
   return (
     <div
@@ -84,7 +82,7 @@ export const Toast = ({ toast, onDismiss }: ToastProps) => {
       {/* Close button */}
       <button
         type="button"
-        onClick={handleDismiss}
+        onClick={() => setIsExiting(true)}
         className="flex-shrink-0 hover:bg-white/20 rounded p-1 transition-colors -mr-1 -mt-1"
         aria-label="Cerrar notificación"
       >

@@ -1,90 +1,15 @@
 /**
- * RegistrarPagoModal (Refactored)
- * Main orchestrator for payment registration flow
- * Now uses extracted components for better maintainability
+ * RegistrarPagoModal
+ * Orquesta el flujo de registro manual de pago; la lógica vive en useRegistrarPagoModal.
  */
 
-import { useReducer } from 'react';
-import type { FormEvent } from 'react';
-import { Modal } from '../../shared/ui';
-import { usePagosPorTitular, useRegistrarPago, useTitularesConPagos } from '../services/pagos.queries';
-import { useToast } from '../../shared/hooks/useToast';
-import { useDebounce } from '../../shared/hooks/useDebounce';
-import type { TitularResponse } from '../../titulares/types/titular.types';
-import { MEDIOS_PAGO, type MedioPago } from '../constants/medios-pago.constants';
-import { ordenarPagosPorPeriodo } from '../helpers/saldo.helpers';
-import {
-  TitularSelector,
-  ResumenTitular,
-  FormularioRegistroPago,
-  ConfirmacionPagoModal,
-  type PagoConfirmacionData,
-} from './registrar-pago';
+import { Modal } from '../../shared/ui/Modal';
+import { TITULARES_PAGE_SIZE, useRegistrarPagoModal } from '../hooks/useRegistrarPagoModal';
+import { TitularSelector } from './registrar-pago/TitularSelector';
+import { ResumenTitular } from './registrar-pago/ResumenTitular';
+import { FormularioRegistroPago } from './registrar-pago/FormularioRegistroPago';
+import { ConfirmacionPagoModal } from './registrar-pago/ConfirmacionPagoModal';
 import { AjustarMontoTitularModal } from './AjustarMontoTitularModal';
-import { getTitularApellidoDisplay } from '../../shared/utils/titulares.helpers';
-
-interface RegistrarPagoState {
-  search: string;
-  pageNumber: number;
-  selectedTitular: TitularResponse | null;
-  monto: string;
-  medioPago: MedioPago;
-  observaciones: string;
-  isAdjustModalOpen: boolean;
-  isConfirmOpen: boolean;
-  confirmacionPago: PagoConfirmacionData | null;
-}
-
-type RegistrarPagoAction =
-  | { type: 'setSearch'; payload: string }
-  | { type: 'setPageNumber'; payload: number }
-  | { type: 'selectTitular'; payload: TitularResponse | null }
-  | { type: 'setMonto'; payload: string }
-  | { type: 'setMedioPago'; payload: MedioPago }
-  | { type: 'setObservaciones'; payload: string }
-  | { type: 'setAdjustModalOpen'; payload: boolean }
-  | { type: 'openConfirmacion'; payload: PagoConfirmacionData }
-  | { type: 'closeConfirmacion' }
-  | { type: 'reset' };
-
-const registrarPagoInitialState: RegistrarPagoState = {
-  search: '',
-  pageNumber: 1,
-  selectedTitular: null,
-  monto: '',
-  medioPago: MEDIOS_PAGO.EFECTIVO,
-  observaciones: '',
-  isAdjustModalOpen: false,
-  isConfirmOpen: false,
-  confirmacionPago: null,
-};
-
-const registrarPagoReducer = (state: RegistrarPagoState, action: RegistrarPagoAction): RegistrarPagoState => {
-  switch (action.type) {
-    case 'setSearch':
-      return { ...state, search: action.payload, pageNumber: 1 };
-    case 'setPageNumber':
-      return { ...state, pageNumber: action.payload };
-    case 'selectTitular':
-      return { ...state, selectedTitular: action.payload, isAdjustModalOpen: false };
-    case 'setMonto':
-      return { ...state, monto: action.payload };
-    case 'setMedioPago':
-      return { ...state, medioPago: action.payload };
-    case 'setObservaciones':
-      return { ...state, observaciones: action.payload };
-    case 'setAdjustModalOpen':
-      return { ...state, isAdjustModalOpen: action.payload };
-    case 'openConfirmacion':
-      return { ...state, confirmacionPago: action.payload, isConfirmOpen: true };
-    case 'closeConfirmacion':
-      return { ...state, confirmacionPago: null, isConfirmOpen: false };
-    case 'reset':
-      return { ...registrarPagoInitialState };
-    default:
-      return state;
-  }
-};
 
 interface RegistrarPagoModalProps {
   isOpen: boolean;
@@ -93,164 +18,28 @@ interface RegistrarPagoModalProps {
 }
 
 export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPagoModalProps) => {
-  const [state, dispatch] = useReducer(registrarPagoReducer, registrarPagoInitialState);
-  const {
-    search,
-    pageNumber,
-    selectedTitular,
-    monto,
-    medioPago,
-    observaciones,
-    isAdjustModalOpen,
-    isConfirmOpen,
-    confirmacionPago,
-  } = state;
-
-  const debouncedSearch = useDebounce(search, 300);
-  const trimmedSearch = debouncedSearch.trim();
-  const pageSize = 10;
-  const selectedTitularId = selectedTitular?.id ?? null;
-
-  // Queries and mutations
-  const {
-    data: titularesResponse,
-    isLoading: isLoadingTitulares,
-    isError: hasTitularesError,
-    error: titularesError,
-    isFetching: isFetchingTitulares,
-  } = useTitularesConPagos(trimmedSearch, pageNumber, pageSize, { enabled: isOpen });
-
-  const {
-    data: pagosTitular,
-    isFetching: isFetchingPagos,
-    isLoading: isLoadingPagos,
-  } = usePagosPorTitular(selectedTitularId);
-
-  const registrarPago = useRegistrarPago();
-  const { showSuccess, showError } = useToast();
-
-  // Derived state
-  const titulares = titularesResponse?.data ?? [];
-  const totalCount = titularesResponse?.totalCount ?? 0;
-  const pagosOrdenados = ordenarPagosPorPeriodo(pagosTitular ?? []);
-  const montoNumber = parseFloat(monto);
-  const isMontoValid = monto.trim() !== '' && Number.isFinite(montoNumber) && montoNumber > 0;
-  const tieneCuotas = pagosOrdenados.length > 0;
-  const titularActivo = selectedTitular
-    ? titulares.find((titular) => titular.id === selectedTitular.id) ?? selectedTitular
-    : null;
-  const canSubmit = Boolean(titularActivo && tieneCuotas && isMontoValid) && !registrarPago.isPending;
-  const ajustarModalKey = `${titularActivo?.id ?? 'none'}-${isAdjustModalOpen ? 'open' : 'closed'}`;
-
-  // Handlers
-  const resetState = () => {
-    dispatch({ type: 'reset' });
-  };
-
-  const closeConfirmacionModal = () => {
-    dispatch({ type: 'closeConfirmacion' });
-  };
-
-  const handleConfirmacionClose = () => {
-    if (registrarPago.isPending) {
-      return;
-    }
-    closeConfirmacionModal();
-  };
-
-  const handleClose = () => {
-    closeConfirmacionModal();
-    resetState();
-    onClose();
-  };
-
-  const handleSearchChange = (value: string) => {
-    dispatch({ type: 'setSearch', payload: value });
-  };
-
-  const handleTitularSelect = (titular: TitularResponse) => {
-    dispatch({ type: 'selectTitular', payload: titular });
-  };
-
-  const handleAdjustMontoClick = () => {
-    if (!titularActivo) {
-      return;
-    }
-    dispatch({ type: 'setAdjustModalOpen', payload: true });
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const pagoDestino = pagosOrdenados[0];
-    if (!titularActivo || !pagoDestino || !isMontoValid) {
-      return;
-    }
-
-    const fechaPagoIso = new Date().toISOString();
-    const trimmedObservaciones = observaciones.trim();
-
-    dispatch({
-      type: 'openConfirmacion',
-      payload: {
-        pagoId: pagoDestino.id,
-        titularLabel: getTitularApellidoDisplay(titularActivo.apellido, titularActivo.nombreContacto),
-        monto: montoNumber,
-        medioPago,
-        observaciones: trimmedObservaciones ? trimmedObservaciones : undefined,
-        fechaPagoIso,
-        periodoDestino: pagoDestino.periodo,
-      },
-    });
-  };
-
-  const handleConfirmarPago = async () => {
-    if (!confirmacionPago) {
-      return;
-    }
-
-    try {
-      await registrarPago.mutateAsync({
-        id: confirmacionPago.pagoId,
-        data: {
-          monto: confirmacionPago.monto,
-          fechaPago: confirmacionPago.fechaPagoIso,
-          medioPago: confirmacionPago.medioPago,
-          observaciones: confirmacionPago.observaciones,
-        },
-      });
-      showSuccess('Pago registrado correctamente');
-      closeConfirmacionModal();
-      resetState();
-      onClose();
-      onSuccess();
-    } catch (error) {
-      const errorMessage =
-        error && typeof error === 'object' && 'message' in error
-          ? String(error.message)
-          : 'No se pudo registrar el pago';
-      showError(errorMessage);
-    }
-  };
+  const flow = useRegistrarPagoModal({ isOpen, onClose, onSuccess });
+  const { state, titularActivo, titularesQuery, pagosQuery } = flow;
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={handleClose} title="Registrar pago manual" maxWidth="2xl">
+      <Modal isOpen={isOpen} onClose={flow.close} title="Registrar pago manual" maxWidth="2xl">
         <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)] xl:gap-8">
           {/* Left column: Titular selection */}
           <TitularSelector
-            titulares={titulares}
-            selectedTitularId={selectedTitularId}
-            search={search}
-            onSearchChange={handleSearchChange}
-            onTitularSelect={handleTitularSelect}
-            pageNumber={pageNumber}
-            onPageChange={(value) => dispatch({ type: 'setPageNumber', payload: value })}
-            totalCount={totalCount}
-            pageSize={pageSize}
-            isLoading={isLoadingTitulares}
-            isFetching={isFetchingTitulares}
-            isError={hasTitularesError}
-            error={titularesError}
+            titulares={flow.titulares}
+            selectedTitularId={state.selectedTitular?.id ?? null}
+            search={state.search}
+            onSearchChange={state.setSearch}
+            onTitularSelect={state.selectTitular}
+            pageNumber={state.pageNumber}
+            onPageChange={state.setPageNumber}
+            totalCount={flow.totalCount}
+            pageSize={TITULARES_PAGE_SIZE}
+            isLoading={titularesQuery.isLoading}
+            isFetching={titularesQuery.isFetching}
+            isError={titularesQuery.isError}
+            error={titularesQuery.error}
           />
 
           {/* Right column: Summary and form */}
@@ -271,25 +60,23 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
             <div className="mt-4 space-y-4">
               <ResumenTitular
                 titular={titularActivo}
-                pagosTitular={pagosTitular}
-                isLoading={isLoadingPagos}
-                isFetching={isFetchingPagos}
-                onAdjustMonto={titularActivo ? handleAdjustMontoClick : undefined}
+                pagosTitular={pagosQuery.data}
+                isLoading={pagosQuery.isLoading}
+                isFetching={pagosQuery.isFetching}
+                onAdjustMonto={titularActivo ? flow.openAdjustMonto : undefined}
               />
 
               <FormularioRegistroPago
-                monto={monto}
-                onMontoChange={(value) => dispatch({ type: 'setMonto', payload: value })}
-                medioPago={medioPago}
-                onMedioPagoChange={(value) => dispatch({ type: 'setMedioPago', payload: value })}
-                observaciones={observaciones}
-                onObservacionesChange={(value) =>
-                  dispatch({ type: 'setObservaciones', payload: value })
-                }
-                onSubmit={handleSubmit}
-                onCancel={handleClose}
-                canSubmit={canSubmit}
-                isPending={registrarPago.isPending}
+                monto={state.monto}
+                onMontoChange={state.setMonto}
+                medioPago={state.medioPago}
+                onMedioPagoChange={state.setMedioPago}
+                observaciones={state.observaciones}
+                onObservacionesChange={state.setObservaciones}
+                onSubmit={flow.submit}
+                onCancel={flow.close}
+                canSubmit={flow.canSubmit}
+                isPending={flow.isRegistrando}
                 disabled={!titularActivo}
               />
             </div>
@@ -298,17 +85,17 @@ export const RegistrarPagoModal = ({ isOpen, onClose, onSuccess }: RegistrarPago
       </Modal>
 
       <ConfirmacionPagoModal
-        isOpen={isConfirmOpen && Boolean(confirmacionPago)}
-        onClose={handleConfirmacionClose}
-        onConfirm={handleConfirmarPago}
-        data={confirmacionPago}
-        isPending={registrarPago.isPending}
+        isOpen={state.isConfirmOpen && Boolean(state.confirmacionPago)}
+        onClose={flow.closeConfirmacion}
+        onConfirm={flow.confirmarPago}
+        data={state.confirmacionPago}
+        isPending={flow.isRegistrando}
       />
 
       <AjustarMontoTitularModal
-        key={ajustarModalKey}
-        isOpen={isAdjustModalOpen && Boolean(titularActivo)}
-        onClose={() => dispatch({ type: 'setAdjustModalOpen', payload: false })}
+        key={`${titularActivo?.id ?? 'none'}-${state.isAdjustModalOpen ? 'open' : 'closed'}`}
+        isOpen={state.isAdjustModalOpen && Boolean(titularActivo)}
+        onClose={() => state.setAdjustModalOpen(false)}
         titular={titularActivo}
       />
     </>

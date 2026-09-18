@@ -13,12 +13,12 @@ import type { UpdateTitularFormData } from '../schemas/titular.schema';
 import type { TitularTelefonoResponse } from '../types/titular.types';
 import { Amount } from '../../shared/ui/Amount';
 
+const mediumDateFormatter = new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium' });
+
 const formatDate = (value: string | null) => {
   if (!value) return null;
-  const formatter = new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium' });
-  return formatter.format(new Date(value));
+  return mediumDateFormatter.format(new Date(value));
 };
-
 
 export const TitularDetailPage = () => {
   const { id } = useParams<{ id: string }>();

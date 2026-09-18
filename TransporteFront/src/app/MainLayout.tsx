@@ -55,18 +55,11 @@ export const MainLayout = () => {
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#18181b] antialiased flex">
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
+          className="fixed inset-0 z-40 cursor-default bg-black/50 lg:hidden"
           aria-label="Cerrar menú lateral"
           onClick={closeSidebar}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              closeSidebar();
-            }
-          }}
         />
       )}
 

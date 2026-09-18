@@ -1,10 +1,14 @@
-import { useEffect, useId } from 'react';
+import { useId } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { Control, FieldError, Resolver, SubmitHandler, UseFormRegister } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button, Modal, PriceInput, Spinner } from '../../shared/ui';
-import { useToast } from '../../shared/hooks';
+import { Button } from '../../shared/ui/Button';
+import { Modal } from '../../shared/ui/Modal';
+import { PriceInput } from '../../shared/ui/PriceInput';
+import { Spinner } from '../../shared/ui/Spinner';
+import { useToast } from '../../shared/hooks/useToast';
+import { TipoSelector } from './TipoSelector';
 import { MEDIOS_PAGO } from '../../pagos/constants/medios-pago.constants';
 import {
   INGRESO_CATEGORIAS,
@@ -148,7 +152,43 @@ const monthFormatter = new Intl.DateTimeFormat('es-AR', {
   year: 'numeric',
 });
 
-export const RegistrarIngresoModal = ({
+/** Valores iniciales del formulario: los del ingreso fijo a editar, o los defaults del periodo. */
+const getInitialValues = (
+  mes: number,
+  anio: number,
+  isEditMode: boolean,
+  initialData?: IngresoItem | null,
+): RegistrarIngresoFormData => {
+  if (!isEditMode || !initialData) {
+    return getDefaultValues(mes, anio);
+  }
+
+  const fallbackDate = getPeriodBounds(initialData.mes ?? mes, initialData.anio ?? anio).min;
+  return {
+    tipo: INGRESO_TIPOS.FIJO,
+    categoria: initialData.categoria,
+    descripcion: initialData.descripcion,
+    monto: initialData.monto,
+    medioCobro: initialData.medioCobro,
+    observaciones: initialData.observaciones ?? '',
+    diaDeAplicacion: new Date(initialData.fecha ?? fallbackDate).getUTCDate(),
+  };
+};
+
+/**
+ * El contenido solo existe mientras el modal está abierto: al cerrarse se desmonta y el
+ * formulario arranca de cero (con los valores del ingreso a editar) la próxima vez que se abre.
+ */
+export const RegistrarIngresoModal = (props: RegistrarIngresoModalProps) => {
+  if (!props.isOpen) {
+    return null;
+  }
+
+  const contentKey = `${props.modo ?? 'create'}-${props.initialData?.id ?? 'new'}-${props.mes}-${props.anio}`;
+  return <RegistrarIngresoModalContent key={contentKey} {...props} />;
+};
+
+const RegistrarIngresoModalContent = ({
   isOpen,
   onClose,
   mes,
@@ -174,14 +214,13 @@ export const RegistrarIngresoModal = ({
   const isEditMode = modo === 'edit';
   const form = useForm<RegistrarIngresoFormData>({
     resolver,
-    defaultValues: getDefaultValues(mes, anio),
+    defaultValues: getInitialValues(mes, anio, isEditMode, initialData),
   });
 
   const {
     register,
     handleSubmit,
     control,
-    reset,
     setValue,
     formState: { errors, isSubmitting },
   } = form;
@@ -200,34 +239,10 @@ export const RegistrarIngresoModal = ({
   const isPending = isSubmitting || crearIngresoFijo.isPending || crearIngresoVariable.isPending || actualizarIngresoFijo.isPending;
   const periodLabel = monthFormatter.format(new Date(anio, mes - 1, 1));
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    if (isEditMode && initialData) {
-      const fallbackDate = getPeriodBounds(initialData.mes ?? mes, initialData.anio ?? anio).min;
-      const diaAplicacion = new Date(initialData.fecha ?? fallbackDate).getUTCDate();
-      reset({
-        tipo: INGRESO_TIPOS.FIJO,
-        categoria: initialData.categoria,
-        descripcion: initialData.descripcion,
-        monto: initialData.monto,
-        medioCobro: initialData.medioCobro,
-        observaciones: initialData.observaciones ?? '',
-        diaDeAplicacion: diaAplicacion,
-      });
-      return;
-    }
-
-    reset(getDefaultValues(mes, anio));
-  }, [anio, initialData, isEditMode, isOpen, mes, reset]);
-
   const closeModal = () => {
     if (isPending) {
       return;
     }
-    reset(getDefaultValues(mes, anio));
     onClose();
   };
 
@@ -289,7 +304,6 @@ export const RegistrarIngresoModal = ({
 
       showSuccess(isEditMode ? 'Ingreso fijo actualizado' : 'Ingreso registrado correctamente');
       onSuccess();
-      reset(getDefaultValues(mes, anio));
       onClose();
     } catch (error) {
       const message =
@@ -383,43 +397,21 @@ interface IngresoTipoSectionProps {
   onChangeTipo: (tipo: IngresoTipo) => void;
 }
 
-const IngresoTipoSection = ({ isEditMode, selectedTipo, onChangeTipo }: IngresoTipoSectionProps) => {
-  return (
-    <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-teal-600">Tipo de ingreso</p>
-      {isEditMode ? (
-        <div className="mt-3 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
-          <span className="material-symbols-outlined text-[20px]">info</span>
-          Estás editando la plantilla del ingreso fijo seleccionado.
-        </div>
-      ) : (
-        <div className="mt-3 inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm dark:border-[#3f3f46] dark:bg-[#1f1f24]">
-          {([INGRESO_TIPOS.VARIABLE, INGRESO_TIPOS.FIJO] as const).map((tipo) => {
-            const isActive = selectedTipo === tipo;
-            const icon = tipo === INGRESO_TIPOS.VARIABLE ? 'stacked_line_chart' : 'auto_mode';
-            return (
-              <button
-                key={tipo}
-                type="button"
-                onClick={() => {
-                  onChangeTipo(tipo);
-                }}
-                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isActive
-                    ? 'bg-teal-600 text-white shadow'
-                    : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-                }`}
-              >
-                <span className="material-symbols-outlined text-[18px]">{icon}</span>
-                {tipo}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-};
+const INGRESO_TIPO_OPTIONS = [
+  { value: INGRESO_TIPOS.VARIABLE, icon: 'stacked_line_chart' },
+  { value: INGRESO_TIPOS.FIJO, icon: 'auto_mode' },
+] as const;
+
+const IngresoTipoSection = ({ isEditMode, selectedTipo, onChangeTipo }: IngresoTipoSectionProps) => (
+  <TipoSelector
+    title="Tipo de ingreso"
+    isEditMode={isEditMode}
+    editMessage="Estás editando la plantilla del ingreso fijo seleccionado."
+    options={INGRESO_TIPO_OPTIONS}
+    selected={selectedTipo}
+    onSelect={onChangeTipo}
+  />
+);
 
 interface IngresoCategoriaMedioFieldsProps {
   fieldIds: Pick<IngresoFieldIds, 'categoria' | 'medioCobro'>;

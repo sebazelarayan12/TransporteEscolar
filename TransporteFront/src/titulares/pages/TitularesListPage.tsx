@@ -1,68 +1,14 @@
-import { useReducer, useState } from 'react';
+import { useState } from 'react';
 import { useTitulares, useTitularesSinTelefonos } from '../services/titulares.queries';
-import { ErrorState, EmptyState, SearchInput, Alert, Skeleton } from '../../shared/ui';
-import { TitularTableHeader, TitularTableRow, TitularDetailPanel } from '../components';
+import { ErrorState, EmptyState } from '../../shared/ui/Alert';
+import { Skeleton } from '../../shared/ui/Skeleton';
+import { TitularesDetailPanels } from '../components/TitularesDetailPanels';
+import { TitularesListHeader } from '../components/TitularesListHeader';
+import { TitularesSinTelefonoAlert } from '../components/TitularesSinTelefonoAlert';
+import { TitularesTable } from '../components/TitularesTable';
 import { filterTitulares } from '../helpers/search.helpers';
-import { exportarContactosVcf } from '../helpers/vcard.helpers';
-import type { TitularResponse } from '../types/titular.types';
-
-const STATUS_FILTERS = {
-  ALL: 'all',
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-} as const;
-
-type StatusFilter = (typeof STATUS_FILTERS)[keyof typeof STATUS_FILTERS];
-
-type PanelState = {
-  selectedTitular: TitularResponse | null;
-  showMobileDrawer: boolean;
-  isPanelExpanded: boolean;
-};
-
-type PanelAction =
-  | { type: 'selectTitular'; payload: TitularResponse }
-  | { type: 'closeMobileDrawer' }
-  | { type: 'closePanel' }
-  | { type: 'expandPanel' };
-
-const PANEL_INITIAL_STATE: PanelState = {
-  selectedTitular: null,
-  showMobileDrawer: false,
-  isPanelExpanded: false,
-};
-
-const panelReducer = (state: PanelState, action: PanelAction): PanelState => {
-  switch (action.type) {
-    case 'selectTitular':
-      return {
-        ...state,
-        selectedTitular: action.payload,
-        showMobileDrawer: true,
-        isPanelExpanded: true,
-      };
-    case 'closeMobileDrawer':
-      return {
-        ...state,
-        showMobileDrawer: false,
-      };
-    case 'closePanel':
-      return {
-        ...state,
-        isPanelExpanded: false,
-      };
-    case 'expandPanel':
-      if (!state.selectedTitular) {
-        return state;
-      }
-      return {
-        ...state,
-        isPanelExpanded: true,
-      };
-    default:
-      return state;
-  }
-};
+import { STATUS_FILTERS, countByStatus, filterByStatus, type StatusFilter } from '../helpers/status-filter.helpers';
+import { useTitularesPanel } from '../hooks/useTitularesPanel';
 
 const TitularesListSkeleton = () => (
   <div className="w-full bg-zinc-50 dark:bg-zinc-900">
@@ -98,54 +44,17 @@ const TitularesListSkeleton = () => (
 );
 
 export const TitularesListPage = () => {
-  const { data: titulares, isLoading, error } = useTitulares();
-  const { data: titularesSinTelefonos } = useTitularesSinTelefonos();
-  const [panelState, dispatchPanel] = useReducer(panelReducer, PANEL_INITIAL_STATE);
+  const { data: titulares = [], isLoading, error } = useTitulares();
+  const { data: titularesSinTelefonos = [] } = useTitularesSinTelefonos();
+  const panel = useTitularesPanel();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(STATUS_FILTERS.ACTIVE);
-  const [exportando, setExportando] = useState(false);
-  const { selectedTitular, showMobileDrawer, isPanelExpanded } = panelState;
-
-  const handleSelectTitular = (titular: TitularResponse) => {
-    dispatchPanel({ type: 'selectTitular', payload: titular });
-  };
-
-  const handleCloseMobileDrawer = () => {
-    dispatchPanel({ type: 'closeMobileDrawer' });
-  };
-
-  const handleCloseSidePanel = () => {
-    dispatchPanel({ type: 'closePanel' });
-  };
-
-  const handleExportarContactos = async () => {
-    const activos = (titulares ?? []).filter((t) => t.activo);
-    setExportando(true);
-    try {
-      await exportarContactosVcf(activos);
-    } finally {
-      setExportando(false);
-    }
-  };
-
-  const titularesList = titulares ?? [];
-  const totalTitulares = titularesList.length;
-  const activeTitularesCount = titularesList.filter((titular) => titular.activo).length;
-  const inactiveTitularesCount = totalTitulares - activeTitularesCount;
-  const filteredBySearch = filterTitulares(titularesList, searchQuery);
-  const filteredTitulares = filteredBySearch.filter((titular) => {
-    if (statusFilter === STATUS_FILTERS.ACTIVE) return titular.activo;
-    if (statusFilter === STATUS_FILTERS.INACTIVE) return !titular.activo;
-    return true;
-  });
-  const filteredCount = filteredTitulares.length;
-  const titularesSinTelefonoList = titularesSinTelefonos ?? [];
-  const titularesSinTelefonoPreview = titularesSinTelefonoList.slice(0, 5);
-  const titularesSinTelefonoRestantes = titularesSinTelefonoList.length - titularesSinTelefonoPreview.length;
 
   if (isLoading) return <TitularesListSkeleton />;
   if (error) return <ErrorState message="Error al cargar los titulares" />;
-  if (!titulares || titulares.length === 0) return <EmptyState message="No hay titulares registrados" />;
+  if (titulares.length === 0) return <EmptyState message="No hay titulares registrados" />;
+
+  const filteredTitulares = filterByStatus(filterTitulares(titulares, searchQuery), statusFilter);
 
   return (
     <div className="w-full bg-[#fafafa] dark:bg-[#18181b]">
@@ -153,185 +62,31 @@ export const TitularesListPage = () => {
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_400px]">
           {/* Main Area */}
           <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Titulares</h1>
-                <p className="mt-1 text-sm text-gray-500">
-                  {filteredCount === 0
-                    ? '0 titulares'
-                    : `${filteredCount} titular${filteredCount !== 1 ? 'es' : ''} encontrado${filteredCount !== 1 ? 's' : ''}`}
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="flex w-full flex-col gap-2">
-                  <SearchInput
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    placeholder="Buscar por nombre, dirección o ID..."
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { label: 'Todos', value: STATUS_FILTERS.ALL, count: totalTitulares },
-                      { label: 'Activos', value: STATUS_FILTERS.ACTIVE, count: activeTitularesCount },
-                      { label: 'Inactivos', value: STATUS_FILTERS.INACTIVE, count: inactiveTitularesCount },
-                    ].map((filter) => (
-                      <button
-                        key={filter.value}
-                        type="button"
-                        onClick={() => setStatusFilter(filter.value)}
-                        className={`inline-flex items-center gap-1 rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
-                          statusFilter === filter.value
-                            ? 'border-[#007a8a] bg-[#007a8a] text-white shadow'
-                            : 'border-gray-200 text-gray-600 hover:border-[#007a8a] hover:text-[#007a8a] dark:border-gray-700 dark:text-gray-300'
-                        }`}
-                      >
-                        {filter.label}
-                        <span className="text-xs font-semibold">({filter.count})</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <button
-                    type="button"
-                    onClick={handleExportarContactos}
-                    disabled={exportando}
-                    className="flex items-center justify-center gap-2 rounded-lg border border-[#007a8a] px-4 py-2.5 text-sm font-bold text-[#007a8a] transition-colors hover:bg-[#007a8a]/10 disabled:opacity-50"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      {exportando ? 'hourglass_empty' : 'contacts'}
-                    </span>
-                    {exportando ? 'Exportando...' : 'Exportar contactos'}
-                  </button>
-                  <button
-                    onClick={() => window.location.href = '/titulares/nuevo'}
-                    className="flex items-center justify-center gap-2 rounded-lg bg-[#007a8a] px-5 py-2.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#00626e]"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">add</span>
-                    Nuevo Titular
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {titularesSinTelefonoList.length > 0 && (
-              <Alert variant="warning" className="space-y-2 rounded-xl border-yellow-200 bg-yellow-50 text-yellow-900">
-                <div>
-                  <p className="text-sm font-semibold">
-                    {titularesSinTelefonoList.length} titular{titularesSinTelefonoList.length !== 1 ? 'es' : ''} sin teléfonos cargados
-                  </p>
-                </div>
-                <ul className="list-disc space-y-1 pl-4 text-xs text-yellow-900 sm:text-sm">
-                  {titularesSinTelefonoPreview.map((titular) => (
-                    <li key={titular.id}>
-                      {titular.apellido}, {titular.nombreContacto}
-                    </li>
-                  ))}
-                </ul>
-                {titularesSinTelefonoRestantes > 0 && (
-                  <p className="text-xs font-medium text-yellow-900">
-                    y {titularesSinTelefonoRestantes} titular{titularesSinTelefonoRestantes !== 1 ? 'es' : ''} más sin teléfonos registrados.
-                  </p>
-                )}
-              </Alert>
-            )}
-
-            {/* Table Card con Scroll Interno - Altura fija */}
-            <div className="flex h-[600px] flex-col overflow-hidden rounded-xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a]">
-              <div className="custom-scrollbar flex-1 overflow-y-auto">
-                <TitularTableHeader />
-                {filteredTitulares.length > 0 ? (
-                  filteredTitulares.map((titular, rowIndex) => (
-                    <TitularTableRow
-                      key={titular.id}
-                      titular={titular}
-                      isSelected={selectedTitular?.id === titular.id}
-                      onClick={() => handleSelectTitular(titular)}
-                      rowIndex={rowIndex}
-                    />
-                  ))
-                ) : (
-                  <div className="flex h-32 items-center justify-center">
-                    <p className="text-gray-500 dark:text-gray-400">No se encontraron titulares para este filtro</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop Side Panel - Sticky con altura fija y scroll */}
-          <div
-            className={`
-              hidden lg:block
-              ${isPanelExpanded ? '' : 'lg:hidden xl:block'}
-            `}
-          >
-            <div
-              className={`
-                flex h-[600px] flex-col overflow-hidden rounded-xl border border-[#e4e4e7] bg-white shadow-sm dark:border-[#3f3f46] dark:bg-[#27272a]
-                lg:fixed lg:right-0 lg:top-0 lg:z-50 lg:h-screen lg:w-[400px] lg:rounded-none lg:shadow-2xl
-                xl:sticky xl:top-6 xl:h-[600px] xl:w-full xl:rounded-xl xl:shadow-sm
-              `}
-            >
-              <div className="flex-1 overflow-y-auto">
-                <TitularDetailPanel titular={selectedTitular} onClose={handleCloseSidePanel} />
-              </div>
-            </div>
-          </div>
-
-          {/* Overlay para LG cuando el panel está expandido */}
-          {isPanelExpanded && selectedTitular && (
-            <div
-              className="fixed inset-0 z-40 hidden bg-black/50 transition-opacity duration-300 lg:block xl:hidden"
-              role="button"
-              tabIndex={0}
-              aria-label="Cerrar panel de detalle de titular"
-              onClick={handleCloseSidePanel}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  handleCloseSidePanel();
-                }
-              }}
+            <TitularesListHeader
+              titulares={titulares}
+              filteredCount={filteredTitulares.length}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              statusFilter={statusFilter}
+              statusCounts={countByStatus(titulares)}
+              onStatusFilterChange={setStatusFilter}
             />
-          )}
+            <TitularesSinTelefonoAlert titulares={titularesSinTelefonos} />
+            <TitularesTable
+              titulares={filteredTitulares}
+              selectedTitularId={panel.selectedTitular?.id}
+              onSelect={panel.selectTitular}
+            />
+          </div>
 
-          {/* Botón flotante para abrir panel en LG */}
-          {selectedTitular && !isPanelExpanded && (
-            <button
-              onClick={() => dispatchPanel({ type: 'expandPanel' })}
-              className="fixed bottom-6 right-6 z-30 hidden items-center gap-2 rounded-full bg-[#007a8a] px-6 py-3 text-white shadow-lg transition-all hover:scale-105 hover:bg-[#00626e] lg:flex xl:hidden"
-            >
-              <span className="material-symbols-outlined text-[20px]">info</span>
-              <span className="text-sm font-bold">Ver Detalles</span>
-            </button>
-          )}
-
-          {/* Mobile Drawer - From Bottom */}
-          {showMobileDrawer && selectedTitular && (
-            <div className="fixed inset-0 z-50 flex items-end lg:hidden">
-              <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                role="button"
-                tabIndex={0}
-                aria-label="Cerrar panel flotante del titular"
-                onClick={handleCloseMobileDrawer}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    handleCloseMobileDrawer();
-                  }
-                }}
-              />
-              <div className="relative flex max-h-[85vh] w-full animate-slide-up flex-col rounded-t-3xl bg-white shadow-2xl dark:bg-[#27272a]">
-                <div className="flex justify-center pb-2 pt-3">
-                  <div className="h-1.5 w-12 rounded-full bg-gray-300 dark:bg-gray-600" />
-                </div>
-                <TitularDetailPanel titular={selectedTitular} onClose={handleCloseMobileDrawer} />
-              </div>
-            </div>
-          )}
+          <TitularesDetailPanels
+            selectedTitular={panel.selectedTitular}
+            isPanelExpanded={panel.isPanelExpanded}
+            showMobileDrawer={panel.showMobileDrawer}
+            onClosePanel={panel.closePanel}
+            onCloseMobileDrawer={panel.closeMobileDrawer}
+            onExpandPanel={panel.expandPanel}
+          />
         </div>
       </div>
     </div>
