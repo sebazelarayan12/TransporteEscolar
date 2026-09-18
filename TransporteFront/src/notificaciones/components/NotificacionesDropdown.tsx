@@ -3,7 +3,6 @@ import { Spinner } from '../../shared/ui/Spinner';
 import { useClickOutside } from '../../shared/hooks/useClickOutside';
 import { useNotificacionesPanel } from '../hooks/useNotificacionesPanel';
 import { NotificacionItem } from './NotificacionItem';
-import { ActualizacionProductoCard } from './ActualizacionProductoCard';
 
 type PanelData = ReturnType<typeof useNotificacionesPanel>;
 
@@ -45,23 +44,15 @@ interface NotificacionesListProps {
 
 const NotificacionesList = ({ panel, onClose }: NotificacionesListProps) => (
   <div className="max-h-96 overflow-y-auto p-3 space-y-3">
-    {panel.isActualizacionLoading && !panel.ultimaActualizacion && (
-      <div className="rounded-2xl border border-dashed border-gray-200 p-4 text-sm text-gray-400 animate-pulse dark:border-white/10">
-        Cargando actualización del sistema...
-      </div>
-    )}
-
-    {panel.ultimaActualizacion && <ActualizacionProductoCard notificacion={panel.ultimaActualizacion} />}
-
     {panel.isLoading && (
       <div className="flex items-center justify-center py-8">
         <Spinner />
       </div>
     )}
 
-    {!panel.isLoading && panel.hasOtrasNotificaciones && (
+    {!panel.isLoading && panel.hasNotificaciones && (
       <div className="space-y-1">
-        {panel.otrasNotificaciones.map((notificacion) => (
+        {panel.notificaciones.map((notificacion) => (
           <NotificacionItem
             key={notificacion.id}
             notificacion={notificacion}
@@ -96,7 +87,7 @@ const NotificacionesPanel = ({ panel, onClose }: NotificacionesListProps) => (
 
     <NotificacionesList panel={panel} onClose={onClose} />
 
-    {panel.hasContent && (
+    {panel.hasNotificaciones && (
       <div className="border-t border-gray-100 px-4 py-3 dark:border-white/5">
         <button
           type="button"
