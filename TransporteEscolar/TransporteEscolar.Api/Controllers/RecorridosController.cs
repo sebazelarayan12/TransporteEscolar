@@ -1,0 +1,48 @@
+using Microsoft.AspNetCore.Mvc;
+using TransporteEscolar.Application.DTOs;
+using TransporteEscolar.Application.Interfaces;
+
+namespace TransporteEscolar.Api.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class RecorridosController : ControllerBase
+{
+    private readonly IRecorridoService _recorridoService;
+    private readonly ILogger<RecorridosController> _logger;
+
+    public RecorridosController(
+        IRecorridoService recorridoService,
+        ILogger<RecorridosController> logger)
+    {
+        _recorridoService = recorridoService;
+        _logger = logger;
+    }
+
+    /// <summary>Colegios activos con sus coordenadas, para dibujarlos en el mapa.</summary>
+    [HttpGet("colegios")]
+    public async Task<ActionResult<List<ColegioModel.Response>>> GetColegios(CancellationToken cancellationToken)
+    {
+        var colegios = await _recorridoService.ObtenerColegiosAsync(cancellationToken);
+        return Ok(colegios);
+    }
+
+    /// <summary>
+    /// Recalcula los recorridos de todos los titulares con ubicación cargada.
+    /// Es una acción manual y puede tardar: con el motor público hay una pausa
+    /// de más de un segundo entre consultas.
+    /// </summary>
+    [HttpPost("recalcular")]
+    public async Task<ActionResult<RecorridoModel.RecalculoResponse>> Recalcular(CancellationToken cancellationToken)
+    {
+        var resultado = await _recorridoService.RecalcularTodosAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Recálculo manual: {Calculados} calculados, {Omitidos} vigentes, {Fallidos} fallidos",
+            resultado.Calculados,
+            resultado.Omitidos,
+            resultado.Fallidos);
+
+        return Ok(resultado);
+    }
+}

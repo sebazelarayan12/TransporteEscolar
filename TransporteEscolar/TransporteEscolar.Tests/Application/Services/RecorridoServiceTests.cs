@@ -19,6 +19,7 @@ public class RecorridoServiceTests
     private readonly Mock<IColegioRepository> _colegios = new();
     private readonly Mock<IRecorridoRepository> _recorridos = new();
     private readonly Mock<IPasajeroRepository> _pasajeros = new();
+    private readonly Mock<ITitularRepository> _titulares = new();
     private readonly Mock<IRutaProvider> _rutaProvider = new();
 
     private static readonly Colegio SanPatricio = CrearColegio(1, "San Patricio", -26.8158608, -65.2742406);
@@ -36,6 +37,7 @@ public class RecorridoServiceTests
             _colegios.Object,
             _recorridos.Object,
             _pasajeros.Object,
+            _titulares.Object,
             _rutaProvider.Object,
             options,
             NullLogger<RecorridoService>.Instance);

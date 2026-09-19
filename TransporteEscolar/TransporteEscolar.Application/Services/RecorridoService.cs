@@ -3,8 +3,10 @@ using Microsoft.Extensions.Options;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Application.Mappers;
 using TransporteEscolar.Application.Options;
 using TransporteEscolar.Domain.Entities;
+using TransporteEscolar.Domain.Enums;
 using TransporteEscolar.Domain.Services;
 
 namespace TransporteEscolar.Application.Services;
@@ -27,6 +29,7 @@ public class RecorridoService : IRecorridoService
     private readonly IColegioRepository _colegioRepository;
     private readonly IRecorridoRepository _recorridoRepository;
     private readonly IPasajeroRepository _pasajeroRepository;
+    private readonly ITitularRepository _titularRepository;
     private readonly IRutaProvider _rutaProvider;
     private readonly RuteoOptions _options;
     private readonly ILogger<RecorridoService> _logger;
@@ -36,6 +39,7 @@ public class RecorridoService : IRecorridoService
         IColegioRepository colegioRepository,
         IRecorridoRepository recorridoRepository,
         IPasajeroRepository pasajeroRepository,
+        ITitularRepository titularRepository,
         IRutaProvider rutaProvider,
         IOptions<RuteoOptions> options,
         ILogger<RecorridoService> logger)
@@ -44,6 +48,7 @@ public class RecorridoService : IRecorridoService
         _colegioRepository = colegioRepository ?? throw new ArgumentNullException(nameof(colegioRepository));
         _recorridoRepository = recorridoRepository ?? throw new ArgumentNullException(nameof(recorridoRepository));
         _pasajeroRepository = pasajeroRepository ?? throw new ArgumentNullException(nameof(pasajeroRepository));
+        _titularRepository = titularRepository ?? throw new ArgumentNullException(nameof(titularRepository));
         _rutaProvider = rutaProvider ?? throw new ArgumentNullException(nameof(rutaProvider));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -204,6 +209,71 @@ public class RecorridoService : IRecorridoService
             await _recorridoRepository.UpsertAsync(recorrido, cancellationToken);
             acumulador.Calculados++;
         }
+    }
+
+    public async Task<UbicacionModel.Response?> ObtenerUbicacionAsync(
+        int titularId,
+        CancellationToken cancellationToken = default)
+    {
+        var ubicacion = await _ubicacionRepository.GetByTitularIdAsync(titularId, cancellationToken);
+        return ubicacion?.ToResponse();
+    }
+
+    public async Task<UbicacionModel.Response> GuardarUbicacionAsync(
+        int titularId,
+        UbicacionModel.Request request,
+        CancellationToken cancellationToken = default)
+    {
+        if (request is null)
+            throw new ValidationException("Faltan los datos de la ubicación");
+
+        var titular = await _titularRepository.GetByIdAsync(titularId, cancellationToken);
+        if (titular is null)
+            throw new NotFoundException(nameof(Titular), titularId);
+
+        TitularUbicacion nueva;
+        try
+        {
+            nueva = new TitularUbicacion(
+                titularId,
+                request.Latitud,
+                request.Longitud,
+                request.DireccionNormalizada,
+                request.EsManual ? FuenteUbicacion.Manual : FuenteUbicacion.Geocoder);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            // El dominio valida los rangos; acá se traduce a un 400 legible para el frontend.
+            throw new ValidationException($"La ubicación no es válida: {ex.Message}");
+        }
+
+        var guardada = await _ubicacionRepository.UpsertAsync(nueva, cancellationToken);
+
+        // Mover el pin invalida los recorridos: se recalculan en el acto.
+        var asignaciones = await _pasajeroRepository.GetAsignacionesColegioAsync(titularId, cancellationToken);
+        var acumulador = new Acumulador();
+        await ProcesarTitularAsync(guardada, asignaciones, acumulador, cancellationToken);
+
+        _logger.LogInformation(
+            "Ubicación del titular {TitularId} guardada. Recorridos: {Calculados} calculados, {Fallidos} fallidos",
+            titularId,
+            acumulador.Calculados,
+            acumulador.Fallidos);
+
+        return guardada.ToResponse();
+    }
+
+    public async Task EliminarUbicacionAsync(int titularId, CancellationToken cancellationToken = default)
+    {
+        // Primero los recorridos: sin pin no tienen sentido y quedarían huérfanos de significado.
+        await _recorridoRepository.DeleteByTitularIdAsync(titularId, cancellationToken);
+        await _ubicacionRepository.DeleteByTitularIdAsync(titularId, cancellationToken);
+    }
+
+    public async Task<List<ColegioModel.Response>> ObtenerColegiosAsync(CancellationToken cancellationToken = default)
+    {
+        var colegios = await _colegioRepository.GetActivosAsync(cancellationToken);
+        return colegios.Select(c => c.ToResponse()).ToList();
     }
 
     private async Task EsperarEntreConsultasAsync(CancellationToken cancellationToken)

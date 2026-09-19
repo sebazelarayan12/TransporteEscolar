@@ -9,13 +9,16 @@ namespace TransporteEscolar.Api.Controllers;
 public class TitularesController : ControllerBase
 {
     private readonly ITitularService _service;
+    private readonly IRecorridoService _recorridoService;
     private readonly ILogger<TitularesController> _logger;
 
     public TitularesController(
         ITitularService service,
+        IRecorridoService recorridoService,
         ILogger<TitularesController> logger)
     {
         _service = service;
+        _recorridoService = recorridoService;
         _logger = logger;
     }
 
@@ -213,5 +216,52 @@ public class TitularesController : ControllerBase
         _logger.LogInformation("Teléfono {TelefonoId} eliminado del titular {TitularId}", telefonoId, id);
 
         return NoContent();
+    }
+
+    // Endpoints para ubicación y recorridos
+    /// <summary>Devuelve el pin de ubicación del titular.</summary>
+    /// <response code="200">El pin cargado.</response>
+    /// <response code="204">El titular todavía no tiene ubicación marcada.</response>
+    [HttpGet("{id}/ubicacion")]
+    public async Task<ActionResult<UbicacionModel.Response>> GetUbicacion(int id, CancellationToken cancellationToken)
+    {
+        var ubicacion = await _recorridoService.ObtenerUbicacionAsync(id, cancellationToken);
+
+        if (ubicacion is null)
+            return NoContent();
+
+        return Ok(ubicacion);
+    }
+
+    /// <summary>Guarda o mueve el pin del titular y recalcula sus recorridos.</summary>
+    [HttpPut("{id}/ubicacion")]
+    public async Task<ActionResult<UbicacionModel.Response>> PutUbicacion(
+        int id,
+        [FromBody] UbicacionModel.Request request,
+        CancellationToken cancellationToken)
+    {
+        var ubicacion = await _recorridoService.GuardarUbicacionAsync(id, request, cancellationToken);
+
+        _logger.LogInformation("Ubicación del titular {TitularId} actualizada", id);
+
+        return Ok(ubicacion);
+    }
+
+    /// <summary>Borra el pin del titular y sus recorridos calculados.</summary>
+    [HttpDelete("{id}/ubicacion")]
+    public async Task<ActionResult> DeleteUbicacion(int id, CancellationToken cancellationToken)
+    {
+        await _recorridoService.EliminarUbicacionAsync(id, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>Recorridos ya calculados del titular. No consulta el motor de ruteo.</summary>
+    [HttpGet("{id}/recorridos")]
+    public async Task<ActionResult<List<RecorridoModel.Response>>> GetRecorridos(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var recorridos = await _recorridoService.ObtenerPorTitularAsync(id, cancellationToken);
+        return Ok(recorridos);
     }
 }
