@@ -29,6 +29,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INotificacionRepository, NotificacionRepository>();
         services.AddScoped<IPushSubscriptionRepository, PushSubscriptionRepository>();
         services.AddScoped<IColegioRepository, ColegioRepository>();
+        services.AddScoped<ITitularUbicacionRepository, TitularUbicacionRepository>();
 
         // Servicios
         services.AddScoped<ITitularService, TitularService>();

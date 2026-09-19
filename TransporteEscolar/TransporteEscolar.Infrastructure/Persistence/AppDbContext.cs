@@ -14,6 +14,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<PasajeroHorario> PasajeroHorarios => Set<PasajeroHorario>();
     public DbSet<Horario> Horarios => Set<Horario>();
     public DbSet<Colegio> Colegios => Set<Colegio>();
+    public DbSet<TitularUbicacion> TitularesUbicaciones => Set<TitularUbicacion>();
     public DbSet<PagoMensual> PagosMensuales => Set<PagoMensual>();
     public DbSet<PagoMovimiento> PagosMovimientos => Set<PagoMovimiento>();
     public DbSet<ReinscripcionPasajero> ReinscripcionesPasajeros => Set<ReinscripcionPasajero>();
@@ -37,6 +38,7 @@ public sealed class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new PasajeroHorarioConfiguration());
         modelBuilder.ApplyConfiguration(new HorarioConfiguration());
         modelBuilder.ApplyConfiguration(new ColegioConfiguration());
+        modelBuilder.ApplyConfiguration(new TitularUbicacionConfiguration());
         modelBuilder.ApplyConfiguration(new PagoMensualConfiguration());
         modelBuilder.ApplyConfiguration(new PagoMovimientoConfiguration());
         modelBuilder.ApplyConfiguration(new ReinscripcionPasajeroConfiguration());
