@@ -13,6 +13,15 @@ public class GetAnalisisKilometrosQueryHandlerTests
     private readonly Mock<IRecorridoRepository> _recorridos = new();
     private readonly Mock<ITitularUbicacionRepository> _ubicaciones = new();
     private readonly Mock<IPasajeroRepository> _pasajeros = new();
+    private readonly Mock<IRecorridoHorarioRepository> _recorridoHorarios = new();
+
+    public GetAnalisisKilometrosQueryHandlerTests()
+    {
+        // Por defecto no hay snapshots marginales calculados.
+        _recorridoHorarios
+            .Setup(r => r.GetAllConAportesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<RecorridoHorario>());
+    }
 
     private static T ConId<T>(T entidad, int id)
     {
@@ -34,7 +43,12 @@ public class GetAnalisisKilometrosQueryHandlerTests
     }
 
     private GetAnalisisKilometrosQueryHandler CrearHandler()
-        => new(_titulares.Object, _recorridos.Object, _ubicaciones.Object, _pasajeros.Object);
+        => new(
+            _titulares.Object,
+            _recorridos.Object,
+            _ubicaciones.Object,
+            _pasajeros.Object,
+            _recorridoHorarios.Object);
 
     [Fact]
     public async Task Handle_CalculaElPrecioPorKilometroDeCadaTitular()
@@ -198,5 +212,74 @@ public class GetAnalisisKilometrosQueryHandlerTests
         var resultado = await CrearHandler().Handle(new GetAnalisisKilometrosQuery(), CancellationToken.None);
 
         resultado.Filas.Select(f => f.Apellido).Should().ContainInOrder("BARATO", "CARO", "SINPIN");
+    }
+
+    [Fact]
+    public async Task Handle_ConSnapshotsMarginales_CalculaKilometrosYPrecioMarginal()
+    {
+        var sanPatricio = CrearColegio(1, "San Patricio");
+
+        _titulares
+            .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Titular> { CrearTitular(3, "PEREZ", 100000m) });
+
+        _recorridos
+            .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Recorrido> { CrearRecorrido(3, sanPatricio, 3000) });
+
+        _ubicaciones
+            .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TitularUbicacion>
+            {
+                new(3, -26.8, -65.2, null, FuenteUbicacion.Manual)
+            });
+
+        _pasajeros
+            .Setup(r => r.GetAsignacionesColegioAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AsignacionColegio> { new(3, 1, 1) });
+
+        var snapshot = new RecorridoHorario(1, 1, 10000, 2);
+        snapshot.AgregarAporte(3, 2500);
+
+        _recorridoHorarios
+            .Setup(r => r.GetAllConAportesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<RecorridoHorario> { snapshot });
+
+        var resultado = await CrearHandler().Handle(new GetAnalisisKilometrosQuery(), CancellationToken.None);
+
+        var fila = resultado.Filas.Should().ContainSingle().Subject;
+        fila.KilometrosMarginalesMensuales.Should().Be(50m);     // 2,5 km · 1 · 20
+        fila.PrecioPorKilometroMarginal.Should().Be(2000m);       // 100000 / 50
+    }
+
+    [Fact]
+    public async Task Handle_SinSnapshotsMarginales_LosKilometrosMarginalesSonCeroYElPrecioEsNulo()
+    {
+        var sanPatricio = CrearColegio(1, "San Patricio");
+
+        _titulares
+            .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Titular> { CrearTitular(3, "PEREZ", 100000m) });
+
+        _recorridos
+            .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Recorrido> { CrearRecorrido(3, sanPatricio, 3000) });
+
+        _ubicaciones
+            .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TitularUbicacion>
+            {
+                new(3, -26.8, -65.2, null, FuenteUbicacion.Manual)
+            });
+
+        _pasajeros
+            .Setup(r => r.GetAsignacionesColegioAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AsignacionColegio> { new(3, 1, 1) });
+
+        var resultado = await CrearHandler().Handle(new GetAnalisisKilometrosQuery(), CancellationToken.None);
+
+        var fila = resultado.Filas.Should().ContainSingle().Subject;
+        fila.KilometrosMarginalesMensuales.Should().Be(0m);
+        fila.PrecioPorKilometroMarginal.Should().BeNull();
     }
 }

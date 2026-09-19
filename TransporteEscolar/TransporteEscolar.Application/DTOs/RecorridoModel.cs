@@ -44,6 +44,13 @@ public static class RecorridoModel
     /// significa "sin dato", no "cobra cero".
     /// </param>
     /// <param name="TieneUbicacion">Si el titular tiene el pin cargado.</param>
+    /// <param name="KilometrosMarginalesMensuales">
+    /// Kilómetros al mes que el recorrido crece por incluir a este titular. Es 0 si todavía
+    /// no se calculó el aporte marginal.
+    /// </param>
+    /// <param name="PrecioPorKilometroMarginal">
+    /// Cuota dividida por los kilómetros marginales, o <c>null</c> si no hay dato.
+    /// </param>
     public sealed record AnalisisFila(
         int TitularId,
         string Apellido,
@@ -51,7 +58,18 @@ public static class RecorridoModel
         IReadOnlyCollection<string> Colegios,
         decimal KilometrosMensuales,
         decimal? PrecioPorKilometro,
-        bool TieneUbicacion);
+        bool TieneUbicacion,
+        decimal KilometrosMarginalesMensuales,
+        decimal? PrecioPorKilometroMarginal);
+
+    /// <summary>Resumen de una corrida de cálculo marginal.</summary>
+    /// <param name="HorariosProcesados">Pares (horario, vehículo) que se pudieron calcular.</param>
+    /// <param name="ConsultasRealizadas">Llamadas al motor de ruteo. Útil para estimar el costo.</param>
+    /// <param name="Fallidos">Pares donde el motor no devolvió ruta.</param>
+    public sealed record RecalculoMarginalResponse(
+        int HorariosProcesados,
+        int ConsultasRealizadas,
+        int Fallidos);
 
     /// <summary>Resultado completo del análisis de kilómetros.</summary>
     public sealed record AnalisisResponse(

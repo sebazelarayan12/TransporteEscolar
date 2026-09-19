@@ -11,15 +11,18 @@ namespace TransporteEscolar.Api.Controllers;
 public class RecorridosController : ControllerBase
 {
     private readonly IRecorridoService _recorridoService;
+    private readonly IRecorridoMarginalService _recorridoMarginalService;
     private readonly ISender _sender;
     private readonly ILogger<RecorridosController> _logger;
 
     public RecorridosController(
         IRecorridoService recorridoService,
+        IRecorridoMarginalService recorridoMarginalService,
         ISender sender,
         ILogger<RecorridosController> logger)
     {
         _recorridoService = recorridoService;
+        _recorridoMarginalService = recorridoMarginalService;
         _sender = sender;
         _logger = logger;
     }
@@ -46,6 +49,25 @@ public class RecorridosController : ControllerBase
             "Recálculo manual: {Calculados} calculados, {Omitidos} vigentes, {Fallidos} fallidos",
             resultado.Calculados,
             resultado.Omitidos,
+            resultado.Fallidos);
+
+        return Ok(resultado);
+    }
+
+    /// <summary>
+    /// Recalcula el aporte marginal de cada titular en cada viaje.
+    /// Es lento: hace muchas consultas al motor de ruteo.
+    /// </summary>
+    [HttpPost("recalcular-marginal")]
+    public async Task<ActionResult<RecorridoModel.RecalculoMarginalResponse>> RecalcularMarginal(
+        CancellationToken cancellationToken)
+    {
+        var resultado = await _recorridoMarginalService.RecalcularAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Recálculo marginal manual: {Procesados} viajes, {Consultas} consultas, {Fallidos} fallidos",
+            resultado.HorariosProcesados,
+            resultado.ConsultasRealizadas,
             resultado.Fallidos);
 
         return Ok(resultado);

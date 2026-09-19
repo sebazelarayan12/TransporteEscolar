@@ -12,6 +12,12 @@ namespace TransporteEscolar.Application.Interfaces;
 /// <param name="HorarioId">Horario asignado. Los horarios distintos son viajes distintos.</param>
 public sealed record AsignacionColegio(int TitularId, int ColegioId, int HorarioId);
 
+/// <summary>
+/// Asignación de un titular a un viaje concreto: un horario, en un vehículo, hacia un colegio.
+/// Varios pasajeros del mismo titular en el mismo viaje colapsan en una sola fila.
+/// </summary>
+public sealed record AsignacionHorario(int HorarioId, byte Transporte, int ColegioId, int TitularId);
+
 public interface IPasajeroRepository
 {
     Task<Pasajero?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
@@ -44,4 +50,10 @@ public interface IPasajeroRepository
     Task<List<AsignacionColegio>> GetAsignacionesColegioAsync(
         int? titularId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Devuelve, sin repetir titulares, quiénes viajan en cada par (horario, vehículo).
+    /// Es el manifiesto de cada viaje.
+    /// </summary>
+    Task<List<AsignacionHorario>> GetAsignacionesHorarioAsync(CancellationToken cancellationToken = default);
 }
