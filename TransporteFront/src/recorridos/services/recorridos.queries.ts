@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { buscarDirecciones } from './geocoding.api';
 import { recorridosApi } from './recorridos.api';
 import { recorridosKeys } from './recorridos.keys';
-import type { UbicacionRequest } from '../types/recorrido.types';
+import type { TransporteTipo } from '../../shared/types/transporte.types';
+import type { ParadaFijaRequest, UbicacionRequest } from '../types/recorrido.types';
 
 export { recorridosKeys } from './recorridos.keys';
 
@@ -110,6 +111,48 @@ export const useRecalcularRecorridos = () => {
     mutationFn: () => recorridosApi.recalcularTodos(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: recorridosKeys.all });
+    },
+  });
+};
+
+export const useParadasFijas = () => {
+  return useQuery({
+    queryKey: recorridosKeys.paradasFijas(),
+    queryFn: () => recorridosApi.getParadasFijas(),
+  });
+};
+
+interface AsignarParadaFijaVariables {
+  horarioId: number;
+  transporte: TransporteTipo;
+  data: ParadaFijaRequest;
+}
+
+export const useAsignarParadaFija = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ horarioId, transporte, data }: AsignarParadaFijaVariables) =>
+      recorridosApi.putParadaFija(horarioId, transporte, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: recorridosKeys.paradasFijas() });
+    },
+  });
+};
+
+interface EliminarParadaFijaVariables {
+  horarioId: number;
+  transporte: TransporteTipo;
+}
+
+export const useEliminarParadaFija = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ horarioId, transporte }: EliminarParadaFijaVariables) =>
+      recorridosApi.deleteParadaFija(horarioId, transporte),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: recorridosKeys.paradasFijas() });
     },
   });
 };

@@ -5,4 +5,5 @@ export const recorridosKeys = {
   colegios: () => [...recorridosKeys.all, 'colegios'] as const,
   analisis: () => [...recorridosKeys.all, 'analisis'] as const,
   direcciones: (consulta: string) => [...recorridosKeys.all, 'direcciones', consulta] as const,
+  paradasFijas: () => [...recorridosKeys.all, 'paradas-fijas'] as const,
 };

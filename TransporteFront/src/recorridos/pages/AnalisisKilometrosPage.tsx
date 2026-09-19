@@ -1,5 +1,6 @@
 import { AnalisisKpis } from '../components/AnalisisKpis';
 import { AnalisisTable } from '../components/AnalisisTable';
+import { PendientesRepartoAviso } from '../components/PendientesRepartoAviso';
 import {
   useAnalisisKilometros,
   useRecalcularReparto,
@@ -13,8 +14,13 @@ import { Skeleton } from '../../shared/ui/Skeleton';
 export const AnalisisKilometrosPage = () => {
   const { data: analisis, isLoading, error } = useAnalisisKilometros();
   const { mutateAsync: recalcular, isPending: recalculando } = useRecalcularRecorridos();
-  const { mutateAsync: recalcularReparto, isPending: recalculandoReparto } = useRecalcularReparto();
+  const {
+    mutateAsync: recalcularReparto,
+    isPending: recalculandoReparto,
+    data: resultadoReparto,
+  } = useRecalcularReparto();
   const { showSuccess, showError } = useToast();
+  const pendientes = resultadoReparto?.pendientes ?? [];
   // Los dos recálculos pisan los mismos datos en el servidor: nunca deben correr a la vez.
   const hayRecalculoEnCurso = recalculando || recalculandoReparto;
 
@@ -91,6 +97,8 @@ export const AnalisisKilometrosPage = () => {
               : 'Recalculando el reparto en el servidor. Puede tardar unos segundos; no cierres la página.'}
           </p>
         ) : null}
+
+        {!hayRecalculoEnCurso ? <PendientesRepartoAviso pendientes={pendientes} /> : null}
 
         {isLoading ? (
           <div className="space-y-4">

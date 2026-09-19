@@ -1,7 +1,10 @@
 import { apiClient } from '../../api/client';
+import type { TransporteTipo } from '../../shared/types/transporte.types';
 import type {
   AnalisisResponse,
   ColegioResponse,
+  ParadaFijaRequest,
+  ParadaFijaResponse,
   RecalculoRepartoResponse,
   RecalculoResponse,
   RecorridoResponse,
@@ -59,5 +62,24 @@ export const recorridosApi = {
         timeout: RECALCULO_TIMEOUT_MS,
       });
     return respuesta.data;
+  },
+
+  getParadasFijas: async (): Promise<ParadaFijaResponse[]> => {
+    return apiClient.get<ParadaFijaResponse[]>('/recorridos/paradas-fijas');
+  },
+
+  putParadaFija: async (
+    horarioId: number,
+    transporte: TransporteTipo,
+    data: ParadaFijaRequest,
+  ): Promise<ParadaFijaResponse> => {
+    return apiClient.put<ParadaFijaResponse>(
+      `/recorridos/horarios/${horarioId}/transportes/${transporte}/parada-fija`,
+      data,
+    );
+  },
+
+  deleteParadaFija: async (horarioId: number, transporte: TransporteTipo): Promise<void> => {
+    return apiClient.delete<void>(`/recorridos/horarios/${horarioId}/transportes/${transporte}/parada-fija`);
   },
 };

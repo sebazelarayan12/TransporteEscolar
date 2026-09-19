@@ -6,6 +6,7 @@ import { useMediaQuery } from '../../shared/hooks/useMediaQuery';
 import { useAgregarHorarioPasajero, useEliminarHorarioPasajero, usePasajerosActivos } from '../../pasajeros/services/pasajeros.queries';
 import { useHorarioPasajeros, useHorarios, sortHorariosByOrden } from '../services/horarios.queries';
 import { HorarioAsignacionPanel } from '../components/HorarioAsignacionPanel';
+import { ParadaFijaSelector } from '../components/ParadaFijaSelector';
 import { HorariosGrid } from '../components/HorariosGrid';
 import { HorariosHeader } from '../components/HorariosHeader';
 import { HorariosError } from '../components/HorariosError';
@@ -102,29 +103,37 @@ export const HorariosPage = () => {
   const isDrawerVisible = drawer.drawerOpen && Boolean(drawer.selectedHorarioId);
 
   const panelContent = (
-    <HorarioAsignacionPanel
-      selectedHorario={selectedHorario}
-      detalleHorario={detalleHorario}
-      search={drawer.search}
-      onSearchChange={drawer.setSearch}
-      filteredPasajeros={filteredPasajeros}
-      selectedPasajeros={drawer.selectedPasajerosPorTransporte[drawer.selectedTransporte]}
-      onTogglePasajero={drawer.togglePasajero}
-      isLoadingDetalle={isLoadingDetalle}
-      isLoadingPasajeros={isLoadingPasajeros}
-      hasChanges={hasChanges}
-      onCancel={drawer.closeDrawer}
-      onSave={handleSave}
-      isSaving={drawer.isPersisting || agregarHorarioPasajero.isPending || eliminarHorarioPasajero.isPending}
-      targetHorarioId={drawer.selectedHorarioId}
-      isGestionMode={drawer.isGestionMode}
-      activeTransporte={drawer.selectedTransporte}
-      onTransporteChange={drawer.setTransporte}
-      selectedCounts={selectedCounts}
-      conteosPorTransporte={
-        detalleHorario?.pasajerosAsignados?.conteosPorTransporte ?? selectedHorario?.conteosPorTransporte
-      }
-    />
+    <div className="flex h-full flex-col gap-6">
+      <ParadaFijaSelector
+        horarioId={drawer.selectedHorarioId}
+        transporte={drawer.selectedTransporte}
+        pasajerosDelHorario={detalleHorario?.pasajeros ?? []}
+        isLoadingPasajeros={isLoadingDetalle}
+      />
+      <HorarioAsignacionPanel
+        selectedHorario={selectedHorario}
+        detalleHorario={detalleHorario}
+        search={drawer.search}
+        onSearchChange={drawer.setSearch}
+        filteredPasajeros={filteredPasajeros}
+        selectedPasajeros={drawer.selectedPasajerosPorTransporte[drawer.selectedTransporte]}
+        onTogglePasajero={drawer.togglePasajero}
+        isLoadingDetalle={isLoadingDetalle}
+        isLoadingPasajeros={isLoadingPasajeros}
+        hasChanges={hasChanges}
+        onCancel={drawer.closeDrawer}
+        onSave={handleSave}
+        isSaving={drawer.isPersisting || agregarHorarioPasajero.isPending || eliminarHorarioPasajero.isPending}
+        targetHorarioId={drawer.selectedHorarioId}
+        isGestionMode={drawer.isGestionMode}
+        activeTransporte={drawer.selectedTransporte}
+        onTransporteChange={drawer.setTransporte}
+        selectedCounts={selectedCounts}
+        conteosPorTransporte={
+          detalleHorario?.pasajerosAsignados?.conteosPorTransporte ?? selectedHorario?.conteosPorTransporte
+        }
+      />
+    </div>
   );
 
   return (

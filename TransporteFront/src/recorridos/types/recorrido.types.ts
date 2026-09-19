@@ -1,3 +1,5 @@
+import type { TransporteTipo } from '../../shared/types/transporte.types';
+
 /** Origen de la ubicación tal como lo devuelve el backend. */
 export const FUENTES_UBICACION = {
   MANUAL: 'Manual',
@@ -40,11 +42,35 @@ export interface RecalculoResponse {
   titularesSinUbicacion: number[];
 }
 
+/** Viaje que no se pudo repartir porque le falta la casa fija (o dejó de corresponder a un participante). */
+export interface ViajePendiente {
+  horarioId: number;
+  horarioEtiqueta: string;
+  transporte: TransporteTipo;
+  /** Texto listo para mostrar tal cual: por qué quedó pendiente. */
+  motivo: string;
+}
+
 export interface RecalculoRepartoResponse {
   viajesProcesados: number;
   consultasRealizadas: number;
   fallidos: number;
   viajesAproximados: number;
+  pendientes: ViajePendiente[];
+}
+
+/** Parada fija marcada para un viaje: la casa que arranca (ida) o cierra (vuelta) el recorrido. */
+export interface ParadaFijaResponse {
+  horarioId: number;
+  horarioEtiqueta: string;
+  transporte: TransporteTipo;
+  titularId: number;
+  titularApellido: string;
+  fechaAsignacion: string;
+}
+
+export interface ParadaFijaRequest {
+  titularId: number;
 }
 
 export interface ColegioResponse {
