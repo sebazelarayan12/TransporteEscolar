@@ -1,6 +1,8 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Application.Recorridos.Queries;
 
 namespace TransporteEscolar.Api.Controllers;
 
@@ -9,13 +11,16 @@ namespace TransporteEscolar.Api.Controllers;
 public class RecorridosController : ControllerBase
 {
     private readonly IRecorridoService _recorridoService;
+    private readonly ISender _sender;
     private readonly ILogger<RecorridosController> _logger;
 
     public RecorridosController(
         IRecorridoService recorridoService,
+        ISender sender,
         ILogger<RecorridosController> logger)
     {
         _recorridoService = recorridoService;
+        _sender = sender;
         _logger = logger;
     }
 
@@ -44,5 +49,13 @@ public class RecorridosController : ControllerBase
             resultado.Fallidos);
 
         return Ok(resultado);
+    }
+
+    /// <summary>Análisis de kilómetros y precio por kilómetro de todos los titulares activos.</summary>
+    [HttpGet("analisis")]
+    public async Task<ActionResult<RecorridoModel.AnalisisResponse>> GetAnalisis(CancellationToken cancellationToken)
+    {
+        var analisis = await _sender.Send(new GetAnalisisKilometrosQuery(), cancellationToken);
+        return Ok(analisis);
     }
 }

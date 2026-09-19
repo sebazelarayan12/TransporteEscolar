@@ -32,4 +32,32 @@ public static class RecorridoModel
         int Omitidos,
         int Fallidos,
         IReadOnlyCollection<int> TitularesSinUbicacion);
+
+    /// <summary>Una fila del análisis: un titular con sus kilómetros y su precio por kilómetro.</summary>
+    /// <param name="TitularId">Id del titular.</param>
+    /// <param name="Apellido">Apellido, para mostrar.</param>
+    /// <param name="MontoMensual">Cuota mensual pactada.</param>
+    /// <param name="Colegios">Nombres de los colegios a los que van sus pasajeros.</param>
+    /// <param name="KilometrosMensuales">Suma de kilómetros mensuales de todos sus recorridos.</param>
+    /// <param name="PrecioPorKilometro">
+    /// Cuota dividida por los kilómetros. Es <c>null</c> cuando no hay kilómetros calculados:
+    /// significa "sin dato", no "cobra cero".
+    /// </param>
+    /// <param name="TieneUbicacion">Si el titular tiene el pin cargado.</param>
+    public sealed record AnalisisFila(
+        int TitularId,
+        string Apellido,
+        decimal MontoMensual,
+        IReadOnlyCollection<string> Colegios,
+        decimal KilometrosMensuales,
+        decimal? PrecioPorKilometro,
+        bool TieneUbicacion);
+
+    /// <summary>Resultado completo del análisis de kilómetros.</summary>
+    public sealed record AnalisisResponse(
+        IReadOnlyCollection<AnalisisFila> Filas,
+        decimal KilometrosTotales,
+        decimal RecaudacionTotal,
+        decimal? PrecioPromedioPorKilometro,
+        int TitularesSinUbicacion);
 }
