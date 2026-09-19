@@ -63,10 +63,12 @@ export const useGuardarUbicacion = () => {
   return useMutation({
     mutationFn: ({ titularId, data }: GuardarUbicacionVariables) =>
       recorridosApi.putUbicacion(titularId, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: recorridosKeys.ubicacion(variables.titularId) });
+    onSuccess: async (_, variables) => {
       // Guardar el pin recalcula los recorridos en el backend, así que hay que refrescarlos.
       queryClient.invalidateQueries({ queryKey: recorridosKeys.recorridos(variables.titularId) });
+      // Se espera el refetch de la ubicación: la tarjeta descarta el pin editado apenas termina la
+      // mutación, y si el cache todavía tuviera el pin viejo se vería saltar hacia atrás un instante.
+      await queryClient.invalidateQueries({ queryKey: recorridosKeys.ubicacion(variables.titularId) });
     },
   });
 };

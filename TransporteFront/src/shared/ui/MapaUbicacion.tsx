@@ -41,13 +41,19 @@ export interface MapaUbicacionProps {
 const CentradorDeMapa = ({ punto }: { punto: PuntoMapa | null }) => {
   const mapa = useMap();
 
+  // Se depende de las coordenadas y no del objeto: quien usa el componente suele armar un
+  // objeto nuevo en cada render, y eso volvería a centrar el mapa (pisando el zoom y el
+  // desplazamiento de la persona) con cada re-render aunque el punto no haya cambiado.
+  const lat = punto?.lat;
+  const lng = punto?.lng;
+
   useEffect(() => {
-    if (!punto) {
+    if (lat === undefined || lng === undefined) {
       return;
     }
 
-    mapa.setView([punto.lat, punto.lng], ZOOM_DETALLE);
-  }, [mapa, punto]);
+    mapa.setView([lat, lng], ZOOM_DETALLE);
+  }, [mapa, lat, lng]);
 
   return null;
 };
