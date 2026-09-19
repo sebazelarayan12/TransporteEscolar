@@ -83,6 +83,82 @@ public class OsrmRutaProvider : IRutaProvider
             .ConfigureAwait(false);
     }
 
+    public async Task<double[][]?> CalcularMatrizDistanciasAsync(
+        IReadOnlyList<Coordenada> puntos,
+        CancellationToken cancellationToken = default)
+    {
+        if (puntos is null || puntos.Count == 0)
+            return null;
+
+        var coordenadas = string.Join(';', puntos.Select(p => p.ToOsrm()));
+        var url = $"/table/v1/{_options.PerfilVehiculo}/{coordenadas}?annotations=distance";
+
+        try
+        {
+            using var respuestaHttp = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
+
+            if (!respuestaHttp.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("OSRM respondió {StatusCode} al pedir la matriz de {Cantidad} puntos",
+                    (int)respuestaHttp.StatusCode, puntos.Count);
+                return null;
+            }
+
+            var cuerpo = await respuestaHttp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            var respuesta = JsonSerializer.Deserialize<OsrmMatriz>(cuerpo, JsonOptions);
+
+            if (respuesta is null || !string.Equals(respuesta.Code, "Ok", StringComparison.Ordinal))
+            {
+                _logger.LogWarning("OSRM devolvió el código {Codigo} al pedir la matriz", respuesta?.Code ?? "(sin código)");
+                return null;
+            }
+
+            var distancias = respuesta.Distances;
+            if (distancias is null || distancias.Count != puntos.Count)
+                return null;
+
+            var matriz = new double[puntos.Count][];
+
+            for (var i = 0; i < puntos.Count; i++)
+            {
+                var fila = distancias[i];
+                if (fila is null || fila.Count != puntos.Count)
+                    return null;
+
+                matriz[i] = new double[puntos.Count];
+
+                for (var j = 0; j < puntos.Count; j++)
+                {
+                    // OSRM manda null cuando no hay camino entre dos puntos.
+                    if (fila[j] is not { } valor)
+                    {
+                        _logger.LogWarning("OSRM no encontró camino entre los puntos {Origen} y {Destino}", i, j);
+                        return null;
+                    }
+
+                    matriz[i][j] = valor;
+                }
+            }
+
+            return matriz;
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("OSRM superó el timeout al pedir la matriz de {Cantidad} puntos", puntos.Count);
+            return null;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "No se pudo contactar a OSRM para la matriz");
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "La matriz de OSRM no se pudo interpretar");
+            return null;
+        }
+    }
+
     private async Task<RutaCalculada?> EjecutarAsync(
         string url,
         Func<OsrmRespuesta, List<OsrmRuta>?> seleccionarRutas,
@@ -172,5 +248,15 @@ public class OsrmRutaProvider : IRutaProvider
 
         [JsonPropertyName("geometry")]
         public string? Geometry { get; set; }
+    }
+
+    /// <summary>Respuesta del endpoint <c>/table</c>. Las celdas son null si no hay camino.</summary>
+    private sealed class OsrmMatriz
+    {
+        [JsonPropertyName("code")]
+        public string? Code { get; set; }
+
+        [JsonPropertyName("distances")]
+        public List<List<double?>>? Distances { get; set; }
     }
 }

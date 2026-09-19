@@ -2,11 +2,11 @@ namespace TransporteEscolar.Domain.Entities;
 
 /// <summary>
 /// Foto del recorrido completo de un horario en un vehículo: todas las paradas
-/// más el colegio, con el aporte marginal de cada titular.
+/// más el colegio, con el reparto de kilómetros de cada titular (valor de Shapley).
 /// </summary>
 public class RecorridoHorario
 {
-    private readonly List<AporteMarginal> _aportes = new();
+    private readonly List<AporteReparto> _aportes = new();
 
     public int Id { get; private set; }
 
@@ -22,7 +22,7 @@ public class RecorridoHorario
 
     public DateTime FechaCalculo { get; private set; }
 
-    public IReadOnlyCollection<AporteMarginal> Aportes => _aportes.AsReadOnly();
+    public IReadOnlyCollection<AporteReparto> Aportes => _aportes.AsReadOnly();
 
     /// <summary>Constructor para EF Core.</summary>
     private RecorridoHorario()
@@ -59,21 +59,21 @@ public class RecorridoHorario
     }
 
     /// <summary>
-    /// Registra el aporte marginal de un titular. Si ya existía uno para ese titular, lo reemplaza.
-    /// Los valores negativos se llevan a cero: el motor puede reordenar las paradas y dar un
-    /// total sin la familia mayor que el total con ella.
+    /// Registra el reparto de kilómetros de un titular. Si ya existía uno para ese titular, lo reemplaza.
+    /// El valor de Shapley nunca da negativo; el recorte a cero es una red de seguridad defensiva,
+    /// no un caso esperado.
     /// </summary>
-    public void AgregarAporte(int titularId, int metrosMarginales)
+    public void AgregarAporte(int titularId, int metrosAsignados)
     {
         var existente = _aportes.FirstOrDefault(a => a.TitularId == titularId);
 
         if (existente is not null)
         {
-            existente.ActualizarMetros(metrosMarginales);
+            existente.ActualizarMetros(metrosAsignados);
             return;
         }
 
-        _aportes.Add(new AporteMarginal(titularId, metrosMarginales));
+        _aportes.Add(new AporteReparto(titularId, metrosAsignados));
     }
 
     private static void ValidarMedidas(int distanciaTotalMetros, int cantidadParadas)

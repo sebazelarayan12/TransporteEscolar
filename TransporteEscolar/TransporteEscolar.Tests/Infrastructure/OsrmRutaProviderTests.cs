@@ -145,4 +145,47 @@ public class OsrmRutaProviderTests
         urls[0].AbsoluteUri.Should().Contain("destination=last");
         urls[0].AbsoluteUri.Should().Contain("roundtrip=false");
     }
+
+    private const string RespuestaMatriz = """
+    {"code":"Ok","distances":[[0,3060.6],[3055.2,0]]}
+    """;
+
+    [Fact]
+    public async Task CalcularMatrizDistanciasAsync_ConRespuestaOk_DevuelveLaMatriz()
+    {
+        var (provider, urls) = CrearProvider(HttpStatusCode.OK, RespuestaMatriz);
+
+        var matriz = await provider.CalcularMatrizDistanciasAsync(new[] { Casa, Colegio });
+
+        matriz.Should().NotBeNull();
+        matriz![0][1].Should().Be(3060.6);
+        matriz[1][0].Should().Be(3055.2);
+        urls[0].AbsoluteUri.Should().Contain("/table/v1/");
+        urls[0].AbsoluteUri.Should().Contain("annotations=distance");
+        urls[0].AbsoluteUri.Should().Contain("-65.2860859,-26.8225289");
+    }
+
+    [Fact]
+    public async Task CalcularMatrizDistanciasAsync_ConParInalcanzable_DevuelveNull()
+    {
+        const string conNulo = """
+        {"code":"Ok","distances":[[0,null],[3055.2,0]]}
+        """;
+        var (provider, _) = CrearProvider(HttpStatusCode.OK, conNulo);
+
+        var matriz = await provider.CalcularMatrizDistanciasAsync(new[] { Casa, Colegio });
+
+        matriz.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CalcularMatrizDistanciasAsync_SinPuntos_DevuelveNullSinLlamarAOsrm()
+    {
+        var (provider, urls) = CrearProvider(HttpStatusCode.OK, RespuestaMatriz);
+
+        var matriz = await provider.CalcularMatrizDistanciasAsync(Array.Empty<Coordenada>());
+
+        matriz.Should().BeNull();
+        urls.Should().BeEmpty();
+    }
 }

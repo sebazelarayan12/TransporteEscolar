@@ -11,7 +11,7 @@ using TransporteEscolar.Domain.ValueObjects;
 
 namespace TransporteEscolar.Tests.Application.Services;
 
-public class RecorridoMarginalServiceTests
+public class RecorridoRepartoServiceTests
 {
     private readonly Mock<IPasajeroRepository> _pasajeros = new();
     private readonly Mock<ITitularUbicacionRepository> _ubicaciones = new();
@@ -26,7 +26,7 @@ public class RecorridoMarginalServiceTests
         return colegio;
     }
 
-    private RecorridoMarginalService CrearServicio()
+    private RecorridoRepartoService CrearServicio()
     {
         var options = Options.Create(new RuteoOptions
         {
@@ -34,18 +34,18 @@ public class RecorridoMarginalServiceTests
             PausaEntreConsultasMs = 0
         });
 
-        return new RecorridoMarginalService(
+        return new RecorridoRepartoService(
             _pasajeros.Object,
             _ubicaciones.Object,
             _colegios.Object,
             _snapshots.Object,
             _rutaProvider.Object,
             options,
-            NullLogger<RecorridoMarginalService>.Instance);
+            NullLogger<RecorridoRepartoService>.Instance);
     }
 
-    [Fact]
-    public async Task RecalcularAsync_CalculaElAporteComoLaDiferenciaEntreLaRutaCompletaYLaRutaSinEsaParada()
+    /// <summary>Un horario con dos titulares (10 y 20) asignados al mismo colegio.</summary>
+    private void ConfigurarViajeConDosTitulares()
     {
         _pasajeros
             .Setup(r => r.GetAsignacionesHorarioAsync(It.IsAny<CancellationToken>()))
@@ -66,21 +66,25 @@ public class RecorridoMarginalServiceTests
         _colegios
             .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Colegio> { CrearColegio(1) });
+    }
 
-        // Ruta completa (2 paradas) = 10000 m. Sin una parada (1 parada) = 8000 m.
-        _rutaProvider
-            .Setup(p => p.CalcularRutaOptimizadaAsync(
-                It.Is<IReadOnlyList<Coordenada>>(paradas => paradas.Count == 2),
-                It.IsAny<Coordenada>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RutaCalculada(10000, 1200, null));
+    [Fact]
+    public async Task RecalcularAsync_RepartePorShapleyYLaSumaEsElRecorridoCompleto()
+    {
+        // Dos titulares: colegio en 0, uno en 5 y otro en 10 sobre la misma recta.
+        // Recorrido óptimo 10 -> 5 -> colegio = 10.000 m. Shapley: 7.500 y 2.500.
+        ConfigurarViajeConDosTitulares();
 
         _rutaProvider
-            .Setup(p => p.CalcularRutaOptimizadaAsync(
-                It.Is<IReadOnlyList<Coordenada>>(paradas => paradas.Count == 1),
-                It.IsAny<Coordenada>(),
+            .Setup(p => p.CalcularMatrizDistanciasAsync(
+                It.Is<IReadOnlyList<Coordenada>>(puntos => puntos.Count == 3),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RutaCalculada(8000, 900, null));
+            .ReturnsAsync(new[]
+            {
+                new[] { 0d, 5000d, 10000d },
+                new[] { 5000d, 0d, 5000d },
+                new[] { 10000d, 5000d, 0d }
+            });
 
         RecorridoHorario? guardado = null;
         _snapshots
@@ -90,14 +94,25 @@ public class RecorridoMarginalServiceTests
 
         var resultado = await CrearServicio().RecalcularAsync();
 
-        resultado.HorariosProcesados.Should().Be(1);
-        resultado.ConsultasRealizadas.Should().Be(3); // 1 completa + 2 sin cada titular
-
-        guardado.Should().NotBeNull();
+        resultado.ConsultasRealizadas.Should().Be(1);   // una sola consulta al motor
         guardado!.DistanciaTotalMetros.Should().Be(10000);
-        guardado.CantidadParadas.Should().Be(2);
-        guardado.Aportes.Should().HaveCount(2);
-        guardado.Aportes.Should().OnlyContain(a => a.MetrosMarginales == 2000);
+        guardado.Aportes.Sum(a => a.MetrosAsignados).Should().Be(10000);
+        guardado.Aportes.Should().OnlyContain(a => a.MetrosAsignados > 0);
+    }
+
+    [Fact]
+    public async Task RecalcularAsync_SiLaMatrizFalla_CuentaFallidoYNoGuarda()
+    {
+        ConfigurarViajeConDosTitulares();
+
+        _rutaProvider
+            .Setup(p => p.CalcularMatrizDistanciasAsync(It.IsAny<IReadOnlyList<Coordenada>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((double[][]?)null);
+
+        var resultado = await CrearServicio().RecalcularAsync();
+
+        resultado.Fallidos.Should().Be(1);
+        _snapshots.Verify(r => r.UpsertAsync(It.IsAny<RecorridoHorario>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -118,12 +133,16 @@ public class RecorridoMarginalServiceTests
             .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Colegio> { CrearColegio(1) });
 
+        // Con un solo titular la matriz es 2x2: casa -> colegio = 5000 m.
         _rutaProvider
-            .Setup(p => p.CalcularRutaOptimizadaAsync(
-                It.Is<IReadOnlyList<Coordenada>>(paradas => paradas.Count == 1),
-                It.IsAny<Coordenada>(),
+            .Setup(p => p.CalcularMatrizDistanciasAsync(
+                It.Is<IReadOnlyList<Coordenada>>(puntos => puntos.Count == 2),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RutaCalculada(5000, 600, null));
+            .ReturnsAsync(new[]
+            {
+                new[] { 0d, 5000d },
+                new[] { 5000d, 0d }
+            });
 
         RecorridoHorario? guardado = null;
         _snapshots
@@ -133,8 +152,8 @@ public class RecorridoMarginalServiceTests
 
         await CrearServicio().RecalcularAsync();
 
-        // Sin él no hay viaje: el aporte marginal es el recorrido entero.
-        guardado!.Aportes.Single().MetrosMarginales.Should().Be(5000);
+        // Con un solo participante no hay reparto que hacer: el aporte es el recorrido entero.
+        guardado!.Aportes.Single().MetrosAsignados.Should().Be(5000);
     }
 
     [Fact]
@@ -160,11 +179,14 @@ public class RecorridoMarginalServiceTests
             .ReturnsAsync(new List<Colegio> { CrearColegio(1) });
 
         _rutaProvider
-            .Setup(p => p.CalcularRutaOptimizadaAsync(
+            .Setup(p => p.CalcularMatrizDistanciasAsync(
                 It.IsAny<IReadOnlyList<Coordenada>>(),
-                It.IsAny<Coordenada>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RutaCalculada(5000, 600, null));
+            .ReturnsAsync(new[]
+            {
+                new[] { 0d, 5000d },
+                new[] { 5000d, 0d }
+            });
 
         RecorridoHorario? guardado = null;
         _snapshots
@@ -176,38 +198,5 @@ public class RecorridoMarginalServiceTests
 
         guardado!.CantidadParadas.Should().Be(1);
         guardado.Aportes.Should().ContainSingle();
-    }
-
-    [Fact]
-    public async Task RecalcularAsync_SiElMotorFallaEnLaRutaCompleta_CuentaFallidoYNoGuarda()
-    {
-        _pasajeros
-            .Setup(r => r.GetAsignacionesHorarioAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<AsignacionHorario> { new(1, 1, 1, 10) });
-
-        _ubicaciones
-            .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<TitularUbicacion>
-            {
-                new(10, -26.8200, -65.2900, null, FuenteUbicacion.Manual)
-            });
-
-        _colegios
-            .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<Colegio> { CrearColegio(1) });
-
-        _rutaProvider
-            .Setup(p => p.CalcularRutaOptimizadaAsync(
-                It.IsAny<IReadOnlyList<Coordenada>>(),
-                It.IsAny<Coordenada>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync((RutaCalculada?)null);
-
-        var resultado = await CrearServicio().RecalcularAsync();
-
-        resultado.Fallidos.Should().Be(1);
-        _snapshots.Verify(
-            r => r.UpsertAsync(It.IsAny<RecorridoHorario>(), It.IsAny<CancellationToken>()),
-            Times.Never);
     }
 }

@@ -11,18 +11,18 @@ namespace TransporteEscolar.Api.Controllers;
 public class RecorridosController : ControllerBase
 {
     private readonly IRecorridoService _recorridoService;
-    private readonly IRecorridoMarginalService _recorridoMarginalService;
+    private readonly IRecorridoRepartoService _recorridoRepartoService;
     private readonly ISender _sender;
     private readonly ILogger<RecorridosController> _logger;
 
     public RecorridosController(
         IRecorridoService recorridoService,
-        IRecorridoMarginalService recorridoMarginalService,
+        IRecorridoRepartoService recorridoRepartoService,
         ISender sender,
         ILogger<RecorridosController> logger)
     {
         _recorridoService = recorridoService;
-        _recorridoMarginalService = recorridoMarginalService;
+        _recorridoRepartoService = recorridoRepartoService;
         _sender = sender;
         _logger = logger;
     }
@@ -59,22 +59,23 @@ public class RecorridosController : ControllerBase
     }
 
     /// <summary>
-    /// Recalcula el aporte marginal de cada titular en cada viaje.
-    /// Es lento: hace muchas consultas al motor de ruteo.
+    /// Recalcula el reparto de kilómetros de cada titular en cada viaje (valor de Shapley).
+    /// Es lento: hace una consulta al motor de ruteo por viaje.
     /// </summary>
-    [HttpPost("recalcular-marginal")]
-    public async Task<ActionResult<RecorridoModel.RecalculoMarginalResponse>> RecalcularMarginal()
+    [HttpPost("recalcular-reparto")]
+    public async Task<ActionResult<RecorridoModel.RecalculoRepartoResponse>> RecalcularReparto()
     {
         // Misma razón que en Recalcular: es una operación administrativa manual y cortarla a la
         // mitad deja resultados parciales. Si el cliente se desconecta, el cálculo termina igual y
         // el resultado se ve refrescando el análisis.
-        var resultado = await _recorridoMarginalService.RecalcularAsync(CancellationToken.None);
+        var resultado = await _recorridoRepartoService.RecalcularAsync(CancellationToken.None);
 
         _logger.LogInformation(
-            "Recálculo marginal manual: {Procesados} viajes, {Consultas} consultas, {Fallidos} fallidos",
-            resultado.HorariosProcesados,
+            "Recálculo de reparto manual: {Procesados} viajes, {Consultas} consultas, {Fallidos} fallidos, {Aproximados} aproximados",
+            resultado.ViajesProcesados,
             resultado.ConsultasRealizadas,
-            resultado.Fallidos);
+            resultado.Fallidos,
+            resultado.ViajesAproximados);
 
         return Ok(resultado);
     }

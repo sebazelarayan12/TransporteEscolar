@@ -219,7 +219,7 @@ public class PasajeroRepository : IPasajeroRepository
         CancellationToken cancellationToken = default)
     {
         // Solo titulares activos: la parada de una familia dada de baja distorsionaría
-        // el aporte marginal de las familias que sí siguen viajando.
+        // el reparto de kilómetros de las familias que sí siguen viajando.
         // Se proyecta a un tipo anónimo para que EF traduzca el Distinct() a SQL sin depender
         // de un constructor de record; el mapeo a AsignacionHorario se hace en memoria.
         var filas = await _context.PasajeroHorarios

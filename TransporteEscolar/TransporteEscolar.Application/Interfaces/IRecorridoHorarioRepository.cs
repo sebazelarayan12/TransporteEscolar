@@ -2,7 +2,7 @@ using TransporteEscolar.Domain.Entities;
 
 namespace TransporteEscolar.Application.Interfaces;
 
-/// <summary>Acceso a los snapshots de recorrido por horario y sus aportes marginales.</summary>
+/// <summary>Acceso a los snapshots de recorrido por horario y su reparto de kilómetros.</summary>
 public interface IRecorridoHorarioRepository
 {
     /// <summary>Todos los snapshots con sus aportes cargados.</summary>

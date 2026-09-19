@@ -4,19 +4,22 @@ using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Application.Options;
 using TransporteEscolar.Domain.Entities;
+using TransporteEscolar.Domain.Services;
 using TransporteEscolar.Domain.ValueObjects;
 
 namespace TransporteEscolar.Application.Services;
 
 /// <summary>
-/// Calcula el aporte marginal de cada titular: los metros que se ahorrarían si esa
-/// familia no estuviera en el recorrido.
+/// Reparte los kilómetros reales de cada viaje entre los titulares que lo componen,
+/// usando el valor de Shapley.
 /// </summary>
 /// <remarks>
-/// Es la métrica honesta de costo. La distancia directa casa-colegio sobreestima a las
-/// familias que viven lejos pero sobre el camino, y subestima a las que obligan a desviarse.
+/// Es la métrica honesta de costo: a diferencia del aporte marginal simple, el reparto
+/// suma exactamente los kilómetros reales del recorrido y nunca da negativo. Por cada
+/// viaje se hace una sola consulta al motor (la matriz de distancias); el reparto se
+/// calcula después en memoria con <see cref="RepartoShapley"/>.
 /// </remarks>
-public class RecorridoMarginalService : IRecorridoMarginalService
+public class RecorridoRepartoService : IRecorridoRepartoService
 {
     private readonly IPasajeroRepository _pasajeroRepository;
     private readonly ITitularUbicacionRepository _ubicacionRepository;
@@ -24,16 +27,16 @@ public class RecorridoMarginalService : IRecorridoMarginalService
     private readonly IRecorridoHorarioRepository _snapshotRepository;
     private readonly IRutaProvider _rutaProvider;
     private readonly RuteoOptions _options;
-    private readonly ILogger<RecorridoMarginalService> _logger;
+    private readonly ILogger<RecorridoRepartoService> _logger;
 
-    public RecorridoMarginalService(
+    public RecorridoRepartoService(
         IPasajeroRepository pasajeroRepository,
         ITitularUbicacionRepository ubicacionRepository,
         IColegioRepository colegioRepository,
         IRecorridoHorarioRepository snapshotRepository,
         IRutaProvider rutaProvider,
         IOptions<RuteoOptions> options,
-        ILogger<RecorridoMarginalService> logger)
+        ILogger<RecorridoRepartoService> logger)
     {
         _pasajeroRepository = pasajeroRepository ?? throw new ArgumentNullException(nameof(pasajeroRepository));
         _ubicacionRepository = ubicacionRepository ?? throw new ArgumentNullException(nameof(ubicacionRepository));
@@ -44,7 +47,7 @@ public class RecorridoMarginalService : IRecorridoMarginalService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<RecorridoModel.RecalculoMarginalResponse> RecalcularAsync(
+    public async Task<RecorridoModel.RecalculoRepartoResponse> RecalcularAsync(
         CancellationToken cancellationToken = default)
     {
         var asignaciones = await _pasajeroRepository.GetAsignacionesHorarioAsync(cancellationToken);
@@ -57,6 +60,7 @@ public class RecorridoMarginalService : IRecorridoMarginalService
         var procesados = 0;
         var consultas = 0;
         var fallidos = 0;
+        var aproximados = 0;
 
         var viajes = asignaciones
             .GroupBy(a => (a.HorarioId, a.Transporte, a.ColegioId))
@@ -86,62 +90,55 @@ public class RecorridoMarginalService : IRecorridoMarginalService
 
             var paradas = participantes.Select(id => ubicacionPorTitular[id]).ToList();
 
+            // Una sola consulta al motor por viaje: la matriz de distancias entre todas las
+            // paradas y el colegio. El reparto se calcula después en memoria.
+            var puntos = new List<Coordenada>(paradas) { destino };
+
             await EsperarAsync(cancellationToken);
-            var rutaCompleta = await _rutaProvider.CalcularRutaOptimizadaAsync(paradas, destino, cancellationToken);
+            var matriz = await _rutaProvider.CalcularMatrizDistanciasAsync(puntos, cancellationToken);
             consultas++;
 
-            if (rutaCompleta is null)
+            if (matriz is null)
             {
                 _logger.LogWarning(
-                    "No se pudo calcular la ruta completa del horario {HorarioId} transporte {Transporte}",
+                    "No se pudo obtener la matriz del horario {HorarioId} transporte {Transporte}",
                     viaje.Key.HorarioId,
                     viaje.Key.Transporte);
                 fallidos++;
                 continue;
             }
 
+            var reparto = RepartoShapley.Calcular(matriz, paradas.Count);
+
+            if (reparto is null)
+            {
+                _logger.LogWarning(
+                    "No hay recorrido posible para el horario {HorarioId} transporte {Transporte}",
+                    viaje.Key.HorarioId,
+                    viaje.Key.Transporte);
+                fallidos++;
+                continue;
+            }
+
+            if (!reparto.EsExacto)
+            {
+                aproximados++;
+                _logger.LogInformation(
+                    "El horario {HorarioId} transporte {Transporte} tiene {Cantidad} paradas: se repartió de forma aproximada",
+                    viaje.Key.HorarioId,
+                    viaje.Key.Transporte,
+                    paradas.Count);
+            }
+
             var snapshot = new RecorridoHorario(
                 viaje.Key.HorarioId,
                 viaje.Key.Transporte,
-                rutaCompleta.DistanciaMetros,
+                reparto.DistanciaTotalMetros,
                 participantes.Count);
 
             for (var indice = 0; indice < participantes.Count; indice++)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var titularId = participantes[indice];
-
-                // Con un solo participante no hay ruta "sin él": su aporte es todo el recorrido.
-                if (participantes.Count == 1)
-                {
-                    snapshot.AgregarAporte(titularId, rutaCompleta.DistanciaMetros);
-                    break;
-                }
-
-                var paradasSinTitular = paradas
-                    .Where((_, posicion) => posicion != indice)
-                    .ToList();
-
-                await EsperarAsync(cancellationToken);
-                var rutaSinTitular = await _rutaProvider.CalcularRutaOptimizadaAsync(
-                    paradasSinTitular,
-                    destino,
-                    cancellationToken);
-                consultas++;
-
-                if (rutaSinTitular is null)
-                {
-                    _logger.LogWarning(
-                        "No se pudo calcular la ruta sin el titular {TitularId} en el horario {HorarioId}",
-                        titularId,
-                        viaje.Key.HorarioId);
-                    continue;
-                }
-
-                snapshot.AgregarAporte(
-                    titularId,
-                    rutaCompleta.DistanciaMetros - rutaSinTitular.DistanciaMetros);
+                snapshot.AgregarAporte(participantes[indice], reparto.MetrosPorParada[indice]);
             }
 
             await _snapshotRepository.UpsertAsync(snapshot, cancellationToken);
@@ -149,12 +146,13 @@ public class RecorridoMarginalService : IRecorridoMarginalService
         }
 
         _logger.LogInformation(
-            "Cálculo marginal: {Procesados} viajes, {Consultas} consultas al motor, {Fallidos} fallidos",
+            "Reparto de kilómetros: {Procesados} viajes, {Consultas} consultas al motor, {Fallidos} fallidos, {Aproximados} aproximados",
             procesados,
             consultas,
-            fallidos);
+            fallidos,
+            aproximados);
 
-        return new RecorridoModel.RecalculoMarginalResponse(procesados, consultas, fallidos);
+        return new RecorridoModel.RecalculoRepartoResponse(procesados, consultas, fallidos, aproximados);
     }
 
     private async Task EsperarAsync(CancellationToken cancellationToken)

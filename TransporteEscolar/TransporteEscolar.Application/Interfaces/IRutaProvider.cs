@@ -35,4 +35,16 @@ public interface IRutaProvider
         IReadOnlyList<Coordenada> paradas,
         Coordenada destino,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Devuelve la matriz de distancias en metros entre todos los puntos indicados.
+    /// </summary>
+    /// <param name="puntos">Puntos a medir. El resultado es cuadrado, del mismo tamaño.</param>
+    /// <returns>
+    /// <c>matriz[i][j]</c> = metros de <c>puntos[i]</c> a <c>puntos[j]</c>, o <c>null</c> si el motor
+    /// falló o si algún par resultó inalcanzable.
+    /// </returns>
+    Task<double[][]?> CalcularMatrizDistanciasAsync(
+        IReadOnlyList<Coordenada> puntos,
+        CancellationToken cancellationToken = default);
 }

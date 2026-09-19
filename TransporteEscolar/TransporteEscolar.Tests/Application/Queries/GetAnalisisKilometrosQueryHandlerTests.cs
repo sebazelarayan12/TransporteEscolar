@@ -17,7 +17,7 @@ public class GetAnalisisKilometrosQueryHandlerTests
 
     public GetAnalisisKilometrosQueryHandlerTests()
     {
-        // Por defecto no hay snapshots marginales calculados.
+        // Por defecto no hay snapshots de reparto calculados.
         _recorridoHorarios
             .Setup(r => r.GetAllConAportesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<RecorridoHorario>());
@@ -215,7 +215,7 @@ public class GetAnalisisKilometrosQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ConSnapshotsMarginales_CalculaKilometrosYPrecioMarginal()
+    public async Task Handle_ConSnapshotsDeReparto_CalculaKilometrosYPrecioAsignado()
     {
         var sanPatricio = CrearColegio(1, "San Patricio");
 
@@ -248,12 +248,12 @@ public class GetAnalisisKilometrosQueryHandlerTests
         var resultado = await CrearHandler().Handle(new GetAnalisisKilometrosQuery(), CancellationToken.None);
 
         var fila = resultado.Filas.Should().ContainSingle().Subject;
-        fila.KilometrosMarginalesMensuales.Should().Be(50m);     // 2,5 km · 1 · 20
-        fila.PrecioPorKilometroMarginal.Should().Be(2000m);       // 100000 / 50
+        fila.KilometrosAsignadosMensuales.Should().Be(50m);     // 2,5 km · 1 · 20
+        fila.PrecioPorKilometroAsignado.Should().Be(2000m);       // 100000 / 50
     }
 
     [Fact]
-    public async Task Handle_SinSnapshotsMarginales_LosKilometrosMarginalesSonCeroYElPrecioEsNulo()
+    public async Task Handle_SinSnapshotsDeReparto_LosKilometrosAsignadosSonCeroYElPrecioEsNulo()
     {
         var sanPatricio = CrearColegio(1, "San Patricio");
 
@@ -279,7 +279,7 @@ public class GetAnalisisKilometrosQueryHandlerTests
         var resultado = await CrearHandler().Handle(new GetAnalisisKilometrosQuery(), CancellationToken.None);
 
         var fila = resultado.Filas.Should().ContainSingle().Subject;
-        fila.KilometrosMarginalesMensuales.Should().Be(0m);
-        fila.PrecioPorKilometroMarginal.Should().BeNull();
+        fila.KilometrosAsignadosMensuales.Should().Be(0m);
+        fila.PrecioPorKilometroAsignado.Should().BeNull();
     }
 }

@@ -4,18 +4,18 @@ using TransporteEscolar.Domain.Entities;
 
 namespace TransporteEscolar.Infrastructure.Persistence.Configurations;
 
-public class AporteMarginalConfiguration : IEntityTypeConfiguration<AporteMarginal>
+public class AporteRepartoConfiguration : IEntityTypeConfiguration<AporteReparto>
 {
-    public void Configure(EntityTypeBuilder<AporteMarginal> builder)
+    public void Configure(EntityTypeBuilder<AporteReparto> builder)
     {
-        builder.ToTable("AportesMarginales");
+        builder.ToTable("AportesReparto");
 
         builder.HasKey(a => a.Id);
         builder.Property(a => a.Id).ValueGeneratedOnAdd();
 
         builder.Property(a => a.RecorridoHorarioId).IsRequired();
         builder.Property(a => a.TitularId).IsRequired();
-        builder.Property(a => a.MetrosMarginales).IsRequired();
+        builder.Property(a => a.MetrosAsignados).IsRequired();
 
         builder.HasIndex(a => new { a.RecorridoHorarioId, a.TitularId }).IsUnique();
 

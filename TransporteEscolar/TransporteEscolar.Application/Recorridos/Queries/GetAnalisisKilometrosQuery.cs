@@ -45,12 +45,12 @@ public sealed class GetAnalisisKilometrosQueryHandler
 
         var titularesConUbicacion = ubicaciones.Select(u => u.TitularId).ToHashSet();
 
-        // Cada horario es un viaje por día: los metros marginales de un titular se suman
-        // tal cual, sin multiplicar por viajes diarios.
-        var metrosMarginalesPorTitular = snapshots
+        // Cada horario es un viaje por día: los metros asignados a un titular (valor de
+        // Shapley) se suman tal cual, sin multiplicar por viajes diarios.
+        var metrosAsignadosPorTitular = snapshots
             .SelectMany(s => s.Aportes)
             .GroupBy(a => a.TitularId)
-            .ToDictionary(g => g.Key, g => g.Sum(a => a.MetrosMarginales));
+            .ToDictionary(g => g.Key, g => g.Sum(a => a.MetrosAsignados));
 
         var recorridosPorTitular = recorridos
             .GroupBy(r => r.TitularId)
@@ -87,11 +87,11 @@ public sealed class GetAnalisisKilometrosQueryHandler
                 }
             }
 
-            var metrosMarginales = metrosMarginalesPorTitular.TryGetValue(titular.Id, out var metros)
+            var metrosAsignados = metrosAsignadosPorTitular.TryGetValue(titular.Id, out var metros)
                 ? metros
                 : 0;
 
-            var kilometrosMarginales = CalculoKilometros.KilometrosMensuales(metrosMarginales, 1);
+            var kilometrosAsignados = CalculoKilometros.KilometrosMensuales(metrosAsignados, 1);
 
             filas.Add(new RecorridoModel.AnalisisFila(
                 titular.Id,
@@ -101,8 +101,8 @@ public sealed class GetAnalisisKilometrosQueryHandler
                 kilometros,
                 CalculoKilometros.PrecioPorKilometro(titular.MontoMensualPactado, kilometros),
                 titularesConUbicacion.Contains(titular.Id),
-                kilometrosMarginales,
-                CalculoKilometros.PrecioPorKilometro(titular.MontoMensualPactado, kilometrosMarginales)));
+                kilometrosAsignados,
+                CalculoKilometros.PrecioPorKilometro(titular.MontoMensualPactado, kilometrosAsignados)));
         }
 
         var kilometrosTotales = filas.Sum(f => f.KilometrosMensuales);

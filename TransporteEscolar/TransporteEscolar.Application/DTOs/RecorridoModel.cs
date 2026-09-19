@@ -44,12 +44,12 @@ public static class RecorridoModel
     /// significa "sin dato", no "cobra cero".
     /// </param>
     /// <param name="TieneUbicacion">Si el titular tiene el pin cargado.</param>
-    /// <param name="KilometrosMarginalesMensuales">
-    /// Kilómetros al mes que el recorrido crece por incluir a este titular. Es 0 si todavía
-    /// no se calculó el aporte marginal.
+    /// <param name="KilometrosAsignadosMensuales">
+    /// Kilómetros al mes que le corresponden a este titular según el reparto por valor de
+    /// Shapley. Es 0 si todavía no se calculó el reparto.
     /// </param>
-    /// <param name="PrecioPorKilometroMarginal">
-    /// Cuota dividida por los kilómetros marginales, o <c>null</c> si no hay dato.
+    /// <param name="PrecioPorKilometroAsignado">
+    /// Cuota dividida por los kilómetros asignados, o <c>null</c> si no hay dato.
     /// </param>
     public sealed record AnalisisFila(
         int TitularId,
@@ -59,17 +59,21 @@ public static class RecorridoModel
         decimal KilometrosMensuales,
         decimal? PrecioPorKilometro,
         bool TieneUbicacion,
-        decimal KilometrosMarginalesMensuales,
-        decimal? PrecioPorKilometroMarginal);
+        decimal KilometrosAsignadosMensuales,
+        decimal? PrecioPorKilometroAsignado);
 
-    /// <summary>Resumen de una corrida de cálculo marginal.</summary>
-    /// <param name="HorariosProcesados">Pares (horario, vehículo) que se pudieron calcular.</param>
-    /// <param name="ConsultasRealizadas">Llamadas al motor de ruteo. Útil para estimar el costo.</param>
-    /// <param name="Fallidos">Pares donde el motor no devolvió ruta.</param>
-    public sealed record RecalculoMarginalResponse(
-        int HorariosProcesados,
+    /// <summary>Resumen de una corrida de reparto de kilómetros.</summary>
+    /// <param name="ViajesProcesados">Pares (horario, vehículo) repartidos.</param>
+    /// <param name="ConsultasRealizadas">Llamadas al motor de ruteo: una por viaje.</param>
+    /// <param name="Fallidos">Viajes donde el motor no devolvió una matriz utilizable.</param>
+    /// <param name="ViajesAproximados">
+    /// Viajes que superaron el umbral de cálculo exacto y se repartieron proporcionalmente.
+    /// </param>
+    public sealed record RecalculoRepartoResponse(
+        int ViajesProcesados,
         int ConsultasRealizadas,
-        int Fallidos);
+        int Fallidos,
+        int ViajesAproximados);
 
     /// <summary>Resultado completo del análisis de kilómetros.</summary>
     public sealed record AnalisisResponse(

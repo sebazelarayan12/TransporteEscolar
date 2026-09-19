@@ -37,19 +37,18 @@ public class RecorridoHorarioTests
 
         snapshot.Aportes.Should().ContainSingle();
         snapshot.Aportes.First().TitularId.Should().Be(3);
-        snapshot.Aportes.First().MetrosMarginales.Should().Be(1200);
+        snapshot.Aportes.First().MetrosAsignados.Should().Be(1200);
     }
 
     [Fact]
     public void AgregarAporte_ConMetrosNegativos_LosLlevaACero()
     {
-        // El motor puede devolver una ruta más larga sin una parada que con ella,
-        // por cómo optimiza el orden. Un aporte negativo no tiene sentido de negocio.
+        // El valor de Shapley nunca da negativo; este es un caso defensivo, no esperado.
         var snapshot = new RecorridoHorario(1, 1, 18500, 6);
 
         snapshot.AgregarAporte(3, -500);
 
-        snapshot.Aportes.First().MetrosMarginales.Should().Be(0);
+        snapshot.Aportes.First().MetrosAsignados.Should().Be(0);
     }
 
     [Fact]
@@ -61,7 +60,7 @@ public class RecorridoHorarioTests
         snapshot.AgregarAporte(3, 900);
 
         snapshot.Aportes.Should().ContainSingle();
-        snapshot.Aportes.First().MetrosMarginales.Should().Be(900);
+        snapshot.Aportes.First().MetrosAsignados.Should().Be(900);
     }
 
     [Fact]
