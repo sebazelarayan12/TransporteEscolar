@@ -2,7 +2,7 @@ import { AnalisisKpis } from '../components/AnalisisKpis';
 import { AnalisisTable } from '../components/AnalisisTable';
 import {
   useAnalisisKilometros,
-  useRecalcularMarginal,
+  useRecalcularReparto,
   useRecalcularRecorridos,
 } from '../services/recorridos.queries';
 import { useToast } from '../../shared/hooks/useToast';
@@ -13,10 +13,10 @@ import { Skeleton } from '../../shared/ui/Skeleton';
 export const AnalisisKilometrosPage = () => {
   const { data: analisis, isLoading, error } = useAnalisisKilometros();
   const { mutateAsync: recalcular, isPending: recalculando } = useRecalcularRecorridos();
-  const { mutateAsync: recalcularMarginal, isPending: recalculandoMarginal } = useRecalcularMarginal();
+  const { mutateAsync: recalcularReparto, isPending: recalculandoReparto } = useRecalcularReparto();
   const { showSuccess, showError } = useToast();
   // Los dos recálculos pisan los mismos datos en el servidor: nunca deben correr a la vez.
-  const hayRecalculoEnCurso = recalculando || recalculandoMarginal;
+  const hayRecalculoEnCurso = recalculando || recalculandoReparto;
 
   const ejecutarRecalculo = async () => {
     try {
@@ -30,15 +30,17 @@ export const AnalisisKilometrosPage = () => {
     }
   };
 
-  const ejecutarRecalculoMarginal = async () => {
+  const ejecutarRecalculoReparto = async () => {
     try {
-      const resultado = await recalcularMarginal();
+      const resultado = await recalcularReparto();
+      const aproximados =
+        resultado.viajesAproximados > 0 ? `, ${resultado.viajesAproximados} aproximados` : '';
       showSuccess(
-        `Marginal recalculado: ${resultado.horariosProcesados} viajes, ${resultado.consultasRealizadas} consultas`,
+        `Reparto recalculado: ${resultado.viajesProcesados} viajes, ${resultado.consultasRealizadas} consultas${aproximados}`,
       );
-    } catch (errorMarginal) {
-      console.error('Error al recalcular la métrica marginal', errorMarginal);
-      showError('No se pudo recalcular la métrica marginal');
+    } catch (errorReparto) {
+      console.error('Error al recalcular el reparto', errorReparto);
+      showError('No se pudo recalcular el reparto');
     }
   };
 
@@ -69,12 +71,12 @@ export const AnalisisKilometrosPage = () => {
 
             <button
               type="button"
-              onClick={ejecutarRecalculoMarginal}
+              onClick={ejecutarRecalculoReparto}
               disabled={hayRecalculoEnCurso}
-              aria-busy={recalculandoMarginal}
+              aria-busy={recalculandoReparto}
               className="rounded-lg border border-[#007a8a] px-4 py-2 text-sm font-semibold text-[#007a8a] hover:bg-[#007a8a]/10 disabled:cursor-not-allowed disabled:opacity-60 dark:border-cyan-200 dark:text-cyan-200 dark:hover:bg-cyan-200/10"
             >
-              {recalculandoMarginal ? 'Calculando marginal…' : 'Recalcular marginal'}
+              {recalculandoReparto ? 'Calculando reparto…' : 'Recalcular reparto'}
             </button>
           </div>
         </header>
@@ -84,9 +86,7 @@ export const AnalisisKilometrosPage = () => {
             role="status"
             className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100"
           >
-            Recalculando en el servidor. Puede tardar varios minutos con el motor de ruteo público; no
-            cierres la página. Si la conexión se corta, el cálculo continúa igual: refrescá el análisis
-            en unos minutos.
+            Recalculando en el servidor. Puede tardar unos segundos; no cierres la página.
           </p>
         ) : null}
 
@@ -117,18 +117,19 @@ export const AnalisisKilometrosPage = () => {
 
             <div className="space-y-1 text-xs text-zinc-500 dark:text-zinc-400">
               <p>
-                <strong>Directo:</strong> distancia casa → colegio por calles, multiplicada por los
-                viajes diarios y por 20 días hábiles. Sirve para comparar familias entre sí.
+                <strong>Directo:</strong> distancia de la casa al colegio por calles, multiplicada
+                por los viajes diarios y por 20 días hábiles. Sirve para comparar familias entre sí.
               </p>
               <p>
-                <strong>Marginal:</strong> cuánto crece el recorrido real del viaje por pasar a
-                buscar a esa familia. Es el número que conviene usar para decidir precios: una
-                familia que vive lejos pero sobre el camino cuesta mucho menos de lo que sugiere la
-                distancia directa.
+                <strong>Asignado:</strong> la parte que le toca a cada familia de los kilómetros que
+                la combi realmente recorre, repartidos con el valor de Shapley. La suma de todas las
+                familias da exactamente el recorrido real, así que es el número que conviene usar
+                para decidir precios: una familia que queda de paso recibe menos que su distancia
+                directa, y una que obliga a desviarse recibe más.
               </p>
               <p>
-                El botón de recálculo marginal hace muchas consultas al motor de ruteo y puede
-                tardar varios minutos.
+                El recálculo del reparto consulta el motor de ruteo una vez por viaje y puede tardar
+                algunos segundos.
               </p>
             </div>
           </>

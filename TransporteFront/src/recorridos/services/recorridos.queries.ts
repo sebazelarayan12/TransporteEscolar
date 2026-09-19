@@ -92,11 +92,11 @@ export const useEliminarUbicacion = () => {
   });
 };
 
-export const useRecalcularMarginal = () => {
+export const useRecalcularReparto = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => recorridosApi.recalcularMarginal(),
+    mutationFn: () => recorridosApi.recalcularReparto(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: recorridosKeys.analisis() });
     },

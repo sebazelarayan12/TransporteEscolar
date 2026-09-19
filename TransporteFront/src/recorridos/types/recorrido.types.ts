@@ -40,10 +40,11 @@ export interface RecalculoResponse {
   titularesSinUbicacion: number[];
 }
 
-export interface RecalculoMarginalResponse {
-  horariosProcesados: number;
+export interface RecalculoRepartoResponse {
+  viajesProcesados: number;
   consultasRealizadas: number;
   fallidos: number;
+  viajesAproximados: number;
 }
 
 export interface ColegioResponse {
@@ -62,9 +63,9 @@ export interface AnalisisFila {
   kilometrosMensuales: number;
   precioPorKilometro: number | null;
   tieneUbicacion: boolean;
-  /** Km/mes que el recorrido real del viaje crece por pasar a buscar a esta familia. 0 si no hay datos. */
-  kilometrosMarginalesMensuales: number;
-  precioPorKilometroMarginal: number | null;
+  /** Km/mes que le corresponden a esta familia según el reparto por valor de Shapley. 0 si no hay datos. */
+  kilometrosAsignadosMensuales: number;
+  precioPorKilometroAsignado: number | null;
 }
 
 export interface AnalisisResponse {

@@ -2,7 +2,7 @@ import { apiClient } from '../../api/client';
 import type {
   AnalisisResponse,
   ColegioResponse,
-  RecalculoMarginalResponse,
+  RecalculoRepartoResponse,
   RecalculoResponse,
   RecorridoResponse,
   UbicacionRequest,
@@ -52,10 +52,10 @@ export const recorridosApi = {
     return respuesta.data;
   },
 
-  recalcularMarginal: async (): Promise<RecalculoMarginalResponse> => {
+  recalcularReparto: async (): Promise<RecalculoRepartoResponse> => {
     const respuesta = await apiClient
       .getAxiosInstance()
-      .post<RecalculoMarginalResponse>('/recorridos/recalcular-marginal', undefined, {
+      .post<RecalculoRepartoResponse>('/recorridos/recalcular-reparto', undefined, {
         timeout: RECALCULO_TIMEOUT_MS,
       });
     return respuesta.data;

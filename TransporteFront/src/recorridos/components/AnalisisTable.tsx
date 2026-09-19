@@ -34,8 +34,8 @@ export const AnalisisTable = ({ filas }: AnalisisTableProps) => {
             <th scope="col" className="px-4 py-3 font-semibold">Km directos/mes</th>
             <th scope="col" className="px-4 py-3 font-semibold">Cuota</th>
             <th scope="col" className="px-4 py-3 font-semibold">$/km directo</th>
-            <th scope="col" className="px-4 py-3 font-semibold">Km marginales/mes</th>
-            <th scope="col" className="px-4 py-3 font-semibold">$/km marginal</th>
+            <th scope="col" className="px-4 py-3 font-semibold">Km asignados/mes</th>
+            <th scope="col" className="px-4 py-3 font-semibold">$/km asignado</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100 dark:divide-zinc-700/50">
@@ -67,17 +67,17 @@ export const AnalisisTable = ({ filas }: AnalisisTableProps) => {
                 {fila.precioPorKilometro === null ? <SinDato /> : <Amount value={fila.precioPorKilometro} />}
               </td>
               <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
-                {fila.kilometrosMarginalesMensuales > 0 ? (
-                  formatearKilometros(fila.kilometrosMarginalesMensuales)
+                {fila.kilometrosAsignadosMensuales > 0 ? (
+                  formatearKilometros(fila.kilometrosAsignadosMensuales)
                 ) : (
                   <SinDato />
                 )}
               </td>
               <td className="px-4 py-3 font-semibold text-zinc-900 dark:text-zinc-100">
-                {fila.precioPorKilometroMarginal === null ? (
+                {fila.precioPorKilometroAsignado === null ? (
                   <SinDato />
                 ) : (
-                  <Amount value={fila.precioPorKilometroMarginal} />
+                  <Amount value={fila.precioPorKilometroAsignado} />
                 )}
               </td>
             </tr>
