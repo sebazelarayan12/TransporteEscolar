@@ -30,6 +30,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPushSubscriptionRepository, PushSubscriptionRepository>();
         services.AddScoped<IColegioRepository, ColegioRepository>();
         services.AddScoped<ITitularUbicacionRepository, TitularUbicacionRepository>();
+        services.AddScoped<IRecorridoRepository, RecorridoRepository>();
 
         // Servicios
         services.AddScoped<ITitularService, TitularService>();
