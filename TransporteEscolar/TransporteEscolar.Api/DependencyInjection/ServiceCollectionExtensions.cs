@@ -94,4 +94,35 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Registra el motor de ruteo. La URL base viene de la variable de entorno
+    /// <c>Ruteo__BaseUrl</c>; nunca se hardcodea.
+    /// </summary>
+    public static IServiceCollection AddRuteo(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        // ValidateOnStart hace que la app falle AL ARRANCAR, con un mensaje claro, si falta
+        // Ruteo__BaseUrl. Sin esto la validación correría recién al resolver IRutaProvider por
+        // primera vez, y como TitularesController depende de IRecorridoService (Task 8), una
+        // variable faltante rompería TODOS los endpoints de titulares en vez de fallar el deploy.
+        services.AddOptions<RuteoOptions>()
+            .Bind(configuration.GetSection(RuteoOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddHttpClient<IRutaProvider, OsrmRutaProvider>((sp, client) =>
+        {
+            var opciones = sp.GetRequiredService<IOptions<RuteoOptions>>().Value;
+
+            client.BaseAddress = new Uri(opciones.BaseUrl.TrimEnd('/'));
+            client.Timeout = TimeSpan.FromSeconds(opciones.TimeoutSegundos);
+
+            // El demo público de OSRM pide identificar al cliente.
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("TransporteEscolar/1.0");
+        });
+
+        return services;
+    }
 }

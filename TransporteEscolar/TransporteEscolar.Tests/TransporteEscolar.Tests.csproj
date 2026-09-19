@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TransporteEscolar.Domain\TransporteEscolar.Domain.csproj" />
     <ProjectReference Include="..\TransporteEscolar.Application\TransporteEscolar.Application.csproj" />
+    <ProjectReference Include="..\TransporteEscolar.Infrastructure\TransporteEscolar.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
