@@ -31,4 +31,12 @@ public class HorarioRepository : IHorarioRepository
     {
         return await _context.Horarios.AnyAsync(h => h.Id == id, cancellationToken);
     }
+
+    public async Task<List<Horario>> GetConColegioAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Horarios
+            .Include(h => h.Colegio)
+            .OrderBy(h => h.Orden)
+            .ToListAsync(cancellationToken);
+    }
 }
