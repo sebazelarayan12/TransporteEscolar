@@ -41,9 +41,13 @@ public class RecorridosController : ControllerBase
     /// de más de un segundo entre consultas.
     /// </summary>
     [HttpPost("recalcular")]
-    public async Task<ActionResult<RecorridoModel.RecalculoResponse>> Recalcular(CancellationToken cancellationToken)
+    public async Task<ActionResult<RecorridoModel.RecalculoResponse>> Recalcular()
     {
-        var resultado = await _recorridoService.RecalcularTodosAsync(cancellationToken);
+        // Operación administrativa manual: cada recorrido ya se persiste por separado, así que
+        // cancelarla a mitad de camino solo deja resultados parciales. Por eso NO se usa el token
+        // del request: si el cliente corta la conexión, el trabajo termina igual y el resultado se
+        // ve refrescando el análisis.
+        var resultado = await _recorridoService.RecalcularTodosAsync(CancellationToken.None);
 
         _logger.LogInformation(
             "Recálculo manual: {Calculados} calculados, {Omitidos} vigentes, {Fallidos} fallidos",
@@ -59,10 +63,12 @@ public class RecorridosController : ControllerBase
     /// Es lento: hace muchas consultas al motor de ruteo.
     /// </summary>
     [HttpPost("recalcular-marginal")]
-    public async Task<ActionResult<RecorridoModel.RecalculoMarginalResponse>> RecalcularMarginal(
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<RecorridoModel.RecalculoMarginalResponse>> RecalcularMarginal()
     {
-        var resultado = await _recorridoMarginalService.RecalcularAsync(cancellationToken);
+        // Misma razón que en Recalcular: es una operación administrativa manual y cortarla a la
+        // mitad deja resultados parciales. Si el cliente se desconecta, el cálculo termina igual y
+        // el resultado se ve refrescando el análisis.
+        var resultado = await _recorridoMarginalService.RecalcularAsync(CancellationToken.None);
 
         _logger.LogInformation(
             "Recálculo marginal manual: {Procesados} viajes, {Consultas} consultas, {Fallidos} fallidos",
