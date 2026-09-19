@@ -62,6 +62,17 @@ public static class RecorridoModel
         decimal KilometrosAsignadosMensuales,
         decimal? PrecioPorKilometroAsignado);
 
+    /// <summary>Viaje que no se pudo repartir porque le falta la casa fija.</summary>
+    /// <param name="HorarioId">Id del horario del viaje.</param>
+    /// <param name="HorarioEtiqueta">Etiqueta del horario, para mostrar.</param>
+    /// <param name="Transporte">Vehículo: 1 (Ducato) o 2 (Sprinter).</param>
+    /// <param name="Motivo">Texto listo para mostrar: por qué quedó pendiente.</param>
+    public sealed record ViajePendiente(
+        int HorarioId,
+        string HorarioEtiqueta,
+        byte Transporte,
+        string Motivo);
+
     /// <summary>Resumen de una corrida de reparto de kilómetros.</summary>
     /// <param name="ViajesProcesados">Pares (horario, vehículo) repartidos.</param>
     /// <param name="ConsultasRealizadas">Llamadas al motor de ruteo: una por viaje.</param>
@@ -69,11 +80,16 @@ public static class RecorridoModel
     /// <param name="ViajesAproximados">
     /// Viajes que superaron el umbral de cálculo exacto y se repartieron proporcionalmente.
     /// </param>
+    /// <param name="Pendientes">
+    /// Viajes que no se calcularon porque les falta la casa fija, o porque la marcada ya no
+    /// corresponde a un participante con ubicación cargada.
+    /// </param>
     public sealed record RecalculoRepartoResponse(
         int ViajesProcesados,
         int ConsultasRealizadas,
         int Fallidos,
-        int ViajesAproximados);
+        int ViajesAproximados,
+        IReadOnlyCollection<ViajePendiente> Pendientes);
 
     /// <summary>Resultado completo del análisis de kilómetros.</summary>
     public sealed record AnalisisResponse(

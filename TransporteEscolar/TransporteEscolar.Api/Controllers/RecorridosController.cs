@@ -87,4 +87,58 @@ public class RecorridosController : ControllerBase
         var analisis = await _sender.Send(new GetAnalisisKilometrosQuery(), cancellationToken);
         return Ok(analisis);
     }
+
+    /// <summary>
+    /// Todas las paradas fijas marcadas (la casa que arranca o cierra cada viaje), con
+    /// etiqueta de horario y apellido del titular.
+    /// </summary>
+    [HttpGet("paradas-fijas")]
+    public async Task<ActionResult<List<ParadaFijaModel.Response>>> GetParadasFijas(CancellationToken cancellationToken)
+    {
+        var paradasFijas = await _recorridoRepartoService.ObtenerParadasFijasAsync(cancellationToken);
+        return Ok(paradasFijas);
+    }
+
+    /// <summary>
+    /// Marca (o reasigna) la parada fija de un viaje. Valida que el titular elegido viaje
+    /// realmente en ese horario con ese vehículo y que tenga ubicación cargada.
+    /// </summary>
+    [HttpPut("horarios/{horarioId}/transportes/{transporte}/parada-fija")]
+    public async Task<ActionResult<ParadaFijaModel.Response>> PutParadaFija(
+        int horarioId,
+        byte transporte,
+        [FromBody] ParadaFijaModel.Request request,
+        CancellationToken cancellationToken)
+    {
+        var paradaFija = await _recorridoRepartoService.AsignarParadaFijaAsync(
+            horarioId,
+            transporte,
+            request.TitularId,
+            cancellationToken);
+
+        _logger.LogInformation(
+            "Parada fija del horario {HorarioId} transporte {Transporte} asignada al titular {TitularId}",
+            horarioId,
+            transporte,
+            request.TitularId);
+
+        return Ok(paradaFija);
+    }
+
+    /// <summary>Borra la parada fija de un viaje.</summary>
+    [HttpDelete("horarios/{horarioId}/transportes/{transporte}/parada-fija")]
+    public async Task<ActionResult> DeleteParadaFija(
+        int horarioId,
+        byte transporte,
+        CancellationToken cancellationToken)
+    {
+        await _recorridoRepartoService.EliminarParadaFijaAsync(horarioId, transporte, cancellationToken);
+
+        _logger.LogInformation(
+            "Parada fija del horario {HorarioId} transporte {Transporte} eliminada",
+            horarioId,
+            transporte);
+
+        return NoContent();
+    }
 }

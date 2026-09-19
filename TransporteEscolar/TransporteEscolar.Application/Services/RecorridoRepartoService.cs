@@ -1,9 +1,12 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TransporteEscolar.Application.DTOs;
+using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Application.Mappers;
 using TransporteEscolar.Application.Options;
 using TransporteEscolar.Domain.Entities;
+using TransporteEscolar.Domain.Enums;
 using TransporteEscolar.Domain.Services;
 using TransporteEscolar.Domain.ValueObjects;
 
@@ -11,19 +14,29 @@ namespace TransporteEscolar.Application.Services;
 
 /// <summary>
 /// Reparte los kilómetros reales de cada viaje entre los titulares que lo componen,
-/// usando el valor de Shapley.
+/// usando el valor de Shapley, y administra la parada fija (la casa que arranca o cierra
+/// el recorrido real) que cada viaje necesita para calcularse.
 /// </summary>
 /// <remarks>
 /// Es la métrica honesta de costo: a diferencia del aporte marginal simple, el reparto
 /// suma exactamente los kilómetros reales del recorrido y nunca da negativo. Por cada
 /// viaje se hace una sola consulta al motor (la matriz de distancias); el reparto se
 /// calcula después en memoria con <see cref="RepartoShapley"/>.
+/// <para>
+/// La lógica de la parada fija vive acá (y no en un servicio propio) porque está
+/// intrínsecamente acoplada al cálculo del reparto: valida contra los mismos datos
+/// (asignaciones de horario, ubicaciones) que ya usa <see cref="RecalcularAsync"/>, y
+/// es, literalmente, el dato que ese cálculo necesita para poder correr.
+/// </para>
 /// </remarks>
 public class RecorridoRepartoService : IRecorridoRepartoService
 {
     private readonly IPasajeroRepository _pasajeroRepository;
     private readonly ITitularUbicacionRepository _ubicacionRepository;
     private readonly IColegioRepository _colegioRepository;
+    private readonly IHorarioRepository _horarioRepository;
+    private readonly IParadaFijaRepository _paradaFijaRepository;
+    private readonly ITitularRepository _titularRepository;
     private readonly IRecorridoHorarioRepository _snapshotRepository;
     private readonly IRutaProvider _rutaProvider;
     private readonly RuteoOptions _options;
@@ -33,6 +46,9 @@ public class RecorridoRepartoService : IRecorridoRepartoService
         IPasajeroRepository pasajeroRepository,
         ITitularUbicacionRepository ubicacionRepository,
         IColegioRepository colegioRepository,
+        IHorarioRepository horarioRepository,
+        IParadaFijaRepository paradaFijaRepository,
+        ITitularRepository titularRepository,
         IRecorridoHorarioRepository snapshotRepository,
         IRutaProvider rutaProvider,
         IOptions<RuteoOptions> options,
@@ -41,6 +57,9 @@ public class RecorridoRepartoService : IRecorridoRepartoService
         _pasajeroRepository = pasajeroRepository ?? throw new ArgumentNullException(nameof(pasajeroRepository));
         _ubicacionRepository = ubicacionRepository ?? throw new ArgumentNullException(nameof(ubicacionRepository));
         _colegioRepository = colegioRepository ?? throw new ArgumentNullException(nameof(colegioRepository));
+        _horarioRepository = horarioRepository ?? throw new ArgumentNullException(nameof(horarioRepository));
+        _paradaFijaRepository = paradaFijaRepository ?? throw new ArgumentNullException(nameof(paradaFijaRepository));
+        _titularRepository = titularRepository ?? throw new ArgumentNullException(nameof(titularRepository));
         _snapshotRepository = snapshotRepository ?? throw new ArgumentNullException(nameof(snapshotRepository));
         _rutaProvider = rutaProvider ?? throw new ArgumentNullException(nameof(rutaProvider));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
@@ -53,14 +72,19 @@ public class RecorridoRepartoService : IRecorridoRepartoService
         var asignaciones = await _pasajeroRepository.GetAsignacionesHorarioAsync(cancellationToken);
         var ubicaciones = await _ubicacionRepository.GetAllAsync(cancellationToken);
         var colegios = await _colegioRepository.GetAllAsync(cancellationToken);
+        var horarios = await _horarioRepository.GetConColegioAsync(cancellationToken);
+        var paradasFijas = await _paradaFijaRepository.GetTodasAsync(cancellationToken);
 
         var ubicacionPorTitular = ubicaciones.ToDictionary(u => u.TitularId, u => u.ObtenerCoordenada());
         var colegioPorId = colegios.ToDictionary(c => c.Id, c => c.ObtenerCoordenada());
+        var horarioPorId = horarios.ToDictionary(h => h.Id);
+        var paradaFijaPorViaje = paradasFijas.ToDictionary(p => (p.HorarioId, p.Transporte));
 
         var procesados = 0;
         var consultas = 0;
         var fallidos = 0;
         var aproximados = 0;
+        var pendientes = new List<RecorridoModel.ViajePendiente>();
 
         var viajes = asignaciones
             .GroupBy(a => (a.HorarioId, a.Transporte, a.ColegioId))
@@ -70,6 +94,9 @@ public class RecorridoRepartoService : IRecorridoRepartoService
         foreach (var viaje in viajes)
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            horarioPorId.TryGetValue(viaje.Key.HorarioId, out var horario);
+            var etiqueta = horario?.Etiqueta ?? $"Horario {viaje.Key.HorarioId}";
 
             if (!colegioPorId.TryGetValue(viaje.Key.ColegioId, out var destino))
             {
@@ -87,6 +114,29 @@ public class RecorridoRepartoService : IRecorridoRepartoService
 
             if (participantes.Count == 0)
                 continue;
+
+            // La parada fija es obligatoria: sin ella el viaje no se calcula ni se consulta al
+            // motor. Este chequeo va ANTES de pedir la matriz para no gastar consultas al pedo.
+            if (!paradaFijaPorViaje.TryGetValue((viaje.Key.HorarioId, viaje.Key.Transporte), out var paradaFija))
+            {
+                pendientes.Add(new RecorridoModel.ViajePendiente(
+                    viaje.Key.HorarioId,
+                    etiqueta,
+                    viaje.Key.Transporte,
+                    "Falta marcar la casa fija de este viaje."));
+                continue;
+            }
+
+            var indiceParadaFija = participantes.IndexOf(paradaFija.TitularId);
+            if (indiceParadaFija < 0)
+            {
+                pendientes.Add(new RecorridoModel.ViajePendiente(
+                    viaje.Key.HorarioId,
+                    etiqueta,
+                    viaje.Key.Transporte,
+                    "La casa fija marcada ya no viaja en este horario (se fue del horario o le borraron la ubicación): reasigná la parada fija."));
+                continue;
+            }
 
             var paradas = participantes.Select(id => ubicacionPorTitular[id]).ToList();
 
@@ -108,8 +158,11 @@ public class RecorridoRepartoService : IRecorridoRepartoService
                 continue;
             }
 
-            // TODO Task 22: usar la ParadaFija real del viaje y el ExtremoFijo según Horario.Sentido.
-            var reparto = RepartoShapley.Calcular(matriz, paradas.Count, 0, ExtremoFijo.Primera);
+            var extremo = horario?.Sentido == SentidoHorario.Vuelta
+                ? ExtremoFijo.Ultima
+                : ExtremoFijo.Primera;
+
+            var reparto = RepartoShapley.Calcular(matriz, paradas.Count, indiceParadaFija, extremo);
 
             if (reparto is null)
             {
@@ -137,10 +190,18 @@ public class RecorridoRepartoService : IRecorridoRepartoService
                 reparto.DistanciaTotalMetros,
                 participantes.Count);
 
+            // reparto.Orden es la secuencia de ÍNDICES de parada en orden de visita: el aporte de
+            // participantes[i] necesita la POSICIÓN de i dentro de Orden (1-based), no al revés.
+            // Ej.: Orden = [2, 0, 1] => la parada 2 lleva orden 1, la 0 lleva orden 2, la 1 orden 3.
+            var ordenPorIndiceParada = new int[participantes.Count];
+            for (var posicion = 0; posicion < reparto.Orden.Count; posicion++)
+            {
+                ordenPorIndiceParada[reparto.Orden[posicion]] = posicion + 1;
+            }
+
             for (var indice = 0; indice < participantes.Count; indice++)
             {
-                // TODO Task 22: usar reparto.Orden en vez del índice + 1 provisorio.
-                snapshot.AgregarAporte(participantes[indice], reparto.MetrosPorParada[indice], indice + 1);
+                snapshot.AgregarAporte(participantes[indice], reparto.MetrosPorParada[indice], ordenPorIndiceParada[indice]);
             }
 
             await _snapshotRepository.UpsertAsync(snapshot, cancellationToken);
@@ -148,13 +209,84 @@ public class RecorridoRepartoService : IRecorridoRepartoService
         }
 
         _logger.LogInformation(
-            "Reparto de kilómetros: {Procesados} viajes, {Consultas} consultas al motor, {Fallidos} fallidos, {Aproximados} aproximados",
+            "Reparto de kilómetros: {Procesados} viajes, {Consultas} consultas al motor, {Fallidos} fallidos, {Aproximados} aproximados, {Pendientes} pendientes de casa fija",
             procesados,
             consultas,
             fallidos,
-            aproximados);
+            aproximados,
+            pendientes.Count);
 
-        return new RecorridoModel.RecalculoRepartoResponse(procesados, consultas, fallidos, aproximados);
+        return new RecorridoModel.RecalculoRepartoResponse(procesados, consultas, fallidos, aproximados, pendientes);
+    }
+
+    public async Task<List<ParadaFijaModel.Response>> ObtenerParadasFijasAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var paradasFijas = await _paradaFijaRepository.GetTodasAsync(cancellationToken);
+        if (paradasFijas.Count == 0)
+            return new List<ParadaFijaModel.Response>();
+
+        var horarios = await _horarioRepository.GetConColegioAsync(cancellationToken);
+        var etiquetaPorHorario = horarios.ToDictionary(h => h.Id, h => h.Etiqueta);
+
+        var titularIds = paradasFijas.Select(p => p.TitularId).Distinct().ToList();
+        var titulares = await _titularRepository.GetByIdsAsync(titularIds, cancellationToken);
+        var apellidoPorTitular = titulares.ToDictionary(t => t.Id, t => t.Apellido);
+
+        return paradasFijas
+            .OrderBy(p => p.HorarioId)
+            .ThenBy(p => p.Transporte)
+            .Select(p => p.ToResponse(
+                etiquetaPorHorario.TryGetValue(p.HorarioId, out var etiqueta) ? etiqueta : $"Horario {p.HorarioId}",
+                apellidoPorTitular.TryGetValue(p.TitularId, out var apellido) ? apellido : string.Empty))
+            .ToList();
+    }
+
+    public async Task<ParadaFijaModel.Response> AsignarParadaFijaAsync(
+        int horarioId,
+        byte transporte,
+        int titularId,
+        CancellationToken cancellationToken = default)
+    {
+        var asignaciones = await _pasajeroRepository.GetAsignacionesHorarioAsync(cancellationToken);
+
+        var viaja = asignaciones.Any(a =>
+            a.HorarioId == horarioId && a.Transporte == transporte && a.TitularId == titularId);
+
+        if (!viaja)
+            throw new ValidationException(
+                "Ese titular no viaja en ese horario con ese vehículo. Revisá los pasajeros asignados.");
+
+        var ubicacion = await _ubicacionRepository.GetByTitularIdAsync(titularId, cancellationToken);
+        if (ubicacion is null)
+            throw new ValidationException(
+                "El titular no tiene ubicación cargada. Marcá la casa en el mapa antes de fijarla como parada.");
+
+        ParadaFija paradaFija;
+        try
+        {
+            paradaFija = new ParadaFija(horarioId, transporte, titularId);
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            // El dominio valida los rangos; acá se traduce a un 400 legible para el frontend.
+            throw new ValidationException($"La parada fija no es válida: {ex.Message}");
+        }
+
+        var guardada = await _paradaFijaRepository.UpsertAsync(paradaFija, cancellationToken);
+
+        var horario = await _horarioRepository.GetByIdAsync(horarioId, cancellationToken);
+        var titular = await _titularRepository.GetByIdAsync(titularId, cancellationToken);
+
+        return guardada.ToResponse(horario?.Etiqueta ?? $"Horario {horarioId}", titular?.Apellido ?? string.Empty);
+    }
+
+    public async Task EliminarParadaFijaAsync(
+        int horarioId,
+        byte transporte,
+        CancellationToken cancellationToken = default)
+    {
+        await _paradaFijaRepository.EliminarAsync(horarioId, transporte, cancellationToken);
     }
 
     private async Task EsperarAsync(CancellationToken cancellationToken)
