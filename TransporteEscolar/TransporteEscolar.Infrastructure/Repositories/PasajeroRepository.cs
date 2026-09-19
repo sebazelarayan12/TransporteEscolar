@@ -199,6 +199,7 @@ public class PasajeroRepository : IPasajeroRepository
     {
         var query = _context.PasajeroHorarios
             .Where(ph => ph.Pasajero.FechaBaja == null)
+            .Where(ph => ph.Pasajero.Titular != null && ph.Pasajero.Titular.FechaBaja == null)
             .Where(ph => ph.Horario.ColegioId != null);
 
         if (titularId.HasValue)
