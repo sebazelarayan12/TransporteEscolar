@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IColegioRepository, ColegioRepository>();
         services.AddScoped<ITitularUbicacionRepository, TitularUbicacionRepository>();
         services.AddScoped<IRecorridoRepository, RecorridoRepository>();
+        services.AddScoped<IRecorridoHorarioRepository, RecorridoHorarioRepository>();
 
         // Servicios
         services.AddScoped<ITitularService, TitularService>();
