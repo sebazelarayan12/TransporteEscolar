@@ -193,6 +193,27 @@ public class PasajeroRepository : IPasajeroRepository
         return await _context.Pasajeros.AnyAsync(p => p.Id == id, cancellationToken);
     }
 
+    public async Task<List<AsignacionColegio>> GetAsignacionesColegioAsync(
+        int? titularId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.PasajeroHorarios
+            .Where(ph => ph.Pasajero.FechaBaja == null)
+            .Where(ph => ph.Horario.ColegioId != null);
+
+        if (titularId.HasValue)
+        {
+            query = query.Where(ph => ph.Pasajero.TitularId == titularId.Value);
+        }
+
+        return await query
+            .Select(ph => new AsignacionColegio(
+                ph.Pasajero.TitularId,
+                ph.Horario.ColegioId!.Value,
+                ph.HorarioId))
+            .ToListAsync(cancellationToken);
+    }
+
     private static IQueryable<Pasajero> SoloTitularesActivos(IQueryable<Pasajero> query)
     {
         return query.Where(p => p.Titular != null && p.Titular.FechaBaja == null);

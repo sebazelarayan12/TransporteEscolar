@@ -20,4 +20,11 @@ public class RuteoOptions
 
     /// <summary>Perfil de OSRM. Para transporte escolar siempre es <c>driving</c>.</summary>
     public string PerfilVehiculo { get; set; } = "driving";
+
+    /// <summary>
+    /// Pausa entre consultas consecutivas al motor, en milisegundos.
+    /// El demo público de OSRM limita a 1 request por segundo; con instancia propia se puede poner 0.
+    /// </summary>
+    [Range(0, 10000)]
+    public int PausaEntreConsultasMs { get; set; } = 1100;
 }

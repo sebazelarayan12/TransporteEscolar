@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGastoService, GastoService>();
         services.AddScoped<IIngresoService, IngresoService>();
         services.AddScoped<INotificacionService, NotificacionService>();
+        services.AddScoped<IRecorridoService, RecorridoService>();
         services.AddSingleton<PushServiceClient>(sp =>
         {
             var vapid = sp.GetRequiredService<IOptions<VapidSettings>>().Value;
