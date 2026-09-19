@@ -54,6 +54,18 @@ export const formatearDistancia = (metros: number): string => {
   return `${kilometros.toFixed(2).replace('.', ',')} km`;
 };
 
+/**
+ * Formatea kilómetros (no metros) truncando a dos decimales, con coma decimal.
+ * Es la única fuente de este formato: lo usan la ficha del titular y la pantalla de análisis.
+ */
+export const formatearKilometros = (kilometros: number): string => {
+  if (!Number.isFinite(kilometros) || kilometros <= 0) {
+    return SIN_DATO;
+  }
+
+  return `${truncar(kilometros, 2).toFixed(2).replace('.', ',')} km`;
+};
+
 /** Formatea una duración en segundos como minutos, o como horas y minutos. */
 export const formatearDuracion = (segundos: number): string => {
   if (!Number.isFinite(segundos) || segundos <= 0) {

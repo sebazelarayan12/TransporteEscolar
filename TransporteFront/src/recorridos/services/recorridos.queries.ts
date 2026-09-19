@@ -24,6 +24,13 @@ export const useRecorridosTitular = (titularId: number | undefined) => {
   });
 };
 
+export const useAnalisisKilometros = () => {
+  return useQuery({
+    queryKey: recorridosKeys.analisis(),
+    queryFn: () => recorridosApi.getAnalisis(),
+  });
+};
+
 export const useColegios = () => {
   return useQuery({
     queryKey: recorridosKeys.colegios(),

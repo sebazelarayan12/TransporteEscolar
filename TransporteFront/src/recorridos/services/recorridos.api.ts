@@ -1,5 +1,6 @@
 import { apiClient } from '../../api/client';
 import type {
+  AnalisisResponse,
   ColegioResponse,
   RecalculoResponse,
   RecorridoResponse,
@@ -29,6 +30,10 @@ export const recorridosApi = {
 
   getColegios: async (): Promise<ColegioResponse[]> => {
     return apiClient.get<ColegioResponse[]>('/recorridos/colegios');
+  },
+
+  getAnalisis: async (): Promise<AnalisisResponse> => {
+    return apiClient.get<AnalisisResponse>('/recorridos/analisis');
   },
 
   recalcularTodos: async (): Promise<RecalculoResponse> => {

@@ -1,4 +1,8 @@
-import { formatearDistancia, formatearDuracion } from '../../shared/utils/geo.helpers';
+import {
+  formatearDistancia,
+  formatearDuracion,
+  formatearKilometros,
+} from '../../shared/utils/geo.helpers';
 import { Skeleton } from '../../shared/ui/Skeleton';
 import type { RecorridoResponse } from '../types/recorrido.types';
 
@@ -6,12 +10,6 @@ export interface RecorridosResumenProps {
   recorridos: RecorridoResponse[];
   isLoading: boolean;
 }
-
-/** Formatea kilómetros mensuales truncando a dos decimales, como el resto del sistema. */
-const formatearKilometros = (kilometros: number): string => {
-  const truncado = Math.trunc(kilometros * 100) / 100;
-  return `${truncado.toFixed(2).replace('.', ',')} km`;
-};
 
 /** Tabla de recorridos calculados del titular: uno por colegio de destino. */
 export const RecorridosResumen = ({ recorridos, isLoading }: RecorridosResumenProps) => {

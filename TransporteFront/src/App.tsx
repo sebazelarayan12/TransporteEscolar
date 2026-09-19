@@ -48,6 +48,9 @@ const PagosMovimientosPage = lazy(() =>
 const GastosControlPage = lazy(() =>
   import('./gastos/pages/GastosControlPage').then((module) => ({ default: module.GastosControlPage }))
 );
+const AnalisisKilometrosPage = lazy(() =>
+  import('./recorridos/pages/AnalisisKilometrosPage').then((module) => ({ default: module.AnalisisKilometrosPage }))
+);
 const NotFoundPage = lazy(() =>
   import('./app/NotFoundPage').then((module) => ({ default: module.NotFoundPage }))
 );
@@ -91,6 +94,7 @@ function App() {
                   <Route path="pagos" element={<PagosListPage />} />
                   <Route path="pagos/movimientos" element={<PagosMovimientosPage />} />
                   <Route path="gastos" element={<GastosControlPage />} />
+                  <Route path="recorridos" element={<AnalisisKilometrosPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>
               </Routes>

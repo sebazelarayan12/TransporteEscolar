@@ -3,6 +3,7 @@ import {
   formatearCoordenada,
   formatearDistancia,
   formatearDuracion,
+  formatearKilometros,
   TUCUMAN_CENTRO,
 } from '../geo.helpers';
 
@@ -40,6 +41,32 @@ describe('geo.helpers', () => {
 
     it('devuelve un guion cuando no hay dato', () => {
       expect(formatearDistancia(0)).toBe('—');
+    });
+  });
+
+  describe('formatearKilometros', () => {
+    it('trunca hacia cero en vez de redondear', () => {
+      // 122,449 -> 122,44 y no 122,45; 3,069 -> 3,06 y no 3,07
+      expect(formatearKilometros(122.449)).toBe('122,44 km');
+      expect(formatearKilometros(3.069)).toBe('3,06 km');
+    });
+
+    it('usa coma decimal y el sufijo km', () => {
+      expect(formatearKilometros(15)).toBe('15,00 km');
+      expect(formatearKilometros(0.5)).toBe('0,50 km');
+    });
+
+    it('devuelve un guion cuando el valor es cero', () => {
+      expect(formatearKilometros(0)).toBe('—');
+    });
+
+    it('devuelve un guion cuando el valor es negativo', () => {
+      expect(formatearKilometros(-4.2)).toBe('—');
+    });
+
+    it('devuelve un guion cuando el valor no es un numero finito', () => {
+      expect(formatearKilometros(Number.NaN)).toBe('—');
+      expect(formatearKilometros(Number.POSITIVE_INFINITY)).toBe('—');
     });
   });
 

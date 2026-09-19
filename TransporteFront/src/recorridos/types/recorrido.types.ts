@@ -48,6 +48,24 @@ export interface ColegioResponse {
   longitud: number;
 }
 
+export interface AnalisisFila {
+  titularId: number;
+  apellido: string;
+  montoMensual: number;
+  colegios: string[];
+  kilometrosMensuales: number;
+  precioPorKilometro: number | null;
+  tieneUbicacion: boolean;
+}
+
+export interface AnalisisResponse {
+  filas: AnalisisFila[];
+  kilometrosTotales: number;
+  recaudacionTotal: number;
+  precioPromedioPorKilometro: number | null;
+  titularesSinUbicacion: number;
+}
+
 /** Resultado del buscador de direcciones. */
 export interface SugerenciaDireccion {
   id: string;
