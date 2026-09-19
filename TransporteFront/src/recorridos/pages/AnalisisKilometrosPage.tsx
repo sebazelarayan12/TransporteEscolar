@@ -86,7 +86,9 @@ export const AnalisisKilometrosPage = () => {
             role="status"
             className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-100"
           >
-            Recalculando en el servidor. Puede tardar unos segundos; no cierres la página.
+            {recalculando
+              ? 'Recalculando los recorridos en el servidor. Puede tardar varios minutos; no cierres la página. Si la conexión se corta, el cálculo continúa igual: refrescá el análisis en unos minutos.'
+              : 'Recalculando el reparto en el servidor. Puede tardar unos segundos; no cierres la página.'}
           </p>
         ) : null}
 
