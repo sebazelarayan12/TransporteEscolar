@@ -34,7 +34,8 @@ const respuestaSchema = z.array(resultadoSchema);
  *
  * @param consulta Texto libre. Si tiene menos de 3 caracteres devuelve una lista vacía sin consultar.
  * @param signal Señal para cancelar la consulta cuando el usuario sigue escribiendo.
- * @returns Sugerencias ordenadas por relevancia. Devuelve lista vacía ante cualquier error.
+ * @returns Sugerencias ordenadas por relevancia. Una lista vacía significa "sin resultados".
+ * @throws Error si Nominatim responde con error o con un formato inesperado, o si falla la red.
  */
 export const buscarDirecciones = async (
   consulta: string,
@@ -56,36 +57,29 @@ export const buscarDirecciones = async (
     'accept-language': 'es',
   });
 
-  try {
-    const respuesta = await fetch(`${NOMINATIM_URL}?${parametros.toString()}`, { signal });
+  // Los errores se propagan a propósito: esta función corre dentro de TanStack Query, y un
+  // fallo devuelto como lista vacía se cachearía como "sin resultados" válido durante 24 horas.
+  // Una búsqueda cancelada (AbortError) también propaga: TanStack la maneja solo.
+  const respuesta = await fetch(`${NOMINATIM_URL}?${parametros.toString()}`, { signal });
 
-    if (!respuesta.ok) {
-      return [];
-    }
-
-    const datos = respuestaSchema.safeParse(await respuesta.json());
-
-    if (!datos.success) {
-      return [];
-    }
-
-    return datos.data
-      .map((resultado) => ({
-        id: String(resultado.place_id),
-        etiqueta: resultado.display_name,
-        latitud: Number.parseFloat(resultado.lat),
-        longitud: Number.parseFloat(resultado.lon),
-      }))
-      .filter(
-        (sugerencia) => Number.isFinite(sugerencia.latitud) && Number.isFinite(sugerencia.longitud),
-      );
-  } catch (error) {
-    // Una búsqueda cancelada es lo normal mientras alguien escribe: no es un error que reportar.
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      return [];
-    }
-
-    console.error('Error al buscar direcciones', error);
-    return [];
+  if (!respuesta.ok) {
+    throw new Error(`Nominatim respondió ${respuesta.status}`);
   }
+
+  const datos = respuestaSchema.safeParse(await respuesta.json());
+
+  if (!datos.success) {
+    throw new Error('Nominatim devolvió una respuesta con un formato inesperado');
+  }
+
+  return datos.data
+    .map((resultado) => ({
+      id: String(resultado.place_id),
+      etiqueta: resultado.display_name,
+      latitud: Number.parseFloat(resultado.lat),
+      longitud: Number.parseFloat(resultado.lon),
+    }))
+    .filter(
+      (sugerencia) => Number.isFinite(sugerencia.latitud) && Number.isFinite(sugerencia.longitud),
+    );
 };

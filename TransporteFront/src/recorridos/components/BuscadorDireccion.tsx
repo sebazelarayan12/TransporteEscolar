@@ -29,7 +29,7 @@ export const BuscadorDireccion = ({ onSeleccionar, disabled = false }: BuscadorD
 
   // Una vez elegida una sugerencia, su etiqueta queda en el input: no se vuelve a buscar
   // para no gastar cuota de Nominatim.
-  const { data: sugerencias = [], isFetching } = useBuscarDirecciones(consultaRetrasada, {
+  const { data: sugerencias = [], isFetching, isError } = useBuscarDirecciones(consultaRetrasada, {
     enabled: consultaRetrasada !== seleccionado,
   });
 
@@ -63,7 +63,7 @@ export const BuscadorDireccion = ({ onSeleccionar, disabled = false }: BuscadorD
         disabled={disabled}
         placeholder="Av. Aconquija 1500, Yerba Buena"
         autoComplete="off"
-        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-[#007a8a] focus:outline-none focus:ring-1 focus:ring-[#007a8a] disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
       />
 
       {isFetching ? (
@@ -86,7 +86,13 @@ export const BuscadorDireccion = ({ onSeleccionar, disabled = false }: BuscadorD
         </ul>
       ) : null}
 
-      {!isFetching && consultaRetrasada.trim().length >= 3 && hayConsultaNueva && sugerencias.length === 0 ? (
+      {!isFetching && isError && hayConsultaNueva ? (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          No se pudo buscar la dirección ahora. Podés ubicar el pin directamente en el mapa.
+        </p>
+      ) : null}
+
+      {!isFetching && !isError && consultaRetrasada.trim().length >= 3 && hayConsultaNueva && sugerencias.length === 0 ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Sin resultados. Podés ubicar el pin directamente en el mapa.
         </p>

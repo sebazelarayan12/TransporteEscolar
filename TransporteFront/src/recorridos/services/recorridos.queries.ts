@@ -47,6 +47,8 @@ export const useBuscarDirecciones = (consulta: string, options?: { enabled?: boo
     enabled: texto.length >= 3 && (options?.enabled ?? true),
     staleTime: UN_DIA_MS,
     gcTime: UN_DIA_MS,
+    // Reintentar de inmediato ante un 429 de Nominatim empeora el bloqueo.
+    retry: false,
   });
 };
 
