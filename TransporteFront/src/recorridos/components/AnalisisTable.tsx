@@ -31,9 +31,11 @@ export const AnalisisTable = ({ filas }: AnalisisTableProps) => {
           <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
             <th scope="col" className="px-4 py-3 font-semibold">Titular</th>
             <th scope="col" className="px-4 py-3 font-semibold">Colegios</th>
-            <th scope="col" className="px-4 py-3 font-semibold">Km/mes</th>
+            <th scope="col" className="px-4 py-3 font-semibold">Km directos/mes</th>
             <th scope="col" className="px-4 py-3 font-semibold">Cuota</th>
-            <th scope="col" className="px-4 py-3 font-semibold">$/km</th>
+            <th scope="col" className="px-4 py-3 font-semibold">$/km directo</th>
+            <th scope="col" className="px-4 py-3 font-semibold">Km marginales/mes</th>
+            <th scope="col" className="px-4 py-3 font-semibold">$/km marginal</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100 dark:divide-zinc-700/50">
@@ -63,6 +65,20 @@ export const AnalisisTable = ({ filas }: AnalisisTableProps) => {
               </td>
               <td className="px-4 py-3 font-semibold text-zinc-900 dark:text-zinc-100">
                 {fila.precioPorKilometro === null ? <SinDato /> : <Amount value={fila.precioPorKilometro} />}
+              </td>
+              <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                {fila.kilometrosMarginalesMensuales > 0 ? (
+                  formatearKilometros(fila.kilometrosMarginalesMensuales)
+                ) : (
+                  <SinDato />
+                )}
+              </td>
+              <td className="px-4 py-3 font-semibold text-zinc-900 dark:text-zinc-100">
+                {fila.precioPorKilometroMarginal === null ? (
+                  <SinDato />
+                ) : (
+                  <Amount value={fila.precioPorKilometroMarginal} />
+                )}
               </td>
             </tr>
           ))}

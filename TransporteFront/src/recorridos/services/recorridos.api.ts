@@ -2,11 +2,19 @@ import { apiClient } from '../../api/client';
 import type {
   AnalisisResponse,
   ColegioResponse,
+  RecalculoMarginalResponse,
   RecalculoResponse,
   RecorridoResponse,
   UbicacionRequest,
   UbicacionResponse,
 } from '../types/recorrido.types';
+
+/**
+ * Los recálculos masivos hacen decenas de consultas al motor de ruteo (con pausa entre cada una), así
+ * que pueden tardar varios minutos. El timeout global de `apiClient` es de 30 s, por eso solo estos dos
+ * pedidos usan uno más largo.
+ */
+const RECALCULO_TIMEOUT_MS = 10 * 60 * 1000;
 
 export const recorridosApi = {
   /** Devuelve el pin del titular, o null si el backend respondió 204. */
@@ -37,6 +45,19 @@ export const recorridosApi = {
   },
 
   recalcularTodos: async (): Promise<RecalculoResponse> => {
-    return apiClient.post<RecalculoResponse>('/recorridos/recalcular');
+    // Se usa la instancia de axios para poder pasar un timeout propio; mantiene baseURL e interceptores.
+    const respuesta = await apiClient
+      .getAxiosInstance()
+      .post<RecalculoResponse>('/recorridos/recalcular', undefined, { timeout: RECALCULO_TIMEOUT_MS });
+    return respuesta.data;
+  },
+
+  recalcularMarginal: async (): Promise<RecalculoMarginalResponse> => {
+    const respuesta = await apiClient
+      .getAxiosInstance()
+      .post<RecalculoMarginalResponse>('/recorridos/recalcular-marginal', undefined, {
+        timeout: RECALCULO_TIMEOUT_MS,
+      });
+    return respuesta.data;
   },
 };

@@ -40,6 +40,12 @@ export interface RecalculoResponse {
   titularesSinUbicacion: number[];
 }
 
+export interface RecalculoMarginalResponse {
+  horariosProcesados: number;
+  consultasRealizadas: number;
+  fallidos: number;
+}
+
 export interface ColegioResponse {
   id: number;
   nombre: string;
@@ -56,6 +62,9 @@ export interface AnalisisFila {
   kilometrosMensuales: number;
   precioPorKilometro: number | null;
   tieneUbicacion: boolean;
+  /** Km/mes que el recorrido real del viaje crece por pasar a buscar a esta familia. 0 si no hay datos. */
+  kilometrosMarginalesMensuales: number;
+  precioPorKilometroMarginal: number | null;
 }
 
 export interface AnalisisResponse {
