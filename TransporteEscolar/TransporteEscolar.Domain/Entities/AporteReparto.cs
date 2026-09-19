@@ -16,22 +16,33 @@ public class AporteReparto
     /// <summary>Metros del recorrido asignados a esta familia. Nunca negativo.</summary>
     public int MetrosAsignados { get; private set; }
 
+    /// <summary>Posición de esta parada dentro del orden real de visita del viaje (1-based).</summary>
+    public int Orden { get; private set; }
+
     /// <summary>Constructor para EF Core.</summary>
     private AporteReparto()
     {
     }
 
-    internal AporteReparto(int titularId, int metrosAsignados)
+    internal AporteReparto(int titularId, int metrosAsignados, int orden)
     {
         if (titularId <= 0)
             throw new ArgumentOutOfRangeException(nameof(titularId), titularId, "El id del titular debe ser mayor a cero");
 
+        if (orden <= 0)
+            throw new ArgumentOutOfRangeException(nameof(orden), orden, "El orden debe ser mayor a cero");
+
         TitularId = titularId;
         MetrosAsignados = Math.Max(0, metrosAsignados);
+        Orden = orden;
     }
 
-    internal void ActualizarMetros(int metrosAsignados)
+    internal void ActualizarMetros(int metrosAsignados, int orden)
     {
+        if (orden <= 0)
+            throw new ArgumentOutOfRangeException(nameof(orden), orden, "El orden debe ser mayor a cero");
+
         MetrosAsignados = Math.Max(0, metrosAsignados);
+        Orden = orden;
     }
 }

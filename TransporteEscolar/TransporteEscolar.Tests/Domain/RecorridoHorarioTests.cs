@@ -33,11 +33,12 @@ public class RecorridoHorarioTests
     {
         var snapshot = new RecorridoHorario(1, 1, 18500, 6);
 
-        snapshot.AgregarAporte(3, 1200);
+        snapshot.AgregarAporte(3, 1200, 1);
 
         snapshot.Aportes.Should().ContainSingle();
         snapshot.Aportes.First().TitularId.Should().Be(3);
         snapshot.Aportes.First().MetrosAsignados.Should().Be(1200);
+        snapshot.Aportes.First().Orden.Should().Be(1);
     }
 
     [Fact]
@@ -46,7 +47,7 @@ public class RecorridoHorarioTests
         // El valor de Shapley nunca da negativo; este es un caso defensivo, no esperado.
         var snapshot = new RecorridoHorario(1, 1, 18500, 6);
 
-        snapshot.AgregarAporte(3, -500);
+        snapshot.AgregarAporte(3, -500, 1);
 
         snapshot.Aportes.First().MetrosAsignados.Should().Be(0);
     }
@@ -56,18 +57,41 @@ public class RecorridoHorarioTests
     {
         var snapshot = new RecorridoHorario(1, 1, 18500, 6);
 
-        snapshot.AgregarAporte(3, 1200);
-        snapshot.AgregarAporte(3, 900);
+        snapshot.AgregarAporte(3, 1200, 1);
+        snapshot.AgregarAporte(3, 900, 1);
 
         snapshot.Aportes.Should().ContainSingle();
         snapshot.Aportes.First().MetrosAsignados.Should().Be(900);
     }
 
     [Fact]
+    public void AgregarAporte_ConOrdenesDistintos_ConservaElOrdenDeCadaTitular()
+    {
+        var snapshot = new RecorridoHorario(1, 1, 18500, 6);
+
+        snapshot.AgregarAporte(3, 1200, 2);
+        snapshot.AgregarAporte(5, 800, 1);
+
+        snapshot.Aportes.Single(a => a.TitularId == 3).Orden.Should().Be(2);
+        snapshot.Aportes.Single(a => a.TitularId == 5).Orden.Should().Be(1);
+    }
+
+    [Fact]
+    public void AgregarAporte_DosVecesElMismoTitular_ActualizaElOrden()
+    {
+        var snapshot = new RecorridoHorario(1, 1, 18500, 6);
+
+        snapshot.AgregarAporte(3, 1200, 2);
+        snapshot.AgregarAporte(3, 900, 1);
+
+        snapshot.Aportes.Single().Orden.Should().Be(1);
+    }
+
+    [Fact]
     public void Reemplazar_ActualizaLosDatosYLimpiaLosAportes()
     {
         var snapshot = new RecorridoHorario(1, 1, 18500, 6);
-        snapshot.AgregarAporte(3, 1200);
+        snapshot.AgregarAporte(3, 1200, 1);
 
         snapshot.Reemplazar(20000, 7);
 

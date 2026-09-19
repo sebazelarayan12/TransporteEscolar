@@ -1,3 +1,5 @@
+using TransporteEscolar.Domain.Enums;
+
 namespace TransporteEscolar.Domain.Entities;
 
 public class Horario
@@ -15,6 +17,9 @@ public class Horario
     /// <summary>Navegación al colegio de destino.</summary>
     public Colegio? Colegio { get; private set; }
 
+    /// <summary>Dirección del recorrido: de las casas al colegio, o del colegio a las casas.</summary>
+    public SentidoHorario Sentido { get; private set; }
+
     public ICollection<PasajeroHorario> PasajeroHorarios { get; private set; }
 
     private Horario()
@@ -29,6 +34,7 @@ public class Horario
 
         Etiqueta = etiqueta.Trim();
         Orden = orden;
+        Sentido = SentidoHorario.Ida;
         PasajeroHorarios = new List<PasajeroHorario>();
     }
 
@@ -54,5 +60,11 @@ public class Horario
             throw new ArgumentOutOfRangeException(nameof(colegioId), colegioId, "El id del colegio debe ser mayor a cero");
 
         ColegioId = colegioId;
+    }
+
+    /// <summary>Cambia el sentido del recorrido de este horario.</summary>
+    public void AsignarSentido(SentidoHorario sentido)
+    {
+        Sentido = sentido;
     }
 }

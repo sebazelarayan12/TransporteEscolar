@@ -63,17 +63,18 @@ public class RecorridoHorario
     /// El valor de Shapley nunca da negativo; el recorte a cero es una red de seguridad defensiva,
     /// no un caso esperado.
     /// </summary>
-    public void AgregarAporte(int titularId, int metrosAsignados)
+    /// <param name="orden">Posición de esta parada en el orden real de visita del viaje (1-based).</param>
+    public void AgregarAporte(int titularId, int metrosAsignados, int orden)
     {
         var existente = _aportes.FirstOrDefault(a => a.TitularId == titularId);
 
         if (existente is not null)
         {
-            existente.ActualizarMetros(metrosAsignados);
+            existente.ActualizarMetros(metrosAsignados, orden);
             return;
         }
 
-        _aportes.Add(new AporteReparto(titularId, metrosAsignados));
+        _aportes.Add(new AporteReparto(titularId, metrosAsignados, orden));
     }
 
     private static void ValidarMedidas(int distanciaTotalMetros, int cantidadParadas)

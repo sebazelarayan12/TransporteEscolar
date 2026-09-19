@@ -108,7 +108,8 @@ public class RecorridoRepartoService : IRecorridoRepartoService
                 continue;
             }
 
-            var reparto = RepartoShapley.Calcular(matriz, paradas.Count);
+            // TODO Task 22: usar la ParadaFija real del viaje y el ExtremoFijo según Horario.Sentido.
+            var reparto = RepartoShapley.Calcular(matriz, paradas.Count, 0, ExtremoFijo.Primera);
 
             if (reparto is null)
             {
@@ -138,7 +139,8 @@ public class RecorridoRepartoService : IRecorridoRepartoService
 
             for (var indice = 0; indice < participantes.Count; indice++)
             {
-                snapshot.AgregarAporte(participantes[indice], reparto.MetrosPorParada[indice]);
+                // TODO Task 22: usar reparto.Orden en vez del índice + 1 provisorio.
+                snapshot.AgregarAporte(participantes[indice], reparto.MetrosPorParada[indice], indice + 1);
             }
 
             await _snapshotRepository.UpsertAsync(snapshot, cancellationToken);
