@@ -72,11 +72,12 @@ public class OsrmRutaProvider : IRutaProvider
         var puntos = paradas.Select(p => p.ToOsrm()).Append(destino.ToOsrm());
         var coordenadas = string.Join(';', puntos);
 
-        // source=first  -> arranca en la primera parada
+        // source=any       -> el motor elige la mejor parada inicial (fijar la primera
+        //                     distorsiona la ruta: el orden de entrada es arbitrario)
         // destination=last -> termina en el colegio
         // roundtrip=false  -> no vuelve al punto de partida
         var url = $"/trip/v1/{_options.PerfilVehiculo}/{coordenadas}" +
-                  "?source=first&destination=last&roundtrip=false&overview=full&geometries=polyline";
+                  "?source=any&destination=last&roundtrip=false&overview=full&geometries=polyline";
 
         return await EjecutarAsync(url, respuesta => respuesta.Trips, cancellationToken)
             .ConfigureAwait(false);
