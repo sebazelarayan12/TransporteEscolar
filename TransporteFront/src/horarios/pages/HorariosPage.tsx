@@ -7,6 +7,7 @@ import { useAgregarHorarioPasajero, useEliminarHorarioPasajero, usePasajerosActi
 import { useHorarioPasajeros, useHorarios, sortHorariosByOrden } from '../services/horarios.queries';
 import { HorarioAsignacionPanel } from '../components/HorarioAsignacionPanel';
 import { ParadaFijaSelector } from '../components/ParadaFijaSelector';
+import { RecorridoViajePanel } from '../../recorridos/components/RecorridoViajePanel';
 import { HorariosGrid } from '../components/HorariosGrid';
 import { HorariosHeader } from '../components/HorariosHeader';
 import { HorariosError } from '../components/HorariosError';
@@ -110,6 +111,7 @@ export const HorariosPage = () => {
         pasajerosDelHorario={detalleHorario?.pasajeros ?? []}
         isLoadingPasajeros={isLoadingDetalle}
       />
+      <RecorridoViajePanel horarioId={drawer.selectedHorarioId} transporte={drawer.selectedTransporte} />
       <HorarioAsignacionPanel
         selectedHorario={selectedHorario}
         detalleHorario={detalleHorario}

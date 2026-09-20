@@ -109,3 +109,39 @@ export interface SugerenciaDireccion {
   latitud: number;
   longitud: number;
 }
+
+/** Sentido del horario tal como lo devuelve el backend (`ToString()` del enum). */
+export const SENTIDOS_HORARIO = {
+  IDA: 'Ida',
+  VUELTA: 'Vuelta',
+} as const;
+
+export type SentidoHorario = (typeof SENTIDOS_HORARIO)[keyof typeof SENTIDOS_HORARIO];
+
+/** Una parada del recorrido de un viaje, en orden de visita. */
+export interface ParadaRecorrido {
+  orden: number;
+  titularId: number;
+  apellido: string;
+  /** Metros desde el punto anterior del recorrido (0 si es el punto de partida). */
+  metrosTramoAnterior: number;
+  /** Metros del viaje que le tocan a esa familia por el reparto (no son mensuales). */
+  metrosAsignados: number;
+  /** Si es la casa elegida a mano para anclar el recorrido. */
+  esParadaFija: boolean;
+}
+
+/** Recorrido calculado de un viaje concreto (horario + vehículo), listo para mostrar en pantalla. */
+export interface RecorridoViajeResponse {
+  horarioId: number;
+  horarioEtiqueta: string;
+  sentido: SentidoHorario;
+  transporte: TransporteTipo;
+  colegioNombre: string;
+  distanciaTotalMetros: number;
+  duracionTotalSegundos: number;
+  /** Metros de la última casa al colegio. Cero en los viajes de vuelta. */
+  metrosTramoFinal: number;
+  fechaCalculo: string;
+  paradas: ParadaRecorrido[];
+}

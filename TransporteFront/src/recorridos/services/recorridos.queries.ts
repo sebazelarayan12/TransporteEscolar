@@ -99,7 +99,9 @@ export const useRecalcularReparto = () => {
   return useMutation({
     mutationFn: () => recorridosApi.recalcularReparto(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: recorridosKeys.analisis() });
+      // El reparto recalcula el análisis y los tramos de cada viaje: invalida todo el dominio para que
+      // el panel de recorrido de Horarios no quede mostrando datos viejos.
+      queryClient.invalidateQueries({ queryKey: recorridosKeys.all });
     },
   });
 };
@@ -154,5 +156,14 @@ export const useEliminarParadaFija = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: recorridosKeys.paradasFijas() });
     },
+  });
+};
+
+/** Recorrido calculado de un viaje concreto. `null` cuando el backend respondió 204 (todavía no se repartió). */
+export const useRecorridoViaje = (horarioId: number | null, transporte: TransporteTipo) => {
+  return useQuery({
+    queryKey: recorridosKeys.recorridoViaje(horarioId ?? 0, transporte),
+    queryFn: () => recorridosApi.getRecorridoViaje(horarioId!, transporte),
+    enabled: Boolean(horarioId) && Boolean(transporte),
   });
 };

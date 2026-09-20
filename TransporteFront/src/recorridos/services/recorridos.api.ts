@@ -8,6 +8,7 @@ import type {
   RecalculoRepartoResponse,
   RecalculoResponse,
   RecorridoResponse,
+  RecorridoViajeResponse,
   UbicacionRequest,
   UbicacionResponse,
 } from '../types/recorrido.types';
@@ -81,5 +82,16 @@ export const recorridosApi = {
 
   deleteParadaFija: async (horarioId: number, transporte: TransporteTipo): Promise<void> => {
     return apiClient.delete<void>(`/recorridos/horarios/${horarioId}/transportes/${transporte}/parada-fija`);
+  },
+
+  /** Recorrido calculado de un viaje, o null si el backend respondió 204 (todavía no se repartió). */
+  getRecorridoViaje: async (
+    horarioId: number,
+    transporte: TransporteTipo,
+  ): Promise<RecorridoViajeResponse | null> => {
+    const respuesta = await apiClient.get<RecorridoViajeResponse | ''>(
+      `/recorridos/horarios/${horarioId}/transportes/${transporte}`,
+    );
+    return respuesta === '' || respuesta === null ? null : respuesta;
   },
 };
