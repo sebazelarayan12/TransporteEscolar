@@ -20,6 +20,15 @@ public class RecorridoHorario
 
     public int CantidadParadas { get; private set; }
 
+    /// <summary>
+    /// Metros de la última casa al colegio. Cero en los viajes de vuelta, donde el recorrido
+    /// termina en una casa (ver la convención de tramos en la documentación de <see cref="AgregarAporte"/>).
+    /// </summary>
+    public int MetrosTramoFinal { get; private set; }
+
+    /// <summary>Duración total estimada del recorrido, en segundos. Nunca negativo.</summary>
+    public int DuracionTotalSegundos { get; private set; }
+
     public DateTime FechaCalculo { get; private set; }
 
     public IReadOnlyCollection<AporteReparto> Aportes => _aportes.AsReadOnly();
@@ -30,7 +39,13 @@ public class RecorridoHorario
     }
 
     /// <exception cref="ArgumentOutOfRangeException">Si algún valor es inválido.</exception>
-    public RecorridoHorario(int horarioId, byte transporte, int distanciaTotalMetros, int cantidadParadas)
+    public RecorridoHorario(
+        int horarioId,
+        byte transporte,
+        int distanciaTotalMetros,
+        int cantidadParadas,
+        int metrosTramoFinal,
+        int duracionTotalSegundos)
     {
         if (horarioId <= 0)
             throw new ArgumentOutOfRangeException(nameof(horarioId), horarioId, "El id del horario debe ser mayor a cero");
@@ -40,10 +55,18 @@ public class RecorridoHorario
 
         ValidarMedidas(distanciaTotalMetros, cantidadParadas);
 
+        if (metrosTramoFinal < 0)
+            throw new ArgumentOutOfRangeException(nameof(metrosTramoFinal), metrosTramoFinal, "El tramo final no puede ser negativo");
+
+        if (duracionTotalSegundos < 0)
+            throw new ArgumentOutOfRangeException(nameof(duracionTotalSegundos), duracionTotalSegundos, "La duración no puede ser negativa");
+
         HorarioId = horarioId;
         Transporte = transporte;
         DistanciaTotalMetros = distanciaTotalMetros;
         CantidadParadas = cantidadParadas;
+        MetrosTramoFinal = metrosTramoFinal;
+        DuracionTotalSegundos = duracionTotalSegundos;
         FechaCalculo = DateTime.UtcNow;
     }
 
@@ -64,17 +87,24 @@ public class RecorridoHorario
     /// no un caso esperado.
     /// </summary>
     /// <param name="orden">Posición de esta parada en el orden real de visita del viaje (1-based).</param>
-    public void AgregarAporte(int titularId, int metrosAsignados, int orden)
+    /// <param name="metrosTramoAnterior">
+    /// Metros desde el punto anterior del recorrido hasta esta casa. Convención uniforme para los
+    /// dos sentidos: en ida, el tramo de la primera parada es cero (ahí arranca el recorrido) y
+    /// <see cref="MetrosTramoFinal"/> es la distancia de la última casa al colegio; en vuelta, el
+    /// tramo de la primera parada es la distancia desde el colegio y <see cref="MetrosTramoFinal"/>
+    /// es cero (el recorrido termina en una casa).
+    /// </param>
+    public void AgregarAporte(int titularId, int metrosAsignados, int orden, int metrosTramoAnterior)
     {
         var existente = _aportes.FirstOrDefault(a => a.TitularId == titularId);
 
         if (existente is not null)
         {
-            existente.ActualizarMetros(metrosAsignados, orden);
+            existente.ActualizarMetros(metrosAsignados, orden, metrosTramoAnterior);
             return;
         }
 
-        _aportes.Add(new AporteReparto(titularId, metrosAsignados, orden));
+        _aportes.Add(new AporteReparto(titularId, metrosAsignados, orden, metrosTramoAnterior));
     }
 
     private static void ValidarMedidas(int distanciaTotalMetros, int cantidadParadas)

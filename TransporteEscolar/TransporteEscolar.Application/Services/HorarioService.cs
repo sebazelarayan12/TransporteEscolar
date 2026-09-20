@@ -42,7 +42,8 @@ public class HorarioService : IHorarioService
                     h.Etiqueta,
                     h.Orden,
                     conteo.TransporteUno + conteo.TransporteDos,
-                    conteo);
+                    conteo,
+                    h.Sentido.ToString());
             })
             .ToList();
     }

@@ -17,6 +17,8 @@ public class RecorridoHorarioConfiguration : IEntityTypeConfiguration<RecorridoH
         builder.Property(r => r.Transporte).IsRequired();
         builder.Property(r => r.DistanciaTotalMetros).IsRequired();
         builder.Property(r => r.CantidadParadas).IsRequired();
+        builder.Property(r => r.MetrosTramoFinal).IsRequired();
+        builder.Property(r => r.DuracionTotalSegundos).IsRequired();
         builder.Property(r => r.FechaCalculo).IsRequired();
 
         builder.HasIndex(r => new { r.HorarioId, r.Transporte }).IsUnique();

@@ -8,6 +8,11 @@ namespace TransporteEscolar.Application.Interfaces;
 /// <param name="GeometriaPolyline">Geometría codificada para dibujar la ruta, o null si no se pidió.</param>
 public sealed record RutaCalculada(int DistanciaMetros, int DuracionSegundos, string? GeometriaPolyline);
 
+/// <summary>Matrices de un viaje: metros y segundos entre cada par de puntos.</summary>
+/// <param name="Distancias"><c>Distancias[i][j]</c> = metros de <c>i</c> a <c>j</c>.</param>
+/// <param name="Duraciones"><c>Duraciones[i][j]</c> = segundos de <c>i</c> a <c>j</c>.</param>
+public sealed record MatrizViaje(double[][] Distancias, double[][] Duraciones);
+
 /// <summary>
 /// Motor de ruteo por calles. La implementación concreta vive en Infrastructure.
 /// </summary>
@@ -37,14 +42,11 @@ public interface IRutaProvider
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Devuelve la matriz de distancias en metros entre todos los puntos indicados.
+    /// Devuelve las matrices de distancia y duración entre todos los puntos indicados.
     /// </summary>
     /// <param name="puntos">Puntos a medir. El resultado es cuadrado, del mismo tamaño.</param>
-    /// <returns>
-    /// <c>matriz[i][j]</c> = metros de <c>puntos[i]</c> a <c>puntos[j]</c>, o <c>null</c> si el motor
-    /// falló o si algún par resultó inalcanzable.
-    /// </returns>
-    Task<double[][]?> CalcularMatrizDistanciasAsync(
+    /// <returns><c>null</c> si el motor falló o si algún par resultó inalcanzable.</returns>
+    Task<MatrizViaje?> CalcularMatricesAsync(
         IReadOnlyList<Coordenada> puntos,
         CancellationToken cancellationToken = default);
 }

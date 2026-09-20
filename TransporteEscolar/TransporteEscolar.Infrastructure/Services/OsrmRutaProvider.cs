@@ -83,7 +83,7 @@ public class OsrmRutaProvider : IRutaProvider
             .ConfigureAwait(false);
     }
 
-    public async Task<double[][]?> CalcularMatrizDistanciasAsync(
+    public async Task<MatrizViaje?> CalcularMatricesAsync(
         IReadOnlyList<Coordenada> puntos,
         CancellationToken cancellationToken = default)
     {
@@ -91,7 +91,7 @@ public class OsrmRutaProvider : IRutaProvider
             return null;
 
         var coordenadas = string.Join(';', puntos.Select(p => p.ToOsrm()));
-        var url = $"/table/v1/{_options.PerfilVehiculo}/{coordenadas}?annotations=distance";
+        var url = $"/table/v1/{_options.PerfilVehiculo}/{coordenadas}?annotations=distance,duration";
 
         try
         {
@@ -113,34 +113,15 @@ public class OsrmRutaProvider : IRutaProvider
                 return null;
             }
 
-            var distancias = respuesta.Distances;
-            if (distancias is null || distancias.Count != puntos.Count)
+            var distancias = ExtraerMatriz(respuesta.Distances, puntos.Count, "distancia");
+            if (distancias is null)
                 return null;
 
-            var matriz = new double[puntos.Count][];
+            var duraciones = ExtraerMatriz(respuesta.Durations, puntos.Count, "duración");
+            if (duraciones is null)
+                return null;
 
-            for (var i = 0; i < puntos.Count; i++)
-            {
-                var fila = distancias[i];
-                if (fila is null || fila.Count != puntos.Count)
-                    return null;
-
-                matriz[i] = new double[puntos.Count];
-
-                for (var j = 0; j < puntos.Count; j++)
-                {
-                    // OSRM manda null cuando no hay camino entre dos puntos.
-                    if (fila[j] is not { } valor)
-                    {
-                        _logger.LogWarning("OSRM no encontró camino entre los puntos {Origen} y {Destino}", i, j);
-                        return null;
-                    }
-
-                    matriz[i][j] = valor;
-                }
-            }
-
-            return matriz;
+            return new MatrizViaje(distancias, duraciones);
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -157,6 +138,39 @@ public class OsrmRutaProvider : IRutaProvider
             _logger.LogError(ex, "La matriz de OSRM no se pudo interpretar");
             return null;
         }
+    }
+
+    /// <summary>Convierte una matriz cruda de OSRM (con posibles nulls) en una matriz de doubles, o null si es inválida.</summary>
+    private double[][]? ExtraerMatriz(List<List<double?>>? filas, int cantidadPuntos, string nombre)
+    {
+        if (filas is null || filas.Count != cantidadPuntos)
+            return null;
+
+        var matriz = new double[cantidadPuntos][];
+
+        for (var i = 0; i < cantidadPuntos; i++)
+        {
+            var fila = filas[i];
+            if (fila is null || fila.Count != cantidadPuntos)
+                return null;
+
+            matriz[i] = new double[cantidadPuntos];
+
+            for (var j = 0; j < cantidadPuntos; j++)
+            {
+                // OSRM manda null cuando no hay camino entre dos puntos.
+                if (fila[j] is not { } valor)
+                {
+                    _logger.LogWarning(
+                        "OSRM no encontró camino ({Nombre}) entre los puntos {Origen} y {Destino}", nombre, i, j);
+                    return null;
+                }
+
+                matriz[i][j] = valor;
+            }
+        }
+
+        return matriz;
     }
 
     private async Task<RutaCalculada?> EjecutarAsync(
@@ -258,5 +272,8 @@ public class OsrmRutaProvider : IRutaProvider
 
         [JsonPropertyName("distances")]
         public List<List<double?>>? Distances { get; set; }
+
+        [JsonPropertyName("durations")]
+        public List<List<double?>>? Durations { get; set; }
     }
 }

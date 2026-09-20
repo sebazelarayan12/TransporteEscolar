@@ -21,6 +21,13 @@ public class RecorridoHorarioRepository : IRecorridoHorarioRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<RecorridoHorario?> GetAsync(int horarioId, byte transporte, CancellationToken cancellationToken = default)
+    {
+        return await _context.RecorridosHorario
+            .Include(r => r.Aportes)
+            .FirstOrDefaultAsync(r => r.HorarioId == horarioId && r.Transporte == transporte, cancellationToken);
+    }
+
     public async Task UpsertAsync(RecorridoHorario snapshot, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(snapshot);

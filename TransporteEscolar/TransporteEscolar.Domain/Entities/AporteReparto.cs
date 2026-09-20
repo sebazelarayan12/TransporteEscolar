@@ -19,12 +19,18 @@ public class AporteReparto
     /// <summary>Posición de esta parada dentro del orden real de visita del viaje (1-based).</summary>
     public int Orden { get; private set; }
 
+    /// <summary>
+    /// Metros desde el punto anterior del recorrido hasta esta casa. Nunca negativo. Cero cuando
+    /// esta parada es la primera del recorrido (ver la convención de tramos en <see cref="RecorridoHorario"/>).
+    /// </summary>
+    public int MetrosTramoAnterior { get; private set; }
+
     /// <summary>Constructor para EF Core.</summary>
     private AporteReparto()
     {
     }
 
-    internal AporteReparto(int titularId, int metrosAsignados, int orden)
+    internal AporteReparto(int titularId, int metrosAsignados, int orden, int metrosTramoAnterior)
     {
         if (titularId <= 0)
             throw new ArgumentOutOfRangeException(nameof(titularId), titularId, "El id del titular debe ser mayor a cero");
@@ -35,14 +41,16 @@ public class AporteReparto
         TitularId = titularId;
         MetrosAsignados = Math.Max(0, metrosAsignados);
         Orden = orden;
+        MetrosTramoAnterior = Math.Max(0, metrosTramoAnterior);
     }
 
-    internal void ActualizarMetros(int metrosAsignados, int orden)
+    internal void ActualizarMetros(int metrosAsignados, int orden, int metrosTramoAnterior)
     {
         if (orden <= 0)
             throw new ArgumentOutOfRangeException(nameof(orden), orden, "El orden debe ser mayor a cero");
 
         MetrosAsignados = Math.Max(0, metrosAsignados);
         Orden = orden;
+        MetrosTramoAnterior = Math.Max(0, metrosTramoAnterior);
     }
 }

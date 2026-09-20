@@ -17,6 +17,7 @@ public class AporteRepartoConfiguration : IEntityTypeConfiguration<AporteReparto
         builder.Property(a => a.TitularId).IsRequired();
         builder.Property(a => a.MetrosAsignados).IsRequired();
         builder.Property(a => a.Orden).IsRequired();
+        builder.Property(a => a.MetrosTramoAnterior).IsRequired();
 
         builder.HasIndex(a => new { a.RecorridoHorarioId, a.TitularId }).IsUnique();
 

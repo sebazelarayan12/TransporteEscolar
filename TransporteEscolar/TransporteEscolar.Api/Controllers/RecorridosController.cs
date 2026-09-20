@@ -141,4 +141,22 @@ public class RecorridosController : ControllerBase
 
         return NoContent();
     }
+
+    /// <summary>
+    /// Recorrido calculado de un viaje concreto: sus paradas en orden de visita, con los tramos y
+    /// la duración estimada. 204 si ese viaje todavía no se repartió.
+    /// </summary>
+    [HttpGet("horarios/{horarioId}/transportes/{transporte}")]
+    public async Task<ActionResult<RecorridoViajeModel.Response>> GetRecorridoViaje(
+        int horarioId,
+        byte transporte,
+        CancellationToken cancellationToken)
+    {
+        var recorrido = await _recorridoRepartoService.ObtenerRecorridoViajeAsync(horarioId, transporte, cancellationToken);
+
+        if (recorrido is null)
+            return NoContent();
+
+        return Ok(recorrido);
+    }
 }

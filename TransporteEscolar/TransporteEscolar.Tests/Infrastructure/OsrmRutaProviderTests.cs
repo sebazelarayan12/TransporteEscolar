@@ -147,43 +147,58 @@ public class OsrmRutaProviderTests
     }
 
     private const string RespuestaMatriz = """
-    {"code":"Ok","distances":[[0,3060.6],[3055.2,0]]}
+    {"code":"Ok","distances":[[0,3060.6],[3055.2,0]],"durations":[[0,335.8],[330.1,0]]}
     """;
 
     [Fact]
-    public async Task CalcularMatrizDistanciasAsync_ConRespuestaOk_DevuelveLaMatriz()
+    public async Task CalcularMatricesAsync_ConRespuestaOk_DevuelveLasDosMatrices()
     {
         var (provider, urls) = CrearProvider(HttpStatusCode.OK, RespuestaMatriz);
 
-        var matriz = await provider.CalcularMatrizDistanciasAsync(new[] { Casa, Colegio });
+        var matriz = await provider.CalcularMatricesAsync(new[] { Casa, Colegio });
 
         matriz.Should().NotBeNull();
-        matriz![0][1].Should().Be(3060.6);
-        matriz[1][0].Should().Be(3055.2);
+        matriz!.Distancias[0][1].Should().Be(3060.6);
+        matriz.Distancias[1][0].Should().Be(3055.2);
+        matriz.Duraciones[0][1].Should().Be(335.8);
+        matriz.Duraciones[1][0].Should().Be(330.1);
         urls[0].AbsoluteUri.Should().Contain("/table/v1/");
-        urls[0].AbsoluteUri.Should().Contain("annotations=distance");
+        urls[0].AbsoluteUri.Should().Contain("annotations=distance,duration");
         urls[0].AbsoluteUri.Should().Contain("-65.2860859,-26.8225289");
     }
 
     [Fact]
-    public async Task CalcularMatrizDistanciasAsync_ConParInalcanzable_DevuelveNull()
+    public async Task CalcularMatricesAsync_ConParInalcanzable_DevuelveNull()
     {
         const string conNulo = """
-        {"code":"Ok","distances":[[0,null],[3055.2,0]]}
+        {"code":"Ok","distances":[[0,null],[3055.2,0]],"durations":[[0,335.8],[330.1,0]]}
         """;
         var (provider, _) = CrearProvider(HttpStatusCode.OK, conNulo);
 
-        var matriz = await provider.CalcularMatrizDistanciasAsync(new[] { Casa, Colegio });
+        var matriz = await provider.CalcularMatricesAsync(new[] { Casa, Colegio });
 
         matriz.Should().BeNull();
     }
 
     [Fact]
-    public async Task CalcularMatrizDistanciasAsync_SinPuntos_DevuelveNullSinLlamarAOsrm()
+    public async Task CalcularMatricesAsync_SinDurations_DevuelveNull()
+    {
+        const string sinDuraciones = """
+        {"code":"Ok","distances":[[0,3060.6],[3055.2,0]]}
+        """;
+        var (provider, _) = CrearProvider(HttpStatusCode.OK, sinDuraciones);
+
+        var matriz = await provider.CalcularMatricesAsync(new[] { Casa, Colegio });
+
+        matriz.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CalcularMatricesAsync_SinPuntos_DevuelveNullSinLlamarAOsrm()
     {
         var (provider, urls) = CrearProvider(HttpStatusCode.OK, RespuestaMatriz);
 
-        var matriz = await provider.CalcularMatrizDistanciasAsync(Array.Empty<Coordenada>());
+        var matriz = await provider.CalcularMatricesAsync(Array.Empty<Coordenada>());
 
         matriz.Should().BeNull();
         urls.Should().BeEmpty();

@@ -238,8 +238,8 @@ public class GetAnalisisKilometrosQueryHandlerTests
             .Setup(r => r.GetAsignacionesColegioAsync(null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<AsignacionColegio> { new(3, 1, 1) });
 
-        var snapshot = new RecorridoHorario(1, 1, 10000, 2);
-        snapshot.AgregarAporte(3, 2500, 1);
+        var snapshot = new RecorridoHorario(1, 1, 10000, 2, 0, 0);
+        snapshot.AgregarAporte(3, 2500, 1, 0);
 
         _recorridoHorarios
             .Setup(r => r.GetAllConAportesAsync(It.IsAny<CancellationToken>()))

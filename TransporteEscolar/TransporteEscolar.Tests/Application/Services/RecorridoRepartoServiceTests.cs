@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
+using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Application.Options;
@@ -38,6 +39,25 @@ public class RecorridoRepartoServiceTests
         horario.AsignarSentido(sentido);
         return horario;
     }
+
+    private static Horario CrearHorarioConColegio(int id, string etiqueta, SentidoHorario sentido, Colegio colegio)
+    {
+        var horario = CrearHorario(id, etiqueta, sentido);
+        typeof(Horario).GetProperty(nameof(Horario.Colegio))!.SetValue(horario, colegio);
+        return horario;
+    }
+
+    private static Titular CrearTitular(int id, string apellido)
+    {
+        var titular = new Titular(apellido, "Contacto", "Dirección", 1000m);
+        typeof(Titular).GetProperty(nameof(Titular.Id))!.SetValue(titular, id);
+        return titular;
+    }
+
+    /// <summary>Matriz de distancias envuelta como <see cref="MatrizViaje"/> para los mocks del proveedor.
+    /// Las duraciones son iguales a las distancias: no importa la magnitud real, solo que sean
+    /// positivas cuando hay distancia, para que <c>DuracionTotalSegundos</c> dé mayor que cero.</summary>
+    private static MatrizViaje CrearMatrizViaje(double[][] distancias) => new(distancias, distancias);
 
     private RecorridoRepartoService CrearServicio()
     {
@@ -112,15 +132,15 @@ public class RecorridoRepartoServiceTests
         ConfigurarParadaFija(1, 1, 10); // parada fija: el titular 10 (índice 0, la casa en x=10)
 
         _rutaProvider
-            .Setup(p => p.CalcularMatrizDistanciasAsync(
+            .Setup(p => p.CalcularMatricesAsync(
                 It.Is<IReadOnlyList<Coordenada>>(puntos => puntos.Count == 3),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[]
+            .ReturnsAsync(CrearMatrizViaje(new[]
             {
                 new[] { 0d, 5000d, 10000d },
                 new[] { 5000d, 0d, 5000d },
                 new[] { 10000d, 5000d, 0d }
-            });
+            }));
 
         RecorridoHorario? guardado = null;
         _snapshots
@@ -135,6 +155,18 @@ public class RecorridoRepartoServiceTests
         guardado!.DistanciaTotalMetros.Should().Be(10000);
         guardado.Aportes.Sum(a => a.MetrosAsignados).Should().Be(10000);
         guardado.Aportes.Should().OnlyContain(a => a.MetrosAsignados > 0);
+
+        // Ida: el primer tramo del recorrido es cero (ahí arranca) y el tramo final (última casa
+        // al colegio) es mayor a cero.
+        var primeraParada = guardado.Aportes.Single(a => a.Orden == 1);
+        primeraParada.MetrosTramoAnterior.Should().Be(0);
+        guardado.MetrosTramoFinal.Should().BeGreaterThan(0);
+        guardado.DuracionTotalSegundos.Should().BeGreaterThan(0);
+
+        // Invariante: la suma de los tramos más el final reconstruye el total exacto en este caso
+        // (sin errores de redondeo porque todas las distancias ya son enteras).
+        var sumaTramos = guardado.Aportes.Sum(a => a.MetrosTramoAnterior) + guardado.MetrosTramoFinal;
+        sumaTramos.Should().Be(guardado.DistanciaTotalMetros);
     }
 
     [Fact]
@@ -144,8 +176,8 @@ public class RecorridoRepartoServiceTests
         ConfigurarParadaFija(1, 1, 10);
 
         _rutaProvider
-            .Setup(p => p.CalcularMatrizDistanciasAsync(It.IsAny<IReadOnlyList<Coordenada>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((double[][]?)null);
+            .Setup(p => p.CalcularMatricesAsync(It.IsAny<IReadOnlyList<Coordenada>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((MatrizViaje?)null);
 
         var resultado = await CrearServicio().RecalcularAsync();
 
@@ -179,14 +211,14 @@ public class RecorridoRepartoServiceTests
 
         // Con un solo titular la matriz es 2x2: casa -> colegio = 5000 m.
         _rutaProvider
-            .Setup(p => p.CalcularMatrizDistanciasAsync(
+            .Setup(p => p.CalcularMatricesAsync(
                 It.Is<IReadOnlyList<Coordenada>>(puntos => puntos.Count == 2),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[]
+            .ReturnsAsync(CrearMatrizViaje(new[]
             {
                 new[] { 0d, 5000d },
                 new[] { 5000d, 0d }
-            });
+            }));
 
         RecorridoHorario? guardado = null;
         _snapshots
@@ -229,14 +261,14 @@ public class RecorridoRepartoServiceTests
         ConfigurarParadaFija(1, 1, 10);
 
         _rutaProvider
-            .Setup(p => p.CalcularMatrizDistanciasAsync(
+            .Setup(p => p.CalcularMatricesAsync(
                 It.IsAny<IReadOnlyList<Coordenada>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[]
+            .ReturnsAsync(CrearMatrizViaje(new[]
             {
                 new[] { 0d, 5000d },
                 new[] { 5000d, 0d }
-            });
+            }));
 
         RecorridoHorario? guardado = null;
         _snapshots
@@ -267,7 +299,7 @@ public class RecorridoRepartoServiceTests
 
         // El punto crítico: ni una sola consulta al motor de ruteo.
         _rutaProvider.Verify(
-            p => p.CalcularMatrizDistanciasAsync(It.IsAny<IReadOnlyList<Coordenada>>(), It.IsAny<CancellationToken>()),
+            p => p.CalcularMatricesAsync(It.IsAny<IReadOnlyList<Coordenada>>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _snapshots.Verify(r => r.UpsertAsync(It.IsAny<RecorridoHorario>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -287,7 +319,7 @@ public class RecorridoRepartoServiceTests
         resultado.Pendientes.Single().Motivo.Should().NotBeNullOrWhiteSpace();
 
         _rutaProvider.Verify(
-            p => p.CalcularMatrizDistanciasAsync(It.IsAny<IReadOnlyList<Coordenada>>(), It.IsAny<CancellationToken>()),
+            p => p.CalcularMatricesAsync(It.IsAny<IReadOnlyList<Coordenada>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -353,15 +385,15 @@ public class RecorridoRepartoServiceTests
         ConfigurarParadaFija(1, 1, 10);
 
         _rutaProvider
-            .Setup(p => p.CalcularMatrizDistanciasAsync(
+            .Setup(p => p.CalcularMatricesAsync(
                 It.Is<IReadOnlyList<Coordenada>>(puntos => puntos.Count == 3),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new[]
+            .ReturnsAsync(CrearMatrizViaje(new[]
             {
                 new[] { 0d, 5000d, 10000d },
                 new[] { 5000d, 0d, 5000d },
                 new[] { 10000d, 5000d, 0d }
-            });
+            }));
 
         // No hay forma directa de espiar los argumentos de RepartoShapley.Calcular (es estático),
         // así que el chequeo indirecto es el resultado: en vuelta, la parada fija (índice 0, titular
@@ -381,6 +413,13 @@ public class RecorridoRepartoServiceTests
         var aporteTitular10 = guardado.Aportes.Single(a => a.TitularId == 10);
         var ordenMaximo = guardado.Aportes.Max(a => a.Orden);
         aporteTitular10.Orden.Should().Be(ordenMaximo);
+
+        // Vuelta: el primer tramo del recorrido es la distancia DESDE el colegio, no cero; y el
+        // tramo final es cero porque el recorrido termina en una casa (no en el colegio).
+        var primeraParada = guardado.Aportes.Single(a => a.Orden == 1);
+        primeraParada.MetrosTramoAnterior.Should().Be(5000); // colegio -> primera casa visitada
+        guardado.MetrosTramoFinal.Should().Be(0);
+        guardado.DuracionTotalSegundos.Should().BeGreaterThan(0);
     }
 
     [Fact]
@@ -428,10 +467,10 @@ public class RecorridoRepartoServiceTests
         // MatrizEnRecta(12, 7, 3, 20, 15, 0). Índice 5 es el colegio.
         var matriz = MatrizEnRecta(12000, 7000, 3000, 20000, 15000, 0);
         _rutaProvider
-            .Setup(p => p.CalcularMatrizDistanciasAsync(
+            .Setup(p => p.CalcularMatricesAsync(
                 It.Is<IReadOnlyList<Coordenada>>(puntos => puntos.Count == 6),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(matriz);
+            .ReturnsAsync(CrearMatrizViaje(matriz));
 
         RecorridoHorario? guardado = null;
         _snapshots
@@ -465,6 +504,31 @@ public class RecorridoRepartoServiceTests
 
             guardado!.Aportes.Single(a => a.TitularId == titularId).Orden.Should().Be(ordenEsperado);
         }
+
+        // El punto crítico de MetrosTramoAnterior: tiene que estar indexado por la parada que
+        // guarda, no por la posición dentro del bucle. Con un orden no trivial (Orden[0] == 2,
+        // no 0) un mapeo invertido daría tramos cruzados entre titulares.
+        for (var posicion = 1; posicion < repartoEsperado.Orden.Count; posicion++)
+        {
+            var paradaActual = repartoEsperado.Orden[posicion];
+            var paradaPrevia = repartoEsperado.Orden[posicion - 1];
+            var titularId = participantesOrdenados[paradaActual];
+            var tramoEsperado = (int)Math.Round(matriz[paradaPrevia][paradaActual], MidpointRounding.AwayFromZero);
+
+            guardado!.Aportes.Single(a => a.TitularId == titularId).MetrosTramoAnterior.Should().Be(tramoEsperado);
+        }
+
+        // Ida: el primer tramo del recorrido es cero (ahí arranca) y el tramo final es mayor a cero.
+        var primerTitular = participantesOrdenados[repartoEsperado.Orden[0]];
+        guardado!.Aportes.Single(a => a.TitularId == primerTitular).MetrosTramoAnterior.Should().Be(0);
+        guardado.MetrosTramoFinal.Should().BeGreaterThan(0);
+        guardado.DuracionTotalSegundos.Should().BeGreaterThan(0);
+
+        // Invariante: la suma de los tramos más el final reconstruye el total, con la tolerancia de
+        // redondeos independientes documentada en el plan (cada tramo se redondea por separado, así
+        // que el acumulado puede diferir del total en, como mucho, un metro por parada).
+        var sumaTramos = guardado.Aportes.Sum(a => a.MetrosTramoAnterior) + guardado.MetrosTramoFinal;
+        Math.Abs(sumaTramos - guardado.DistanciaTotalMetros).Should().BeLessOrEqualTo(guardado.CantidadParadas + 1);
     }
 
     /// <summary>Igual al helper homónimo de RepartoShapleyTests: matriz de distancias sobre una recta.</summary>
@@ -535,5 +599,82 @@ public class RecorridoRepartoServiceTests
         var accion = () => CrearServicio().AsignarParadaFijaAsync(1, 1, 10);
 
         await accion.Should().ThrowAsync<ValidationException>();
+    }
+
+    [Fact]
+    public async Task ObtenerRecorridoViajeAsync_SinSnapshot_DevuelveNull()
+    {
+        _snapshots
+            .Setup(r => r.GetAsync(1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((RecorridoHorario?)null);
+
+        var resultado = await CrearServicio().ObtenerRecorridoViajeAsync(1, 1);
+
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerRecorridoViajeAsync_DevuelveLasParadasOrdenadasPorOrden()
+    {
+        // Se agregan a propósito en el orden inverso al real, para que el test solo pase si el
+        // servicio ordena por Orden y no confía en el orden de inserción de la colección.
+        var snapshot = new RecorridoHorario(1, 1, 10000, 2, 1500, 900);
+        snapshot.AgregarAporte(20, 6000, 2, 3500);
+        snapshot.AgregarAporte(10, 4000, 1, 0);
+
+        _snapshots
+            .Setup(r => r.GetAsync(1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(snapshot);
+
+        var colegio = CrearColegio(1);
+        _horarios
+            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Horario> { CrearHorarioConColegio(1, "8 San Patricio", SentidoHorario.Ida, colegio) });
+
+        _paradasFijas
+            .Setup(r => r.GetAsync(1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ParadaFija?)null);
+
+        _titulares
+            .Setup(r => r.GetByIdsAsync(It.IsAny<List<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Titular> { CrearTitular(10, "Perez"), CrearTitular(20, "Gomez") });
+
+        var resultado = await CrearServicio().ObtenerRecorridoViajeAsync(1, 1);
+
+        resultado.Should().NotBeNull();
+        resultado!.HorarioEtiqueta.Should().Be("8 San Patricio");
+        resultado.Sentido.Should().Be(nameof(SentidoHorario.Ida));
+        resultado.ColegioNombre.Should().Be("San Patricio");
+        resultado.Paradas.Select(p => p.Orden).Should().ContainInOrder(1, 2);
+        resultado.Paradas.Select(p => p.TitularId).Should().ContainInOrder(10, 20);
+    }
+
+    [Fact]
+    public async Task ObtenerRecorridoViajeAsync_MarcaEsParadaFijaEnLaCorrecta()
+    {
+        var snapshot = new RecorridoHorario(1, 1, 10000, 2, 1500, 900);
+        snapshot.AgregarAporte(10, 4000, 1, 0);
+        snapshot.AgregarAporte(20, 6000, 2, 3500);
+
+        _snapshots
+            .Setup(r => r.GetAsync(1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(snapshot);
+
+        _horarios
+            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Horario> { CrearHorario(1, "8 San Patricio", SentidoHorario.Ida) });
+
+        _paradasFijas
+            .Setup(r => r.GetAsync(1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ParadaFija(1, 1, 20));
+
+        _titulares
+            .Setup(r => r.GetByIdsAsync(It.IsAny<List<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Titular> { CrearTitular(10, "Perez"), CrearTitular(20, "Gomez") });
+
+        var resultado = await CrearServicio().ObtenerRecorridoViajeAsync(1, 1);
+
+        resultado!.Paradas.Single(p => p.TitularId == 20).EsParadaFija.Should().BeTrue();
+        resultado.Paradas.Single(p => p.TitularId == 10).EsParadaFija.Should().BeFalse();
     }
 }

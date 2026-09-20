@@ -36,4 +36,13 @@ public interface IRecorridoRepartoService
 
     /// <summary>Borra la parada fija de un viaje. No falla si no existía.</summary>
     Task EliminarParadaFijaAsync(int horarioId, byte transporte, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Recorrido calculado de un viaje, con sus paradas en orden de visita.
+    /// Devuelve <c>null</c> si ese viaje todavía no se repartió.
+    /// </summary>
+    Task<RecorridoViajeModel.Response?> ObtenerRecorridoViajeAsync(
+        int horarioId,
+        byte transporte,
+        CancellationToken cancellationToken = default);
 }

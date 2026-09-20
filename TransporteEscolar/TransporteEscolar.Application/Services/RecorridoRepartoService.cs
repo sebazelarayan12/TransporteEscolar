@@ -145,7 +145,7 @@ public class RecorridoRepartoService : IRecorridoRepartoService
             var puntos = new List<Coordenada>(paradas) { destino };
 
             await EsperarAsync(cancellationToken);
-            var matriz = await _rutaProvider.CalcularMatrizDistanciasAsync(puntos, cancellationToken);
+            var matriz = await _rutaProvider.CalcularMatricesAsync(puntos, cancellationToken);
             consultas++;
 
             if (matriz is null)
@@ -162,7 +162,7 @@ public class RecorridoRepartoService : IRecorridoRepartoService
                 ? ExtremoFijo.Ultima
                 : ExtremoFijo.Primera;
 
-            var reparto = RepartoShapley.Calcular(matriz, paradas.Count, indiceParadaFija, extremo);
+            var reparto = RepartoShapley.Calcular(matriz.Distancias, paradas.Count, indiceParadaFija, extremo);
 
             if (reparto is null)
             {
@@ -184,11 +184,50 @@ public class RecorridoRepartoService : IRecorridoRepartoService
                     paradas.Count);
             }
 
+            var indiceColegio = participantes.Count;
+
+            // Los tramos salen del orden que ya calculó el algoritmo y de la matriz que ya tenemos:
+            // no hace falta ninguna consulta extra al motor.
+            var metrosTramoAnterior = new int[participantes.Count];
+            var duracionTotal = 0d;
+
+            for (var posicion = 0; posicion < reparto.Orden.Count; posicion++)
+            {
+                var paradaActual = reparto.Orden[posicion];
+
+                if (posicion == 0)
+                {
+                    // En ida el recorrido arranca en esta casa; en vuelta viene del colegio.
+                    if (extremo == ExtremoFijo.Ultima)
+                    {
+                        metrosTramoAnterior[paradaActual] = Redondear(matriz.Distancias[indiceColegio][paradaActual]);
+                        duracionTotal += matriz.Duraciones[indiceColegio][paradaActual];
+                    }
+
+                    continue;
+                }
+
+                var paradaPrevia = reparto.Orden[posicion - 1];
+                metrosTramoAnterior[paradaActual] = Redondear(matriz.Distancias[paradaPrevia][paradaActual]);
+                duracionTotal += matriz.Duraciones[paradaPrevia][paradaActual];
+            }
+
+            var ultimaParada = reparto.Orden[^1];
+            var metrosTramoFinal = 0;
+
+            if (extremo == ExtremoFijo.Primera)
+            {
+                metrosTramoFinal = Redondear(matriz.Distancias[ultimaParada][indiceColegio]);
+                duracionTotal += matriz.Duraciones[ultimaParada][indiceColegio];
+            }
+
             var snapshot = new RecorridoHorario(
                 viaje.Key.HorarioId,
                 viaje.Key.Transporte,
                 reparto.DistanciaTotalMetros,
-                participantes.Count);
+                participantes.Count,
+                metrosTramoFinal,
+                Redondear(duracionTotal));
 
             // reparto.Orden es la secuencia de ÍNDICES de parada en orden de visita: el aporte de
             // participantes[i] necesita la POSICIÓN de i dentro de Orden (1-based), no al revés.
@@ -201,7 +240,11 @@ public class RecorridoRepartoService : IRecorridoRepartoService
 
             for (var indice = 0; indice < participantes.Count; indice++)
             {
-                snapshot.AgregarAporte(participantes[indice], reparto.MetrosPorParada[indice], ordenPorIndiceParada[indice]);
+                snapshot.AgregarAporte(
+                    participantes[indice],
+                    reparto.MetrosPorParada[indice],
+                    ordenPorIndiceParada[indice],
+                    metrosTramoAnterior[indice]);
             }
 
             await _snapshotRepository.UpsertAsync(snapshot, cancellationToken);
@@ -288,6 +331,54 @@ public class RecorridoRepartoService : IRecorridoRepartoService
     {
         await _paradaFijaRepository.EliminarAsync(horarioId, transporte, cancellationToken);
     }
+
+    public async Task<RecorridoViajeModel.Response?> ObtenerRecorridoViajeAsync(
+        int horarioId,
+        byte transporte,
+        CancellationToken cancellationToken = default)
+    {
+        var snapshot = await _snapshotRepository.GetAsync(horarioId, transporte, cancellationToken);
+        if (snapshot is null)
+            return null;
+
+        var horarios = await _horarioRepository.GetConColegioAsync(cancellationToken);
+        var horarioDelViaje = horarios.FirstOrDefault(h => h.Id == horarioId);
+
+        var etiqueta = horarioDelViaje?.Etiqueta ?? $"Horario {horarioId}";
+        var sentido = (horarioDelViaje?.Sentido ?? SentidoHorario.Ida).ToString();
+        var colegioNombre = horarioDelViaje?.Colegio?.Nombre ?? string.Empty;
+
+        var paradaFija = await _paradaFijaRepository.GetAsync(horarioId, transporte, cancellationToken);
+
+        var titularIds = snapshot.Aportes.Select(a => a.TitularId).ToList();
+        var titulares = await _titularRepository.GetByIdsAsync(titularIds, cancellationToken);
+        var apellidoPorTitular = titulares.ToDictionary(t => t.Id, t => t.Apellido);
+
+        var paradas = snapshot.Aportes
+            .OrderBy(a => a.Orden)
+            .Select(a => new RecorridoViajeModel.Parada(
+                a.Orden,
+                a.TitularId,
+                apellidoPorTitular.TryGetValue(a.TitularId, out var apellido) ? apellido : string.Empty,
+                a.MetrosTramoAnterior,
+                a.MetrosAsignados,
+                paradaFija is not null && paradaFija.TitularId == a.TitularId))
+            .ToList();
+
+        return new RecorridoViajeModel.Response(
+            horarioId,
+            etiqueta,
+            sentido,
+            transporte,
+            colegioNombre,
+            snapshot.DistanciaTotalMetros,
+            snapshot.DuracionTotalSegundos,
+            snapshot.MetrosTramoFinal,
+            snapshot.FechaCalculo,
+            paradas);
+    }
+
+    private static int Redondear(double valor) => (int)Math.Round(valor, MidpointRounding.AwayFromZero);
 
     private async Task EsperarAsync(CancellationToken cancellationToken)
     {
