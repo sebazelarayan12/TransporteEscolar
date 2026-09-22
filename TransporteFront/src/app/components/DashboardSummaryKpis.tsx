@@ -92,28 +92,38 @@ const CountKpiCard = ({ icon, iconClassName, label, showSkeleton, value }: Count
 export const DashboardSummaryKpis = ({ summary, isLoading }: DashboardSummaryKpisProps) => {
   const showSkeleton = isLoading && !summary;
 
+  // Nunca se muestran pendientes y vencidos a la vez (ver PagosStatusFilters): mientras no pasó
+  // el vencimiento del mes se ve "pendientes"; después, "vencidos". Mientras summary es
+  // undefined (skeleton) se muestra la tarjeta de pendientes por defecto, sin parpadeo.
+  const mostrarVencidos = summary?.vencimientoPasado ?? false;
+
   return (
     <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <PaymentKpiCard
-        icon="pending_actions"
-        label="Pagos pendientes"
-        accentBubbleClass="bg-[#1d8ca5]/10"
-        iconBoxClass="bg-[#1d8ca5]/10 text-[#1d8ca5]"
-        countClass="text-[#1d8ca5]"
-        showSkeleton={showSkeleton}
-        total={summary?.totalPendiente}
-        count={summary?.cantidadPendiente}
-      />
-      <PaymentKpiCard
-        icon="warning"
-        label="Pagos vencidos"
-        accentBubbleClass="bg-rose-500/10"
-        iconBoxClass="bg-rose-500/10 text-rose-500"
-        countClass="text-rose-500"
-        showSkeleton={showSkeleton}
-        total={summary?.totalVencido}
-        count={summary?.cantidadVencido}
-      />
+      <div className="md:col-span-2">
+        {mostrarVencidos ? (
+          <PaymentKpiCard
+            icon="warning"
+            label="Pagos vencidos"
+            accentBubbleClass="bg-rose-500/10"
+            iconBoxClass="bg-rose-500/10 text-rose-500"
+            countClass="text-rose-500"
+            showSkeleton={showSkeleton}
+            total={summary?.totalVencido}
+            count={summary?.cantidadVencido}
+          />
+        ) : (
+          <PaymentKpiCard
+            icon="pending_actions"
+            label="Pagos pendientes"
+            accentBubbleClass="bg-[#1d8ca5]/10"
+            iconBoxClass="bg-[#1d8ca5]/10 text-[#1d8ca5]"
+            countClass="text-[#1d8ca5]"
+            showSkeleton={showSkeleton}
+            total={summary?.totalPendiente}
+            count={summary?.cantidadPendiente}
+          />
+        )}
+      </div>
 
       <div className="md:col-span-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <CountKpiCard

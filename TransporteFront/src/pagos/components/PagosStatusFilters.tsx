@@ -1,5 +1,6 @@
 import type { PagosEstadoFiltro } from '../types/pago.types';
 import { formatNumber } from '../../shared/utils/number.helpers';
+import { vencimientoYaPaso } from '../helpers/periodo.helpers';
 
 interface PagosStatusFiltersProps {
   totalPeriodo: number;
@@ -7,6 +8,7 @@ interface PagosStatusFiltersProps {
   estadoSeleccionado: PagosEstadoFiltro;
   onEstadoSelect: (estado: PagosEstadoFiltro) => void;
   counts: Record<PagosEstadoFiltro, number>;
+  fechaVencimiento?: string;
 }
 
 type FilterDescriptor = {
@@ -19,48 +21,49 @@ type FilterDescriptor = {
   icon: string;
 };
 
-const FILTERS: FilterDescriptor[] = [
-  {
-    value: 'todos',
-    label: 'Todos',
-    description: 'Todos los movimientos del período',
-    accentClass:
-      'border-gray-200 bg-gray-50 text-gray-800 shadow-lg shadow-gray-200/70 dark:border-white/10 dark:bg-white/5 dark:text-white',
-    countClass: 'text-gray-900 dark:text-white',
-    iconClass: 'text-gray-500 dark:text-gray-300',
-    icon: 'select_all',
-  },
-  {
-    value: 'pendiente',
-    label: 'Pendientes',
-    description: 'Saldo por cobrar',
-    accentClass:
-      'border-amber-200 bg-amber-50 text-amber-800 shadow-lg shadow-amber-100/70 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100',
-    countClass: 'text-amber-600 dark:text-amber-200',
-    iconClass: 'text-amber-500 dark:text-amber-200',
-    icon: 'pending',
-  },
-  {
-    value: 'pagado',
-    label: 'Pagados',
-    description: 'Cuotas canceladas',
-    accentClass:
-      'border-emerald-200 bg-emerald-50 text-emerald-800 shadow-lg shadow-emerald-100/70 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100',
-    countClass: 'text-emerald-600 dark:text-emerald-200',
-    iconClass: 'text-emerald-500 dark:text-emerald-200',
-    icon: 'task_alt',
-  },
-  {
-    value: 'vencido',
-    label: 'Vencidos',
-    description: 'Con fecha límite superada',
-    accentClass:
-      'border-rose-200 bg-rose-50 text-rose-800 shadow-lg shadow-rose-100/70 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100',
-    countClass: 'text-rose-600 dark:text-rose-200',
-    iconClass: 'text-rose-500 dark:text-rose-200',
-    icon: 'error',
-  },
-];
+const TODOS_FILTER: FilterDescriptor = {
+  value: 'todos',
+  label: 'Todos',
+  description: 'Todos los movimientos del período',
+  accentClass:
+    'border-gray-200 bg-gray-50 text-gray-800 shadow-lg shadow-gray-200/70 dark:border-white/10 dark:bg-white/5 dark:text-white',
+  countClass: 'text-gray-900 dark:text-white',
+  iconClass: 'text-gray-500 dark:text-gray-300',
+  icon: 'select_all',
+};
+
+const PENDIENTE_FILTER: FilterDescriptor = {
+  value: 'pendiente',
+  label: 'Pendientes',
+  description: 'Saldo por cobrar',
+  accentClass:
+    'border-amber-200 bg-amber-50 text-amber-800 shadow-lg shadow-amber-100/70 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100',
+  countClass: 'text-amber-600 dark:text-amber-200',
+  iconClass: 'text-amber-500 dark:text-amber-200',
+  icon: 'pending',
+};
+
+const PAGADO_FILTER: FilterDescriptor = {
+  value: 'pagado',
+  label: 'Pagados',
+  description: 'Cuotas canceladas',
+  accentClass:
+    'border-emerald-200 bg-emerald-50 text-emerald-800 shadow-lg shadow-emerald-100/70 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100',
+  countClass: 'text-emerald-600 dark:text-emerald-200',
+  iconClass: 'text-emerald-500 dark:text-emerald-200',
+  icon: 'task_alt',
+};
+
+const VENCIDO_FILTER: FilterDescriptor = {
+  value: 'vencido',
+  label: 'Vencidos',
+  description: 'Con fecha límite superada',
+  accentClass:
+    'border-rose-200 bg-rose-50 text-rose-800 shadow-lg shadow-rose-100/70 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100',
+  countClass: 'text-rose-600 dark:text-rose-200',
+  iconClass: 'text-rose-500 dark:text-rose-200',
+  icon: 'error',
+};
 
 const baseButtonClass =
   'flex min-w-[160px] flex-1 items-center justify-between gap-4 rounded-2xl border px-4 py-4 text-left transition-all duration-200 lg:min-w-[200px]';
@@ -74,7 +77,14 @@ export const PagosStatusFilters = ({
   estadoSeleccionado,
   onEstadoSelect,
   counts,
+  fechaVencimiento,
 }: PagosStatusFiltersProps) => {
+  // Nunca se muestran pendientes y vencidos a la vez: mientras no pasó el vencimiento del
+  // período se ve "pendientes"; una vez que pasó, "vencidos" (nunca hay deuda acumulada de
+  // meses anteriores porque el servicio se corta al segundo mes impago).
+  const chipEstadoImpago = fechaVencimiento && vencimientoYaPaso(fechaVencimiento) ? VENCIDO_FILTER : PENDIENTE_FILTER;
+  const filters: FilterDescriptor[] = [TODOS_FILTER, chipEstadoImpago, PAGADO_FILTER];
+
   return (
     <section className="rounded-3xl border border-[#e1e8ec] bg-white px-5 py-6 shadow-sm dark:border-white/5 dark:bg-[#1f1f24]">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -100,7 +110,7 @@ export const PagosStatusFilters = ({
       </div>
 
       <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:flex-wrap">
-        {FILTERS.map((filter) => {
+        {filters.map((filter) => {
           const isActive = estadoSeleccionado === filter.value;
           const count = counts[filter.value] ?? 0;
           return (

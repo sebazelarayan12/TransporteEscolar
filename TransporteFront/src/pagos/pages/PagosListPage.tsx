@@ -23,6 +23,7 @@ export const PagosListPage = () => {
     debouncedSearch,
     view.pageNumber,
     PAGOS_PAGE_SIZE,
+    view.estadoFiltro,
   );
   const { data: estadisticas, refetch: refetchEstadisticas } = useEstadisticasMes(view.selectedMes, view.selectedAnio);
   const { data: alertasPagos } = useReinscripcionesAlertasPagos(view.selectedAnio);
@@ -68,6 +69,7 @@ export const PagosListPage = () => {
             hasSearch={Boolean(view.search)}
             estadoFiltro={view.estadoFiltro}
             filterCounts={buildFilterCounts(estadisticas, totalCount)}
+            fechaVencimiento={estadisticas?.fechaVencimiento}
             pageNumber={view.pageNumber}
             onPageChange={view.setPage}
             onSelectPago={view.openDetalle}

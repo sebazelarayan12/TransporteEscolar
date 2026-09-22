@@ -110,7 +110,11 @@ export const pagosApi = {
     if (params.search && params.search.trim()) {
       searchParams.append('search', params.search.trim());
     }
-    
+
+    if (params.estado && params.estado !== 'todos') {
+      searchParams.append('estado', params.estado);
+    }
+
     return apiClient.get<PagoPaginationResponse>(`${BASE_PATH}/paginados?${searchParams}`);
   },
 

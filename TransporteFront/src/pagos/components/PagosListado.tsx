@@ -1,5 +1,5 @@
 import { getPagoEstado } from '../helpers/periodo.helpers';
-import { ESTADO_FILTRO_LABELS, PAGOS_PAGE_SIZE, filterPagosByEstado } from '../helpers/pagos-list.helpers';
+import { ESTADO_FILTRO_LABELS, PAGOS_PAGE_SIZE } from '../helpers/pagos-list.helpers';
 import { PagoStatusBadge } from '../../shared/ui/PagoStatusBadge';
 import { Pagination } from '../../shared/ui/Pagination';
 import { Amount } from '../../shared/ui/Amount';
@@ -157,6 +157,7 @@ interface PagosListadoProps {
   hasSearch: boolean;
   estadoFiltro: PagosEstadoFiltro;
   filterCounts: Record<PagosEstadoFiltro, number>;
+  fechaVencimiento?: string;
   pageNumber: number;
   onPageChange: (page: number) => void;
   onSelectPago: (pagoId: number) => void;
@@ -169,33 +170,38 @@ export const PagosListado = ({
   hasSearch,
   estadoFiltro,
   filterCounts,
+  fechaVencimiento,
   pageNumber,
   onPageChange,
   onSelectPago,
   onEstadoSelect,
 }: PagosListadoProps) => {
-  if (pagos.length === 0) {
+  // filterCounts.todos es el total de pagos del mes sin filtrar (viene de las estadísticas,
+  // no del endpoint paginado). Si es 0, no hay pagos en el mes; si es mayor a 0 pero `pagos`
+  // llegó vacío, es el filtro/búsqueda actual el que no tiene resultados, no el mes entero.
+  const hayPagosEnElMes = filterCounts.todos > 0;
+
+  if (!hayPagosEnElMes) {
     return <PagosEmptyStateCard hasSearch={hasSearch} />;
   }
-
-  const filteredPagos = filterPagosByEstado(pagos, estadoFiltro);
 
   return (
     <>
       <PagosStatusFilters
         totalPeriodo={totalCount}
-        matchingCount={filteredPagos.length}
+        matchingCount={totalCount}
         estadoSeleccionado={estadoFiltro}
         onEstadoSelect={onEstadoSelect}
         counts={filterCounts}
+        fechaVencimiento={fechaVencimiento}
       />
       <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm dark:border-white/5 dark:bg-zinc-900">
-        {filteredPagos.length === 0 ? (
+        {pagos.length === 0 ? (
           <PagosSinResultados estadoFiltro={estadoFiltro} />
         ) : (
           <>
-            <PagosDesktopTable pagos={filteredPagos} onSelectPago={onSelectPago} />
-            <PagosMobileCards pagos={filteredPagos} onSelectPago={onSelectPago} />
+            <PagosDesktopTable pagos={pagos} onSelectPago={onSelectPago} />
+            <PagosMobileCards pagos={pagos} onSelectPago={onSelectPago} />
           </>
         )}
       </div>

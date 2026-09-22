@@ -36,7 +36,14 @@ const createInitialPagosState = (): PagosViewState => {
 const pagosViewReducer = (state: PagosViewState, action: PagosViewAction): PagosViewState => {
   switch (action.type) {
     case 'setPeriodo':
-      return { ...state, selectedMes: action.mes, selectedAnio: action.anio, pageNumber: 1, search: '' };
+      return {
+        ...state,
+        selectedMes: action.mes,
+        selectedAnio: action.anio,
+        pageNumber: 1,
+        search: '',
+        estadoFiltro: 'todos',
+      };
     case 'setSearch':
       return { ...state, search: action.value, pageNumber: 1 };
     case 'setPage':
@@ -44,7 +51,7 @@ const pagosViewReducer = (state: PagosViewState, action: PagosViewAction): Pagos
     case 'toggleRegisterModal':
       return { ...state, isRegisterModalOpen: action.isOpen };
     case 'setEstadoFiltro':
-      return { ...state, estadoFiltro: action.value };
+      return { ...state, estadoFiltro: action.value, pageNumber: 1 };
     case 'openDetalle':
       return { ...state, selectedPagoId: action.pagoId };
     case 'closeDetalle':

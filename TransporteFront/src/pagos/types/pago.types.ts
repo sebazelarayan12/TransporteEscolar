@@ -50,6 +50,7 @@ export interface PagoFilterRequest {
   search?: string;
   pageNumber: number;
   pageSize: number;
+  estado?: PagosEstadoFiltro;
 }
 
 export interface PagoPaginationResponse {
@@ -64,6 +65,7 @@ export interface EstadisticasMes {
   cantidadVencidos: number;
   totalRecaudado: number;
   totalPendiente: number;
+  fechaVencimiento: string;
 }
 
 export interface AjusteTitularRequest {
