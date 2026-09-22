@@ -37,6 +37,27 @@ public class GetPagosMensualesPaginadosQueryHandlerTests
         return pago;
     }
 
+    private static PagoMensual CrearPagoVencido(string apellido)
+    {
+        // Mes claramente pasado, sin pagar -> EstaVencido() true.
+        var fechaVieja = DateTime.UtcNow.AddMonths(-3);
+        return CrearPagoConTitular(apellido, mes: fechaVieja.Month, anio: fechaVieja.Year);
+    }
+
+    private static PagoMensual CrearPagoPendiente(string apellido)
+    {
+        // Mes claramente futuro, sin pagar -> ni pagado ni vencido.
+        var fechaFutura = DateTime.UtcNow.AddYears(5);
+        return CrearPagoConTitular(apellido, mes: fechaFutura.Month, anio: fechaFutura.Year);
+    }
+
+    private static PagoMensual CrearPagoPagado(string apellido)
+    {
+        var pago = CrearPagoConTitular(apellido);
+        pago.AplicarPago(10000m, DateTimeOffset.UtcNow, "Efectivo", null);
+        return pago;
+    }
+
     [Fact]
     public async Task Handle_SinFiltro_RetornaTodosLosPagosDelMes()
     {
@@ -151,5 +172,129 @@ public class GetPagosMensualesPaginadosQueryHandlerTests
             CancellationToken.None);
 
         result.TotalCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Handle_EstadoVencido_EscenarioReal_TraeLosVencidosAunqueQuedenFueraDeLaPagina1SinFiltrar()
+    {
+        // Escenario real reportado: 40 pagos del mes, sólo 3 vencidos, ubicados de modo que
+        // caigan en la posición 38-40 (fuera de la página 1 de 20 si el filtro se aplicara
+        // después de paginar, que es justamente el bug que se corrige).
+        var pagos = new List<PagoMensual>();
+        for (var i = 0; i < 37; i++)
+        {
+            pagos.Add(CrearPagoPagado($"Pagado{i:D2}"));
+        }
+        for (var i = 0; i < 3; i++)
+        {
+            pagos.Add(CrearPagoVencido($"Vencido{i:D2}"));
+        }
+
+        _repo.Setup(r => r.GetByMesAnioAsync(6, 2025, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pagos);
+
+        var handler = CrearHandler();
+        var result = await handler.Handle(
+            new GetPagosMensualesPaginadosQuery(Mes: 6, Anio: 2025, Search: null, PageNumber: 1, PageSize: 20, Estado: "vencido"),
+            CancellationToken.None);
+
+        result.TotalCount.Should().Be(3);
+        result.Data.Should().HaveCount(3);
+        result.Data.Should().AllSatisfy(p => p.EstaVencido.Should().BeTrue());
+    }
+
+    [Fact]
+    public async Task Handle_EstadoPagado_RetornaSoloPagados()
+    {
+        var pagos = new List<PagoMensual>
+        {
+            CrearPagoPagado("Pagado"),
+            CrearPagoVencido("Vencido"),
+            CrearPagoPendiente("Pendiente"),
+        };
+
+        _repo.Setup(r => r.GetByMesAnioAsync(6, 2025, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pagos);
+
+        var handler = CrearHandler();
+        var result = await handler.Handle(
+            new GetPagosMensualesPaginadosQuery(Mes: 6, Anio: 2025, Search: null, PageNumber: 1, PageSize: 20, Estado: "pagado"),
+            CancellationToken.None);
+
+        result.TotalCount.Should().Be(1);
+        result.Data.Should().ContainSingle();
+        result.Data.Should().AllSatisfy(p => p.EstaPagado.Should().BeTrue());
+    }
+
+    [Fact]
+    public async Task Handle_EstadoPendiente_RetornaSoloNoPagadosNiVencidos()
+    {
+        var pagos = new List<PagoMensual>
+        {
+            CrearPagoPagado("Pagado"),
+            CrearPagoVencido("Vencido"),
+            CrearPagoPendiente("Pendiente"),
+        };
+
+        _repo.Setup(r => r.GetByMesAnioAsync(6, 2025, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pagos);
+
+        var handler = CrearHandler();
+        var result = await handler.Handle(
+            new GetPagosMensualesPaginadosQuery(Mes: 6, Anio: 2025, Search: null, PageNumber: 1, PageSize: 20, Estado: "pendiente"),
+            CancellationToken.None);
+
+        result.TotalCount.Should().Be(1);
+        result.Data.Should().ContainSingle();
+        result.Data.Should().AllSatisfy(p => p.EstaPagado.Should().BeFalse());
+        result.Data.Should().AllSatisfy(p => p.EstaVencido.Should().BeFalse());
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("cualquiera")]
+    public async Task Handle_EstadoNuloOInvalido_NoFiltra(string? estado)
+    {
+        var pagos = new List<PagoMensual>
+        {
+            CrearPagoPagado("Pagado"),
+            CrearPagoVencido("Vencido"),
+            CrearPagoPendiente("Pendiente"),
+        };
+
+        _repo.Setup(r => r.GetByMesAnioAsync(6, 2025, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pagos);
+
+        var handler = CrearHandler();
+        var result = await handler.Handle(
+            new GetPagosMensualesPaginadosQuery(Mes: 6, Anio: 2025, Search: null, PageNumber: 1, PageSize: 20, Estado: estado),
+            CancellationToken.None);
+
+        result.TotalCount.Should().Be(3);
+        result.Data.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public async Task Handle_SearchYEstadoCombinados_AplicaAmbosFiltros()
+    {
+        var pagos = new List<PagoMensual>
+        {
+            CrearPagoVencido("Garcia"),   // coincide search + estado
+            CrearPagoPagado("Garcia"),    // coincide search, no estado
+            CrearPagoVencido("Lopez"),    // coincide estado, no search
+        };
+
+        _repo.Setup(r => r.GetByMesAnioAsync(6, 2025, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pagos);
+
+        var handler = CrearHandler();
+        var result = await handler.Handle(
+            new GetPagosMensualesPaginadosQuery(Mes: 6, Anio: 2025, Search: "Garcia", PageNumber: 1, PageSize: 20, Estado: "vencido"),
+            CancellationToken.None);
+
+        result.TotalCount.Should().Be(1);
+        result.Data.Should().ContainSingle();
+        result.Data[0].TitularApellido.Should().Be("GARCIA");
+        result.Data[0].EstaVencido.Should().BeTrue();
     }
 }

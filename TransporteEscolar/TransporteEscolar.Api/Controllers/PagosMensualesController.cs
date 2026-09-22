@@ -72,9 +72,10 @@ public class PagosMensualesController : ControllerBase
         [FromQuery] int anio,
         [FromQuery] string? search = null,
         [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? estado = null)
     {
-        var resultado = await _sender.Send(new GetPagosMensualesPaginadosQuery(mes, anio, search, pageNumber, pageSize));
+        var resultado = await _sender.Send(new GetPagosMensualesPaginadosQuery(mes, anio, search, pageNumber, pageSize, estado));
         return Ok(resultado);
     }
 
