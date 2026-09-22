@@ -8,7 +8,10 @@ public record DashboardModel
         decimal TotalVencido,
         int CantidadVencido,
         int TitularesActivos,
-        int PasajerosActivos);
+        int PasajerosActivos,
+        // True cuando ya pasó el día 10 del mes en curso, es decir cuando las cuotas impagas
+        // de este mes pasaron de pendientes a vencidas.
+        bool VencimientoPasado);
 
     public record RevenuePoint(
         int Anio,

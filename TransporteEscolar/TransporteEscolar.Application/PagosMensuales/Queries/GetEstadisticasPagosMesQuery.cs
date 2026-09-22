@@ -26,12 +26,16 @@ public sealed class GetEstadisticasPagosMesQueryHandler : IRequestHandler<GetEst
         var totalRecaudado = pagos.Sum(p => p.TotalPagado());
         var totalPendiente = pagos.Sum(p => p.SaldoPendiente());
 
+        // Mismo criterio que PagoMensual.CrearFechaVencimiento: día 10 del período consultado.
+        var fechaVencimiento = new DateTime(request.Anio, request.Mes, 10, 0, 0, 0, DateTimeKind.Utc);
+
         return new PagoMensualModel.EstadisticasMes(
             totalPagos,
             cantidadPagados,
             cantidadPendientes,
             cantidadVencidos,
             totalRecaudado,
-            totalPendiente);
+            totalPendiente,
+            fechaVencimiento);
     }
 }

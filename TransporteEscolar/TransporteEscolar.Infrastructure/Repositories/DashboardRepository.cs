@@ -20,18 +20,26 @@ public class DashboardRepository : IDashboardRepository
         var mesActual = hoy.Month;
         var anioActual = hoy.Year;
 
+        // El chofer corta el servicio al segundo mes impago, así que una familia activa nunca
+        // acumula deuda de meses anteriores. Lo que se acumulaba sin este filtro eran cuotas
+        // viejas de titulares dados de baja, que quedan como historial pero no son deuda real.
         var pendientesQuery = _context.PagosMensuales
             .AsNoTracking()
             .Where(p =>
                 p.Mes == mesActual &&
                 p.Anio == anioActual &&
-                p.FechaVencimiento >= hoy)
+                p.FechaVencimiento >= hoy &&
+                p.Titular != null && p.Titular.FechaBaja == null)
             .Select(p => p.MontoGenerado - (p.Movimientos.Sum(m => (decimal?)m.Monto) ?? 0m))
             .Where(saldo => saldo > 0);
 
         var vencidosQuery = _context.PagosMensuales
             .AsNoTracking()
-            .Where(p => p.FechaVencimiento < hoy)
+            .Where(p =>
+                p.Mes == mesActual &&
+                p.Anio == anioActual &&
+                p.FechaVencimiento < hoy &&
+                p.Titular != null && p.Titular.FechaBaja == null)
             .Select(p => p.MontoGenerado - (p.Movimientos.Sum(m => (decimal?)m.Monto) ?? 0m))
             .Where(saldo => saldo > 0);
 
@@ -51,13 +59,19 @@ public class DashboardRepository : IDashboardRepository
             .AsNoTracking()
             .CountAsync(p => p.FechaBaja == null, cancellationToken);
 
+        // Mismo criterio que PagoMensual.EstaVencido(): el día 10 sigue siendo pendiente,
+        // recién el 11 pasa a vencido.
+        var vencimientoMesActual = new DateTime(anioActual, mesActual, 10, 0, 0, 0, DateTimeKind.Utc);
+        var vencimientoPasado = hoy > vencimientoMesActual;
+
         return new DashboardModel.Summary(
             totalPendiente,
             cantidadPendiente,
             totalVencido,
             cantidadVencido,
             titularesActivos,
-            pasajerosActivos);
+            pasajerosActivos,
+            vencimientoPasado);
     }
 
     public async Task<List<DashboardModel.RevenuePoint>> ObtenerRecaudacionHistoricoAsync(
