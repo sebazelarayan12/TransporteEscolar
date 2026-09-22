@@ -6,9 +6,6 @@ export * from './types/movimientos.types';
 export * from './services/pagos.api';
 export * from './services/pagos.queries';
 
-// Hooks
-export * from './hooks/usePagosList';
-
 // Helpers
 export * from './helpers/periodo.helpers';
 
