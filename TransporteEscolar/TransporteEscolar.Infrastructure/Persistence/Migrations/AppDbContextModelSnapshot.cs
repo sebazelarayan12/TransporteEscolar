@@ -22,6 +22,96 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.AporteReparto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MetrosAsignados")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MetrosTramoAnterior")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Orden")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecorridoHorarioId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TitularId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TitularId");
+
+                    b.HasIndex("RecorridoHorarioId", "TitularId")
+                        .IsUnique();
+
+                    b.ToTable("AportesReparto", (string)null);
+                });
+
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.Colegio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Direccion")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<double>("Latitud")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitud")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("Colegios", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Activo = true,
+                            Direccion = "Avenida Aconquija 631, Marcos Paz, Yerba Buena, Tucumán",
+                            Latitud = -26.815860799999999,
+                            Longitud = -65.274240599999999,
+                            Nombre = "San Patricio"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Activo = true,
+                            Direccion = "General Lamadrid 1048, Marcos Paz, Yerba Buena, Tucumán",
+                            Latitud = -26.822528899999998,
+                            Longitud = -65.286085900000003,
+                            Nombre = "Boisdron"
+                        });
+                });
+
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.GastoFijoTemplate", b =>
                 {
                     b.Property<int>("Id")
@@ -161,6 +251,9 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("ColegioId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Etiqueta")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -169,7 +262,12 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.Property<int>("Orden")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Sentido")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ColegioId");
 
                     b.ToTable("Horarios", (string)null);
 
@@ -177,56 +275,74 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = 1,
+                            ColegioId = 1,
                             Etiqueta = "8 San Patricio",
-                            Orden = 1
+                            Orden = 1,
+                            Sentido = 1
                         },
                         new
                         {
                             Id = 2,
+                            ColegioId = 2,
                             Etiqueta = "8 Boisdron",
-                            Orden = 2
+                            Orden = 2,
+                            Sentido = 1
                         },
                         new
                         {
                             Id = 3,
+                            ColegioId = 2,
                             Etiqueta = "9 Boisdron",
-                            Orden = 3
+                            Orden = 3,
+                            Sentido = 1
                         },
                         new
                         {
                             Id = 4,
+                            ColegioId = 1,
                             Etiqueta = "9 San Patricio",
-                            Orden = 4
+                            Orden = 4,
+                            Sentido = 1
                         },
                         new
                         {
                             Id = 5,
+                            ColegioId = 1,
                             Etiqueta = "12 San Patricio",
-                            Orden = 5
+                            Orden = 5,
+                            Sentido = 2
                         },
                         new
                         {
                             Id = 6,
+                            ColegioId = 2,
                             Etiqueta = "13 Boisdron Entrada",
-                            Orden = 6
+                            Orden = 6,
+                            Sentido = 1
                         },
                         new
                         {
                             Id = 7,
+                            ColegioId = 2,
                             Etiqueta = "13 Boisdron Salida",
-                            Orden = 7
+                            Orden = 7,
+                            Sentido = 2
                         },
                         new
                         {
                             Id = 8,
+                            ColegioId = 1,
                             Etiqueta = "16 San Patricio",
-                            Orden = 8
+                            Orden = 8,
+                            Sentido = 2
                         },
                         new
                         {
                             Id = 9,
+                            ColegioId = 2,
                             Etiqueta = "17 Boisdron",
-                            Orden = 9
+                            Orden = 9,
+                            Sentido = 2
                         });
                 });
 
@@ -590,6 +706,36 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.ToTable("PagosMovimientos", (string)null);
                 });
 
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.ParadaFija", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("FechaAsignacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("HorarioId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TitularId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Transporte")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TitularId");
+
+                    b.HasIndex("HorarioId", "Transporte")
+                        .IsUnique();
+
+                    b.ToTable("ParadasFijas", (string)null);
+                });
+
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.Pasajero", b =>
                 {
                     b.Property<int>("Id")
@@ -721,6 +867,90 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.ToTable("PushSubscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.Recorrido", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ColegioId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DistanciaMetros")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DuracionSegundos")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaCalculo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GeometriaPolyline")
+                        .HasMaxLength(20000)
+                        .HasColumnType("character varying(20000)");
+
+                    b.Property<string>("HashOrigenDestino")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Proveedor")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("TitularId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ColegioId");
+
+                    b.HasIndex("TitularId", "ColegioId")
+                        .IsUnique();
+
+                    b.ToTable("Recorridos", (string)null);
+                });
+
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.RecorridoHorario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CantidadParadas")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DistanciaTotalMetros")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DuracionTotalSegundos")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaCalculo")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("HorarioId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MetrosTramoFinal")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Transporte")
+                        .HasColumnType("smallint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HorarioId", "Transporte")
+                        .IsUnique();
+
+                    b.ToTable("RecorridosHorario", (string)null);
+                });
+
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.ReinscripcionPasajero", b =>
                 {
                     b.Property<int>("Id")
@@ -826,6 +1056,56 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.ToTable("TitularesTelefonos", (string)null);
                 });
 
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.TitularUbicacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DireccionNormalizada")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime>("FechaActualizacion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Fuente")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("Latitud")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitud")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("TitularId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TitularId")
+                        .IsUnique();
+
+                    b.ToTable("TitularesUbicaciones", (string)null);
+                });
+
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.AporteReparto", b =>
+                {
+                    b.HasOne("TransporteEscolar.Domain.Entities.RecorridoHorario", null)
+                        .WithMany("Aportes")
+                        .HasForeignKey("RecorridoHorarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TransporteEscolar.Domain.Entities.Titular", null)
+                        .WithMany()
+                        .HasForeignKey("TitularId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.GastoMensual", b =>
                 {
                     b.HasOne("TransporteEscolar.Domain.Entities.GastoFijoTemplate", "GastoFijoTemplate")
@@ -834,6 +1114,16 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("GastoFijoTemplate");
+                });
+
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.Horario", b =>
+                {
+                    b.HasOne("TransporteEscolar.Domain.Entities.Colegio", "Colegio")
+                        .WithMany()
+                        .HasForeignKey("ColegioId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Colegio");
                 });
 
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.IngresoMensual", b =>
@@ -887,6 +1177,21 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.Navigation("PagoMensual");
                 });
 
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.ParadaFija", b =>
+                {
+                    b.HasOne("TransporteEscolar.Domain.Entities.Horario", null)
+                        .WithMany()
+                        .HasForeignKey("HorarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TransporteEscolar.Domain.Entities.Titular", null)
+                        .WithMany()
+                        .HasForeignKey("TitularId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.Pasajero", b =>
                 {
                     b.HasOne("TransporteEscolar.Domain.Entities.Titular", "Titular")
@@ -917,6 +1222,32 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.Navigation("Pasajero");
                 });
 
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.Recorrido", b =>
+                {
+                    b.HasOne("TransporteEscolar.Domain.Entities.Colegio", "Colegio")
+                        .WithMany()
+                        .HasForeignKey("ColegioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TransporteEscolar.Domain.Entities.Titular", null)
+                        .WithMany()
+                        .HasForeignKey("TitularId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Colegio");
+                });
+
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.RecorridoHorario", b =>
+                {
+                    b.HasOne("TransporteEscolar.Domain.Entities.Horario", null)
+                        .WithMany()
+                        .HasForeignKey("HorarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.ReinscripcionPasajero", b =>
                 {
                     b.HasOne("TransporteEscolar.Domain.Entities.Pasajero", "Pasajero")
@@ -933,6 +1264,17 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.HasOne("TransporteEscolar.Domain.Entities.Titular", "Titular")
                         .WithMany("Telefonos")
                         .HasForeignKey("TitularId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Titular");
+                });
+
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.TitularUbicacion", b =>
+                {
+                    b.HasOne("TransporteEscolar.Domain.Entities.Titular", "Titular")
+                        .WithOne()
+                        .HasForeignKey("TransporteEscolar.Domain.Entities.TitularUbicacion", "TitularId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -969,6 +1311,11 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.Navigation("PasajeroHorarios");
 
                     b.Navigation("Reinscripciones");
+                });
+
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.RecorridoHorario", b =>
+                {
+                    b.Navigation("Aportes");
                 });
 
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.Titular", b =>

@@ -193,6 +193,55 @@ public class PasajeroRepository : IPasajeroRepository
         return await _context.Pasajeros.AnyAsync(p => p.Id == id, cancellationToken);
     }
 
+    public async Task<List<AsignacionColegio>> GetAsignacionesColegioAsync(
+        int? titularId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _context.PasajeroHorarios
+            .Where(ph => ph.Pasajero.FechaBaja == null)
+            .Where(ph => ph.Pasajero.Titular != null && ph.Pasajero.Titular.FechaBaja == null)
+            .Where(ph => ph.Horario.ColegioId != null);
+
+        if (titularId.HasValue)
+        {
+            query = query.Where(ph => ph.Pasajero.TitularId == titularId.Value);
+        }
+
+        return await query
+            .Select(ph => new AsignacionColegio(
+                ph.Pasajero.TitularId,
+                ph.Horario.ColegioId!.Value,
+                ph.HorarioId))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<AsignacionHorario>> GetAsignacionesHorarioAsync(
+        CancellationToken cancellationToken = default)
+    {
+        // Solo titulares activos: la parada de una familia dada de baja distorsionaría
+        // el reparto de kilómetros de las familias que sí siguen viajando.
+        // Se proyecta a un tipo anónimo para que EF traduzca el Distinct() a SQL sin depender
+        // de un constructor de record; el mapeo a AsignacionHorario se hace en memoria.
+        var filas = await _context.PasajeroHorarios
+            .Where(ph => ph.Pasajero.FechaBaja == null)
+            .Where(ph => ph.Pasajero.Titular != null && ph.Pasajero.Titular.FechaBaja == null)
+            .Where(ph => ph.Horario.ColegioId != null)
+            .Select(ph => new
+            {
+                ph.HorarioId,
+                ph.Transporte,
+                ColegioId = ph.Horario.ColegioId!.Value,
+                ph.Pasajero.TitularId
+            })
+            // Dos hermanos en el mismo viaje son una sola parada.
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return filas
+            .Select(f => new AsignacionHorario(f.HorarioId, f.Transporte, f.ColegioId, f.TitularId))
+            .ToList();
+    }
+
     private static IQueryable<Pasajero> SoloTitularesActivos(IQueryable<Pasajero> query)
     {
         return query.Where(p => p.Titular != null && p.Titular.FechaBaja == null);

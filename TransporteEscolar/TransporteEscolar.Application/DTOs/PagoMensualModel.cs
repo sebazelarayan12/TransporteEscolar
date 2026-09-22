@@ -39,7 +39,10 @@ public record PagoMensualModel
         int CantidadPendientes,
         int CantidadVencidos,
         decimal TotalRecaudado,
-        decimal TotalPendiente);
+        decimal TotalPendiente,
+        // Día de vencimiento del período consultado; el front lo compara contra hoy para saber
+        // si las cuotas impagas se muestran como pendientes o como vencidas.
+        DateTime FechaVencimiento);
 
     public record Response(
         int Id,

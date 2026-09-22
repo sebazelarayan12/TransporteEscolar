@@ -12,6 +12,7 @@ import { useToast } from '../../shared/hooks/useToast';
 import type { UpdateTitularFormData } from '../schemas/titular.schema';
 import type { TitularTelefonoResponse } from '../types/titular.types';
 import { Amount } from '../../shared/ui/Amount';
+import { UbicacionTitularCard } from '../../recorridos/components/UbicacionTitularCard';
 
 const mediumDateFormatter = new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium' });
 
@@ -237,6 +238,12 @@ export const TitularDetailPage = () => {
                 />
               </div>
             </div>
+
+            {/* Ubicación y kilómetros */}
+            <UbicacionTitularCard
+              titularId={titular.id}
+              direccionTexto={titular.direccion}
+            />
           </div>
         </div>
           </div>

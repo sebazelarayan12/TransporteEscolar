@@ -1,14 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { titularesKeys } from '../../titulares/services/titulares.queries';
 import { pagosApi } from './pagos.api';
-import type { AjusteTitularRequest, RegistrarPagoRequest } from '../types/pago.types';
+import type { AjusteTitularRequest, PagosEstadoFiltro, RegistrarPagoRequest } from '../types/pago.types';
 import type { MovimientosFilterRequest } from '../types/movimientos.types';
 
 export const QUERY_KEYS = {
   pagos: ['pagos'] as const,
   pagoById: (id: number) => ['pagos', id] as const,
-  pagosPaginados: (mes: number, anio: number, search: string, page: number) => 
-    ['pagos', 'paginados', mes, anio, search, page] as const,
+  pagosPaginados: (mes: number, anio: number, search: string, page: number, estado: PagosEstadoFiltro) =>
+    ['pagos', 'paginados', mes, anio, search, page, estado] as const,
   estadisticas: (mes: number, anio: number) => 
     ['pagos', 'estadisticas', mes, anio] as const,
   pagosPorTitular: (titularId: number) => ['pagos', 'titular', titularId] as const,
@@ -84,10 +84,11 @@ export function usePagosPaginados(
   anio: number | null,
   search: string,
   pageNumber: number,
-  pageSize: number = 20
+  pageSize: number = 20,
+  estado: PagosEstadoFiltro = 'todos'
 ) {
   return useQuery({
-    queryKey: QUERY_KEYS.pagosPaginados(mes!, anio!, search, pageNumber),
+    queryKey: QUERY_KEYS.pagosPaginados(mes!, anio!, search, pageNumber, estado),
     queryFn: async () => {
       return await pagosApi.getPaginados({
         mes: mes!,
@@ -95,6 +96,7 @@ export function usePagosPaginados(
         search,
         pageNumber,
         pageSize,
+        estado,
       });
     },
     enabled: mes !== null && anio !== null,

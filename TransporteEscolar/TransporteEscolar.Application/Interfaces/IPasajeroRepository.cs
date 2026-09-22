@@ -3,6 +3,21 @@ using TransporteEscolar.Domain.Entities;
 
 namespace TransporteEscolar.Application.Interfaces;
 
+/// <summary>
+/// Asignación de un pasajero activo a un horario que tiene colegio vinculado.
+/// Es la proyección mínima que necesita el cálculo de kilómetros.
+/// </summary>
+/// <param name="TitularId">Titular dueño del pasajero.</param>
+/// <param name="ColegioId">Colegio de destino, tomado del horario.</param>
+/// <param name="HorarioId">Horario asignado. Los horarios distintos son viajes distintos.</param>
+public sealed record AsignacionColegio(int TitularId, int ColegioId, int HorarioId);
+
+/// <summary>
+/// Asignación de un titular a un viaje concreto: un horario, en un vehículo, hacia un colegio.
+/// Varios pasajeros del mismo titular en el mismo viaje colapsan en una sola fila.
+/// </summary>
+public sealed record AsignacionHorario(int HorarioId, byte Transporte, int ColegioId, int TitularId);
+
 public interface IPasajeroRepository
 {
     Task<Pasajero?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
@@ -27,4 +42,18 @@ public interface IPasajeroRepository
     Task UpdateAsync(Pasajero pasajero, CancellationToken cancellationToken = default);
     Task UpdateRangeAsync(IEnumerable<Pasajero> pasajeros, CancellationToken cancellationToken = default);
     Task<bool> ExisteAsync(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Devuelve las asignaciones de pasajeros activos a horarios que tienen colegio vinculado.
+    /// </summary>
+    /// <param name="titularId">Si se indica, limita el resultado a ese titular. Si es null, devuelve todas.</param>
+    Task<List<AsignacionColegio>> GetAsignacionesColegioAsync(
+        int? titularId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Devuelve, sin repetir titulares, quiénes viajan en cada par (horario, vehículo).
+    /// Es el manifiesto de cada viaje.
+    /// </summary>
+    Task<List<AsignacionHorario>> GetAsignacionesHorarioAsync(CancellationToken cancellationToken = default);
 }

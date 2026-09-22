@@ -77,4 +77,16 @@ public class GetEstadisticasPagosMesQueryHandlerTests
         result.CantidadPendientes.Should().Be(0);
         result.TotalPendiente.Should().Be(0m);
     }
+
+    [Fact]
+    public async Task Handle_FechaVencimiento_EsElDia10DelPeriodoPedido()
+    {
+        _repo.Setup(r => r.GetByMesAnioAsync(6, 2025, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<PagoMensual>());
+
+        var handler = CrearHandler();
+        var result = await handler.Handle(new GetEstadisticasPagosMesQuery(6, 2025), CancellationToken.None);
+
+        result.FechaVencimiento.Should().Be(new DateTime(2025, 6, 10, 0, 0, 0, DateTimeKind.Utc));
+    }
 }

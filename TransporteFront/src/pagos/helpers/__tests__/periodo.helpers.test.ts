@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { getPagoEstado, esCicloActual, agruparPorPeriodo } from '../periodo.helpers';
+import { getPagoEstado, esCicloActual, agruparPorPeriodo, vencimientoYaPaso } from '../periodo.helpers';
 import type { PagoMensual } from '../../types/pago.types';
 
 const crearPago = (overrides: Partial<PagoMensual> = {}): PagoMensual => ({
@@ -87,6 +87,25 @@ describe('esCicloActual', () => {
     expect(esCicloActual(12, 2024)).toBe(true);
     expect(esCicloActual(1, 2025)).toBe(true);
     expect(esCicloActual(3, 2025)).toBe(false); // futuro
+  });
+});
+
+describe('vencimientoYaPaso', () => {
+  const fechaVencimiento = '2025-06-10T00:00:00Z';
+
+  it('el día anterior al vencimiento retorna false', () => {
+    const hoy = new Date('2025-06-09T12:00:00Z');
+    expect(vencimientoYaPaso(fechaVencimiento, hoy)).toBe(false);
+  });
+
+  it('el día exacto del vencimiento retorna false (el día 10 sigue siendo pendiente)', () => {
+    const hoy = new Date('2025-06-10T23:59:00Z');
+    expect(vencimientoYaPaso(fechaVencimiento, hoy)).toBe(false);
+  });
+
+  it('el día siguiente al vencimiento retorna true', () => {
+    const hoy = new Date('2025-06-11T00:00:00Z');
+    expect(vencimientoYaPaso(fechaVencimiento, hoy)).toBe(true);
   });
 });
 

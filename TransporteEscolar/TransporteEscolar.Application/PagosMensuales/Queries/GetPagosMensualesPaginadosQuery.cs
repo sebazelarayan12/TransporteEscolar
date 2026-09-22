@@ -10,7 +10,8 @@ public sealed record GetPagosMensualesPaginadosQuery(
     int Anio,
     string? Search,
     int PageNumber,
-    int PageSize) : IRequest<PaginationModel.ResponsePagination<PagoMensualModel.Response>>;
+    int PageSize,
+    string? Estado = null) : IRequest<PaginationModel.ResponsePagination<PagoMensualModel.Response>>;
 
 public sealed class GetPagosMensualesPaginadosQueryHandler : IRequestHandler<GetPagosMensualesPaginadosQuery, PaginationModel.ResponsePagination<PagoMensualModel.Response>>
 {
@@ -43,6 +44,17 @@ public sealed class GetPagosMensualesPaginadosQueryHandler : IRequestHandler<Get
                 })
                 .ToList();
         }
+
+        // El filtro por estado se aplica en memoria (no en SQL) para reusar EstaPagado()/EstaVencido()
+        // del dominio directamente, en vez de reescribirlos como predicados SQL y arriesgar que la
+        // regla de negocio diverja entre los dos lugares.
+        pagos = request.Estado?.Trim().ToLowerInvariant() switch
+        {
+            "pagado" => pagos.Where(p => p.EstaPagado()).ToList(),
+            "vencido" => pagos.Where(p => p.EstaVencido()).ToList(),
+            "pendiente" => pagos.Where(p => !p.EstaPagado() && !p.EstaVencido()).ToList(),
+            _ => pagos
+        };
 
         var totalCount = pagos.Count;
 

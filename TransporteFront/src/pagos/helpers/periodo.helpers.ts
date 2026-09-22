@@ -46,6 +46,23 @@ export function esCicloActual(mes: number, anio: number): boolean {
 }
 
 /**
+ * True cuando el vencimiento del período ya pasó: las cuotas impagas se muestran como vencidas.
+ * Compara por día (no por instante), en UTC, igual que PagoMensual.EstaVencido() del backend:
+ * el día del vencimiento entero sigue contando como pendiente, recién al día siguiente es vencido.
+ */
+export function vencimientoYaPaso(fechaVencimiento: string, hoy: Date = new Date()): boolean {
+  const vencimiento = new Date(fechaVencimiento);
+  const hoyUtcDias = Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), hoy.getUTCDate());
+  const vencimientoUtcDias = Date.UTC(
+    vencimiento.getUTCFullYear(),
+    vencimiento.getUTCMonth(),
+    vencimiento.getUTCDate(),
+  );
+
+  return hoyUtcDias > vencimientoUtcDias;
+}
+
+/**
  * Agrupa pagos mensuales por periodo (mes-año)
  * Ordena los grupos: más recientes primero
  */

@@ -7,7 +7,8 @@ public record HorarioModel
         string Etiqueta,
         int Orden,
         int PasajerosActivos,
-        ConteoPorTransporte ConteosPorTransporte);
+        ConteoPorTransporte ConteosPorTransporte,
+        string Sentido);
 
     public record Resumen(
         int Id,

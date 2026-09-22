@@ -5,6 +5,7 @@ export interface DashboardSummary {
   cantidadVencido: number;
   titularesActivos: number;
   pasajerosActivos: number;
+  vencimientoPasado: boolean;
 }
 
 export interface DashboardRevenuePoint {
