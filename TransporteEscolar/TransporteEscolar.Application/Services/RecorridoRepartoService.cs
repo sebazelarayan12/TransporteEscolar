@@ -276,12 +276,22 @@ public class RecorridoRepartoService : IRecorridoRepartoService
         var titulares = await _titularRepository.GetByIdsAsync(titularIds, cancellationToken);
         var apellidoPorTitular = titulares.ToDictionary(t => t.Id, t => t.Apellido);
 
+        // Mismo criterio que usa RecalcularAsync para detectar paradas fijas huérfanas: el titular
+        // tiene que seguir en las asignaciones de ESE horario+transporte, no alcanza con que viaje
+        // en cualquier otro viaje. No se filtran del listado: se devuelven marcadas para que la
+        // pantalla pueda avisar y ofrecer reasignarlas.
+        var asignaciones = await _pasajeroRepository.GetAsignacionesHorarioAsync(cancellationToken);
+        var viajesVigentes = asignaciones
+            .Select(a => (a.HorarioId, a.Transporte, a.TitularId))
+            .ToHashSet();
+
         return paradasFijas
             .OrderBy(p => p.HorarioId)
             .ThenBy(p => p.Transporte)
             .Select(p => p.ToResponse(
                 etiquetaPorHorario.TryGetValue(p.HorarioId, out var etiqueta) ? etiqueta : $"Horario {p.HorarioId}",
-                apellidoPorTitular.TryGetValue(p.TitularId, out var apellido) ? apellido : string.Empty))
+                apellidoPorTitular.TryGetValue(p.TitularId, out var apellido) ? apellido : string.Empty,
+                viajesVigentes.Contains((p.HorarioId, p.Transporte, p.TitularId))))
             .ToList();
     }
 
@@ -321,7 +331,9 @@ public class RecorridoRepartoService : IRecorridoRepartoService
         var horario = await _horarioRepository.GetByIdAsync(horarioId, cancellationToken);
         var titular = await _titularRepository.GetByIdAsync(titularId, cancellationToken);
 
-        return guardada.ToResponse(horario?.Etiqueta ?? $"Horario {horarioId}", titular?.Apellido ?? string.Empty);
+        // Siempre true acá: arriba ya se validó que el titular viaja en este horario+transporte
+        // antes de guardar la parada fija.
+        return guardada.ToResponse(horario?.Etiqueta ?? $"Horario {horarioId}", titular?.Apellido ?? string.Empty, true);
     }
 
     public async Task EliminarParadaFijaAsync(

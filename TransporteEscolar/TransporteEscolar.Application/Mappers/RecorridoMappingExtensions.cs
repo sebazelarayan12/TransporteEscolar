@@ -36,7 +36,16 @@ public static class RecorridoMappingExtensions
     /// <summary>Convierte una parada fija de dominio en su respuesta de API.</summary>
     /// <param name="horarioEtiqueta">Etiqueta del horario, resuelta aparte porque la entidad no la conoce.</param>
     /// <param name="titularApellido">Apellido del titular, resuelto aparte por la misma razón.</param>
-    public static ParadaFijaModel.Response ToResponse(this ParadaFija paradaFija, string horarioEtiqueta, string titularApellido)
+    /// <param name="sigueViajando">
+    /// Si el titular sigue apareciendo en las asignaciones de ese (horario, transporte): mismo
+    /// criterio que usa <see cref="Services.RecorridoRepartoService.RecalcularAsync"/> para detectar
+    /// paradas fijas huérfanas.
+    /// </param>
+    public static ParadaFijaModel.Response ToResponse(
+        this ParadaFija paradaFija,
+        string horarioEtiqueta,
+        string titularApellido,
+        bool sigueViajando)
     {
         ArgumentNullException.ThrowIfNull(paradaFija);
 
@@ -46,6 +55,7 @@ public static class RecorridoMappingExtensions
             paradaFija.Transporte,
             paradaFija.TitularId,
             titularApellido,
-            paradaFija.FechaAsignacion);
+            paradaFija.FechaAsignacion,
+            sigueViajando);
     }
 }

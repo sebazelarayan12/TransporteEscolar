@@ -566,11 +566,102 @@ public class RecorridoRepartoServiceTests
             .Setup(r => r.GetByIdsAsync(It.Is<List<int>>(ids => ids.Contains(10)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Titular> { titular });
 
+        _pasajeros
+            .Setup(r => r.GetAsignacionesHorarioAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AsignacionHorario> { new(1, 1, 1, 10) });
+
         var resultado = await CrearServicio().ObtenerParadasFijasAsync();
 
         var fila = resultado.Should().ContainSingle().Subject;
         fila.HorarioEtiqueta.Should().Be("8 San Patricio");
         fila.TitularApellido.Should().Be("PÉREZ");
+        fila.SigueViajando.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ObtenerParadasFijasAsync_MarcaSigueViajandoFalso_SiElTitularYaNoEstaEnLasAsignacionesDeEseViaje()
+    {
+        // El titular 10 fue marcado como parada fija, pero ya no aparece en las asignaciones de
+        // ningún viaje (se dio de baja, dieron de baja a sus pasajeros, o lo sacaron del horario).
+        _paradasFijas
+            .Setup(r => r.GetTodasAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParadaFija> { new(1, 1, 10) });
+
+        _horarios
+            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Horario> { CrearHorario(1, "8 San Patricio", SentidoHorario.Ida) });
+
+        _titulares
+            .Setup(r => r.GetByIdsAsync(It.IsAny<List<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Titular> { CrearTitular(10, "Pérez") });
+
+        _pasajeros
+            .Setup(r => r.GetAsignacionesHorarioAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AsignacionHorario>());
+
+        var resultado = await CrearServicio().ObtenerParadasFijasAsync();
+
+        resultado.Should().ContainSingle().Which.SigueViajando.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ObtenerParadasFijasAsync_NoFiltraLaParadaHuerfana_LaDevuelveMarcada()
+    {
+        // Dos paradas fijas: la del horario 1 sigue vigente, la del horario 2 quedó huérfana.
+        // Ninguna se tiene que perder de la lista: la pantalla necesita ver ambas para poder avisar.
+        _paradasFijas
+            .Setup(r => r.GetTodasAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParadaFija> { new(1, 1, 10), new(2, 1, 20) });
+
+        _horarios
+            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Horario>
+            {
+                CrearHorario(1, "8 San Patricio", SentidoHorario.Ida),
+                CrearHorario(2, "9 San Patricio", SentidoHorario.Ida)
+            });
+
+        _titulares
+            .Setup(r => r.GetByIdsAsync(It.IsAny<List<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Titular> { CrearTitular(10, "Pérez"), CrearTitular(20, "Gómez") });
+
+        // Solo el titular 10 sigue en las asignaciones (horario 1); el 20 ya no aparece en ningún viaje.
+        _pasajeros
+            .Setup(r => r.GetAsignacionesHorarioAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AsignacionHorario> { new(1, 1, 1, 10) });
+
+        var resultado = await CrearServicio().ObtenerParadasFijasAsync();
+
+        resultado.Should().HaveCount(2);
+        resultado.Single(p => p.HorarioId == 1).SigueViajando.Should().BeTrue();
+        resultado.Single(p => p.HorarioId == 2).SigueViajando.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ObtenerParadasFijasAsync_SigueViajandoEsPorHorarioYTransporte_NoSoloPorTitular()
+    {
+        // La parada fija es del transporte 1, pero el titular solo viaja en el transporte 2 de ese
+        // mismo horario: la tupla completa (horario, transporte, titular) tiene que fallar aunque el
+        // titular exista en las asignaciones de otro vehículo.
+        _paradasFijas
+            .Setup(r => r.GetTodasAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParadaFija> { new(1, 1, 10) });
+
+        _horarios
+            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Horario> { CrearHorario(1, "8 San Patricio", SentidoHorario.Ida) });
+
+        _titulares
+            .Setup(r => r.GetByIdsAsync(It.IsAny<List<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Titular> { CrearTitular(10, "Pérez") });
+
+        _pasajeros
+            .Setup(r => r.GetAsignacionesHorarioAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AsignacionHorario> { new(1, 2, 1, 10) });
+
+        var resultado = await CrearServicio().ObtenerParadasFijasAsync();
+
+        resultado.Should().ContainSingle().Which.SigueViajando.Should().BeFalse();
     }
 
     [Fact]

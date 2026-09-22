@@ -10,13 +10,15 @@ public static class ParadaFijaModel
     /// <param name="TitularId">Titular elegido como extremo fijo del recorrido.</param>
     /// <param name="TitularApellido">Apellido del titular, para mostrar.</param>
     /// <param name="FechaAsignacion">Cuándo se asignó (o reasignó) esta parada fija.</param>
+    /// <param name="SigueViajando">False si esa familia ya no viaja en este viaje: la parada fija quedó huérfana y hay que reasignarla.</param>
     public sealed record Response(
         int HorarioId,
         string HorarioEtiqueta,
         byte Transporte,
         int TitularId,
         string TitularApellido,
-        DateTime FechaAsignacion);
+        DateTime FechaAsignacion,
+        bool SigueViajando);
 
     /// <summary>Pedido para marcar la parada fija de un viaje.</summary>
     /// <param name="TitularId">Titular elegido. Debe viajar en ese horario y vehículo, y tener ubicación cargada.</param>
