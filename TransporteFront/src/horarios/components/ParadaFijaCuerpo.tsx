@@ -47,7 +47,9 @@ export const ParadaFijaCuerpo = ({
   }
 
   const iniciarEdicion = () => {
-    setTitularSeleccionado(paradaFijaActual?.titularId ?? '');
+    setTitularSeleccionado(
+      paradaFijaActual && paradaFijaActual.sigueViajando ? paradaFijaActual.titularId : '',
+    );
     setEditando(true);
   };
 

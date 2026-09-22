@@ -30,6 +30,35 @@ export const ParadaFijaResumen = ({
     );
   }
 
+  if (!paradaFijaActual.sigueViajando) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50/60 px-4 py-3 dark:border-red-800/50 dark:bg-red-900/10">
+        <div>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+            {getTitularApellidoDisplay(paradaFijaActual.titularApellido)}
+          </p>
+          <p className="text-xs text-red-600 dark:text-red-300">
+            Esta familia ya no viaja en este horario. Reasigná la casa fija para poder calcular el
+            reparto.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button type="button" variant="ghost" size="sm" onClick={onIniciarEdicion}>
+            Cambiar
+          </Button>
+          <button
+            type="button"
+            onClick={onQuitar}
+            disabled={isQuitando}
+            className="inline-flex items-center rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-800/50 dark:text-red-300 dark:hover:bg-red-900/30"
+          >
+            {isQuitando ? 'Quitando...' : 'Quitar'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 dark:border-emerald-900/40 dark:bg-emerald-900/10">
       <div>

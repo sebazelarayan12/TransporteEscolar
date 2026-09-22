@@ -67,6 +67,8 @@ export interface ParadaFijaResponse {
   titularId: number;
   titularApellido: string;
   fechaAsignacion: string;
+  /** False si esa familia ya no viaja en este horario+transporte: la parada quedó huérfana. */
+  sigueViajando: boolean;
 }
 
 export interface ParadaFijaRequest {

@@ -58,15 +58,19 @@ export const RecorridoViajePanel = ({ horarioId, transporte }: RecorridoViajePan
     return <ErrorState message="No se pudo cargar el recorrido de este viaje" />;
   }
 
-  const tieneParadaFija = paradasFijas?.some(
+  const paradaFijaDelViaje = paradasFijas?.find(
     (parada) => parada.horarioId === horarioId && parada.transporte === transporte,
   );
 
-  if (!tieneParadaFija) {
+  // Una parada huérfana no cuenta como válida: el recálculo tampoco la usa, así que no hay
+  // recorrido posible hasta que se reasigne.
+  if (!paradaFijaDelViaje || !paradaFijaDelViaje.sigueViajando) {
     return (
       <RecorridoViajeShell>
         <p className="rounded-xl border border-dashed border-gray-200 bg-white/60 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-white/5 dark:text-gray-300">
-          Este viaje todavía no tiene casa fija marcada, así que no se puede calcular el recorrido.
+          {paradaFijaDelViaje
+            ? 'La casa fija de este viaje ya no viaja en este horario, así que no se puede calcular el recorrido. Reasignala desde Horarios.'
+            : 'Este viaje todavía no tiene casa fija marcada, así que no se puede calcular el recorrido.'}
         </p>
       </RecorridoViajeShell>
     );
