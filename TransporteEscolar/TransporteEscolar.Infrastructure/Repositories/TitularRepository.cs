@@ -69,4 +69,13 @@ public class TitularRepository : ITitularRepository
     {
         return await _context.Titulares.AnyAsync(t => t.Id == id, cancellationToken);
     }
+
+    public async Task<List<TelefonoActivo>> GetTelefonosActivosAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.TitularesTelefonos
+            .Where(tel => tel.FechaBaja == null)
+            .Where(tel => tel.Titular.FechaBaja == null)
+            .Select(tel => new TelefonoActivo(tel.TitularId, tel.NumeroE164))
+            .ToListAsync(cancellationToken);
+    }
 }
