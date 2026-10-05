@@ -56,7 +56,6 @@ Plataforma integral para administrar el servicio de transporte escolar: titulare
     - `ConnectionStrings__Default`
     - `AllowedOrigins` (lista separada por comas)
     - `ReleaseNotes__Titulo`, `ReleaseNotes__Descripcion`, `ReleaseNotes__FechaPublicacionUtc`, `ReleaseNotes__Link`
-    - `MetaWhatsApp__AccessToken`, `PhoneNumberId`, `ApiVersion`, `LanguageCode`, `TemplateName`, `WebhookVerifyToken`
 
 El `DotEnvLoader` del backend lee automáticamente, antes de crear el `WebApplicationBuilder`, los archivos `.env`, `.env.<Environment>` de la raíz del repo y una copia opcional ubicada en `TransporteEscolar/TransporteEscolar.Api/.env`. Los valores solo se establecen si no existen en el entorno del sistema, por lo que puedes sobreescribirlos con variables de CI/CD sin riesgos.
 

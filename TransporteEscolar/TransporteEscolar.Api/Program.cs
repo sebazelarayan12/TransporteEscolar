@@ -28,7 +28,7 @@ namespace TransporteEscolar.Api
 
             // Registrar servicios y repositorios
             builder.Services.AddApplicationServices();
-            builder.Services.AddWhatsAppIntegration(builder.Configuration);
+            builder.Services.AddWhatsAppLoteRepository();
             builder.Services.AddRuteo(builder.Configuration);
             builder.Services.AddBotApi(builder.Configuration);
             builder.Services.Configure<ReleaseNotesOptions>(builder.Configuration.GetSection("ReleaseNotes"));
@@ -90,8 +90,9 @@ namespace TransporteEscolar.Api
             // CORS - Debe ir antes de Authorization
             app.UseCors("AllowFrontend");
 
-            // Middleware
-            if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
+            // Swagger solo si Swagger:Enabled es true. Lo activan los perfiles locales de launchSettings;
+            // desplegado (api-dev / api-prod) queda apagado porque documenta todos los endpoints.
+            if (app.Configuration.GetValue<bool>("Swagger:Enabled"))
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
