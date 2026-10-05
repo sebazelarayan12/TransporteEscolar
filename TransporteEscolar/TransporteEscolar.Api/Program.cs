@@ -28,7 +28,7 @@ namespace TransporteEscolar.Api
 
             // Registrar servicios y repositorios
             builder.Services.AddApplicationServices();
-            builder.Services.AddWhatsAppIntegration(builder.Configuration);
+            builder.Services.AddWhatsAppLoteRepository();
             builder.Services.AddRuteo(builder.Configuration);
             builder.Services.AddBotApi(builder.Configuration);
             builder.Services.Configure<ReleaseNotesOptions>(builder.Configuration.GetSection("ReleaseNotes"));

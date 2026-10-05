@@ -68,35 +68,12 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registra la integración con Meta WhatsApp Cloud API.
-    /// Llama a este método desde Program.cs pasando la configuración.
+    /// Registra el repositorio de lotes de WhatsApp, que usa la consulta de pagos pendientes para notificar.
+    /// El envío por Meta WhatsApp Cloud API se eliminó: el bot manual del dueño es quien manda los mensajes.
     /// </summary>
-    public static IServiceCollection AddWhatsAppIntegration(
-        this IServiceCollection services,
-        IConfiguration configuration)
+    public static IServiceCollection AddWhatsAppLoteRepository(this IServiceCollection services)
     {
-        // Vincula las opciones desde la sección "MetaWhatsApp" de appsettings
-        services.Configure<MetaWhatsAppOptions>(
-            configuration.GetSection(MetaWhatsAppOptions.SectionName));
-
-        // Opciones de nombre de plantilla (para que Application no dependa de Infrastructure)
-        services.Configure<WhatsAppTemplateName>(
-            configuration.GetSection(WhatsAppTemplateName.SectionName));
-
-        // HttpClient tipado: inyecta el Bearer Token automáticamente en cada request
-        services.AddHttpClient<IWhatsAppProvider, MetaWhatsAppProvider>((sp, client) =>
-        {
-            var token = configuration["MetaWhatsApp:AccessToken"];
-            if (!string.IsNullOrEmpty(token))
-                client.DefaultRequestHeaders.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        });
-
-        // Repositorio de lotes (Infrastructure accede al AppDbContext)
         services.AddScoped<IWhatsAppLoteRepository, WhatsAppLoteRepository>();
-
-        // Servicio de lotes (Application usa el repositorio)
-        services.AddScoped<IWhatsAppLoteService, WhatsAppLoteService>();
 
         return services;
     }
