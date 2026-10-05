@@ -90,8 +90,9 @@ namespace TransporteEscolar.Api
             // CORS - Debe ir antes de Authorization
             app.UseCors("AllowFrontend");
 
-            // Middleware
-            if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
+            // Swagger solo si Swagger:Enabled es true. Lo activan los perfiles locales de launchSettings;
+            // desplegado (api-dev / api-prod) queda apagado porque documenta todos los endpoints.
+            if (app.Configuration.GetValue<bool>("Swagger:Enabled"))
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
