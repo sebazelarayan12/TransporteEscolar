@@ -95,18 +95,6 @@ function seleccionarTelefonoPrincipal(telefonos) {
   );
 }
 
-async function fetchLinkMP(pagoId) {
-  try {
-    const { data } = await axios.post(
-      `${env.API_BASE_URL}/pagosmensuales/${pagoId}/mercadopago-link`
-    );
-    return data.url ?? null;
-  } catch (err) {
-    console.warn(`⚠️  No se pudo generar link MP para pago ${pagoId}: ${err.message}`);
-    return null;
-  }
-}
-
 function printHeader(commandName, description) {
   console.log('='.repeat(60));
   console.log('  🚌 Bot WhatsApp — Transporte Escolar');
@@ -163,7 +151,8 @@ async function fetchDestinatariosPendientes() {
       telefono,
       periodo: periodo.label,
       saldoPendiente: pago.saldoPendiente,
-      pagoId: pago.id,
+      titularId: pago.titularId,
+      titularApellido: pago.titularApellido,
     });
   }
 
@@ -171,28 +160,66 @@ async function fetchDestinatariosPendientes() {
   if (sinTelefono > 0) console.log(`⚠️  ${sinTelefono} titular(es) sin teléfono activo, omitidos.`);
   console.log(`📤 Destinatarios listos: ${destinatarios.length}`);
 
-  console.log('💳 Generando links de Mercado Pago...');
-  await Promise.all(
-    destinatarios.map(async (dest) => {
-      if (!dest.pagoId) return;
-      dest.linkMP = await fetchLinkMP(dest.pagoId);
-    })
+  return destinatarios;
+}
+
+async function fetchDestinatariosPendientesExcluir() {
+  const periodo = getPeriodoActual();
+  console.log(`\n🌐 API [${env.label}]: ${env.API_BASE_URL}`);
+  console.log(`📅 Mes a notificar: ${periodo.label}`);
+  console.log(`🚫 Excluidos: ${EXCLUIR_TITULAR_IDS.join(', ')}`);
+
+  const [{ data: pendientes }, { data: vencidos }] = await Promise.all([
+    axios.get(`${env.API_BASE_URL}/pagosmensuales/pendientes`),
+    axios.get(`${env.API_BASE_URL}/pagosmensuales/vencidos`),
+  ]);
+
+  const todos = [...(pendientes ?? []), ...(vencidos ?? [])];
+  const delMes = todos.filter(
+    (pago) =>
+      pago.mes === periodo.mes &&
+      pago.anio === periodo.anio &&
+      pago.saldoPendiente > 0 &&
+      !EXCLUIR_TITULAR_IDS.includes(pago.titularId)
   );
-  const conLink = destinatarios.filter((d) => d.linkMP).length;
-  console.log(`🔗 Links generados: ${conLink}/${destinatarios.length}`);
+  const pagosUnicos = Object.values(Object.fromEntries(delMes.map((p) => [p.id, p])));
+
+  if (pagosUnicos.length === 0) {
+    console.log('✅ No hay cuotas pendientes o vencidas este mes.');
+    return [];
+  }
+
+  const telefonos = await cargarTelefonosPrincipales(pagosUnicos.map((p) => p.titularId));
+  const vistos = new Set();
+  const destinatarios = [];
+
+  for (const pago of pagosUnicos) {
+    if (vistos.has(pago.titularId)) continue;
+    const telefono = telefonos[pago.titularId];
+    if (!telefono) continue;
+    vistos.add(pago.titularId);
+    destinatarios.push({
+      telefono,
+      periodo: periodo.label,
+      saldoPendiente: pago.saldoPendiente,
+      titularId: pago.titularId,
+      titularApellido: pago.titularApellido,
+    });
+  }
+
+  const sinTelefono = new Set(pagosUnicos.map((p) => p.titularId)).size - destinatarios.length;
+  if (sinTelefono > 0) console.log(`⚠️  ${sinTelefono} titular(es) sin teléfono activo, omitidos.`);
+  console.log(`📤 Destinatarios listos: ${destinatarios.length}`);
 
   return destinatarios;
 }
 
 function buildMensajePendientes(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
-  const linkLinea = destinatario.linkMP
-    ? `\n💳 Pagá con Mercado Pago:\n${destinatario.linkMP}\n`
-    : '';
   return (
-    `Hola! 🚌\n\n` +
+    `Buenos días! 🚌\n\n` +
     `Te recordamos que tenés la cuota del mes *${periodoNatural}* pendiente por *${formatMonto(destinatario.saldoPendiente)}*.` +
-    `${linkLinea}\n` +
+    `\n` +
     `¡Muchas gracias! 😊`
   );
 }
@@ -223,6 +250,8 @@ async function fetchDestinatariosRecordatorio() {
         telefono,
         periodo: periodo.label,
         monto: titular.montoMensualPactado ?? 0,
+        titularId: titular.id,
+        titularApellido: titular.apellido,
       };
     })
     .filter(Boolean);
@@ -241,6 +270,50 @@ function buildMensajeRecordatorio(destinatario) {
     `Los pagos son por adelantado del 1 al 10 de cada mes. Te recordamos que la cuota del servicio de transporte escolar correspondiente al mes de *${periodoNatural}* es de *${formatMonto(destinatario.monto)}*.\n\n` +
     `Podés abonar por transferencia o en efectivo. ¡Gracias por confiar en nosotros! 😊`
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Comando: recordatorio-excluir
+// ─────────────────────────────────────────────────────────────────────────────
+
+const EXCLUIR_TITULAR_IDS = [41];
+
+async function fetchDestinatariosRecordatorioExcluir() {
+  const periodo = getPeriodoSiguiente();
+  console.log(`\n🌐 API [${env.label}]: ${env.API_BASE_URL}`);
+  console.log('📋 Recuperando titulares activos...');
+  console.log(`🚫 Excluidos: ${EXCLUIR_TITULAR_IDS.join(', ')}`);
+
+  const { data } = await axios.get(`${env.API_BASE_URL}/titulares/activos`);
+  const titulares = (Array.isArray(data) ? data : []).filter(
+    (t) => !EXCLUIR_TITULAR_IDS.includes(t.id)
+  );
+
+  if (titulares.length === 0) {
+    console.log('✅ No se encontraron titulares activos.');
+    return [];
+  }
+
+  const telefonos = await cargarTelefonosPrincipales(titulares.map((t) => t.id));
+  const destinatarios = titulares
+    .map((titular) => {
+      const telefono = telefonos[titular.id];
+      if (!telefono) return null;
+      return {
+        telefono,
+        periodo: periodo.label,
+        monto: titular.montoMensualPactado ?? 0,
+        titularId: titular.id,
+        titularApellido: titular.apellido,
+      };
+    })
+    .filter(Boolean);
+
+  const sinTelefono = titulares.length - destinatarios.length;
+  if (sinTelefono > 0) console.log(`⚠️  ${sinTelefono} titular(es) sin teléfono activo, omitidos.`);
+  console.log(`📤 Recordatorios a enviar: ${destinatarios.length}`);
+
+  return destinatarios;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -264,7 +337,7 @@ async function fetchDestinatariosPersonalizado() {
     .map((titular) => {
       const telefono = telefonos[titular.id];
       if (!telefono) return null;
-      return { telefono };
+      return { telefono, titularId: titular.id, titularApellido: titular.apellido };
     })
     .filter(Boolean);
 
@@ -304,31 +377,27 @@ async function fetchDestinatariosPrueba() {
   );
 
   if (pagoEncontrado) {
-    console.log(`✅ Pago encontrado (ID: ${pagoEncontrado.id}, saldo: ${pagoEncontrado.saldoPendiente}). Generando link MP...`);
-    const dest = {
+    console.log(`✅ Pago encontrado (ID: ${pagoEncontrado.id}, saldo: ${pagoEncontrado.saldoPendiente}).`);
+    return [{
       telefono,
       periodo: `${String(pagoEncontrado.mes).padStart(2, '0')}/${pagoEncontrado.anio}`,
       saldoPendiente: pagoEncontrado.saldoPendiente,
-      pagoId: pagoEncontrado.id,
-    };
-    dest.linkMP = await fetchLinkMP(dest.pagoId);
-    return [dest];
+      titularId: pagoEncontrado.titularId,
+      titularApellido: pagoEncontrado.titularApellido,
+    }];
   }
 
   console.log('⚠️  Sin pago pendiente para ese titular. Enviando mensaje básico de prueba.');
-  return [{ telefono, periodo: periodo.label, saldoPendiente: 10000 }];
+  return [{ telefono, periodo: periodo.label, saldoPendiente: 10000, titularId: TITULAR_ID_PRUEBA }];
 }
 
 function buildMensajePrueba(destinatario) {
   const periodoNatural = formatPeriodoNatural(destinatario.periodo);
-  const linkLinea = destinatario.linkMP
-    ? `\n💳 Pagá con Mercado Pago:\n${destinatario.linkMP}\n`
-    : '';
   return (
     `🧪 *MENSAJE DE PRUEBA*\n\n` +
     `Hola Sebastian! 🚌\n` +
     `Cuota *${periodoNatural}* — *${formatMonto(destinatario.saldoPendiente)}*` +
-    `${linkLinea}\n` +
+    `\n` +
     `(Este es un mensaje de prueba del sistema)`
   );
 }
@@ -343,9 +412,19 @@ const commands = {
     fetchDestinatarios: fetchDestinatariosPendientes,
     buildMensaje: buildMensajePendientes,
   },
+  'pendientes-excluir': {
+    description: 'Recordatorio de pendientes/vencidos excluyendo titulares en EXCLUIR_TITULAR_IDS.',
+    fetchDestinatarios: fetchDestinatariosPendientesExcluir,
+    buildMensaje: buildMensajePendientes,
+  },
   recordatorio: {
     description: 'Aviso masivo con el monto mensual pactado para titulares activos.',
     fetchDestinatarios: fetchDestinatariosRecordatorio,
+    buildMensaje: buildMensajeRecordatorio,
+  },
+  'recordatorio-excluir': {
+    description: 'Recordatorio mensual excluyendo titulares en EXCLUIR_TITULAR_IDS.',
+    fetchDestinatarios: fetchDestinatariosRecordatorioExcluir,
     buildMensaje: buildMensajeRecordatorio,
   },
   personalizado: {
@@ -429,6 +508,12 @@ async function iniciarSesionWhatsApp(destinatarios, buildMensaje) {
   });
 }
 
+function identificarTitular(destinatario) {
+  const id = destinatario.titularId ?? '?';
+  const apellido = destinatario.titularApellido ?? 'sin apellido';
+  return `#${id} - ${apellido}`;
+}
+
 async function enviarMensajes(client, destinatarios, buildMensaje) {
   let enviados = 0;
   let errores = 0;
@@ -454,10 +539,10 @@ async function enviarMensajes(client, destinatarios, buildMensaje) {
       }
       const chatId = numberId._serialized ?? `${numberId.user}@c.us`;
       await client.sendMessage(chatId, buildMensaje(destinatario));
-      console.log(`✅ Enviado a ${destinatario.telefono} (chatId: ${chatId})`);
+      console.log(`✅ Enviado a ${destinatario.telefono} [titular ${identificarTitular(destinatario)}] (chatId: ${chatId})`);
       enviados++;
     } catch (err) {
-      console.error(`❌ Error al enviar a ${destinatario.telefono}: ${err.message ?? err}`);
+      console.error(`❌ Error al enviar a ${destinatario.telefono} [titular ${identificarTitular(destinatario)}]: ${err.message ?? err}`);
       console.error(err.stack);
       errores++;
     }

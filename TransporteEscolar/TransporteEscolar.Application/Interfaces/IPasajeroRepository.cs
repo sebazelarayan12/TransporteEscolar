@@ -18,6 +18,14 @@ public sealed record AsignacionColegio(int TitularId, int ColegioId, int Horario
 /// </summary>
 public sealed record AsignacionHorario(int HorarioId, byte Transporte, int ColegioId, int TitularId);
 
+/// <summary>
+/// Pasajero activo de un titular activo, reducido a lo mínimo para identificarlo por nombre de pila.
+/// </summary>
+/// <param name="Id">Identificador del pasajero.</param>
+/// <param name="TitularId">Titular dueño del pasajero.</param>
+/// <param name="Nombre">Nombre de pila (el apellido vive en el titular).</param>
+public sealed record PasajeroActivoBasico(int Id, int TitularId, string Nombre);
+
 public interface IPasajeroRepository
 {
     Task<Pasajero?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
@@ -56,4 +64,13 @@ public interface IPasajeroRepository
     /// Es el manifiesto de cada viaje.
     /// </summary>
     Task<List<AsignacionHorario>> GetAsignacionesHorarioAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Devuelve id, titular y nombre de pila de los pasajeros de los titulares indicados.
+    /// Excluye al pasajero dado de baja y al de un titular dado de baja (ambas condiciones).
+    /// Si <paramref name="titularIds"/> está vacío devuelve una lista vacía sin consultar.
+    /// </summary>
+    Task<List<PasajeroActivoBasico>> GetNombresActivosPorTitularesAsync(
+        IReadOnlyCollection<int> titularIds,
+        CancellationToken cancellationToken = default);
 }

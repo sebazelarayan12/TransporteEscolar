@@ -2,6 +2,8 @@ using Lib.Net.Http.WebPush;
 using Lib.Net.Http.WebPush.Authentication;
 using MediatR;
 using Microsoft.Extensions.Options;
+using TransporteEscolar.Api.Filters;
+using TransporteEscolar.Api.Options;
 using TransporteEscolar.Application;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Application.Options;
@@ -56,7 +58,6 @@ public static class ServiceCollectionExtensions
             };
         });
         services.AddScoped<IWebPushService, WebPushService>();
-        services.AddScoped<IMercadoPagoService, MercadoPagoService>();
 
         // Gestión de Transacciones
         services.AddScoped<ITransactionManager, TransactionManager>();
@@ -127,6 +128,20 @@ public static class ServiceCollectionExtensions
             // El demo público de OSRM pide identificar al cliente.
             client.DefaultRequestHeaders.UserAgent.ParseAdd("TransporteEscolar/1.0");
         });
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registra el acceso del bot externo: opciones (<c>BotApi__ApiKey</c>) y el filtro de API key.
+    /// El filtro se aplica solo al <c>BotController</c> con <c>[ServiceFilter]</c>; no es global.
+    /// </summary>
+    public static IServiceCollection AddBotApi(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<BotApiOptions>(configuration.GetSection(BotApiOptions.SectionName));
+        services.AddScoped<ApiKeyFilter>();
 
         return services;
     }

@@ -631,21 +631,6 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("FechaVencimiento")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime?>("MercadoPagoGeneratedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("MercadoPagoPaymentId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("MercadoPagoPreferenceId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("MercadoPagoUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<int>("Mes")
                         .HasColumnType("integer");
 
@@ -660,10 +645,6 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("MercadoPagoPreferenceId")
-                        .IsUnique()
-                        .HasFilter("\"MercadoPagoPreferenceId\" IS NOT NULL");
 
                     b.HasIndex("TitularId", "Mes", "Anio")
                         .IsUnique();

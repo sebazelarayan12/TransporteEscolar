@@ -242,6 +242,24 @@ public class PasajeroRepository : IPasajeroRepository
             .ToList();
     }
 
+    public async Task<List<PasajeroActivoBasico>> GetNombresActivosPorTitularesAsync(
+        IReadOnlyCollection<int> titularIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (titularIds.Count == 0)
+            return new List<PasajeroActivoBasico>();
+
+        var ids = titularIds.Distinct().ToList();
+
+        // Las dos condiciones de baja: el pasajero y su titular. Proyección directa, sin traer entidades.
+        return await _context.Pasajeros
+            .Where(p => ids.Contains(p.TitularId))
+            .Where(p => p.FechaBaja == null)
+            .Where(p => p.Titular != null && p.Titular.FechaBaja == null)
+            .Select(p => new PasajeroActivoBasico(p.Id, p.TitularId, p.Nombre))
+            .ToListAsync(cancellationToken);
+    }
+
     private static IQueryable<Pasajero> SoloTitularesActivos(IQueryable<Pasajero> query)
     {
         return query.Where(p => p.Titular != null && p.Titular.FechaBaja == null);
