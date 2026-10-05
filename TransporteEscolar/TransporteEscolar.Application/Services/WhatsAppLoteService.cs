@@ -15,26 +15,17 @@ public class WhatsAppLoteService : IWhatsAppLoteService
     private readonly IWhatsAppLoteRepository _repository;
     private readonly IWhatsAppProvider _whatsAppProvider;
     private readonly WhatsAppTemplateName _templateOptions;
-    private readonly IPagoMensualRepository _pagoMensualRepository;
-    private readonly ITitularRepository _titularRepository;
-    private readonly IMercadoPagoService _mercadoPagoService;
     private readonly ILogger<WhatsAppLoteService> _logger;
 
     public WhatsAppLoteService(
         IWhatsAppLoteRepository repository,
         IWhatsAppProvider whatsAppProvider,
         IOptions<WhatsAppTemplateName> templateOptions,
-        IPagoMensualRepository pagoMensualRepository,
-        ITitularRepository titularRepository,
-        IMercadoPagoService mercadoPagoService,
         ILogger<WhatsAppLoteService> logger)
     {
         _repository = repository;
         _whatsAppProvider = whatsAppProvider;
         _templateOptions = templateOptions.Value;
-        _pagoMensualRepository = pagoMensualRepository;
-        _titularRepository = titularRepository;
-        _mercadoPagoService = mercadoPagoService;
         _logger = logger;
     }
 
@@ -89,8 +80,6 @@ public class WhatsAppLoteService : IWhatsAppLoteService
         _logger.LogInformation("Procesando {Count} mensajes del Lote #{LoteId}", pendientes.Count, loteId);
 
         var hoy = DateTime.UtcNow.AddHours(-3);
-        var mesActual = hoy.Month;
-        var anioActual = hoy.Year;
         var fechaLimiteStr = new DateTime(hoy.Year, hoy.Month,
             DateTime.DaysInMonth(hoy.Year, hoy.Month)).ToString("dd/MM/yyyy");
 
@@ -99,20 +88,12 @@ public class WhatsAppLoteService : IWhatsAppLoteService
         var titularesProjection = await _repository.ObtenerTitularesActivosConTelefonoAsync(titularIds, cancellationToken);
         var montosPorTitular = titularesProjection.ToDictionary(t => t.TitularId, t => t.MontoMensualPactado);
 
-        var linksPorTitular = await GenerarLinksMercadoPagoAsync(
-            titularIds, mesActual, anioActual, cancellationToken);
-
         foreach (var mensaje in pendientes)
         {
             if (cancellationToken.IsCancellationRequested) break;
 
             var monto = montosPorTitular.TryGetValue(mensaje.TitularId, out var m) ? m : 0m;
-            string[] parametros;
-
-            if (linksPorTitular.TryGetValue(mensaje.TitularId, out var link))
-                parametros = [mensaje.NombreTitular, monto.ToString("N0"), fechaLimiteStr, link];
-            else
-                parametros = [mensaje.NombreTitular, monto.ToString("N0"), fechaLimiteStr];
+            string[] parametros = [mensaje.NombreTitular, monto.ToString("N0"), fechaLimiteStr];
 
             var resultado = await _whatsAppProvider.EnviarTemplateMensajeAsync(
                 telefono: mensaje.TelefonoDestino,
@@ -184,65 +165,6 @@ public class WhatsAppLoteService : IWhatsAppLoteService
         }
 
         await _repository.ActualizarMensajeAsync(mensaje, cancellationToken);
-    }
-
-    // ── Generación de links Mercado Pago ───────────────────────────────────
-
-    private async Task<Dictionary<int, string>> GenerarLinksMercadoPagoAsync(
-        List<int> titularIds,
-        int mes,
-        int anio,
-        CancellationToken cancellationToken)
-    {
-        var links = new Dictionary<int, string>();
-
-        List<PagoMensual> pagos;
-        List<Titular> titulares;
-
-        try
-        {
-            pagos = await _pagoMensualRepository.GetByMesAnioAsync(mes, anio, cancellationToken);
-            titulares = await _titularRepository.GetByIdsAsync(titularIds, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error cargando datos para links Mercado Pago");
-            return links;
-        }
-
-        var pagosPorTitular = pagos
-            .Where(p => !p.EstaPagado() && p.SaldoPendiente() > 0)
-            .GroupBy(p => p.TitularId)
-            .ToDictionary(g => g.Key, g => g.First());
-
-        var titularesPorId = titulares.ToDictionary(t => t.Id);
-
-        foreach (var titularId in titularIds)
-        {
-            if (!pagosPorTitular.TryGetValue(titularId, out var pago)) continue;
-            if (!titularesPorId.TryGetValue(titularId, out var titular)) continue;
-
-            try
-            {
-                var linkResult = await _mercadoPagoService.GetOrCreatePreferenceAsync(
-                    pago, cancellationToken);
-
-                pago.AsignarMercadoPagoLink(linkResult.PreferenceId, linkResult.PaymentUrl, DateTime.UtcNow);
-                if (linkResult.CreatedNew)
-                    pago.LimpiarMercadoPagoPayment();
-
-                await _pagoMensualRepository.UpdateAsync(pago, cancellationToken);
-
-                links[titularId] = linkResult.PaymentUrl;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex,
-                    "No se pudo generar link Mercado Pago para titular {TitularId}", titularId);
-            }
-        }
-
-        return links;
     }
 }
 

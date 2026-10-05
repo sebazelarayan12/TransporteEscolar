@@ -35,21 +35,6 @@ public class PagoMensualConfiguration : IEntityTypeConfiguration<PagoMensual>
             .IsRequired(false)
             .HasMaxLength(500);
 
-        builder.Property(pm => pm.MercadoPagoPreferenceId)
-            .IsRequired(false)
-            .HasMaxLength(100);
-
-        builder.Property(pm => pm.MercadoPagoUrl)
-            .IsRequired(false)
-            .HasMaxLength(500);
-
-        builder.Property(pm => pm.MercadoPagoPaymentId)
-            .IsRequired(false)
-            .HasMaxLength(100);
-
-        builder.Property(pm => pm.MercadoPagoGeneratedAt)
-            .IsRequired(false);
-
         // Relaci�n con Titular
         builder.HasOne(pm => pm.Titular)
             .WithMany()
@@ -65,10 +50,6 @@ public class PagoMensualConfiguration : IEntityTypeConfiguration<PagoMensual>
         // �ndice �nico: TitularId + Mes + Anio
         builder.HasIndex(pm => new { pm.TitularId, pm.Mes, pm.Anio })
             .IsUnique();
-
-        builder.HasIndex(pm => pm.MercadoPagoPreferenceId)
-            .IsUnique()
-            .HasFilter("\"MercadoPagoPreferenceId\" IS NOT NULL");
 
         // Nota: Los m�todos TotalPagado(), EstaPagado(), etc. son ignorados autom�ticamente por EF Core
     }

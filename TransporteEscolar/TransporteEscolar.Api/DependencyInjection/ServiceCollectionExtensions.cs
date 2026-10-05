@@ -58,7 +58,6 @@ public static class ServiceCollectionExtensions
             };
         });
         services.AddScoped<IWebPushService, WebPushService>();
-        services.AddScoped<IMercadoPagoService, MercadoPagoService>();
 
         // Gestión de Transacciones
         services.AddScoped<ITransactionManager, TransactionManager>();

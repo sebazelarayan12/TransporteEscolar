@@ -57,15 +57,6 @@ Plataforma integral para administrar el servicio de transporte escolar: titulare
     - `AllowedOrigins` (lista separada por comas)
     - `ReleaseNotes__Titulo`, `ReleaseNotes__Descripcion`, `ReleaseNotes__FechaPublicacionUtc`, `ReleaseNotes__Link`
     - `MetaWhatsApp__AccessToken`, `PhoneNumberId`, `ApiVersion`, `LanguageCode`, `TemplateName`, `WebhookVerifyToken`
-    - `MercadoPago__ReturnUrlSuccess`, `MercadoPago__ReturnUrlPending`, `MercadoPago__ReturnUrlFailure`
-
-Todas las variables de Mercado Pago deben apuntar al mismo endpoint publico recien creado:
-
-```text
-https://<host>/pagos/resultado?estado=<valor>
-```
-
-Sustituye `<valor>` segun el tipo (`success`, `pending`, `failure`) para habilitar `auto_return` en el panel de Mercado Pago.
 
 El `DotEnvLoader` del backend lee automáticamente, antes de crear el `WebApplicationBuilder`, los archivos `.env`, `.env.<Environment>` de la raíz del repo y una copia opcional ubicada en `TransporteEscolar/TransporteEscolar.Api/.env`. Los valores solo se establecen si no existen en el entorno del sistema, por lo que puedes sobreescribirlos con variables de CI/CD sin riesgos.
 
