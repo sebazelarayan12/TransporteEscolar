@@ -100,6 +100,7 @@ namespace TransporteEscolar.Api
 
             app.UseHttpsRedirection();
             app.UseAuthentication();
+            app.UseMiddleware<ApiClientLoggingMiddleware>();
             app.UseAuthorization();
             app.MapControllers();
 
