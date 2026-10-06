@@ -11,14 +11,18 @@ export const ZOOM_POR_DEFECTO = 13;
 export const ZOOM_DETALLE = 17;
 
 /**
- * Tiles de CARTO. Gratis hasta 5 millones de pedidos por mes, uso comercial permitido,
- * sin cuenta ni API key. La atribución es obligatoria.
+ * Teselas estándar de OpenStreetMap. No piden cuenta ni API key. Su política de uso admite un
+ * tráfico liviano como el de esta app (un panel interno), con atribución visible; si el uso creciera
+ * mucho habría que pasar a un proveedor propio o de pago.
+ *
+ * Se abandonaron las teselas de CARTO porque cambiaron: hoy devuelven con código 200 una imagen con el
+ * cartel "API KEY REQUIRED" en lugar del mapa, así que un chequeo de estado HTTP no detecta el problema.
  */
-export const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+export const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-/** Atribución legalmente obligatoria de OpenStreetMap y CARTO. No quitarla. */
+/** Atribución obligatoria de OpenStreetMap. No quitarla. */
 export const TILE_ATRIBUCION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 const SIN_DATO = '—';
 const METROS_POR_KILOMETRO = 1000;
