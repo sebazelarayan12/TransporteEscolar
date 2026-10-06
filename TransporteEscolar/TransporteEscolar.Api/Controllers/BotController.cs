@@ -1,6 +1,7 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TransporteEscolar.Api.Filters;
+using TransporteEscolar.Api.Authentication;
 using TransporteEscolar.Application.Bot.Queries;
 using TransporteEscolar.Application.DTOs;
 
@@ -8,11 +9,12 @@ namespace TransporteEscolar.Api.Controllers;
 
 /// <summary>
 /// Endpoints de solo lectura para el bot externo de inasistencias.
-/// Protegidos con <c>X-Api-Key</c> únicamente en este controller (no hay autenticación global).
+/// Protegidos con <c>X-Api-Key</c> y el alcance <c>bot:identidad</c> únicamente en este controller
+/// (no hay autenticación global).
 /// </summary>
 [ApiController]
 [Route("api/bot")]
-[ServiceFilter(typeof(ApiKeyFilter))]
+[Authorize(Policy = ApiPolicies.BotIdentidad)]
 public class BotController : ControllerBase
 {
     private readonly ISender _sender;
@@ -29,7 +31,8 @@ public class BotController : ControllerBase
     /// <para>
     /// Códigos: 200 (siempre que la key sea válida, con <c>coincidencias</c> vacío si nadie coincide, incluso si
     /// el número tiene dígitos pero no es normalizable); 400 (falta <c>numero</c> o no tiene ningún dígito);
-    /// 401 (falta el header o la key es incorrecta); 503 (la key no está configurada en el servidor).
+    /// 401 (falta el header o la key es incorrecta); 403 (la key es válida pero no tiene el alcance
+    /// <c>bot:identidad</c>); 503 (no hay ninguna key configurada en el servidor).
     /// </para>
     /// </summary>
     /// <param name="numero">Teléfono tal como lo manda el bot (por ejemplo, 549 + área + abonado).</param>
@@ -37,6 +40,7 @@ public class BotController : ControllerBase
     [ProducesResponseType(typeof(BotModel.Response), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<ActionResult<BotModel.Response>> GetTitularPorTelefono(
         [FromQuery] string? numero,

@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TransporteEscolar.Api.Controllers;
 using TransporteEscolar.Api.DependencyInjection;
-using TransporteEscolar.Api.Filters;
+using TransporteEscolar.Api.Authentication;
 using TransporteEscolar.Api.Middleware;
 using TransporteEscolar.Application;
 using TransporteEscolar.Application.Interfaces;
@@ -36,14 +36,16 @@ public class BotEndpointPipelineTests
         public IHost Host { get; }
         public HttpClient Cliente { get; }
 
-        public HostDePrueba(string? apiKey, Mock<ITitularRepository> titulares, Mock<IPasajeroRepository> pasajeros)
+        public HostDePrueba(
+            IDictionary<string, string?> configuracion,
+            Mock<ITitularRepository> titulares,
+            Mock<IPasajeroRepository> pasajeros)
         {
             Host = new HostBuilder()
                 .ConfigureAppConfiguration(config =>
                 {
-                    // Sin la entrada BotApi:ApiKey queda "no configurada" (503).
-                    if (apiKey is not null)
-                        config.AddInMemoryCollection(new Dictionary<string, string?> { ["BotApi:ApiKey"] = apiKey });
+                    // Sin entradas BotApi:ApiKey ni ApiClients:* queda "no configurada" (503).
+                    config.AddInMemoryCollection(configuracion);
                 })
                 .ConfigureLogging(logging => logging.ClearProviders())
                 .ConfigureWebHost(web => web
@@ -61,6 +63,8 @@ public class BotEndpointPipelineTests
                     {
                         app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
                         app.UseRouting();
+                        app.UseAuthentication();
+                        app.UseAuthorization();
                         app.UseEndpoints(endpoints => endpoints.MapControllers());
                     }))
                 .Build();
@@ -108,20 +112,46 @@ public class BotEndpointPipelineTests
         return (titulares, pasajeros);
     }
 
-    private static async Task<HttpResponseMessage> Consultar(
+    // Caso común: clave heredada BotApi:ApiKey (null = sin entrada de configuración).
+    private static Task<HttpResponseMessage> Consultar(
         string? apiKeyConfigurada,
         string url,
         string? headerKey)
     {
+        var config = new Dictionary<string, string?>();
+        if (apiKeyConfigurada is not null)
+            config["BotApi:ApiKey"] = apiKeyConfigurada;
+
+        return Consultar(config, url, headerKey is null ? Array.Empty<string>() : new[] { headerKey });
+    }
+
+    private static async Task<HttpResponseMessage> Consultar(
+        IDictionary<string, string?> configuracion,
+        string url,
+        params string[] valoresHeader)
+    {
         var (titulares, pasajeros) = CrearRepositorios();
-        await using var host = new HostDePrueba(apiKeyConfigurada, titulares, pasajeros);
+        await using var host = new HostDePrueba(configuracion, titulares, pasajeros);
 
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        if (headerKey is not null)
-            request.Headers.Add(ApiKeyFilter.HeaderName, headerKey);
+        if (valoresHeader.Length > 0)
+            request.Headers.Add(ApiKeyAuthenticationHandler.HeaderName, valoresHeader);
 
         return await host.Cliente.SendAsync(request);
     }
+
+    private static Dictionary<string, string?> Cliente(string nombre, string? clave, params string[] scopes)
+    {
+        var config = new Dictionary<string, string?> { [$"ApiClients:{nombre}:Key"] = clave };
+        for (var i = 0; i < scopes.Length; i++)
+            config[$"ApiClients:{nombre}:Scopes:{i}"] = scopes[i];
+        return config;
+    }
+
+    private static Dictionary<string, string?> Unir(params Dictionary<string, string?>[] partes) =>
+        partes.SelectMany(p => p).ToDictionary(kv => kv.Key, kv => kv.Value);
+
+    private const string UrlValida = Ruta + "?numero=5493814123456";
 
     [Fact]
     public async Task SinHeader_Devuelve401()
@@ -210,12 +240,126 @@ public class BotEndpointPipelineTests
         json.RootElement.GetProperty("coincidencias").GetArrayLength().Should().Be(0);
     }
 
+    // ----- Casos portados de ApiKeyFilterTests (borrado) -----
+
+    [Fact]
+    public async Task HeaderVacio_Devuelve401()
+    {
+        var respuesta = await Consultar(ClaveReal, UrlValida, headerKey: "");
+
+        respuesta.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Theory]
+    [InlineData("x")]
+    [InlineData("clave-de-prueba-12")]
+    [InlineData("clave-de-prueba-1234")]
+    [InlineData("una-clave-incorrecta-mucho-mas-larga-que-la-real-0123456789")]
+    public async Task KeyIncorrectaDeDistintoLargo_Devuelve401SinExcepcion(string recibida)
+    {
+        var respuesta = await Consultar(ClaveReal, UrlValida, headerKey: recibida);
+
+        respuesta.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task HeaderRepetido_Devuelve401AunqueUnoSeaCorrecto()
+    {
+        var config = new Dictionary<string, string?> { ["BotApi:ApiKey"] = ClaveReal };
+
+        var respuesta = await Consultar(config, UrlValida, ClaveReal, ClaveReal);
+
+        respuesta.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public async Task KeyNoConfigurada_SinHeader_TambienDevuelve503(string? configurada)
+    {
+        var respuesta = await Consultar(configurada, UrlValida, headerKey: null);
+
+        respuesta.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    }
+
+    // ----- Clientes con alcances -----
+
+    [Fact]
+    public async Task ClienteBotInasistenciasConScope_ClaveCorrecta_Devuelve200()
+    {
+        var config = Cliente("BotInasistencias", "clave-cliente-bot", "bot:identidad");
+
+        var respuesta = await Consultar(config, UrlValida, "clave-cliente-bot");
+
+        respuesta.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ClienteSinElScopeDelBot_ClaveCorrecta_Devuelve403()
+    {
+        var config = Cliente("BotLocal", "clave-bot-local", "lectura:bot-local");
+
+        var respuesta = await Consultar(config, UrlValida, "clave-bot-local");
+
+        respuesta.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task ClaveDeBotLocalConviviendoConBotInasistencias_Da403_YLaDelBot_Da200()
+    {
+        var config = Unir(
+            Cliente("BotInasistencias", "clave-cliente-bot", "bot:identidad"),
+            Cliente("BotLocal", "clave-bot-local", "lectura:bot-local"));
+
+        var conLocal = await Consultar(config, UrlValida, "clave-bot-local");
+        var conBot = await Consultar(config, UrlValida, "clave-cliente-bot");
+
+        conLocal.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+        conBot.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ClienteExplicitoGanaSobreElAliasHeredado()
+    {
+        var config = Unir(
+            Cliente("BotInasistencias", "clave-A", "bot:identidad"),
+            new Dictionary<string, string?> { ["BotApi:ApiKey"] = "clave-B" });
+
+        var conA = await Consultar(config, UrlValida, "clave-A");
+        var conB = await Consultar(config, UrlValida, "clave-B");
+
+        conA.StatusCode.Should().Be(HttpStatusCode.OK);
+        conB.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task SoloBotLocalConfigurado_ClaveInventadaOSinHeader_Devuelve401()
+    {
+        var config = Cliente("BotLocal", "clave-bot-local", "lectura:bot-local");
+
+        var inventada = await Consultar(config, UrlValida, "clave-inventada");
+        var sinHeader = await Consultar(config, UrlValida);
+
+        inventada.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        sinHeader.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task ClienteConKeyEnBlanco_SeIgnora_Devuelve503()
+    {
+        var config = Cliente("BotLocal", "   ", "bot:identidad");
+
+        var respuesta = await Consultar(config, UrlValida, "cualquier-cosa");
+
+        respuesta.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+    }
+
     [Theory]
     [InlineData(ClaveReal)]
     [InlineData(null)]
     public async Task Health_Devuelve200SinNingunHeader_ConLaKeyConfiguradaOSinConfigurar(string? configurada)
     {
-        // Regresión: el filtro de API key solo aplica al BotController, nunca al resto de la API.
+        // Regresión: la autorización por API key solo aplica al BotController, nunca al resto de la API.
         var respuesta = await Consultar(configurada, "/api/health", headerKey: null);
 
         respuesta.StatusCode.Should().Be(HttpStatusCode.OK);

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using TransporteEscolar.Api.Controllers;
-using TransporteEscolar.Api.Filters;
 
 namespace TransporteEscolar.Tests.Api;
 
@@ -19,7 +18,7 @@ namespace TransporteEscolar.Tests.Api;
 /// a propósito, y se ve cuándo se paga.
 /// </para>
 /// <para>
-/// "Protegido" significa: <c>[Authorize]</c> o <c>[ServiceFilter(typeof(ApiKeyFilter))]</c> en el método o en el
+/// "Protegido" significa: <c>[Authorize]</c> (incluida la política ApiKey del bot) en el método o en el
 /// controller, salvo que el método tenga <c>[AllowAnonymous]</c>. Cuando se agregue una política de
 /// autorización por defecto (FallbackPolicy) hay que adaptar <see cref="ExigeAutenticacion"/>.
 /// </para>
@@ -146,12 +145,12 @@ public class EndpointsAbiertosTests
     {
         // Guarda contra un falso verde: si la reflexión dejara de encontrar endpoints, los otros tests
         // pasarían en vacío. El endpoint del bot es GET (no cuenta como escritura) pero sirve para
-        // comprobar que la detección de [ServiceFilter(typeof(ApiKeyFilter))] funciona.
+        // comprobar que la detección de [Authorize] funciona.
         EnumerarEscrituras().Should().NotBeEmpty();
 
         var metodoBot = typeof(BotController).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
             .Single(m => m.GetCustomAttributes<HttpMethodAttribute>().Any());
-        ExigeAutenticacion(metodoBot).Should().BeTrue("BotController está protegido con ApiKeyFilter");
+        ExigeAutenticacion(metodoBot).Should().BeTrue("BotController está protegido con [Authorize] (política ApiKey)");
     }
 
     private static IEnumerable<Endpoint> EnumerarEscrituras()
@@ -196,10 +195,7 @@ public class EndpointsAbiertosTests
         var tipo = metodo.DeclaringType!;
 
         bool Exige(ICustomAttributeProvider origen) =>
-            origen.GetCustomAttributes(inherit: true).OfType<IAuthorizeData>().Any()
-            || origen.GetCustomAttributes(inherit: true)
-                .OfType<ServiceFilterAttribute>()
-                .Any(f => f.ServiceType == typeof(ApiKeyFilter));
+            origen.GetCustomAttributes(inherit: true).OfType<IAuthorizeData>().Any();
 
         return Exige(metodo) || Exige(tipo);
     }
