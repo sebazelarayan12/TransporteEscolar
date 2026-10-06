@@ -31,6 +31,8 @@ recarga.md
 cosas.md
 mercadopago.md
 not.md
+dokploy-migration-plan.md
 
 # Claude Code worktrees (repos git internos temporales)
 .claude/worktrees/
+plan-seguridad-api.md
