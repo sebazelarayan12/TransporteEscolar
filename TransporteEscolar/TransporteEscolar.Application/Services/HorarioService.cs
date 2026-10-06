@@ -4,7 +4,9 @@ using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Helpers;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Application.Mappers;
+using TransporteEscolar.Application.Validation;
 using TransporteEscolar.Domain.Entities;
+using TransporteEscolar.Domain.Exceptions;
 
 namespace TransporteEscolar.Application.Services;
 
@@ -14,38 +16,170 @@ public class HorarioService : IHorarioService
     private readonly IPasajeroRepository _pasajeroRepository;
     private readonly IPasajeroHorarioRepository _pasajeroHorarioRepository;
 
+    private readonly IColegioRepository _colegioRepository;
+
     public HorarioService(
         IHorarioRepository horarioRepository,
         IPasajeroRepository pasajeroRepository,
-        IPasajeroHorarioRepository pasajeroHorarioRepository)
+        IPasajeroHorarioRepository pasajeroHorarioRepository,
+        IColegioRepository colegioRepository)
     {
         _horarioRepository = horarioRepository;
         _pasajeroRepository = pasajeroRepository;
         _pasajeroHorarioRepository = pasajeroHorarioRepository;
+        _colegioRepository = colegioRepository;
     }
 
-    public async Task<List<HorarioModel.Response>> ObtenerHorariosAsync(CancellationToken cancellationToken = default)
+    public async Task<List<HorarioModel.Response>> ObtenerHorariosAsync(bool incluirInactivos = false, CancellationToken cancellationToken = default)
     {
-        var horarios = await _horarioRepository.GetAllAsync(cancellationToken);
+        var horarios = incluirInactivos
+            ? await _horarioRepository.GetTodosAsync(cancellationToken)
+            : await _horarioRepository.GetAllAsync(cancellationToken);
         var conteos = await _pasajeroRepository.GetActivosCountByHorarioAsync(cancellationToken);
 
         return horarios
             .OrderBy(h => h.Orden)
-            .Select(h =>
-            {
-                var conteo = conteos.TryGetValue(h.Id, out var encontrado)
-                    ? encontrado
-                    : new ConteoPorTransporte(0, 0);
-
-                return new HorarioModel.Response(
-                    h.Id,
-                    h.Etiqueta,
-                    h.Orden,
-                    conteo.TransporteUno + conteo.TransporteDos,
-                    conteo,
-                    h.Sentido.ToString());
-            })
+            .Select(h => ToResponse(h, conteos.TryGetValue(h.Id, out var encontrado) ? encontrado : new ConteoPorTransporte(0, 0)))
             .ToList();
+    }
+
+    public async Task<HorarioModel.Response> CrearAsync(HorarioModel.CrearRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request is null)
+            throw new ValidationException("Debes indicar los datos del horario");
+
+        var etiqueta = HorarioValidator.ValidarEtiqueta(request.Etiqueta);
+        HorarioValidator.ValidarSentido(request.Sentido);
+        HorarioValidator.ValidarColegioId(request.ColegioId);
+        if (request.Orden.HasValue)
+            HorarioValidator.ValidarOrden(request.Orden.Value);
+
+        await ValidarColegioActivoAsync(request.ColegioId, cancellationToken);
+        await ValidarEtiquetaUnicaAsync(etiqueta, null, cancellationToken);
+
+        var orden = request.Orden ?? await _horarioRepository.GetSiguienteOrdenAsync(cancellationToken);
+        var horario = Horario.Crear(etiqueta, orden, request.ColegioId, request.Sentido);
+        await _horarioRepository.AddAsync(horario, cancellationToken);
+
+        // Se vuelve a leer para devolver el colegio cargado.
+        var creado = await _horarioRepository.GetByIdAsync(horario.Id, cancellationToken) ?? horario;
+        return await ConstruirRespuestaAsync(creado.Id, creado, cancellationToken);
+    }
+
+    public async Task<HorarioModel.Response> ActualizarAsync(int id, HorarioModel.ActualizarRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request is null)
+            throw new ValidationException("Debes indicar los datos del horario");
+
+        var etiqueta = HorarioValidator.ValidarEtiqueta(request.Etiqueta);
+        HorarioValidator.ValidarOrden(request.Orden);
+        HorarioValidator.ValidarSentido(request.Sentido);
+        HorarioValidator.ValidarColegioId(request.ColegioId);
+
+        var horario = await RepositoryHelper.GetByIdOrThrowAsync(
+            _horarioRepository.GetByIdAsync, id, nameof(Horario), cancellationToken);
+
+        var cambiaEstructura = horario.ColegioId != request.ColegioId || horario.Sentido != request.Sentido;
+        if (cambiaEstructura)
+        {
+            // Cambiar colegio o sentido invalida los recorridos ya calculados: solo se permite sin pasajeros activos.
+            var activos = await ContarPasajerosActivosAsync(id, cancellationToken);
+            if (activos > 0)
+                throw new BusinessRuleException(
+                    $"No se puede cambiar el colegio ni el sentido de un horario con {activos} pasajero(s) activo(s). " +
+                    "Reasignalos a otro horario o creá uno nuevo.");
+
+            await ValidarColegioActivoAsync(request.ColegioId, cancellationToken);
+        }
+
+        if (horario.Activo)
+            await ValidarEtiquetaUnicaAsync(etiqueta, id, cancellationToken);
+
+        horario.ActualizarEtiqueta(etiqueta);
+        horario.ActualizarOrden(request.Orden);
+        horario.AsignarColegio(request.ColegioId);
+        horario.AsignarSentido(request.Sentido);
+        await _horarioRepository.UpdateAsync(horario, cancellationToken);
+
+        return await ConstruirRespuestaAsync(id, horario, cancellationToken);
+    }
+
+    public async Task DesactivarAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var horario = await RepositoryHelper.GetByIdOrThrowAsync(
+            _horarioRepository.GetByIdAsync, id, nameof(Horario), cancellationToken);
+
+        if (!horario.Activo)
+            return;
+
+        var activos = await ContarPasajerosActivosAsync(id, cancellationToken);
+        if (activos > 0)
+            throw new BusinessRuleException(
+                $"No se puede desactivar un horario con {activos} pasajero(s) activo(s). Reasignalos a otro horario primero.");
+
+        horario.Desactivar();
+        await _horarioRepository.UpdateAsync(horario, cancellationToken);
+    }
+
+    public async Task ReactivarAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var horario = await RepositoryHelper.GetByIdOrThrowAsync(
+            _horarioRepository.GetByIdAsync, id, nameof(Horario), cancellationToken);
+
+        if (horario.Activo)
+            return;
+
+        await ValidarEtiquetaUnicaAsync(horario.Etiqueta, id, cancellationToken);
+
+        if (horario.ColegioId is int colegioId)
+        {
+            var colegio = await _colegioRepository.GetByIdAsync(colegioId, cancellationToken);
+            if (colegio is null || !colegio.Activo)
+                throw new BusinessRuleException("No se puede reactivar el horario: su colegio está inactivo.");
+        }
+
+        horario.Reactivar();
+        await _horarioRepository.UpdateAsync(horario, cancellationToken);
+    }
+
+    private static HorarioModel.Response ToResponse(Horario horario, ConteoPorTransporte conteo) =>
+        new(
+            horario.Id,
+            horario.Etiqueta,
+            horario.Orden,
+            conteo.TransporteUno + conteo.TransporteDos,
+            conteo,
+            horario.Sentido.ToString(),
+            horario.ColegioId,
+            horario.Colegio?.Nombre,
+            horario.Activo);
+
+    private async Task<int> ContarPasajerosActivosAsync(int horarioId, CancellationToken cancellationToken)
+    {
+        var conteos = await _pasajeroRepository.GetActivosCountByHorarioAsync(cancellationToken);
+        return conteos.TryGetValue(horarioId, out var conteo) ? conteo.TransporteUno + conteo.TransporteDos : 0;
+    }
+
+    private async Task ValidarColegioActivoAsync(int colegioId, CancellationToken cancellationToken)
+    {
+        var colegio = await _colegioRepository.GetByIdAsync(colegioId, cancellationToken);
+        if (colegio is null)
+            throw new ValidationException("El colegio elegido no existe");
+        if (!colegio.Activo)
+            throw new ValidationException("El colegio elegido está inactivo");
+    }
+
+    private async Task ValidarEtiquetaUnicaAsync(string etiqueta, int? excluirId, CancellationToken cancellationToken)
+    {
+        if (await _horarioRepository.ExisteEtiquetaActivaAsync(etiqueta, excluirId, cancellationToken))
+            throw new ValidationException($"Ya existe un horario activo con la etiqueta \"{etiqueta}\"");
+    }
+
+    private async Task<HorarioModel.Response> ConstruirRespuestaAsync(int id, Horario horario, CancellationToken cancellationToken)
+    {
+        var conteos = await _pasajeroRepository.GetActivosCountByHorarioAsync(cancellationToken);
+        var conteo = conteos.TryGetValue(id, out var encontrado) ? encontrado : new ConteoPorTransporte(0, 0);
+        return ToResponse(horario, conteo);
     }
 
     public async Task<HorarioModel.PasajerosResponse> ObtenerPasajerosPorHorarioAsync(int horarioId, CancellationToken cancellationToken = default)
@@ -98,11 +232,14 @@ public class HorarioService : IHorarioService
         if (asignaciones.Count == 0)
             throw new ValidationException("No se encontraron pasajeros válidos para asignar");
 
-        await RepositoryHelper.GetByIdOrThrowAsync(
+        var horario = await RepositoryHelper.GetByIdOrThrowAsync(
             _horarioRepository.GetByIdAsync,
             horarioId,
             nameof(Horario),
             cancellationToken);
+
+        if (!horario.Activo)
+            throw new ValidationException("El horario está inactivo: reactivalo antes de asignarle pasajeros");
 
         var ids = asignaciones.Select(a => a.PasajeroId).ToList();
         var pasajeros = await _pasajeroRepository.GetByIdsAsync(ids, cancellationToken);

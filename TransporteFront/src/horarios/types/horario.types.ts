@@ -24,6 +24,13 @@ export interface HorarioPasajerosAsignados {
   conteosPorTransporte: HorarioConteosPorTransporte;
 }
 
+export const SENTIDOS_HORARIO = {
+  IDA: 'Ida',
+  VUELTA: 'Vuelta',
+} as const;
+
+export type SentidoHorarioTipo = (typeof SENTIDOS_HORARIO)[keyof typeof SENTIDOS_HORARIO];
+
 export interface HorarioResponse {
   id: number;
   etiqueta: string;
@@ -31,6 +38,24 @@ export interface HorarioResponse {
   pasajerosActivos: number;
   conteosPorTransporte: HorarioConteosPorTransporte;
   pasajerosAsignados?: HorarioPasajeroAsignado[];
+  sentido: SentidoHorarioTipo;
+  colegioId: number | null;
+  colegioNombre: string | null;
+  activo: boolean;
+}
+
+export interface HorarioCrearRequest {
+  etiqueta: string;
+  orden?: number | null;
+  colegioId: number;
+  sentido: SentidoHorarioTipo;
+}
+
+export interface HorarioActualizarRequest {
+  etiqueta: string;
+  orden: number;
+  colegioId: number;
+  sentido: SentidoHorarioTipo;
 }
 
 export interface HorarioResumen {

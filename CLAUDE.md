@@ -54,6 +54,18 @@ docker-compose up -d                                   # Production DB
 - **NUNCA hardcodear variables** (URLs, claves, tokens, connection strings, puertos) en el codigo fuente. Toda configuracion va via variables de entorno. El usuario las agrega manualmente en el dashboard de Railway (backend) o Cloudflare Pages (frontend).
 - Si se necesita una nueva variable, indicar el nombre exacto y donde agregarla — nunca agregarla directamente al codigo.
 
+## Pruebas contra datos reales vs. desarrollo
+
+> **REGLA DE SEGURIDAD:** en **development** (api-dev) se pueden hacer pruebas que escriban datos (crear, editar, quitar, desactivar) sin pedir permiso: esos datos no son los reales. **Producción (api-prod) NUNCA se toca** para probar: solo lecturas si el usuario lo pide expresamente.
+
+Antes de CUALQUIER request que escriba datos (POST/PUT/PATCH/DELETE), verificar **explícitamente** que el destino es development:
+
+1. El host debe ser exactamente el de api-dev: `https://transporte-escolar-eye-api-dev-1ihse2-c8fe0d-169-58-25-147.sslip.io` (o `localhost`). Comparar el host carácter por carácter; el de api-prod (`...api-prod-ju2rwl...`) está prohibido para escrituras.
+2. Confirmar con un GET previo al mismo host (ej. `/health` o el listado) y dejar dicho en la respuesta "host verificado: dev" antes de escribir.
+3. Si hay la mínima duda de a qué entorno apunta una URL, variable, `.env` o app de Dokploy (hay 3 apps llamadas "api-prod" en Dokploy; la de Transporte es `Zn7jtXwMc7zu8s9hNEoQO`, api-dev es `IaKvxLM9Gvkkg6tyXa2H7`): **no escribir** y preguntar.
+4. Nunca copiar a producción datos ni comandos usados en una prueba de dev sin que el usuario lo pida.
+5. Tras probar en dev, informar qué datos se modificaron (ids) para poder restaurarlos.
+
 ## Architecture
 
 ### Backend — Clean Architecture + CQRS

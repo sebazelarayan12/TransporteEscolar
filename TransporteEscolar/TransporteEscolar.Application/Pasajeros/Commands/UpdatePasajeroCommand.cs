@@ -50,10 +50,8 @@ public sealed class UpdatePasajeroCommandHandler : IRequestHandler<UpdatePasajer
                 prioridad,
                 PasajeroHorario.NormalizarTransporte(null));
         }
-        else
-        {
-            pasajero.QuitarHorarioPrincipal();
-        }
+        // HorarioId null = "no tocar los horarios": el front edita solo datos personales y no lo manda.
+        // Quitar un horario tiene su propio endpoint (DELETE /pasajeros/{id}/horario).
 
         await _pasajeroRepository.UpdateAsync(pasajero, cancellationToken);
         return Unit.Value;

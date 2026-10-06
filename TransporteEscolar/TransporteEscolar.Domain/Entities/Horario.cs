@@ -20,6 +20,12 @@ public class Horario
     /// <summary>Dirección del recorrido: de las casas al colegio, o del colegio a las casas.</summary>
     public SentidoHorario Sentido { get; private set; }
 
+    /// <summary>
+    /// Si es false el horario está dado de baja: no se lista por defecto, no admite pasajeros nuevos y no entra
+    /// en los cálculos de recorridos. Nunca se borra: reactivarlo lo deja como estaba.
+    /// </summary>
+    public bool Activo { get; private set; } = true;
+
     public ICollection<PasajeroHorario> PasajeroHorarios { get; private set; }
 
     private Horario()
@@ -67,4 +73,24 @@ public class Horario
     {
         Sentido = sentido;
     }
+
+    /// <summary>Crea un horario completo (etiqueta, orden, colegio de destino y sentido).</summary>
+    /// <exception cref="ArgumentException">Si la etiqueta está vacía.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Si el colegio es menor o igual a cero o el sentido no existe.</exception>
+    public static Horario Crear(string etiqueta, int orden, int colegioId, SentidoHorario sentido)
+    {
+        if (!Enum.IsDefined(sentido))
+            throw new ArgumentOutOfRangeException(nameof(sentido), sentido, "El sentido no es válido");
+
+        var horario = new Horario(etiqueta, orden);
+        horario.AsignarColegio(colegioId);
+        horario.AsignarSentido(sentido);
+        return horario;
+    }
+
+    /// <summary>Da de baja el horario (baja lógica). No toca ninguna otra información.</summary>
+    public void Desactivar() => Activo = false;
+
+    /// <summary>Vuelve a activar un horario dado de baja.</summary>
+    public void Reactivar() => Activo = true;
 }

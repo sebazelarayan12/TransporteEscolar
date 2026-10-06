@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { LoadingScreen } from '../../shared/ui/Spinner';
 import { MobileDrawer } from '../../shared/ui/MobileDrawer';
 import { Modal } from '../../shared/ui/Modal';
@@ -5,6 +6,7 @@ import { useToast } from '../../shared/hooks/useToast';
 import { useMediaQuery } from '../../shared/hooks/useMediaQuery';
 import { useAgregarHorarioPasajero, useEliminarHorarioPasajero, usePasajerosActivos } from '../../pasajeros/services/pasajeros.queries';
 import { useHorarioPasajeros, useHorarios, sortHorariosByOrden } from '../services/horarios.queries';
+import { HorarioFormModal } from '../components/HorarioFormModal';
 import { HorarioAsignacionPanel } from '../components/HorarioAsignacionPanel';
 import { ParadaFijaSelector } from '../components/ParadaFijaSelector';
 import { RecorridoViajePanel } from '../../recorridos/components/RecorridoViajePanel';
@@ -17,6 +19,7 @@ import { TRANSPORTE_TIPOS } from '../../shared/types/transporte.types';
 import type { TransporteTipo } from '../../shared/types/transporte.types';
 import { runInSequence } from '../../shared/utils/async.helpers';
 import { useHorarioDrawerState, useHorarioSelectionSync } from '../hooks/useHorarioDrawerState';
+import { useHorarioEdicion } from '../hooks/useHorarioEdicion';
 import { buildAssignmentPlan, groupAdditionsByPasajero } from '../helpers/selection.helpers';
 
 const DESKTOP_QUERY = '(min-width: 1024px)';
@@ -27,7 +30,9 @@ const getErrorMessage = (error: unknown) =>
 export const HorariosPage = () => {
   const drawer = useHorarioDrawerState();
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
-  const { data: horarios, isLoading, isError, refetch } = useHorarios();
+  const [mostrarInactivos, setMostrarInactivos] = useState(false);
+  const edicion = useHorarioEdicion();
+  const { data: horarios, isLoading, isError, refetch } = useHorarios({ incluirInactivos: mostrarInactivos });
   const ordenados = sortHorariosByOrden(horarios);
   const { showSuccess, showError } = useToast();
 
@@ -92,10 +97,6 @@ export const HorariosPage = () => {
     return <HorariosError onRetry={refetch} />;
   }
 
-  if (!ordenados.length) {
-    return <HorariosEmptyState />;
-  }
-
   const selectedHorario = ordenados.find((horario) => horario.id === drawer.selectedHorarioId);
   const selectedCounts: Record<TransporteTipo, number> = {
     [TRANSPORTE_TIPOS.UNO]: drawer.selectedPasajerosPorTransporte[TRANSPORTE_TIPOS.UNO].size,
@@ -141,10 +142,35 @@ export const HorariosPage = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] py-8 dark:bg-[#18181b]">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 sm:px-6 lg:px-8">
-        <HorariosHeader isGestionMode={drawer.isGestionMode} onGestionModeToggle={drawer.toggleGestionMode} />
+        <HorariosHeader
+          isGestionMode={drawer.isGestionMode}
+          onGestionModeToggle={drawer.toggleGestionMode}
+          mostrarInactivos={mostrarInactivos}
+          onMostrarInactivosChange={setMostrarInactivos}
+          onNuevoHorario={edicion.abrirCreacion}
+        />
 
-        <HorariosGrid horarios={ordenados} onSelectHorario={drawer.openHorario} />
+        {ordenados.length ? (
+          <HorariosGrid
+            horarios={ordenados}
+            onSelectHorario={drawer.openHorario}
+            onEditar={edicion.abrirEdicion}
+            onReactivar={edicion.reactivar}
+          />
+        ) : (
+          <HorariosEmptyState onNuevoHorario={edicion.abrirCreacion} />
+        )}
       </div>
+
+      <HorarioFormModal
+        key={edicion.modalKey}
+        isOpen={edicion.modalAbierto}
+        horario={edicion.horarioEditando}
+        onClose={edicion.cerrarModal}
+        onSave={edicion.guardar}
+        onDesactivar={edicion.desactivar}
+        isSaving={edicion.isSaving}
+      />
 
       {/* Solo se monta uno: un <dialog> modal oculto por CSS igual bloquearía el resto de la página */}
       {isDesktop ? (
