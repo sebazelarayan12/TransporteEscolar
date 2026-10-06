@@ -57,17 +57,25 @@ const TRANSPORTE_SHORT_LABELS: Record<TransporteTipo, string> = {
 interface HorariosGridProps {
   horarios: HorarioResponse[];
   onSelectHorario: (horarioId: number, transporte: TransporteTipo) => void;
+  onEditar: (horario: HorarioResponse) => void;
+  onReactivar: (horario: HorarioResponse) => void;
 }
 
-export const HorariosGrid = ({ horarios, onSelectHorario }: HorariosGridProps) => (
+export const HorariosGrid = ({ horarios, onSelectHorario, onEditar, onReactivar }: HorariosGridProps) => (
   <section className="space-y-4">
     <div className="flex items-center justify-between">
       <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">Horarios disponibles</h2>
-      <span className="text-sm text-gray-500">{horarios.length} horarios activos</span>
+      <span className="text-sm text-gray-500">{horarios.filter((horario) => horario.activo).length} horarios activos</span>
     </div>
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {horarios.map((horario) => (
-        <HorarioCard key={horario.id} horario={horario} onSelectHorario={onSelectHorario} />
+        <HorarioCard
+          key={horario.id}
+          horario={horario}
+          onSelectHorario={onSelectHorario}
+          onEditar={onEditar}
+          onReactivar={onReactivar}
+        />
       ))}
     </div>
   </section>
@@ -76,9 +84,11 @@ export const HorariosGrid = ({ horarios, onSelectHorario }: HorariosGridProps) =
 interface HorarioCardProps {
   horario: HorarioResponse;
   onSelectHorario: (horarioId: number, transporte: TransporteTipo) => void;
+  onEditar: (horario: HorarioResponse) => void;
+  onReactivar: (horario: HorarioResponse) => void;
 }
 
-const HorarioCard = ({ horario, onSelectHorario }: HorarioCardProps) => {
+const HorarioCard = ({ horario, onSelectHorario, onEditar, onReactivar }: HorarioCardProps) => {
   const { hora, recorrido } = getHorarioDisplayData(horario.etiqueta);
   const [activeTransporte, setActiveTransporte] = useState<TransporteTipo>(TRANSPORTE_TIPOS.UNO);
 
@@ -90,23 +100,54 @@ const HorarioCard = ({ horario, onSelectHorario }: HorarioCardProps) => {
   });
 
   const activePanel = transporteData.find((item) => item.value === activeTransporte) ?? transporteData[0];
+  // Solo el contenido informativo se atenúa; los botones (Editar, Reactivar) conservan opacidad completa.
+  const informativoClass = horario.activo ? '' : 'opacity-60';
 
   return (
-    <Card className="border border-gray-100/70 bg-white/95 shadow-none transition hover:ring-1 hover:ring-[#007a8a]/20 dark:border-white/5 dark:bg-[#1e1e23]">
+    <Card className={`border border-gray-100/70 bg-white/95 shadow-none transition hover:ring-1 hover:ring-[#007a8a]/20 dark:border-white/5 dark:bg-[#1e1e23]`}>
       <CardHeader className="space-y-3 pb-4">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-2xl font-semibold text-gray-900 dark:text-white">
+          <div className={`flex items-center gap-2 text-2xl font-semibold text-gray-900 dark:text-white ${informativoClass}`}>
             <ClockIcon className="text-[28px] text-[#007a8a] dark:text-cyan-300" />
             <span>{hora}</span>
           </div>
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-300">{horario.pasajerosActivos} pax activos</span>
+          <div className="flex items-center gap-2">
+            {!horario.activo && (
+              <span className="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-[11px] font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200">
+                Inactivo
+              </span>
+            )}
+            <span className={`text-sm font-medium text-gray-500 dark:text-gray-300 ${informativoClass}`}>{horario.pasajerosActivos} pax activos</span>
+            <button
+              type="button"
+              aria-label={`Editar horario ${horario.etiqueta}`}
+              className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#007a8a] dark:border-white/10 dark:text-gray-200 dark:hover:bg-white/10"
+              onClick={() => onEditar(horario)}
+            >
+              <span className="material-symbols-outlined text-base" aria-hidden="true">edit</span>
+              Editar
+            </button>
+          </div>
         </div>
-        <CardTitle className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-200">
+        <CardTitle className={`flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-gray-200 ${informativoClass}`}>
           <SchoolIcon className="text-base text-gray-400 dark:text-gray-200" />
           <span className="truncate">{recorrido}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
+        {!horario.activo ? (
+          <div className="border-t border-gray-100/80 p-4 dark:border-white/5 sm:p-5">
+            <button
+              type="button"
+              aria-label={`Reactivar horario ${horario.etiqueta}`}
+              className="flex w-full items-center justify-center gap-1 rounded-full bg-[#007a8a] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#00626e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              onClick={() => onReactivar(horario)}
+            >
+              <span className="material-symbols-outlined text-base" aria-hidden="true">restart_alt</span>
+              Reactivar
+            </button>
+          </div>
+        ) : (
         <div className="border-t border-gray-100/80 p-4 dark:border-white/5 sm:p-5">
           <div className="flex flex-wrap items-center gap-2">
             {transporteData.map((transporte) => {
@@ -156,6 +197,7 @@ const HorarioCard = ({ horario, onSelectHorario }: HorarioCardProps) => {
             </div>
           </div>
         </div>
+        )}
       </CardContent>
     </Card>
   );
