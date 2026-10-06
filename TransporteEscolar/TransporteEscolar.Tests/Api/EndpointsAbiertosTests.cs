@@ -36,6 +36,7 @@ public class EndpointsAbiertosTests
     [
         "DELETE api/Gastos/fijos/{templateId:int}",
         "DELETE api/Gastos/variables/{id:int}",
+        "DELETE api/Horarios/{id}",             // Horarios editables: pendiente de autenticación (Fase 2)
         "DELETE api/Ingresos/fijos/{templateId:int}",
         "DELETE api/Ingresos/variables/{id:int}",
         "DELETE api/Notificaciones/{id}",
@@ -52,6 +53,8 @@ public class EndpointsAbiertosTests
         "PATCH api/Reinscripciones/{id}/pendiente",
         "POST api/Gastos/fijos",
         "POST api/Gastos/variables",
+        "POST api/Horarios",                    // Horarios editables: pendiente de autenticación (Fase 2)
+        "POST api/Horarios/{id}/reactivar",    // Horarios editables: pendiente de autenticación (Fase 2)
         "POST api/Ingresos/fijos",
         "POST api/Ingresos/variables",
         "POST api/PagosMensuales",
@@ -70,6 +73,7 @@ public class EndpointsAbiertosTests
         "POST api/push-subscriptions/unsubscribe",
         "PUT api/Gastos/fijos/{templateId:int}",
         "PUT api/Gastos/variables/{id:int}/marcar-pagado",
+        "PUT api/Horarios/{id}",                // Horarios editables: pendiente de autenticación (Fase 2)
         "PUT api/Horarios/{id}/asignaciones",
         "PUT api/Ingresos/fijos/{templateId:int}",
         "PUT api/Notificaciones/marcar-todas-leidas",

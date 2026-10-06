@@ -72,7 +72,9 @@ public class RecorridoRepartoService : IRecorridoRepartoService
         var asignaciones = await _pasajeroRepository.GetAsignacionesHorarioAsync(cancellationToken);
         var ubicaciones = await _ubicacionRepository.GetAllAsync(cancellationToken);
         var colegios = await _colegioRepository.GetAllAsync(cancellationToken);
-        var horarios = await _horarioRepository.GetConColegioAsync(cancellationToken);
+        // GetTodosAsync (no GetConColegioAsync): hay que resolver también los horarios inactivos
+        // para reconocerlos y no pisar su recorrido guardado con un sentido equivocado.
+        var horarios = await _horarioRepository.GetTodosAsync(cancellationToken);
         var paradasFijas = await _paradaFijaRepository.GetTodasAsync(cancellationToken);
 
         var ubicacionPorTitular = ubicaciones.ToDictionary(u => u.TitularId, u => u.ObtenerCoordenada());
@@ -97,6 +99,19 @@ public class RecorridoRepartoService : IRecorridoRepartoService
 
             horarioPorId.TryGetValue(viaje.Key.HorarioId, out var horario);
             var etiqueta = horario?.Etiqueta ?? $"Horario {viaje.Key.HorarioId}";
+
+            // Un horario inactivo nunca se recalcula ni se guarda: su recorrido y sus aportes
+            // quedan intactos hasta que se reactive el horario o se reasignen sus pasajeros.
+            // Va ANTES de consultar al motor y de guardar.
+            if (horario is { Activo: false })
+            {
+                pendientes.Add(new RecorridoModel.ViajePendiente(
+                    viaje.Key.HorarioId,
+                    etiqueta,
+                    viaje.Key.Transporte,
+                    "El horario está inactivo: reactivalo o reasigná a sus pasajeros."));
+                continue;
+            }
 
             if (!colegioPorId.TryGetValue(viaje.Key.ColegioId, out var destino))
             {
@@ -269,7 +284,8 @@ public class RecorridoRepartoService : IRecorridoRepartoService
         if (paradasFijas.Count == 0)
             return new List<ParadaFijaModel.Response>();
 
-        var horarios = await _horarioRepository.GetConColegioAsync(cancellationToken);
+        // Solo lectura para mostrar: incluye inactivos para que no aparezca "Horario N".
+        var horarios = await _horarioRepository.GetTodosAsync(cancellationToken);
         var etiquetaPorHorario = horarios.ToDictionary(h => h.Id, h => h.Etiqueta);
 
         var titularIds = paradasFijas.Select(p => p.TitularId).Distinct().ToList();
@@ -353,7 +369,8 @@ public class RecorridoRepartoService : IRecorridoRepartoService
         if (snapshot is null)
             return null;
 
-        var horarios = await _horarioRepository.GetConColegioAsync(cancellationToken);
+        // Solo lectura para mostrar: incluye inactivos para devolver etiqueta, sentido y colegio reales.
+        var horarios = await _horarioRepository.GetTodosAsync(cancellationToken);
         var horarioDelViaje = horarios.FirstOrDefault(h => h.Id == horarioId);
 
         var etiqueta = horarioDelViaje?.Etiqueta ?? $"Horario {horarioId}";

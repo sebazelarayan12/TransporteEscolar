@@ -16,14 +16,20 @@ public class TitularService : ITitularService
     private readonly INotificacionService _notificacionService;
     private readonly IPagoMensualRepository _pagoMensualRepository;
     private readonly ISender _sender;
+    private readonly IPasajeroHorarioRepository _pasajeroHorarioRepository;
+    private readonly IHorarioRepository _horarioRepository;
 
     public TitularService(
         ITitularRepository repository,
         IPasajeroRepository pasajeroRepository,
         INotificacionService notificacionService,
         IPagoMensualRepository pagoMensualRepository,
-        ISender sender)
+        ISender sender,
+        IPasajeroHorarioRepository pasajeroHorarioRepository,
+        IHorarioRepository horarioRepository)
     {
+        _pasajeroHorarioRepository = pasajeroHorarioRepository;
+        _horarioRepository = horarioRepository;
         _repository = repository;
         _pasajeroRepository = pasajeroRepository;
         _notificacionService = notificacionService;
@@ -156,6 +162,14 @@ public class TitularService : ITitularService
         // sigue de baja en BD, y GetByTitularIdAsync filtra por titular activo.
         var pasajeros = await _pasajeroRepository.GetTodosByTitularIdAsync(id, cancellationToken);
         var pasajerosDadosDeBaja = pasajeros.Where(p => p.FechaBaja != null).ToList();
+
+        // Valida a TODOS los pasajeros ANTES de tocar nada: si alguno está asignado a un horario
+        // inactivo no se reactiva ni el titular ni ningún pasajero, y no se generan cuotas.
+        await HorariosActivosGuard.AsegurarQueNoTenganHorariosInactivosAsync(
+            pasajerosDadosDeBaja,
+            _pasajeroHorarioRepository,
+            _horarioRepository,
+            cancellationToken);
 
         titular.Reactivar();
 

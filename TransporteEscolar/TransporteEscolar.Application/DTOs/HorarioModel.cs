@@ -1,3 +1,5 @@
+using TransporteEscolar.Domain.Enums;
+
 namespace TransporteEscolar.Application.DTOs;
 
 public record HorarioModel
@@ -8,7 +10,22 @@ public record HorarioModel
         int Orden,
         int PasajerosActivos,
         ConteoPorTransporte ConteosPorTransporte,
-        string Sentido);
+        string Sentido,
+        int? ColegioId,
+        string? ColegioNombre,
+        bool Activo);
+
+    public record CrearRequest(
+        string Etiqueta,
+        int? Orden,
+        int ColegioId,
+        SentidoHorario Sentido);
+
+    public record ActualizarRequest(
+        string Etiqueta,
+        int Orden,
+        int ColegioId,
+        SentidoHorario Sentido);
 
     public record Resumen(
         int Id,

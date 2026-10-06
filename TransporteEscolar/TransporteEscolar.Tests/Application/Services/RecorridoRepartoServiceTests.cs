@@ -104,7 +104,7 @@ public class RecorridoRepartoServiceTests
             .ReturnsAsync(new List<Colegio> { CrearColegio(1) });
 
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario> { CrearHorario(1, "8 San Patricio", SentidoHorario.Ida) });
     }
 
@@ -204,7 +204,7 @@ public class RecorridoRepartoServiceTests
             .ReturnsAsync(new List<Colegio> { CrearColegio(1) });
 
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario> { CrearHorario(1, "8 San Patricio", SentidoHorario.Ida) });
 
         ConfigurarParadaFija(1, 1, 10);
@@ -255,7 +255,7 @@ public class RecorridoRepartoServiceTests
             .ReturnsAsync(new List<Colegio> { CrearColegio(1) });
 
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario> { CrearHorario(1, "8 San Patricio", SentidoHorario.Ida) });
 
         ConfigurarParadaFija(1, 1, 10);
@@ -349,7 +349,7 @@ public class RecorridoRepartoServiceTests
             .ReturnsAsync(new List<Colegio> { CrearColegio(1) });
 
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario>
             {
                 CrearHorario(1, "8 San Patricio", SentidoHorario.Ida),
@@ -375,7 +375,7 @@ public class RecorridoRepartoServiceTests
 
         // Sobrescribe el horario del helper: mismo id, pero de vuelta.
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario> { CrearHorario(1, "12 San Patricio", SentidoHorario.Vuelta) });
 
         // Parada fija: titular 10 (índice 0 dentro de los participantes ordenados [10, 20]).
@@ -456,7 +456,7 @@ public class RecorridoRepartoServiceTests
             .ReturnsAsync(new List<Colegio> { CrearColegio(1) });
 
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario> { CrearHorario(1, "8 San Patricio", SentidoHorario.Ida) });
 
         // Parada fija: titular 30, que es el índice 2 dentro de participantes ordenados
@@ -556,7 +556,7 @@ public class RecorridoRepartoServiceTests
             .ReturnsAsync(new List<ParadaFija> { new(1, 1, 10) });
 
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario> { CrearHorario(1, "8 San Patricio", SentidoHorario.Ida) });
 
         var titular = new Titular("Pérez", "Contacto", "Dirección", 1000m);
@@ -588,7 +588,7 @@ public class RecorridoRepartoServiceTests
             .ReturnsAsync(new List<ParadaFija> { new(1, 1, 10) });
 
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario> { CrearHorario(1, "8 San Patricio", SentidoHorario.Ida) });
 
         _titulares
@@ -614,7 +614,7 @@ public class RecorridoRepartoServiceTests
             .ReturnsAsync(new List<ParadaFija> { new(1, 1, 10), new(2, 1, 20) });
 
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario>
             {
                 CrearHorario(1, "8 San Patricio", SentidoHorario.Ida),
@@ -648,7 +648,7 @@ public class RecorridoRepartoServiceTests
             .ReturnsAsync(new List<ParadaFija> { new(1, 1, 10) });
 
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario> { CrearHorario(1, "8 San Patricio", SentidoHorario.Ida) });
 
         _titulares
@@ -719,7 +719,7 @@ public class RecorridoRepartoServiceTests
 
         var colegio = CrearColegio(1);
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario> { CrearHorarioConColegio(1, "8 San Patricio", SentidoHorario.Ida, colegio) });
 
         _paradasFijas
@@ -740,6 +740,160 @@ public class RecorridoRepartoServiceTests
         resultado.Paradas.Select(p => p.TitularId).Should().ContainInOrder(10, 20);
     }
 
+    private static Horario CrearHorarioInactivo(int id, string etiqueta, SentidoHorario sentido, Colegio colegio)
+    {
+        var horario = CrearHorarioConColegio(id, etiqueta, sentido, colegio);
+        horario.Desactivar();
+        return horario;
+    }
+
+    [Fact]
+    public async Task RecalcularAsync_ConViajeDeHorarioInactivo_QuedaPendienteSinConsultarElMotorNiGuardar()
+    {
+        // Horario de VUELTA inactivo: no se recalcula ni se guarda, así no se pisa el recorrido
+        // guardado con el sentido equivocado.
+        ConfigurarViajeConDosTitulares();
+        _horarios
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Horario>
+            {
+                CrearHorarioInactivo(1, "12 San Patricio", SentidoHorario.Vuelta, CrearColegio(1))
+            });
+        ConfigurarParadaFija(1, 1, 10);
+
+        var resultado = await CrearServicio().RecalcularAsync();
+
+        resultado.ViajesProcesados.Should().Be(0);
+        resultado.ConsultasRealizadas.Should().Be(0);
+        var pendiente = resultado.Pendientes.Should().ContainSingle().Subject;
+        pendiente.HorarioId.Should().Be(1);
+        pendiente.HorarioEtiqueta.Should().Be("12 San Patricio");
+        pendiente.Transporte.Should().Be((byte)1);
+        pendiente.Motivo.Should().Be("El horario está inactivo: reactivalo o reasigná a sus pasajeros.");
+
+        _rutaProvider.Verify(
+            p => p.CalcularMatricesAsync(It.IsAny<IReadOnlyList<Coordenada>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _snapshots.Verify(r => r.UpsertAsync(It.IsAny<RecorridoHorario>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RecalcularAsync_ConUnHorarioInactivoYOtroActivo_SoloCalculaElActivo()
+    {
+        _pasajeros
+            .Setup(r => r.GetAsignacionesHorarioAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AsignacionHorario>
+            {
+                new(1, 1, 1, 10),
+                new(2, 1, 1, 10)
+            });
+
+        _ubicaciones
+            .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<TitularUbicacion>
+            {
+                new(10, -26.8200, -65.2900, null, FuenteUbicacion.Manual)
+            });
+
+        _colegios
+            .Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Colegio> { CrearColegio(1) });
+
+        var colegio = CrearColegio(1);
+        _horarios
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Horario>
+            {
+                CrearHorarioConColegio(1, "8 San Patricio", SentidoHorario.Ida, colegio),
+                CrearHorarioInactivo(2, "9 San Patricio", SentidoHorario.Vuelta, colegio)
+            });
+
+        _paradasFijas
+            .Setup(r => r.GetTodasAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParadaFija> { new(1, 1, 10), new(2, 1, 10) });
+
+        _rutaProvider
+            .Setup(p => p.CalcularMatricesAsync(It.IsAny<IReadOnlyList<Coordenada>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CrearMatrizViaje(new[]
+            {
+                new[] { 0d, 5000d },
+                new[] { 5000d, 0d }
+            }));
+
+        var guardados = new List<RecorridoHorario>();
+        _snapshots
+            .Setup(r => r.UpsertAsync(It.IsAny<RecorridoHorario>(), It.IsAny<CancellationToken>()))
+            .Callback<RecorridoHorario, CancellationToken>((snapshot, _) => guardados.Add(snapshot))
+            .Returns(Task.CompletedTask);
+
+        var resultado = await CrearServicio().RecalcularAsync();
+
+        resultado.ViajesProcesados.Should().Be(1);
+        resultado.ConsultasRealizadas.Should().Be(1);
+        guardados.Should().ContainSingle().Which.HorarioId.Should().Be(1);
+        resultado.Pendientes.Should().ContainSingle().Which.HorarioId.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task ObtenerRecorridoViajeAsync_DeUnHorarioInactivo_DevuelveEtiquetaSentidoYColegioReales()
+    {
+        var snapshot = new RecorridoHorario(1, 1, 10000, 1, 0, 900);
+        snapshot.AgregarAporte(10, 10000, 1, 5000);
+
+        _snapshots
+            .Setup(r => r.GetAsync(1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(snapshot);
+
+        _horarios
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Horario>
+            {
+                CrearHorarioInactivo(1, "12 San Patricio", SentidoHorario.Vuelta, CrearColegio(1))
+            });
+
+        _paradasFijas
+            .Setup(r => r.GetAsync(1, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ParadaFija?)null);
+
+        _titulares
+            .Setup(r => r.GetByIdsAsync(It.IsAny<List<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Titular> { CrearTitular(10, "Perez") });
+
+        var resultado = await CrearServicio().ObtenerRecorridoViajeAsync(1, 1);
+
+        resultado.Should().NotBeNull();
+        resultado!.HorarioEtiqueta.Should().Be("12 San Patricio");
+        resultado.Sentido.Should().Be(nameof(SentidoHorario.Vuelta));
+        resultado.ColegioNombre.Should().Be("San Patricio");
+    }
+
+    [Fact]
+    public async Task ObtenerParadasFijasAsync_DeUnHorarioInactivo_DevuelveLaEtiquetaReal()
+    {
+        _paradasFijas
+            .Setup(r => r.GetTodasAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ParadaFija> { new(1, 1, 10) });
+
+        _horarios
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Horario>
+            {
+                CrearHorarioInactivo(1, "12 San Patricio", SentidoHorario.Vuelta, CrearColegio(1))
+            });
+
+        _titulares
+            .Setup(r => r.GetByIdsAsync(It.IsAny<List<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Titular> { CrearTitular(10, "Pérez") });
+
+        _pasajeros
+            .Setup(r => r.GetAsignacionesHorarioAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<AsignacionHorario>());
+
+        var resultado = await CrearServicio().ObtenerParadasFijasAsync();
+
+        resultado.Should().ContainSingle().Which.HorarioEtiqueta.Should().Be("12 San Patricio");
+    }
+
     [Fact]
     public async Task ObtenerRecorridoViajeAsync_MarcaEsParadaFijaEnLaCorrecta()
     {
@@ -752,7 +906,7 @@ public class RecorridoRepartoServiceTests
             .ReturnsAsync(snapshot);
 
         _horarios
-            .Setup(r => r.GetConColegioAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetTodosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Horario> { CrearHorario(1, "8 San Patricio", SentidoHorario.Ida) });
 
         _paradasFijas
