@@ -83,4 +83,18 @@ describe('LoginPage', () => {
 
     expect(await screen.findByText('El servidor no tiene el acceso configurado')).toBeInTheDocument();
   });
+
+  it('permite mostrar y ocultar la contraseña', async () => {
+    const user = userEvent.setup();
+    montar();
+
+    const campo = screen.getByLabelText('Contraseña');
+    expect(campo).toHaveAttribute('type', 'password');
+
+    await user.click(screen.getByRole('button', { name: 'Mostrar contraseña' }));
+    expect(campo).toHaveAttribute('type', 'text');
+
+    await user.click(screen.getByRole('button', { name: 'Ocultar contraseña' }));
+    expect(campo).toHaveAttribute('type', 'password');
+  });
 });
