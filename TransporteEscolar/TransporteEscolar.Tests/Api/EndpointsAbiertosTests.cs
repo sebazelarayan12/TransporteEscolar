@@ -50,6 +50,7 @@ public class EndpointsAbiertosTests
         "PATCH api/Reinscripciones/{id}/confirmar",
         "PATCH api/Reinscripciones/{id}/no-continua",
         "PATCH api/Reinscripciones/{id}/pendiente",
+        "POST api/auth/login",                  // Excepción deliberada: el login es público por diseño ([AllowAnonymous])
         "POST api/Gastos/fijos",
         "POST api/Gastos/variables",
         "POST api/Horarios",                    // Horarios editables: pendiente de autenticación (Fase 2)
