@@ -84,6 +84,10 @@ namespace TransporteEscolar.Api
 
             var app = builder.Build();
 
+            // Registro de pedidos por cliente. Va ANTES del manejo global de excepciones para ver el status final:
+            // si fuera después, las respuestas que salen de una excepción (400/404/500) no se registrarían.
+            app.UseMiddleware<ApiClientLoggingMiddleware>();
+
             // Middleware de manejo global de excepciones
             app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
@@ -99,6 +103,7 @@ namespace TransporteEscolar.Api
             }
 
             app.UseHttpsRedirection();
+            app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
 

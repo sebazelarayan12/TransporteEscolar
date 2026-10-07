@@ -1,8 +1,9 @@
 using Lib.Net.Http.WebPush;
 using Lib.Net.Http.WebPush.Authentication;
 using MediatR;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
-using TransporteEscolar.Api.Filters;
+using TransporteEscolar.Api.Authentication;
 using TransporteEscolar.Api.Options;
 using TransporteEscolar.Application;
 using TransporteEscolar.Application.Interfaces;
@@ -110,15 +111,31 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Registra el acceso del bot externo: opciones (<c>BotApi__ApiKey</c>) y el filtro de API key.
-    /// El filtro se aplica solo al <c>BotController</c> con <c>[ServiceFilter]</c>; no es global.
+    /// Registra el acceso de los clientes máquina-a-máquina: catálogo de clientes (<c>ApiClients__*</c> y el
+    /// alias <c>BotApi__ApiKey</c>), el esquema de autenticación ApiKey y la política del bot.
+    /// No es global: solo protege lo que lleve <c>[Authorize(Policy = ...)]</c>.
     /// </summary>
     public static IServiceCollection AddBotApi(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<BotApiOptions>(configuration.GetSection(BotApiOptions.SectionName));
-        services.AddScoped<ApiKeyFilter>();
+        var configurados = configuration.GetSection(ApiClientOptions.SectionName)
+            .Get<Dictionary<string, ApiClientOptions>>() ?? new Dictionary<string, ApiClientOptions>();
+        var claveHeredada = configuration.GetSection(BotApiOptions.SectionName).Get<BotApiOptions>()?.ApiKey;
+
+        services.AddSingleton(new ApiClientCatalog(configurados, claveHeredada));
+
+        services.AddAuthentication()
+            .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
+                ApiKeyAuthenticationHandler.SchemeName, configureOptions: null);
+
+        services.AddAuthorization(opciones =>
+        {
+            opciones.AddPolicy(ApiPolicies.BotIdentidad, politica => politica
+                .AddAuthenticationSchemes(ApiKeyAuthenticationHandler.SchemeName)
+                .RequireAuthenticatedUser()
+                .RequireClaim(ApiKeyAuthenticationHandler.ScopeClaim, ApiClientCatalog.ScopeBotIdentidad));
+        });
 
         return services;
     }

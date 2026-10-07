@@ -2,14 +2,15 @@ using System.Reflection;
 using FluentAssertions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TransporteEscolar.Api.Authentication;
 using TransporteEscolar.Api.Controllers;
-using TransporteEscolar.Api.Filters;
 
 namespace TransporteEscolar.Tests.Api;
 
 /// <summary>
-/// Guardián de aislamiento: la protección por API key es solo del BotController.
-/// Límite conocido: no detecta un filtro global agregado a futuro en Program.cs (el mini-host de
+/// Guardián de aislamiento: ningún controller salvo BotController lleva [Authorize], [ServiceFilter] ni
+/// [TypeFilter]; la protección por API key es solo del BotController.
+/// Límite conocido: no detecta una política o filtro global agregado a futuro en Program.cs (el mini-host de
 /// los tests de pipeline no ejecuta el Program real); eso se verifica con un curl real tras el deploy.
 /// </summary>
 public class BotApiIsolationTests
@@ -19,12 +20,8 @@ public class BotApiIsolationTests
             .GetTypes()
             .Where(t => typeof(ControllerBase).IsAssignableFrom(t) && !t.IsAbstract);
 
-    private static bool ApuntaAApiKeyFilter(Attribute atributo) => atributo switch
-    {
-        ServiceFilterAttribute sf => sf.ServiceType == typeof(ApiKeyFilter),
-        TypeFilterAttribute tf => tf.ImplementationType == typeof(ApiKeyFilter),
-        _ => false
-    };
+    private static bool EsAutorizacionOFiltroDeServicio(Attribute atributo) =>
+        atributo is AuthorizeAttribute or ServiceFilterAttribute or TypeFilterAttribute;
 
     // Atributos a nivel de clase y de cada acción (incluye heredados).
     private static IEnumerable<(string Donde, Attribute Atributo)> AtributosDe(Type controller)
@@ -47,12 +44,12 @@ public class BotApiIsolationTests
     }
 
     [Fact]
-    public void NingunControllerSalvoBotTieneApiKeyFilterNiAuthorize()
+    public void NingunControllerSalvoBotTieneAuthorizeNiServiceFilterNiTypeFilter()
     {
         var infracciones = ControllersDelAssemblyApi()
             .Where(c => c != typeof(BotController))
             .SelectMany(AtributosDe)
-            .Where(x => ApuntaAApiKeyFilter(x.Atributo) || x.Atributo is AuthorizeAttribute)
+            .Where(x => EsAutorizacionOFiltroDeServicio(x.Atributo))
             .Select(x => $"{x.Donde}: {x.Atributo.GetType().Name}")
             .ToList();
 
@@ -60,11 +57,11 @@ public class BotApiIsolationTests
     }
 
     [Fact]
-    public void BotController_TieneApiKeyFilterAplicadoANivelDeClase()
+    public void BotController_TieneAuthorizeConLaPoliticaBotIdentidadANivelDeClase()
     {
         typeof(BotController)
-            .GetCustomAttributes(typeof(ServiceFilterAttribute), inherit: false)
-            .Cast<ServiceFilterAttribute>()
-            .Should().ContainSingle(a => a.ServiceType == typeof(ApiKeyFilter));
+            .GetCustomAttributes(typeof(AuthorizeAttribute), inherit: false)
+            .Cast<AuthorizeAttribute>()
+            .Should().ContainSingle(a => a.Policy == ApiPolicies.BotIdentidad);
     }
 }
