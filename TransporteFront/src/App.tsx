@@ -6,6 +6,7 @@ import { ErrorBoundary } from './shared/ui/ErrorBoundary';
 import { PrivacyModeProvider } from './shared/hooks/usePrivacyMode';
 import { MainLayout } from './app/MainLayout';
 import { RequireAuth } from './auth/components/RequireAuth';
+import { SESSION_EVENT, getSession } from './auth/helpers/session.storage';
 import { Spinner } from './shared/ui/Spinner';
 import {
   subscribeToPush,
@@ -73,6 +74,16 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  // Sin sesión (cierre manual o token vencido) se vacía el caché: los datos del servidor no deben
+  // quedar en memoria para quien entre después en el mismo navegador.
+  useEffect(() => {
+    const alCambiarSesion = () => {
+      if (!getSession()) queryClient.clear();
+    };
+    window.addEventListener(SESSION_EVENT, alCambiarSesion);
+    return () => window.removeEventListener(SESSION_EVENT, alCambiarSesion);
+  }, []);
+
   useEffect(() => {
     if (!isPushSupported() || getNotificationPermission() === 'denied') return;
     iniciarSincronizacionTokenPush();
