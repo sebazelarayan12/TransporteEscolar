@@ -15,6 +15,7 @@ public sealed class ApiClientCatalog
 {
     public const string NombreBotInasistencias = "BotInasistencias";
     public const string ScopeBotIdentidad = "bot:identidad";
+    public const string ScopeLecturaBotLocal = "lectura:bot-local";
 
     private readonly IReadOnlyList<ApiClient> _clientes;
 

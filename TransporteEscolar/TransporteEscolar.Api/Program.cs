@@ -31,6 +31,7 @@ namespace TransporteEscolar.Api
             builder.Services.AddWhatsAppLoteRepository();
             builder.Services.AddRuteo(builder.Configuration);
             builder.Services.AddBotApi(builder.Configuration);
+            builder.Services.AddSeguridadApi(builder.Configuration);
             builder.Services.Configure<ReleaseNotesOptions>(builder.Configuration.GetSection("ReleaseNotes"));
             builder.Services.Configure<VapidSettings>(builder.Configuration.GetSection(VapidSettings.SectionName));
             builder.Services.AddHostedService<ReleaseNotesInitializer>();

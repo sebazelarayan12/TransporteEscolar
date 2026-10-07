@@ -1,5 +1,7 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TransporteEscolar.Api.Authentication;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.PagosMensuales.Commands;
 using TransporteEscolar.Application.PagosMensuales.Queries;
@@ -34,6 +36,7 @@ public class PagosMensualesController : ControllerBase
     /// <summary>
     /// Obtiene pagos vencidos
     /// </summary>
+    [Authorize(Policy = ApiPolicies.LecturaBotLocal)]
     [HttpGet("vencidos")]
     public async Task<ActionResult<List<PagoMensualModel.Response>>> GetVencidos()
     {
@@ -44,6 +47,7 @@ public class PagosMensualesController : ControllerBase
     /// <summary>
     /// Obtiene pagos pendientes
     /// </summary>
+    [Authorize(Policy = ApiPolicies.LecturaBotLocal)]
     [HttpGet("pendientes")]
     public async Task<ActionResult<List<PagoMensualModel.Response>>> GetPendientes()
     {
