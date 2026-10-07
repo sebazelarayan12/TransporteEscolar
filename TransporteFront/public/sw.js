@@ -2,10 +2,17 @@
 // Este archivo se sirve desde la raiz del dominio
 
 let apiSubscribeUrl = null;
+// Token de sesion enviado por la pagina. Vive solo en memoria: si el navegador
+// reinicia el SW se pierde y la re-suscripcion falla con 401 hasta que el front
+// se vuelva a suscribir al abrir la app.
+let authToken = null;
 
 self.addEventListener('message', function (event) {
   if (event.data?.type === 'SET_API_SUBSCRIBE_URL') {
     apiSubscribeUrl = event.data.url;
+  }
+  if (event.data?.type === 'SET_AUTH_TOKEN') {
+    authToken = event.data.token || null;
   }
 });
 
@@ -88,9 +95,13 @@ self.addEventListener('pushsubscriptionchange', function (event) {
     self.registration.pushManager
       .subscribe(event.oldSubscription.options)
       .then(function (subscription) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (authToken) {
+          headers.Authorization = 'Bearer ' + authToken;
+        }
         return fetch(apiSubscribeUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: headers,
           body: JSON.stringify({
             endpoint: subscription.endpoint,
             p256dh: arrayBufferToBase64Url(subscription.getKey('p256dh')),

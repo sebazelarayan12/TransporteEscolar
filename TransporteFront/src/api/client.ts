@@ -2,12 +2,14 @@ import axios, { AxiosError } from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
 import { config } from '../config/env';
 import type { ApiError } from '../shared/types/api.types';
+import { clearSession, getSession } from '../auth/helpers/session.storage';
 
 type RequestParams = Record<string, string | number | boolean | undefined>;
 
 /**
  * Cliente HTTP centralizado usando Axios
- * Configurado con baseURL y interceptors preparados para auth futura
+ * Configurado con baseURL e interceptors: agrega el Bearer de la sesión y
+ * limpia la sesión ante un 401 (salvo el del propio login)
  */
 class ApiClient {
   private client: AxiosInstance;
@@ -25,14 +27,13 @@ class ApiClient {
   }
 
   private setupInterceptors(): void {
-    // Request interceptor - preparado para agregar Authorization header
+    // Request interceptor - agrega el token de la sesión vigente
     this.client.interceptors.request.use(
       (config) => {
-        // TODO: Cuando se implemente auth, agregar token aquí
-        // const token = getAuthToken();
-        // if (token) {
-        //   config.headers.Authorization = `Bearer ${token}`;
-        // }
+        const session = getSession();
+        if (session) {
+          config.headers.Authorization = `Bearer ${session.token}`;
+        }
         return config;
       },
       (error) => {
@@ -44,6 +45,10 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
       (error: AxiosError<unknown>) => {
+        const esLogin = error.config?.url?.endsWith('/auth/login') ?? false;
+        if (error.response?.status === 401 && !esLogin) {
+          clearSession();
+        }
         throw this.normalizeError(error);
       }
     );
