@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using TransporteEscolar.Api.Authentication;
 using TransporteEscolar.Api.DependencyInjection;
 using TransporteEscolar.Api.Middleware;
+using TransporteEscolar.Application.Exceptions;
 
 namespace TransporteEscolar.Tests.Api;
 
@@ -178,6 +179,64 @@ public class ApiClientLoggingMiddlewareTests
         var logs = await Pedir("/health", apiKey: null);
 
         logs.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("validacion", 400)]
+    [InlineData("no-encontrado", 404)]
+    public async Task ConElMiddlewareAntesDelManejoDeExcepciones_RegistraElStatusFinalDeLosErrores(string ruta, int statusEsperado)
+    {
+        // Reproduce el orden de Program.cs: logging primero, manejo global de excepciones después. Si el logging
+        // quedara dentro, estas respuestas (que nacen de una excepción) no se registrarían.
+        var captura = new CapturaLoggerProvider();
+
+        using var host = new HostBuilder()
+            .ConfigureAppConfiguration(config => config.AddInMemoryCollection(ConfigBot()))
+            .ConfigureLogging(logging =>
+            {
+                logging.ClearProviders();
+                logging.AddProvider(captura);
+            })
+            .ConfigureWebHost(web => web
+                .UseTestServer()
+                .ConfigureServices((contexto, services) =>
+                {
+                    services.AddRouting();
+                    services.AddBotApi(contexto.Configuration);
+                })
+                .Configure(app =>
+                {
+                    app.UseMiddleware<ApiClientLoggingMiddleware>();
+                    app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+                    app.UseRouting();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapGet("/api/validacion", (HttpContext _) =>
+                            Task.FromException(new ValidationException("dato inválido")));
+                        endpoints.MapGet("/api/no-encontrado", (HttpContext _) =>
+                            Task.FromException(new NotFoundException("Pasajero", 1)));
+                    });
+                }))
+            .Build();
+
+        await host.StartAsync();
+        try
+        {
+            using var cliente = host.GetTestClient();
+            using var respuesta = await cliente.GetAsync($"/api/{ruta}?numero=5493815551234");
+            ((int)respuesta.StatusCode).Should().Be(statusEsperado);
+        }
+        finally
+        {
+            await host.StopAsync();
+        }
+
+        var log = captura.Registros
+            .Where(r => r.Categoria == typeof(ApiClientLoggingMiddleware).FullName)
+            .Should().ContainSingle().Subject;
+        Valor(log, "Status").Should().Be(statusEsperado);
+        Valor(log, "Cliente").Should().Be("anonimo");
+        log.Mensaje.Should().NotContain("5493815551234");
     }
 
     [Theory]
