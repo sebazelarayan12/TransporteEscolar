@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using TransporteEscolar.Api.Authentication;
 using TransporteEscolar.Api.Options;
@@ -137,7 +138,13 @@ public static class ServiceCollectionExtensions
                 .AddAuthenticationSchemes(ApiKeyAuthenticationHandler.SchemeName)
                 .RequireAuthenticatedUser()
                 .RequireClaim(ApiKeyAuthenticationHandler.ScopeClaim, ApiClientCatalog.ScopeBotIdentidad));
+            opciones.AddPolicy(ApiPolicies.BotGastos, politica => politica
+                .AddAuthenticationSchemes(ApiKeyAuthenticationHandler.SchemeName)
+                .RequireAuthenticatedUser()
+                .RequireClaim(ApiKeyAuthenticationHandler.ScopeClaim, ApiClientCatalog.ScopeBotGastos));
         });
+
+        services.TryAddSingleton(TimeProvider.System);
 
         return services;
     }
