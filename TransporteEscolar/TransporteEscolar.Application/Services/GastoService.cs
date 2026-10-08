@@ -136,7 +136,7 @@ public class GastoService : IGastoService
         var fecha = DateTime.SpecifyKind(dto.Fecha.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
         var observaciones = dto.Observaciones?.Trim();
         var estadoPago = MapearEstadoPago(dto.EstadoPago);
-        var vehiculo = dto.Vehiculo?.Trim();
+        var vehiculo = GastoValidator.NormalizarVehiculo(dto.Vehiculo);
         var gasto = new GastoMensual(
             dto.Mes,
             dto.Anio,
