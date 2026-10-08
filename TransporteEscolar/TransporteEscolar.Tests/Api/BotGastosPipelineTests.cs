@@ -15,6 +15,7 @@ using TransporteEscolar.Api.Controllers;
 using TransporteEscolar.Api.DependencyInjection;
 using TransporteEscolar.Api.Middleware;
 using TransporteEscolar.Application;
+using TransporteEscolar.Application.Bot;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Domain.Entities;
 
@@ -30,6 +31,8 @@ public class BotGastosPipelineTests
     private const string ClaveInasistencias = "clave-bot-inasistencias-456";
     private const string Url = "/api/bot/gastos";
     private const string MensajeId = "msg-1";
+    // Lo que el bot guarda y busca en la base: el hash del id, nunca el id en claro.
+    private static readonly string ClaveMensaje = BotMensajeId.Hashear(MensajeId);
 
     private static readonly TimeZoneInfo ZonaArgentina = TimeZoneInfo.FindSystemTimeZoneById("America/Buenos_Aires");
 
@@ -259,7 +262,7 @@ public class BotGastosPipelineTests
     {
         var gastos = new Mock<IGastoRepository>();
         gastos
-            .Setup(r => r.ObtenerGastoMensualPorOrigenMensajeIdAsync(MensajeId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ObtenerGastoMensualPorOrigenMensajeIdAsync(ClaveMensaje, It.IsAny<CancellationToken>()))
             .ReturnsAsync((GastoMensual?)null);
         gastos
             .Setup(r => r.AgregarGastoDeBotAsync(It.IsAny<GastoMensual>(), It.IsAny<CancellationToken>()))
@@ -285,17 +288,17 @@ public class BotGastosPipelineTests
         raiz.GetProperty("anio").GetInt32().Should().Be(hoy.Year);
 
         gastos.Verify(r => r.AgregarGastoDeBotAsync(
-            It.Is<GastoMensual>(g => g.OrigenMensajeId == MensajeId && g.Tipo == GastoMensual.TipoVariable),
+            It.Is<GastoMensual>(g => g.OrigenMensajeId == ClaveMensaje && g.OrigenMensajeId != MensajeId && g.Tipo == GastoMensual.TipoVariable),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task MensajeIdYaExistente_Devuelve200ConElGastoExistente_SinVolverAGuardar()
     {
-        var existente = CrearGasto(9, DateTime.UtcNow, MensajeId, DateTime.UtcNow.AddMinutes(-5));
+        var existente = CrearGasto(9, DateTime.UtcNow, ClaveMensaje, DateTime.UtcNow.AddMinutes(-5));
         var gastos = new Mock<IGastoRepository>();
         gastos
-            .Setup(r => r.ObtenerGastoMensualPorOrigenMensajeIdAsync(MensajeId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ObtenerGastoMensualPorOrigenMensajeIdAsync(ClaveMensaje, It.IsAny<CancellationToken>()))
             .ReturnsAsync(existente);
         await using var host = new HostDePrueba(ConClientesConfigurados(), gastos);
 
@@ -447,7 +450,7 @@ public class BotGastosPipelineTests
     {
         var gastos = new Mock<IGastoRepository>();
         gastos
-            .Setup(r => r.ObtenerGastoMensualPorOrigenMensajeIdAsync(MensajeId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ObtenerGastoMensualPorOrigenMensajeIdAsync(ClaveMensaje, It.IsAny<CancellationToken>()))
             .ReturnsAsync((GastoMensual?)null);
         gastos
             .Setup(r => r.AgregarGastoDeBotAsync(It.IsAny<GastoMensual>(), It.IsAny<CancellationToken>()))
@@ -467,7 +470,7 @@ public class BotGastosPipelineTests
         var captura = new CapturaLoggerProvider();
         var gastos = new Mock<IGastoRepository>();
         gastos
-            .Setup(r => r.ObtenerGastoMensualPorOrigenMensajeIdAsync(MensajeId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ObtenerGastoMensualPorOrigenMensajeIdAsync(ClaveMensaje, It.IsAny<CancellationToken>()))
             .ReturnsAsync((GastoMensual?)null);
         gastos
             .Setup(r => r.AgregarGastoDeBotAsync(It.IsAny<GastoMensual>(), It.IsAny<CancellationToken>()))

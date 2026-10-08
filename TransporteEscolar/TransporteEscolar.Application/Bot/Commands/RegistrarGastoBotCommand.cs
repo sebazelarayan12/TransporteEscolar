@@ -38,7 +38,10 @@ public sealed class RegistrarGastoBotCommandHandler
 
         var datos = BotGastoValidator.Validar(request.Payload, hoyArgentina);
 
-        var existente = await _gastoRepository.ObtenerGastoMensualPorOrigenMensajeIdAsync(datos.MensajeId, cancellationToken);
+        // Se guarda y se busca el HASH del id de mensaje, nunca el id en claro (embebe el teléfono del remitente).
+        var claveIdempotencia = BotMensajeId.Hashear(datos.MensajeId);
+
+        var existente = await _gastoRepository.ObtenerGastoMensualPorOrigenMensajeIdAsync(claveIdempotencia, cancellationToken);
         if (existente is not null)
             return new BotGastoModel.RegistrarResultado(GastoMapper.ToResponse(existente), false);
 
@@ -56,7 +59,7 @@ public sealed class RegistrarGastoBotCommandHandler
             observaciones: null,
             vehiculo: datos.Vehiculo);
 
-        gasto.MarcarComoCargadoPorBot(datos.MensajeId, ahora.UtcDateTime);
+        gasto.MarcarComoCargadoPorBot(claveIdempotencia, ahora.UtcDateTime);
 
         var (guardado, creado) = await _gastoRepository.AgregarGastoDeBotAsync(gasto, cancellationToken);
         return new BotGastoModel.RegistrarResultado(GastoMapper.ToResponse(guardado), creado);
