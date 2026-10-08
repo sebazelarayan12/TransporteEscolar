@@ -89,11 +89,8 @@ public class BotApiIsolationTests
         var encontradas = new List<string>();
         var infracciones = new List<string>();
 
-        // Se crea en la tarea siguiente del plan
-        const string BotGastosControllerNombre = "BotGastosController";
-
         foreach (var controller in ControllersDelAssemblyApi()
-                     .Where(c => c != typeof(BotController) && c.Name != BotGastosControllerNombre))
+                     .Where(c => c != typeof(BotController) && c != typeof(BotGastosController)))
         {
             // [Authorize] a nivel de clase en cualquier otro controller cerraría o abriría toda la clase a la vez.
             foreach (var a in controller.GetCustomAttributes(inherit: true).OfType<Attribute>()
@@ -129,5 +126,14 @@ public class BotApiIsolationTests
             .GetCustomAttributes(typeof(AuthorizeAttribute), inherit: false)
             .Cast<AuthorizeAttribute>()
             .Should().ContainSingle(a => a.Policy == ApiPolicies.BotIdentidad);
+    }
+
+    [Fact]
+    public void BotGastosController_TieneAuthorizeConLaPoliticaBotGastosANivelDeClase()
+    {
+        typeof(BotGastosController)
+            .GetCustomAttributes(typeof(AuthorizeAttribute), inherit: false)
+            .Cast<AuthorizeAttribute>()
+            .Should().ContainSingle(a => a.Policy == ApiPolicies.BotGastos);
     }
 }
