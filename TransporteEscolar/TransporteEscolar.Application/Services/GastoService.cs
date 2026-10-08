@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Exceptions;
 using TransporteEscolar.Application.Interfaces;
+using TransporteEscolar.Application.Mapping;
 using TransporteEscolar.Application.Validation;
 using TransporteEscolar.Domain.Entities;
 using TransporteEscolar.Domain.Enums;
@@ -136,7 +137,7 @@ public class GastoService : IGastoService
         var fecha = DateTime.SpecifyKind(dto.Fecha.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
         var observaciones = dto.Observaciones?.Trim();
         var estadoPago = MapearEstadoPago(dto.EstadoPago);
-        var vehiculo = dto.Vehiculo?.Trim();
+        var vehiculo = GastoValidator.NormalizarVehiculo(dto.Vehiculo);
         var gasto = new GastoMensual(
             dto.Mes,
             dto.Anio,
@@ -301,22 +302,6 @@ public class GastoService : IGastoService
 
     private static GastoModel.GastoMensualResponse MapearGasto(GastoMensual gasto)
     {
-        return new GastoModel.GastoMensualResponse(
-            gasto.Id,
-            gasto.Mes,
-            gasto.Anio,
-            gasto.Tipo,
-            gasto.Categoria,
-            gasto.Descripcion,
-            gasto.Monto,
-            gasto.Fecha,
-            gasto.MedioPago,
-            gasto.EstadoPago.ToString(),
-            gasto.Observaciones,
-            gasto.Vehiculo,
-            gasto.GastoFijoTemplateId,
-            gasto.NumeroCuota,
-            gasto.TotalCuotas,
-            gasto.FechaActualizacion);
+        return GastoMapper.ToResponse(gasto);
     }
 }

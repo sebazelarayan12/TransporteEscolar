@@ -102,14 +102,39 @@ public static class GastoValidator
         }
     }
 
+    /// <summary>Vehículos frecuentes: se guardan siempre con esta grafía, escriban "ducato" o "Ducato".</summary>
+    private static readonly string[] VehiculosConocidos = { "Ducato", "Sprinter" };
+
+    private const int MaxVehiculoLength = 60;
+
+    /// <summary>
+    /// El vehículo es texto libre (Ducato, Sprinter u otro como "Moto" o "Auto"): el front ofrece el botón
+    /// "Otro". Si coincide con uno conocido se devuelve con su grafía canónica; si no, recortado.
+    /// </summary>
+    public static string? NormalizarVehiculo(string? vehiculo)
+    {
+        if (vehiculo is null)
+            return null;
+
+        var nombre = vehiculo.Trim();
+        var conocido = VehiculosConocidos.FirstOrDefault(v =>
+            string.Equals(v, nombre, StringComparison.OrdinalIgnoreCase));
+
+        return conocido ?? nombre;
+    }
+
     private static void ValidateVehiculo(string? vehiculo)
     {
         if (vehiculo is null)
             return;
 
-        var vehiculosValidos = new[] { "Ducato", "Sprinter" };
-        if (!vehiculosValidos.Contains(vehiculo.Trim(), StringComparer.OrdinalIgnoreCase))
-            throw new ValidationException("vehiculo debe ser Ducato o Sprinter.");
+        var nombre = vehiculo.Trim();
+
+        if (nombre.Length == 0)
+            throw new ValidationException("vehiculo no puede estar vacío.");
+
+        if (nombre.Length > MaxVehiculoLength)
+            throw new ValidationException($"vehiculo supera el máximo de {MaxVehiculoLength} caracteres.");
     }
 
     private static void ValidatePlanCuotas(GastoModel.PlanCuotasRequest plan)

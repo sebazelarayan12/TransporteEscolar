@@ -15,10 +15,12 @@ const config = {
   environments: {
     testing: {
       API_BASE_URL: process.env.API_TESTING,
+      API_KEY: process.env.API_KEY_TESTING,
       label: 'TESTING',
     },
     production: {
       API_BASE_URL: process.env.API_PROD,
+      API_KEY: process.env.API_KEY_PROD,
       label: 'PRODUCCIÓN',
     },
   },

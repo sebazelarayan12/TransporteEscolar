@@ -66,6 +66,20 @@ Antes de CUALQUIER request que escriba datos (POST/PUT/PATCH/DELETE), verificar 
 4. Nunca copiar a producción datos ni comandos usados en una prueba de dev sin que el usuario lo pida.
 5. Tras probar en dev, informar qué datos se modificaron (ids) para poder restaurarlos.
 
+## Delegación de tareas a subagentes
+
+Reparto de modelos acordado con el dueño:
+
+| Rol | Modelo |
+|---|---|
+| **Subagentes (implementan)** | **`haiku`**, por defecto, ya está configurado. Pasar siempre `model: "haiku"` de forma explícita al lanzarlos |
+| **Agente principal (dirige, planifica, revisa)** | **`sonnet`**, el modelo oficial |
+| **Advisor** (herramienta `advisor`) | **`opus`**: consultarlo antes de comprometerse con un enfoque en tareas de riesgo (seguridad, migraciones, datos reales) y antes de dar algo por terminado |
+
+- La idea es delegar a `haiku` incluso trabajo de implementación; para eso los planes deben ser muy precisos (código y casos de prueba explícitos). Escalar un subagente a `sonnet` solo si `haiku` queda BLOQUEADO, falla la revisión dos veces o la tarea exige diseño real; decirlo al dueño.
+- El agente principal NO implementa lo que puede delegar: dirige y revisa personalmente cada resultado (diff + corrida de tests) antes de darlo por bueno. Lo que toca seguridad o migraciones se revisa línea por línea.
+- Nunca omitir el parámetro `model` al delegar: un subagente sin modelo explícito hereda el más caro de la sesión.
+
 ## Architecture
 
 ### Backend — Clean Architecture + CQRS

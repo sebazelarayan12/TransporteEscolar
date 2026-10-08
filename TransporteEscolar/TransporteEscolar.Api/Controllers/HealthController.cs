@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TransporteEscolar.Api.Controllers;
@@ -16,6 +17,7 @@ public class HealthController : ControllerBase
     /// <summary>
     /// Endpoint ligero para verificar el estado general del backend
     /// </summary>
+    [AllowAnonymous]
     [HttpGet]
     public ActionResult<HealthStatusResponse> Get()
     {

@@ -202,6 +202,9 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("FechaActualizacion")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("FechaCreacion")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int?>("GastoFijoTemplateId")
                         .HasColumnType("integer");
 
@@ -223,6 +226,10 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("OrigenMensajeId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Tipo")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -237,6 +244,9 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("GastoFijoTemplateId");
+
+                    b.HasIndex("OrigenMensajeId")
+                        .IsUnique();
 
                     b.HasIndex("Mes", "Anio");
 

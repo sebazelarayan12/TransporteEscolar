@@ -1,5 +1,6 @@
 import { config } from '../../config/env';
 import { pushApi } from './push.api';
+import { SESSION_EVENT, getSession } from '../../auth/helpers/session.storage';
 
 /**
  * Convierte una clave VAPID base64 a Uint8Array (formato requerido por PushManager)
@@ -26,6 +27,38 @@ function arrayBufferToBase64(buffer: ArrayBuffer | null): string {
     binary += String.fromCharCode(bytes[i]);
   }
   return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+type TokenWorker = Pick<ServiceWorker, 'postMessage'>;
+
+/** Envia al SW el token de la sesion vigente (null si no hay) para que pueda re-suscribir. */
+function enviarTokenAlWorker(worker: TokenWorker | null | undefined): void {
+  worker?.postMessage({ type: 'SET_AUTH_TOKEN', token: getSession()?.token ?? null });
+}
+
+let sincronizacionTokenActiva = false;
+
+/**
+ * Mantiene sincronizado el token con el Service Worker cada vez que la sesion cambia.
+ * Limite conocido: si el navegador reinicia el SW pierde el token en memoria; una
+ * re-suscripcion (pushsubscriptionchange) en ese estado recibe 401 y el front se
+ * vuelve a suscribir al abrir la app.
+ */
+export function iniciarSincronizacionTokenPush(): void {
+  if (sincronizacionTokenActiva || !('serviceWorker' in navigator)) return;
+  sincronizacionTokenActiva = true;
+
+  const sincronizar = () => {
+    navigator.serviceWorker
+      .getRegistration()
+      .then((registration) => {
+        enviarTokenAlWorker(registration?.active ?? navigator.serviceWorker.controller);
+      })
+      .catch(() => undefined);
+  };
+
+  window.addEventListener(SESSION_EVENT, sincronizar);
+  sincronizar();
 }
 
 /**
@@ -97,6 +130,8 @@ export async function subscribeToPush(): Promise<boolean> {
       type: 'SET_API_SUBSCRIBE_URL',
       url: `${config.apiBaseUrl}/push-subscriptions/subscribe`,
     });
+    enviarTokenAlWorker(activeWorker);
+    iniciarSincronizacionTokenPush();
 
     console.info('Suscripcion push registrada exitosamente');
     return true;

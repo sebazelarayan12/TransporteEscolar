@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Interfaces;
@@ -23,6 +24,7 @@ public class PushSubscriptionsController : ControllerBase
         _logger = logger;
     }
 
+    [AllowAnonymous]
     [HttpGet("vapid-public-key")]
     public ActionResult<PushSubscriptionModel.VapidPublicKeyResponse> GetVapidPublicKey()
     {

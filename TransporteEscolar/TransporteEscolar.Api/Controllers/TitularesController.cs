@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TransporteEscolar.Api.Authentication;
 using TransporteEscolar.Application.DTOs;
 using TransporteEscolar.Application.Interfaces;
 
@@ -35,6 +37,7 @@ public class TitularesController : ControllerBase
     /// <summary>
     /// Obtiene solo titulares activos
     /// </summary>
+    [Authorize(Policy = ApiPolicies.LecturaBotLocal)]
     [HttpGet("activos")]
     public async Task<ActionResult<List<TitularModel.Response>>> GetActivos()
     {
@@ -155,6 +158,7 @@ public class TitularesController : ControllerBase
     /// <summary>
     /// Obtiene los teléfonos de un titular
     /// </summary>
+    [Authorize(Policy = ApiPolicies.LecturaBotLocal)]
     [HttpGet("{id}/telefonos")]
     public async Task<ActionResult<List<TelefonoModel.Response>>> GetTelefonos(int id)
     {

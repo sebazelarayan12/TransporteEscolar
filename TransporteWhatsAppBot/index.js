@@ -6,6 +6,18 @@ const config = require('./config.js');
 const env = config.environments[config.activeEnvironment];
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const API_KEY_VAR = config.activeEnvironment === 'testing' ? 'API_KEY_TESTING' : 'API_KEY_PROD';
+
+// Cliente de la API: envía la clave (si está configurada) en X-Api-Key.
+function crearClienteApi(entorno) {
+  return axios.create({
+    baseURL: entorno.API_BASE_URL,
+    headers: entorno.API_KEY ? { 'X-Api-Key': entorno.API_KEY } : {},
+  });
+}
+
+const api = crearClienteApi(env);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilidades compartidas
 // ─────────────────────────────────────────────────────────────────────────────
@@ -75,7 +87,7 @@ async function cargarTelefonosPrincipales(titularIds = []) {
   await Promise.all(
     [...new Set(titularIds)].map(async (id) => {
       try {
-        const { data } = await axios.get(`${env.API_BASE_URL}/titulares/${id}/telefonos`);
+        const { data } = await api.get(`/titulares/${id}/telefonos`);
         const principal = seleccionarTelefonoPrincipal(data ?? []);
         const numero = principal?.numeroE164 ?? principal?.numero ?? null;
         if (numero) telefonos[id] = numero;
@@ -99,10 +111,14 @@ function printHeader(commandName, description) {
   console.log('='.repeat(60));
   console.log('  🚌 Bot WhatsApp — Transporte Escolar');
   console.log(`  Entorno: ${env.label}`);
+  console.log(`  Clave de API configurada: ${env.API_KEY ? 'sí' : 'no'}`);
   console.log(`  Comando: ${commandName}`);
   console.log(`  Acción: ${description}`);
   if (config.dryRun) console.log('  ⚠️  MODO SIMULACIÓN — no se enviará nada');
   console.log('='.repeat(60));
+  if (!env.API_KEY) {
+    console.warn(`⚠️  ${API_KEY_VAR} no está configurada: cuando la API exija clave, los pedidos darán 401.`);
+  }
 }
 
 function printHelp() {
@@ -123,8 +139,8 @@ async function fetchDestinatariosPendientes() {
   console.log(`📅 Mes a notificar: ${periodo.label}`);
 
   const [{ data: pendientes }, { data: vencidos }] = await Promise.all([
-    axios.get(`${env.API_BASE_URL}/pagosmensuales/pendientes`),
-    axios.get(`${env.API_BASE_URL}/pagosmensuales/vencidos`),
+    api.get('/pagosmensuales/pendientes'),
+    api.get('/pagosmensuales/vencidos'),
   ]);
 
   const todos = [...(pendientes ?? []), ...(vencidos ?? [])];
@@ -170,8 +186,8 @@ async function fetchDestinatariosPendientesExcluir() {
   console.log(`🚫 Excluidos: ${EXCLUIR_TITULAR_IDS.join(', ')}`);
 
   const [{ data: pendientes }, { data: vencidos }] = await Promise.all([
-    axios.get(`${env.API_BASE_URL}/pagosmensuales/pendientes`),
-    axios.get(`${env.API_BASE_URL}/pagosmensuales/vencidos`),
+    api.get('/pagosmensuales/pendientes'),
+    api.get('/pagosmensuales/vencidos'),
   ]);
 
   const todos = [...(pendientes ?? []), ...(vencidos ?? [])];
@@ -233,7 +249,7 @@ async function fetchDestinatariosRecordatorio() {
   console.log(`\n🌐 API [${env.label}]: ${env.API_BASE_URL}`);
   console.log('📋 Recuperando titulares activos...');
 
-  const { data } = await axios.get(`${env.API_BASE_URL}/titulares/activos`);
+  const { data } = await api.get('/titulares/activos');
   const titulares = Array.isArray(data) ? data : [];
 
   if (titulares.length === 0) {
@@ -284,7 +300,7 @@ async function fetchDestinatariosRecordatorioExcluir() {
   console.log('📋 Recuperando titulares activos...');
   console.log(`🚫 Excluidos: ${EXCLUIR_TITULAR_IDS.join(', ')}`);
 
-  const { data } = await axios.get(`${env.API_BASE_URL}/titulares/activos`);
+  const { data } = await api.get('/titulares/activos');
   const titulares = (Array.isArray(data) ? data : []).filter(
     (t) => !EXCLUIR_TITULAR_IDS.includes(t.id)
   );
@@ -324,7 +340,7 @@ async function fetchDestinatariosPersonalizado() {
   console.log(`\n🌐 API [${env.label}]: ${env.API_BASE_URL}`);
   console.log('📋 Recuperando titulares activos...');
 
-  const { data } = await axios.get(`${env.API_BASE_URL}/titulares/activos`);
+  const { data } = await api.get('/titulares/activos');
   const titulares = Array.isArray(data) ? data : [];
 
   if (titulares.length === 0) {
@@ -367,8 +383,8 @@ async function fetchDestinatariosPrueba() {
   console.log(`📞 Teléfono obtenido de API: ${telefono}`);
 
   const [{ data: pendientes }, { data: vencidos }] = await Promise.all([
-    axios.get(`${env.API_BASE_URL}/pagosmensuales/pendientes`),
-    axios.get(`${env.API_BASE_URL}/pagosmensuales/vencidos`),
+    api.get('/pagosmensuales/pendientes'),
+    api.get('/pagosmensuales/vencidos'),
   ]);
 
   const todos = [...(pendientes ?? []), ...(vencidos ?? [])];
@@ -584,6 +600,7 @@ async function main() {
 main()
   .then(() => process.exit(0))
   .catch((err) => {
-    console.error('💥 Error fatal:', err.message);
+    const pista401 = err.response?.status === 401 ? ` (401: revisá ${API_KEY_VAR})` : '';
+    console.error('💥 Error fatal:', err.message + pista401);
     process.exit(1);
   });

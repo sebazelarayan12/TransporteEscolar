@@ -2,6 +2,9 @@ using Lib.Net.Http.WebPush;
 using Lib.Net.Http.WebPush.Authentication;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using TransporteEscolar.Api.Authentication;
 using TransporteEscolar.Api.Options;
@@ -135,6 +138,59 @@ public static class ServiceCollectionExtensions
                 .AddAuthenticationSchemes(ApiKeyAuthenticationHandler.SchemeName)
                 .RequireAuthenticatedUser()
                 .RequireClaim(ApiKeyAuthenticationHandler.ScopeClaim, ApiClientCatalog.ScopeBotIdentidad));
+            opciones.AddPolicy(ApiPolicies.BotGastos, politica => politica
+                .AddAuthenticationSchemes(ApiKeyAuthenticationHandler.SchemeName)
+                .RequireAuthenticatedUser()
+                .RequireClaim(ApiKeyAuthenticationHandler.ScopeClaim, ApiClientCatalog.ScopeBotGastos));
+        });
+
+        services.TryAddSingleton(TimeProvider.System);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registra el login de personas (JWT), la política general que exige autenticación en todo endpoint sin
+    /// atributo propio y la bandera <c>Auth__Enforce</c> (modo observación). Debe llamarse junto con
+    /// <see cref="AddBotApi"/>.
+    /// </summary>
+    public static IServiceCollection AddSeguridadApi(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.SectionName));
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.AddHttpContextAccessor();
+
+        var jwt = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+        var tokenService = new TokenService(Microsoft.Extensions.Options.Options.Create(jwt));
+        services.AddSingleton(tokenService);
+
+        services.AddAuthentication()
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, opciones =>
+            {
+                opciones.MapInboundClaims = false;
+                opciones.TokenValidationParameters = tokenService.ParametrosDeValidacion();
+            });
+
+        services.AddSingleton<IAuthorizationHandler, AccesoHandler>();
+
+        static bool EsPersona(System.Security.Claims.ClaimsPrincipal usuario) =>
+            usuario.HasClaim(TokenService.ClaimTipo, TokenService.TipoPersona);
+
+        services.AddAuthorization(opciones =>
+        {
+            // Todo endpoint sin atributo propio exige una persona logueada (los nuevos nacen cerrados).
+            opciones.FallbackPolicy = new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
+                .AddRequirements(new AccesoRequirement(EsPersona))
+                .Build();
+
+            // Los 4 GET del bot local: persona o cliente ApiKey con alcance lectura:bot-local.
+            opciones.AddPolicy(ApiPolicies.LecturaBotLocal, politica => politica
+                .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme, ApiKeyAuthenticationHandler.SchemeName)
+                .AddRequirements(new AccesoRequirement(usuario =>
+                    EsPersona(usuario)
+                    || usuario.HasClaim(ApiKeyAuthenticationHandler.ScopeClaim, ApiClientCatalog.ScopeLecturaBotLocal))));
         });
 
         return services;

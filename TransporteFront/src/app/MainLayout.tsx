@@ -5,6 +5,7 @@ import { NotificacionesDropdown } from '../notificaciones/components/Notificacio
 import { usePrivacyMode } from '../shared/hooks/usePrivacyMode';
 import { EyeIcon } from '../shared/ui/icons/EyeIcon';
 import { EyeOffIcon } from '../shared/ui/icons/EyeOffIcon';
+import { useSession } from '../auth/hooks/useSession';
 
 const LayoutContentFallback = () => (
   <div className="flex min-h-[360px] w-full items-center justify-center px-6 py-10">
@@ -26,6 +27,7 @@ export const MainLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { hidden, toggle } = usePrivacyMode();
+  const { cerrarSesion } = useSession();
 
   const privacyToggleLabel = hidden ? 'Mostrar montos' : 'Ocultar montos';
   const privacyToggleButtonClass =
@@ -157,6 +159,15 @@ export const MainLayout = () => {
               {hidden ? <EyeOffIcon className="text-2xl" /> : <EyeIcon className="text-2xl" />}
             </button>
             <NotificacionesDropdown />
+            <button
+              type="button"
+              onClick={cerrarSesion}
+              className={privacyToggleButtonClass}
+              aria-label="Cerrar sesión"
+              title="Cerrar sesión"
+            >
+              <span className="material-symbols-outlined text-2xl" aria-hidden="true">logout</span>
+            </button>
           </div>
         </header>
 
@@ -172,6 +183,15 @@ export const MainLayout = () => {
             {hidden ? <EyeOffIcon className="text-2xl" /> : <EyeIcon className="text-2xl" />}
           </button>
           <NotificacionesDropdown />
+          <button
+            type="button"
+            onClick={cerrarSesion}
+            className={privacyToggleButtonClass}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
+          >
+            <span className="material-symbols-outlined text-2xl" aria-hidden="true">logout</span>
+          </button>
           <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#007a8a] to-cyan-400 flex items-center justify-center text-sm font-bold text-white">
             EA
           </div>
