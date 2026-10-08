@@ -14,6 +14,8 @@ public interface IGastoRepository
     Task<GastoFijoTemplate> ActualizarTemplateAsync(GastoFijoTemplate template, CancellationToken cancellationToken = default);
     Task<GastoMensual?> ObtenerGastoMensualPorTemplateAsync(int templateId, int mes, int anio, CancellationToken cancellationToken = default);
     Task<GastoMensual?> ObtenerGastoMensualPorIdAsync(int gastoId, CancellationToken cancellationToken = default);
+    Task<GastoMensual?> ObtenerGastoMensualPorOrigenMensajeIdAsync(string mensajeId, CancellationToken cancellationToken = default);
+    Task<(GastoMensual Gasto, bool Creado)> AgregarGastoDeBotAsync(GastoMensual gasto, CancellationToken cancellationToken = default);
     Task<GastoMensual> ActualizarGastoMensualAsync(GastoMensual gasto, CancellationToken cancellationToken = default);
     Task EliminarGastoMensualAsync(GastoMensual gasto, CancellationToken cancellationToken = default);
     Task<List<GastoMensual>> GetFuturosPorTemplateAsync(int templateId, int mes, int anio, CancellationToken cancellationToken = default);

@@ -24,6 +24,17 @@ public class GastoMensual
     public string? Vehiculo { get; private set; }
     public int? GastoFijoTemplateId { get; private set; }
 
+    /// <summary>Plazo (en horas) durante el cual el bot puede anular un gasto que cargó.</summary>
+    public const int HorasParaAnularPorBot = 24;
+
+    /// <summary>Id del mensaje de WhatsApp que originó el gasto. Null si no lo cargó el bot.</summary>
+    public string? OrigenMensajeId { get; private set; }
+
+    /// <summary>Momento de creación (UTC). Solo se completa en los gastos cargados por el bot.</summary>
+    public DateTime? FechaCreacion { get; private set; }
+
+    public bool EsDeBot => OrigenMensajeId is not null;
+
     public GastoFijoTemplate? GastoFijoTemplate { get; private set; }
 
     private GastoMensual()
@@ -109,6 +120,23 @@ public class GastoMensual
 
         EstadoPago = EstadoPagoGasto.Pagado;
         FechaActualizacion = DateTime.SpecifyKind(fechaActualizacion, DateTimeKind.Utc);
+    }
+
+    public void MarcarComoCargadoPorBot(string mensajeId, DateTime ahoraUtc)
+    {
+        if (string.IsNullOrWhiteSpace(mensajeId))
+        {
+            throw new ArgumentException("El id del mensaje de origen es obligatorio.", nameof(mensajeId));
+        }
+
+        OrigenMensajeId = mensajeId;
+        FechaCreacion = DateTime.SpecifyKind(ahoraUtc, DateTimeKind.Utc);
+    }
+
+    public bool DentroDelPlazoDeAnulacion(DateTime ahoraUtc)
+    {
+        return FechaCreacion.HasValue
+            && ahoraUtc - FechaCreacion.Value < TimeSpan.FromHours(HorasParaAnularPorBot);
     }
 
     private DateTime CrearFechaNormalizada(int diaDeAplicacion)

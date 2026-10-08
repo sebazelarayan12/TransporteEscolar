@@ -49,6 +49,15 @@ public class GastoMensualConfiguration : IEntityTypeConfiguration<GastoMensual>
 
         builder.Property(g => g.TotalCuotas);
 
+        builder.Property(g => g.OrigenMensajeId)
+            .HasMaxLength(200);
+
+        builder.Property(g => g.FechaCreacion);
+
+        // Idempotencia del bot: PostgreSQL admite varios NULL en un indice unico.
+        builder.HasIndex(g => g.OrigenMensajeId)
+            .IsUnique();
+
         builder.HasIndex(g => new { g.Mes, g.Anio });
         builder.HasIndex(g => g.GastoFijoTemplateId);
 

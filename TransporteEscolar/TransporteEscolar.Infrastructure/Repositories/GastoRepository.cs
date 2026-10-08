@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Domain.Entities;
 using TransporteEscolar.Infrastructure.Persistence;
@@ -86,6 +87,37 @@ public class GastoRepository : IGastoRepository
     {
         return await _context.GastosMensuales
             .FirstOrDefaultAsync(g => g.Id == gastoId, cancellationToken);
+    }
+
+    public async Task<GastoMensual?> ObtenerGastoMensualPorOrigenMensajeIdAsync(string mensajeId, CancellationToken cancellationToken = default)
+    {
+        return await _context.GastosMensuales
+            .AsNoTracking()
+            .FirstOrDefaultAsync(g => g.OrigenMensajeId == mensajeId, cancellationToken);
+    }
+
+    public async Task<(GastoMensual Gasto, bool Creado)> AgregarGastoDeBotAsync(GastoMensual gasto, CancellationToken cancellationToken = default)
+    {
+        _context.GastosMensuales.Add(gasto);
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+            return (gasto, true);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            // Carrera: otro pedido con el mismo id de mensaje inserto primero. Se devuelve el existente.
+            _context.Entry(gasto).State = EntityState.Detached;
+
+            var existente = await ObtenerGastoMensualPorOrigenMensajeIdAsync(gasto.OrigenMensajeId!, cancellationToken);
+            if (existente is null)
+            {
+                throw;
+            }
+
+            return (existente, false);
+        }
     }
 
     public async Task<GastoMensual> ActualizarGastoMensualAsync(GastoMensual gasto, CancellationToken cancellationToken = default)
