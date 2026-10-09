@@ -149,9 +149,12 @@ public class PagoMensualRepository : IPagoMensualRepository
 
     public async Task<List<PagoMovimiento>> GetMovimientosPorOrigenMensajeIdAsync(string origenMensajeId, CancellationToken cancellationToken = default)
     {
+        // Sin tracking, con resolución de identidad: el include PagoMovimiento -> PagoMensual -> Movimientos
+        // forma un ciclo, que EF solo admite en consultas sin tracking si se resuelve la identidad.
         return await _context.PagosMovimientos
-            .AsNoTracking()
+            .AsNoTrackingWithIdentityResolution()
             .Include(m => m.PagoMensual)
+                .ThenInclude(p => p.Movimientos)
             .Where(m => m.OrigenMensajeId == origenMensajeId)
             .OrderBy(m => m.Id)
             .ToListAsync(cancellationToken);

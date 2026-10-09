@@ -77,6 +77,25 @@ public class PagoMensualRepositoryBotTests
     }
 
     [Fact]
+    public async Task GetMovimientosPorOrigenMensajeIdAsync_CargaTodosLosMovimientosDeLaCuota_YElSaldoEsCorrecto()
+    {
+        await using var context = CrearContexto();
+        var pagos = await CrearPagosAsync(context, (9, 2026));
+        // Movimiento manual (no del bot) sobre la misma cuota: también debe contar para el saldo.
+        context.PagosMovimientos.Add(new PagoMovimiento(pagos[0].Id, 20000m, FechaPago, "Efectivo"));
+        context.PagosMovimientos.Add(CrearMovimientoDeBot(pagos[0].Id, "hash.abc", Grupo, 30000m));
+        await context.SaveChangesAsync();
+        var repo = new PagoMensualRepository(context);
+
+        var resultado = await repo.GetMovimientosPorOrigenMensajeIdAsync("hash.abc");
+
+        var movimiento = resultado.Should().ContainSingle().Subject;
+        movimiento.PagoMensual.Movimientos.Should().HaveCount(2);
+        movimiento.PagoMensual.Movimientos.Sum(m => m.Monto).Should().Be(50000m);
+        movimiento.PagoMensual.SaldoPendiente().Should().Be(120000m - 50000m);
+    }
+
+    [Fact]
     public async Task GetMovimientosPorGrupoIdAsync_DevuelveTodosLosMovimientosDelGrupo()
     {
         await using var context = CrearContexto();
