@@ -90,7 +90,8 @@ public class BotApiIsolationTests
         var infracciones = new List<string>();
 
         foreach (var controller in ControllersDelAssemblyApi()
-                     .Where(c => c != typeof(BotController) && c != typeof(BotGastosController)))
+                     .Where(c => c != typeof(BotController) && c != typeof(BotGastosController)
+                                 && c != typeof(BotPagosController)))
         {
             // [Authorize] a nivel de clase en cualquier otro controller cerraría o abriría toda la clase a la vez.
             foreach (var a in controller.GetCustomAttributes(inherit: true).OfType<Attribute>()
@@ -135,5 +136,14 @@ public class BotApiIsolationTests
             .GetCustomAttributes(typeof(AuthorizeAttribute), inherit: false)
             .Cast<AuthorizeAttribute>()
             .Should().ContainSingle(a => a.Policy == ApiPolicies.BotGastos);
+    }
+
+    [Fact]
+    public void BotPagosController_TieneAuthorizeConLaPoliticaBotPagosANivelDeClase()
+    {
+        typeof(BotPagosController)
+            .GetCustomAttributes(typeof(AuthorizeAttribute), inherit: false)
+            .Cast<AuthorizeAttribute>()
+            .Should().ContainSingle(a => a.Policy == ApiPolicies.BotPagos);
     }
 }

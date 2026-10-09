@@ -142,6 +142,10 @@ public static class ServiceCollectionExtensions
                 .AddAuthenticationSchemes(ApiKeyAuthenticationHandler.SchemeName)
                 .RequireAuthenticatedUser()
                 .RequireClaim(ApiKeyAuthenticationHandler.ScopeClaim, ApiClientCatalog.ScopeBotGastos));
+            opciones.AddPolicy(ApiPolicies.BotPagos, politica => politica
+                .AddAuthenticationSchemes(ApiKeyAuthenticationHandler.SchemeName)
+                .RequireAuthenticatedUser()
+                .RequireClaim(ApiKeyAuthenticationHandler.ScopeClaim, ApiClientCatalog.ScopeBotPagos));
         });
 
         services.TryAddSingleton(TimeProvider.System);
