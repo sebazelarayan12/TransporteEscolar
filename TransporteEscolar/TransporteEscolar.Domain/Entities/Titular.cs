@@ -1,3 +1,5 @@
+using TransporteEscolar.Domain.Services;
+
 namespace TransporteEscolar.Domain.Entities;
 
 public class Titular
@@ -60,51 +62,46 @@ public class Titular
         string? observaciones,
         IReadOnlyCollection<PagoMensual> pagos)
     {
+        var aplicados = RegistrarPagoDetallado(monto, fechaPago, medioPago, observaciones, pagos);
+        return aplicados.Select(a => a.Pago).Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Registra el pago repartiéndolo entre las cuotas pendientes (ver <see cref="ReparticionPagos"/>) y devuelve,
+    /// por cada cuota tocada, el movimiento creado. Valida todo ANTES de modificar nada.
+    /// </summary>
+    public IReadOnlyList<(PagoMensual Pago, PagoMovimiento Movimiento)> RegistrarPagoDetallado(
+        decimal monto,
+        DateTimeOffset fechaPago,
+        string medioPago,
+        string? observaciones,
+        IReadOnlyCollection<PagoMensual> pagos)
+    {
         if (monto <= 0)
             throw new ArgumentOutOfRangeException(nameof(monto), "El monto pagado debe ser mayor a 0");
 
         if (pagos == null || pagos.Count == 0)
             throw new InvalidOperationException("No hay pagos disponibles para registrar");
 
-        var pagosPendientes = pagos
-            .Where(p => p.SaldoPendiente() > 0)
-            .OrderBy(p => p.Anio)
-            .ThenBy(p => p.Mes)
-            .ToList();
+        var reparto = ReparticionPagos.Planificar(monto, pagos);
 
-        if (pagosPendientes.Count == 0)
+        if (reparto.Items.Count == 0)
             throw new InvalidOperationException("No hay pagos pendientes para este titular");
 
-        var pagosActualizados = new List<PagoMensual>();
-        var montoRestante = monto;
-
-        foreach (var pago in pagosPendientes)
-        {
-            if (montoRestante <= 0)
-                break;
-
-            var saldo = pago.SaldoPendiente();
-            if (saldo <= 0)
-                continue;
-
-            var montoAplicar = Math.Min(montoRestante, saldo);
-            pago.AplicarPago(montoAplicar, fechaPago, medioPago, observaciones);
-
-            if (!pagosActualizados.Contains(pago))
-            {
-                pagosActualizados.Add(pago);
-            }
-
-            montoRestante -= montoAplicar;
-        }
-
-        if (montoRestante > 0)
+        if (reparto.Sobrante > 0)
         {
             throw new InvalidOperationException(
-                $"El monto pagado ({monto:C}) excede la deuda total pendiente. Sobrante: {montoRestante:C}");
+                $"El monto pagado ({monto:C}) excede la deuda total pendiente. Sobrante: {reparto.Sobrante:C}");
         }
 
-        return pagosActualizados;
+        var resultado = new List<(PagoMensual Pago, PagoMovimiento Movimiento)>();
+        foreach (var item in reparto.Items)
+        {
+            var movimiento = item.Pago.AplicarPago(item.Aplicado, fechaPago, medioPago, observaciones);
+            resultado.Add((item.Pago, movimiento));
+        }
+
+        return resultado;
     }
 
     public TitularAjusteMontoResult AjustarMonto(

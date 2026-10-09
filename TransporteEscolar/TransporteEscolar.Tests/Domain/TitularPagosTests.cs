@@ -93,6 +93,52 @@ public class TitularPagosTests
         pago2.EstaPagado().Should().BeFalse();
     }
 
+    // ── RegistrarPagoDetallado ───────────────────────────────────────────────
+
+    [Fact]
+    public void RegistrarPagoDetallado_DevuelveUnMovimientoPorCuotaTocada()
+    {
+        var titular = CrearTitular();
+        var pago1 = CrearPago(monto: 5000m, mes: 4, anio: 2025);
+        var pago2 = CrearPago(monto: 5000m, mes: 5, anio: 2025);
+
+        var resultado = titular.RegistrarPagoDetallado(7000m, DateTimeOffset.UtcNow, "Efectivo", null, new[] { pago1, pago2 });
+
+        resultado.Should().HaveCount(2);
+        resultado[0].Pago.Should().BeSameAs(pago1);
+        resultado[0].Movimiento.Monto.Should().Be(5000m);
+        pago1.Movimientos.Should().Contain(resultado[0].Movimiento);
+        resultado[1].Pago.Should().BeSameAs(pago2);
+        resultado[1].Movimiento.Monto.Should().Be(2000m);
+        pago2.Movimientos.Should().Contain(resultado[1].Movimiento);
+    }
+
+    [Fact]
+    public void RegistrarPagoDetallado_MontoExcedente_LanzaYNoAgregaMovimientos()
+    {
+        var titular = CrearTitular();
+        var pago1 = CrearPago(monto: 5000m, mes: 4, anio: 2025);
+        var pago2 = CrearPago(monto: 5000m, mes: 5, anio: 2025);
+
+        var act = () => titular.RegistrarPagoDetallado(12000m, DateTimeOffset.UtcNow, "Efectivo", null, new[] { pago1, pago2 });
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("*excede la deuda total*");
+        pago1.Movimientos.Should().BeEmpty();
+        pago2.Movimientos.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void RegistrarPago_DevuelveLasMismasCuotasTocadasEnOrden()
+    {
+        var titular = CrearTitular();
+        var pago1 = CrearPago(monto: 5000m, mes: 4, anio: 2025);
+        var pago2 = CrearPago(monto: 5000m, mes: 5, anio: 2025);
+
+        var actualizados = titular.RegistrarPago(7000m, DateTimeOffset.UtcNow, "Efectivo", null, new[] { pago2, pago1 });
+
+        actualizados.Should().Equal(pago1, pago2);
+    }
+
     // ── AjustarMonto ─────────────────────────────────────────────────────────
 
     [Fact]
