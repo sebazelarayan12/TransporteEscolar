@@ -69,8 +69,8 @@ const NotificacionesList = ({ panel, onClose }: NotificacionesListProps) => (
 );
 
 const NotificacionesPanel = ({ panel, onClose }: NotificacionesListProps) => (
-  // En mobile usa ancho limitado alineado a la derecha, en desktop se expande
-  <div className="absolute right-0 top-full z-[70] mt-2 w-[calc(100vw-2rem)] max-w-96 rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900 sm:w-96">
+  // En mobile se ancla al viewport (la campana ya no es el ultimo icono del header); desde sm cuelga de la campana
+  <div className="fixed inset-x-4 top-[4.5rem] z-[70] rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96">
     <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-white/5">
       <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notificaciones</h3>
       {panel.count > 0 && (
