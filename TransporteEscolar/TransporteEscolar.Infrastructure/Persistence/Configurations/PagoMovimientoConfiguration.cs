@@ -34,8 +34,26 @@ public class PagoMovimientoConfiguration : IEntityTypeConfiguration<PagoMovimien
             .IsRequired(false)
             .HasMaxLength(500);
 
+        builder.Property(m => m.OrigenMensajeId)
+            .IsRequired(false)
+            .HasMaxLength(200);
+
+        builder.Property(m => m.GrupoId)
+            .IsRequired(false);
+
+        builder.Property(m => m.FechaCreacion)
+            .IsRequired(false)
+            .HasColumnType("timestamp with time zone");
+
         // �ndices para consultas frecuentes
         builder.HasIndex(m => m.FechaPago);
         builder.HasIndex(m => m.PagoMensualId);
+
+        // Idempotencia del bot: un mismo mensaje no crea dos movimientos para el mismo pago.
+        // PostgreSQL no cuenta los NULL como duplicados, asi que los movimientos manuales no chocan.
+        builder.HasIndex(m => new { m.OrigenMensajeId, m.PagoMensualId })
+            .IsUnique();
+
+        builder.HasIndex(m => m.GrupoId);
     }
 }

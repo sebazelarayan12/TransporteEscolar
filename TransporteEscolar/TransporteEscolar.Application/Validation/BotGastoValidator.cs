@@ -72,7 +72,7 @@ public static class BotGastoValidator
         return new Datos(mensajeId, monto, categoria, medioPago, estado, fecha, descripcion, vehiculo);
     }
 
-    private static string ValidarMensajeId(string? valor)
+    internal static string ValidarMensajeId(string? valor)
     {
         var mensajeId = valor?.Trim();
 
@@ -86,7 +86,7 @@ public static class BotGastoValidator
     }
 
     // Estricto: no se recorta. " 4500 " es inválido (el bot manda el valor ya limpio).
-    private static decimal ValidarMonto(string? valor)
+    internal static decimal ValidarMonto(string? valor)
     {
         if (valor is null || valor.Length == 0)
             throw new ValidationException("monto es requerido.");
@@ -105,7 +105,7 @@ public static class BotGastoValidator
         return monto;
     }
 
-    private static string ValidarLista(string? valor, string campo, string[] permitidos, string adjetivo = "válido")
+    internal static string ValidarLista(string? valor, string campo, string[] permitidos, string adjetivo = "válido")
     {
         var texto = valor?.Trim();
 
@@ -118,7 +118,7 @@ public static class BotGastoValidator
             ?? throw new ValidationException($"{campo} no {adjetivo}. Opciones: {string.Join(", ", permitidos)}.");
     }
 
-    private static DateOnly ValidarFecha(string? valor, DateOnly hoyArgentina)
+    internal static DateOnly ValidarFecha(string? valor, DateOnly hoyArgentina)
     {
         if (string.IsNullOrEmpty(valor))
             throw new ValidationException("fecha es requerida.");

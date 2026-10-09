@@ -25,6 +25,24 @@ public interface IPagoMensualRepository
         int pageSize,
         CancellationToken cancellationToken = default);
     Task<PagoMovimiento?> GetMovimientoByIdAsync(int movimientoId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Devuelve los movimientos cargados por el bot para un mismo mensaje de origen (sin tracking, con su pago cargado).
+    /// Lista vacía si no existe.
+    /// </summary>
+    Task<List<PagoMovimiento>> GetMovimientosPorOrigenMensajeIdAsync(string origenMensajeId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Devuelve todos los movimientos de un grupo (un pago del bot), con tracking, para poder eliminarlos.
+    /// </summary>
+    Task<List<PagoMovimiento>> GetMovimientosPorGrupoIdAsync(Guid grupoId, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Persiste en un único SaveChanges los movimientos agregados al contexto.
+    /// Devuelve false si hubo una violación de unicidad (otro pedido con el mismo mensaje ya guardó el pago).
+    /// </summary>
+    Task<bool> GuardarPagoDeBotAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Elimina los movimientos indicados en un único SaveChanges.
+    /// </summary>
+    Task EliminarMovimientosAsync(IReadOnlyCollection<PagoMovimiento> movimientos, CancellationToken cancellationToken = default);
     Task<(List<Titular> Titulares, int TotalCount)> GetTitularesConPagosAsync(string? search, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
     Task<PagoMensual> AddAsync(PagoMensual pagoMensual, CancellationToken cancellationToken = default);
     Task UpdateAsync(PagoMensual pagoMensual, CancellationToken cancellationToken = default);

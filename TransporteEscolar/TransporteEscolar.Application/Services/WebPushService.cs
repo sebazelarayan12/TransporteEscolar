@@ -35,7 +35,17 @@ public class WebPushService : IWebPushService
         return _vapidSettings.PublicKey;
     }
 
-    public async Task EnviarATodosAsync(string titulo, string mensaje, string? url = null, CancellationToken cancellationToken = default)
+    public Task EnviarATodosAsync(string titulo, string mensaje, string? url = null, CancellationToken cancellationToken = default)
+    {
+        return EnviarAsync(titulo, mensaje, url, normalizarPeriodo: true, cancellationToken);
+    }
+
+    public Task EnviarATodosSinPeriodoAsync(string titulo, string mensaje, string? url = null, CancellationToken cancellationToken = default)
+    {
+        return EnviarAsync(titulo, mensaje, url, normalizarPeriodo: false, cancellationToken);
+    }
+
+    private async Task EnviarAsync(string titulo, string mensaje, string? url, bool normalizarPeriodo, CancellationToken cancellationToken)
     {
         var suscripciones = await _repository.GetAllAsync(cancellationToken);
 
@@ -45,7 +55,7 @@ public class WebPushService : IWebPushService
             return;
         }
 
-        var mensajeNormalizado = FormatearMensajeConPeriodoActual(mensaje);
+        var mensajeNormalizado = normalizarPeriodo ? FormatearMensajeConPeriodoActual(mensaje) : mensaje;
 
         var payload = JsonSerializer.Serialize(new
         {
