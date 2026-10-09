@@ -1,5 +1,6 @@
 using System;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using TransporteEscolar.Application.Interfaces;
 using TransporteEscolar.Domain.Entities;
 using TransporteEscolar.Infrastructure.Persistence;
@@ -144,6 +145,46 @@ public class PagoMensualRepository : IPagoMensualRepository
             .Include(m => m.PagoMensual)
                 .ThenInclude(p => p.Titular)
             .FirstOrDefaultAsync(m => m.Id == movimientoId, cancellationToken);
+    }
+
+    public async Task<List<PagoMovimiento>> GetMovimientosPorOrigenMensajeIdAsync(string origenMensajeId, CancellationToken cancellationToken = default)
+    {
+        return await _context.PagosMovimientos
+            .AsNoTracking()
+            .Include(m => m.PagoMensual)
+            .Where(m => m.OrigenMensajeId == origenMensajeId)
+            .OrderBy(m => m.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<PagoMovimiento>> GetMovimientosPorGrupoIdAsync(Guid grupoId, CancellationToken cancellationToken = default)
+    {
+        return await _context.PagosMovimientos
+            .Include(m => m.PagoMensual)
+            .Where(m => m.GrupoId == grupoId)
+            .OrderBy(m => m.Id)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> GuardarPagoDeBotAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            // Carrera: otro pedido con el mismo mensaje guardo primero. Se descarta lo pendiente.
+            _context.ChangeTracker.Clear();
+            return false;
+        }
+    }
+
+    public async Task EliminarMovimientosAsync(IReadOnlyCollection<PagoMovimiento> movimientos, CancellationToken cancellationToken = default)
+    {
+        _context.PagosMovimientos.RemoveRange(movimientos);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>
