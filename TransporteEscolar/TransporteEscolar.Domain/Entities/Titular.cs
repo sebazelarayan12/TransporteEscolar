@@ -91,7 +91,7 @@ public class Titular
         if (reparto.Sobrante > 0)
         {
             throw new InvalidOperationException(
-                $"El monto pagado ({monto:C}) excede la deuda total pendiente. Sobrante: {reparto.Sobrante:C}");
+                $"El monto pagado (${monto.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)}) excede la deuda total pendiente. Sobrante: ${reparto.Sobrante.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)}");
         }
 
         var resultado = new List<(PagoMensual Pago, PagoMovimiento Movimiento)>();
@@ -125,7 +125,7 @@ public class Titular
             {
                 var periodo = $"{pago.Mes:D2}/{pago.Anio}";
                 throw new InvalidOperationException(
-                    $"El nuevo monto ({nuevoMonto:C}) no puede ser menor al total pagado ({pago.TotalPagado():C}) del período {periodo}.");
+                    $"El nuevo monto (${nuevoMonto.ToString("N2", System.Globalization.CultureInfo.InvariantCulture)}) no puede ser menor al total pagado (${pago.TotalPagado().ToString("N2", System.Globalization.CultureInfo.InvariantCulture)}) del período {periodo}.");
             }
         }
 

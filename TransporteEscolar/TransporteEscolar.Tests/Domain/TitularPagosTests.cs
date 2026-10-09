@@ -258,4 +258,36 @@ public class TitularPagosTests
         result.Should().HaveCount(2); // abril y mayo
         result.Select(p => p.Mes).Should().NotContain(3);
     }
+
+    // ── Formato de montos en mensajes de error ───────────────────────────────
+
+    [Fact]
+    public void RegistrarPagoDetallado_MontoExcedente_MensajeMuestraMontosConSignoDolarYDosDecimales()
+    {
+        var titular = CrearTitular();
+        var pago1 = CrearPago(monto: 160000m, mes: 4, anio: 2025);
+        var pago2 = CrearPago(monto: 160000m, mes: 5, anio: 2025);
+
+        var act = () => titular.RegistrarPagoDetallado(320001m, DateTimeOffset.UtcNow, "Efectivo", null, new[] { pago1, pago2 });
+
+        var error = act.Should().Throw<InvalidOperationException>().Which;
+        error.Message.Should().Contain("($320,001.00)");
+        error.Message.Should().Contain("Sobrante: $1.00");
+        error.Message.Should().NotContain("¤");
+    }
+
+    [Fact]
+    public void AjustarMonto_MontoMenorAlTotalPagado_MensajeMuestraMontosConSignoDolarYDosDecimales()
+    {
+        var titular = CrearTitular();
+        var pago = CrearPago(monto: 10000m);
+        pago.AplicarPago(8000m, DateTimeOffset.UtcNow, "Efectivo", null);
+
+        var act = () => titular.AjustarMonto(5000m, aplicarSoloPendientes: false, motivo: null, pagos: new[] { pago });
+
+        var error = act.Should().Throw<InvalidOperationException>().Which;
+        error.Message.Should().Contain("($5,000.00)");
+        error.Message.Should().Contain("($8,000.00)");
+        error.Message.Should().NotContain("¤");
+    }
 }
