@@ -13,6 +13,7 @@ public interface INotificacionService
 
     // Métodos para crear notificaciones desde otros servicios
     Task CrearNotificacionPagoRegistradoAsync(string titularApellido, decimal monto, string periodo, int pagoMensualId, CancellationToken cancellationToken = default);
+    Task CrearNotificacionPagoBotAsync(string titularApellido, decimal monto, IReadOnlyList<string> periodos, int pagoMensualId, CancellationToken cancellationToken = default);
     Task CrearNotificacionAjusteMontoAsync(string titularNombre, decimal nuevoMonto, int titularId, CancellationToken cancellationToken = default);
     Task CrearNotificacionReinscripcionAsync(string titularNombre, int cantidadPasajeros, int titularId, CancellationToken cancellationToken = default);
     Task CrearNotificacionTitularCreadoAsync(string titularNombre, int titularId, CancellationToken cancellationToken = default);

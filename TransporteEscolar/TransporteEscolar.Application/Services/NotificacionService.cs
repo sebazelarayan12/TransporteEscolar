@@ -129,8 +129,51 @@ namespace TransporteEscolar.Application.Services;
             cancellationToken);
     }
 
+    public async Task CrearNotificacionPagoBotAsync(
+        string titularApellido,
+        decimal monto,
+        IReadOnlyList<string> periodos,
+        int pagoMensualId,
+        CancellationToken cancellationToken = default)
+    {
+        var periodosTexto = UnirPeriodos(periodos);
+        var mensaje = $"{titularApellido} pagó ${monto:N0} ({periodosTexto})";
+
+        var notificacion = new Notificacion(
+            "PAGO_REGISTRADO",
+            "Nuevo pago registrado",
+            mensaje,
+            "PagoMensual",
+            pagoMensualId);
+
+        await _repository.AddAsync(notificacion, cancellationToken);
+
+        // Limpieza oportunista de notificaciones antiguas
+        await LimpiarNotificacionesAntiguasAsync(cancellationToken);
+
+        await EnviarPushSinPeriodoAsync(
+            "Nuevo pago registrado",
+            mensaje,
+            $"/pagos?pagoId={pagoMensualId}",
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Une los períodos en español: "a", "a y b", "a, b y c".
+    /// </summary>
+    public static string UnirPeriodos(IReadOnlyList<string> periodos)
+    {
+        return periodos.Count switch
+        {
+            0 => string.Empty,
+            1 => periodos[0],
+            2 => $"{periodos[0]} y {periodos[1]}",
+            _ => $"{string.Join(", ", periodos.Take(periodos.Count - 1))} y {periodos[^1]}"
+        };
+    }
+
     public async Task CrearNotificacionAjusteMontoAsync(
-        string titularNombre, 
+        string titularNombre,
         decimal nuevoMonto, 
         int titularId, 
         CancellationToken cancellationToken = default)
@@ -240,6 +283,18 @@ namespace TransporteEscolar.Application.Services;
         try
         {
             await _webPushService.EnviarATodosAsync(titulo, mensaje, url, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error al enviar notificacion push {Titulo}", titulo);
+        }
+    }
+
+    private async Task EnviarPushSinPeriodoAsync(string titulo, string mensaje, string? url, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _webPushService.EnviarATodosSinPeriodoAsync(titulo, mensaje, url, cancellationToken);
         }
         catch (Exception ex)
         {
