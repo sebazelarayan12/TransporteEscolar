@@ -112,6 +112,42 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.ConfirmacionDiciembre", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Anio")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaDecision")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("Monto")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<int?>("PagoMensualId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TitularId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Va")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PagoMensualId");
+
+                    b.HasIndex("TitularId", "Anio")
+                        .IsUnique();
+
+                    b.ToTable("ConfirmacionesDiciembre", (string)null);
+                });
+
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.GastoFijoTemplate", b =>
                 {
                     b.Property<int>("Id")
@@ -1124,6 +1160,24 @@ namespace TransporteEscolar.Infrastructure.Persistence.Migrations
                         .HasForeignKey("TitularId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("TransporteEscolar.Domain.Entities.ConfirmacionDiciembre", b =>
+                {
+                    b.HasOne("TransporteEscolar.Domain.Entities.PagoMensual", "PagoMensual")
+                        .WithMany()
+                        .HasForeignKey("PagoMensualId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("TransporteEscolar.Domain.Entities.Titular", "Titular")
+                        .WithMany()
+                        .HasForeignKey("TitularId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PagoMensual");
+
+                    b.Navigation("Titular");
                 });
 
             modelBuilder.Entity("TransporteEscolar.Domain.Entities.GastoMensual", b =>
