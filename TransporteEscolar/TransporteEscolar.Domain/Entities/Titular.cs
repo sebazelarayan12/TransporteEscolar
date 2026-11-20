@@ -207,6 +207,21 @@ public class Titular
         return nuevos;
     }
 
+    /// <summary>
+    /// Crea la cuota de diciembre (mes 12) del año indicado con el monto dado. Diciembre queda fuera de
+    /// <see cref="GenerarPagos"/>, que solo cubre marzo-noviembre.
+    /// </summary>
+    public PagoMensual GenerarPagoDiciembre(int anio, decimal monto, IReadOnlyCollection<PagoMensual> existentes)
+    {
+        if (monto <= 0)
+            throw new ArgumentOutOfRangeException(nameof(monto), "El monto de diciembre debe ser mayor a 0");
+
+        if (existentes.Any(p => p.Anio == anio && p.Mes == 12))
+            throw new InvalidOperationException($"Ya existe una cuota de diciembre {anio} para este titular");
+
+        return new PagoMensual(Id, 12, anio, monto, "Cuota de diciembre");
+    }
+
     public void DarDeBaja()
     {
         FechaBaja = NormalizarFechaUtc(DateTime.UtcNow);

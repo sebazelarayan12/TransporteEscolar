@@ -30,6 +30,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<LoteWhatsApp> LotesWhatsApp => Set<LoteWhatsApp>();
     public DbSet<MensajeWhatsApp> MensajesWhatsApp => Set<MensajeWhatsApp>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
+    public DbSet<ConfirmacionDiciembre> ConfirmacionesDiciembre => Set<ConfirmacionDiciembre>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,5 +59,6 @@ public sealed class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new LoteWhatsAppConfiguration());
         modelBuilder.ApplyConfiguration(new MensajeWhatsAppConfiguration());
         modelBuilder.ApplyConfiguration(new PushSubscriptionConfiguration());
+        modelBuilder.ApplyConfiguration(new ConfirmacionDiciembreConfiguration());
     }
 }

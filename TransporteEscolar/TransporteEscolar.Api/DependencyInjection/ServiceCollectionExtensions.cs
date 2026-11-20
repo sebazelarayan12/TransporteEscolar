@@ -27,6 +27,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPasajeroRepository, PasajeroRepository>();
         services.AddScoped<IPasajeroHorarioRepository, PasajeroHorarioRepository>();
         services.AddScoped<IPagoMensualRepository, PagoMensualRepository>();
+        services.AddScoped<IConfirmacionDiciembreRepository, ConfirmacionDiciembreRepository>();
         services.AddScoped<IReinscripcionRepository, ReinscripcionRepository>();
         services.AddScoped<IDashboardRepository, DashboardRepository>();
         services.AddScoped<IHorarioRepository, HorarioRepository>();
