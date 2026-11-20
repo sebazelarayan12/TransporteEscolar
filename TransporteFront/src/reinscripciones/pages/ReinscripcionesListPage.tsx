@@ -6,12 +6,16 @@ import { ReinscripcionFilters } from '../components/ReinscripcionFilters';
 import { ReinscripcionCreateModal } from '../components/ReinscripcionCreateModal';
 import { LastPendingConfirmationModal } from '../components/LastPendingConfirmationModal';
 import { ReinscripcionesResults } from '../components/ReinscripcionesResults';
+import { ReinscripcionesTabs } from '../components/ReinscripcionesTabs';
+import { REINSCRIPCIONES_TABS, type ReinscripcionesTab } from '../types/reinscripciones-tabs.types';
+import { DiciembreTab } from '../components/DiciembreTab';
 import { Button } from '../../shared/ui/Button';
 import { buildResumenStats, filterReinscripciones } from '../helpers/reinscripcion-list.helpers';
 
 export const ReinscripcionesListPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ReinscripcionesTab>(REINSCRIPCIONES_TABS.REINSCRIPCIONES);
   const {
     anio,
     estadoSeleccionado,
@@ -45,60 +49,81 @@ export const ReinscripcionesListPage = () => {
           </div>
         </header>
 
-        <div className="flex justify-end">
-          <Button
-            variant="brand"
-            className="flex items-center gap-2 rounded-full bg-[#1d8ca5] px-6 py-3 text-base font-semibold text-white shadow-lg shadow-[#1d8ca5]/30 hover:bg-[#187286]"
-            onClick={() => setIsCreateModalOpen(true)}
+        <ReinscripcionesTabs activeTab={activeTab} onChange={setActiveTab} />
+
+        {activeTab === REINSCRIPCIONES_TABS.REINSCRIPCIONES && (
+          <div
+            id={`reinscripciones-panel-${REINSCRIPCIONES_TABS.REINSCRIPCIONES}`}
+            role="tabpanel"
+            aria-labelledby={`reinscripciones-tab-${REINSCRIPCIONES_TABS.REINSCRIPCIONES}`}
+            className="flex flex-col gap-6"
           >
-            <span className="material-symbols-outlined text-[20px]">add</span>
-            Nueva Reinscripción
-          </Button>
-        </div>
+            <div className="flex justify-end">
+              <Button
+                variant="brand"
+                className="flex items-center gap-2 rounded-full bg-[#1d8ca5] px-6 py-3 text-base font-semibold text-white shadow-lg shadow-[#1d8ca5]/30 hover:bg-[#187286]"
+                onClick={() => setIsCreateModalOpen(true)}
+              >
+                <span className="material-symbols-outlined text-[20px]">add</span>
+                Nueva Reinscripción
+              </Button>
+            </div>
 
-        {/* Filters & Search */}
-        <ReinscripcionFilters
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          totalCount={enabled ? totalCount : 0}
-          matchingCount={enabled ? filteredReinscripciones.length : 0}
-          estadoSeleccionado={estadoSeleccionado}
-          onEstadoSelect={selectEstado}
-        />
+            {/* Filters & Search */}
+            <ReinscripcionFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              totalCount={enabled ? totalCount : 0}
+              matchingCount={enabled ? filteredReinscripciones.length : 0}
+              estadoSeleccionado={estadoSeleccionado}
+              onEstadoSelect={selectEstado}
+            />
 
-        {/* Placeholder hasta seleccionar estado */}
-        {!estadoSeleccionado && (
-          <section className="rounded-3xl border border-dashed border-[#d9e2e7] bg-white p-8 text-center text-sm shadow-sm dark:border-white/10 dark:bg-[#1f1f24]">
-            <p className="text-base font-semibold text-[#0f181a] dark:text-white">
-               Selecciona un estado para ver las reinscripciones del {anio}.
-            </p>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              Puedes cambiar de estado en cualquier momento para comparar cómo avanza cada grupo.
-            </p>
-          </section>
+            {/* Placeholder hasta seleccionar estado */}
+            {!estadoSeleccionado && (
+              <section className="rounded-3xl border border-dashed border-[#d9e2e7] bg-white p-8 text-center text-sm shadow-sm dark:border-white/10 dark:bg-[#1f1f24]">
+                <p className="text-base font-semibold text-[#0f181a] dark:text-white">
+                   Selecciona un estado para ver las reinscripciones del {anio}.
+                </p>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  Puedes cambiar de estado en cualquier momento para comparar cómo avanza cada grupo.
+                </p>
+              </section>
+            )}
+
+            {/* Stats */}
+            {estadoSeleccionado && !isLoading && !isError && <ReinscripcionStats stats={buildResumenStats(reinscripciones)} />}
+
+            {/* List + Paginación */}
+            {estadoSeleccionado && (
+              <section className="rounded-3xl border border-[#e1e8ec] bg-white shadow-sm dark:border-white/5 dark:bg-[#1f1f24]">
+                <ReinscripcionesResults
+                  reinscripciones={filteredReinscripciones}
+                  isLoading={isLoading}
+                  isFetching={isFetching}
+                  isError={isError}
+                  pageNumber={pageNumber}
+                  pageSize={pageSize}
+                  totalCount={totalCount}
+                  onRetry={() => refetch()}
+                  onPageChange={setPageNumber}
+                  onConfirm={critical.requestConfirm}
+                  onMarkAsNotContinuing={critical.requestNoContinua}
+                  onMarkAsPending={critical.markPendiente}
+                />
+              </section>
+            )}
+          </div>
         )}
 
-        {/* Stats */}
-        {estadoSeleccionado && !isLoading && !isError && <ReinscripcionStats stats={buildResumenStats(reinscripciones)} />}
-
-        {/* List + Paginación */}
-        {estadoSeleccionado && (
-          <section className="rounded-3xl border border-[#e1e8ec] bg-white shadow-sm dark:border-white/5 dark:bg-[#1f1f24]">
-            <ReinscripcionesResults
-              reinscripciones={filteredReinscripciones}
-              isLoading={isLoading}
-              isFetching={isFetching}
-              isError={isError}
-              pageNumber={pageNumber}
-              pageSize={pageSize}
-              totalCount={totalCount}
-              onRetry={() => refetch()}
-              onPageChange={setPageNumber}
-              onConfirm={critical.requestConfirm}
-              onMarkAsNotContinuing={critical.requestNoContinua}
-              onMarkAsPending={critical.markPendiente}
-            />
-          </section>
+        {activeTab === REINSCRIPCIONES_TABS.DICIEMBRE && (
+          <div
+            id={`reinscripciones-panel-${REINSCRIPCIONES_TABS.DICIEMBRE}`}
+            role="tabpanel"
+            aria-labelledby={`reinscripciones-tab-${REINSCRIPCIONES_TABS.DICIEMBRE}`}
+          >
+            <DiciembreTab anio={anio} />
+          </div>
         )}
       </div>
       <ReinscripcionCreateModal
